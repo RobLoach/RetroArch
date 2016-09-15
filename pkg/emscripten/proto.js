@@ -195,6 +195,9 @@ function startRetroArch()
 
    Module['callMain'](Module['arguments']);
    document.getElementById('canvas').focus();
+
+   // Now that the Canvas has loaded, resize it to fit the window.
+   //resizeCanvas();
 }
 
 function selectFiles(files)
@@ -222,6 +225,29 @@ function selectFiles(files)
        }
    }
 }
+
+/**
+ * Makes the Canvas fit within the window size.
+ */
+function resizeCanvas() {
+   var canvas = document.getElementById('canvas');
+   var navHeight = $('.navbar').outerHeight();
+   var canvasRatio = canvas.height / canvas.width;
+   var windowRatio = (window.innerHeight - navHeight) / window.innerWidth;
+   var width;
+   var height;
+
+   if (windowRatio < canvasRatio) {
+      height = window.innerHeight - navHeight;
+      width = height / canvasRatio;
+   } else {
+      width = window.innerWidth;
+      height = width * canvasRatio;
+   }
+
+   canvas.style.width = width + 'px';
+   canvas.style.height = height + 'px';
+};
 
 function uploadData(data,name)
 {
@@ -299,6 +325,9 @@ $(function() {
       e.preventDefault();
     }
   });
+
+   // When the window resizes, adapt the canvas.
+   window.addEventListener('resize', resizeCanvas, false);
 
    // Switch the core when selecting one.
    $('#core-selector a').click(function () {
