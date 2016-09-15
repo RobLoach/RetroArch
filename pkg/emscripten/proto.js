@@ -197,7 +197,7 @@ function startRetroArch()
    document.getElementById('canvas').focus();
 
    // Now that the Canvas has loaded, resize it to fit the window.
-   //resizeCanvas();
+   resizeCanvas();
 }
 
 function selectFiles(files)
