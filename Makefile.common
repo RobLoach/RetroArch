@@ -32,6 +32,14 @@ ifeq ($(HAVE_MENU), 1)
 	HAVE_MENU_COMMON = 1
 endif
 
+ifeq ($(HAVE_SCREENSAVER),)
+   HAVE_SCREENSAVER = 1
+endif
+
+ifeq ($(HAVE_SCREENSAVER), 1)
+   DEFINES += -DHAVE_SCREENSAVER
+endif
+
 ifeq ($(HAVE_SOCKET_LEGACY), 1)
 	DEFINES += -DHAVE_SOCKET_LEGACY
 endif
