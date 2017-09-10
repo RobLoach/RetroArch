@@ -330,6 +330,12 @@ if [ "$HAVE_ZLIB" != 'no' ]; then
    fi
 fi
 
+if [ "$HAVE_PHYSFS" != 'no' ]; then
+   add_include_dirs ./deps/physfs/src/
+   HAVE_PHYSFS='1'
+   add_define_make HAVE_PHYSFS "$HAVE_PHYSFS"
+fi
+
 if [ "$HAVE_THREADS" != 'no' ]; then
    if [ "$HAVE_FFMPEG" != 'no' ]; then
       check_pkgconf AVCODEC libavcodec 54

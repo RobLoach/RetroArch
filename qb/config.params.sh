@@ -55,6 +55,7 @@ HAVE_CG=auto               # Cg shader support
 HAVE_LIBXML2=auto          # libxml2 support
 HAVE_BUILTINZLIB=no        # Bake in zlib
 HAVE_ZLIB=auto             # zlib support (ZIP extract, PNG decoding/encoding)
+HAVE_PHYSFS=auto           # PhysFS support
 HAVE_FBO=auto              # render-to-texture (FBO) support
 HAVE_ALSA=auto             # ALSA support
 C89_ALSA=no
