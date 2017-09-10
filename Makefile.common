@@ -1318,6 +1318,45 @@ ifeq ($(HAVE_ZLIB), 1)
    endif
 endif
 
+# PhysFS
+ifeq ($(HAVE_PHYSFS), 1)
+   DEFINES += -DHAVE_PHYSFS
+   DEPS_DIR_PHYSFS := $(DEPS_DIR)/physfs
+   PHYSFS_OBJS = $(DEPS_DIR_PHYSFS)/physfs.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_byteorder.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_unicode.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_7z.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_dir.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_grp.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_hog.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_iso9660.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_mvl.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_qpak.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_slb.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_unpacked.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_vdf.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_wad.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_archiver_zip.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_platform_os2.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_platform_posix.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_platform_qnx.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_platform_unix.o \
+                 $(DEPS_DIR_PHYSFS)/physfs_platform_windows.o
+   OBJ += $(PHYSFS_OBJS)
+   ifeq ($(HAVE_7ZIP),1)
+      DEFINES += -DPHYSFS_SUPPORTS_7Z
+   endif
+   ifeq ($(HAVE_ZLIB),1)
+      DEFINES += -DPHYSFS_SUPPORTS_ZIP
+   endif
+   ifeq ($(HAVE_UNIX), 1)
+      DEFINES += -DPHYSFS_PLATFORM_UNIX
+   endif
+   ifneq ($(findstring Linux,$(OS)),)
+      DEFINES += -DPHYSFS_PLATFORM_LINUX
+   endif
+endif
+
 ifeq ($(HAVE_RTGA), 1)
    DEFINES += -DHAVE_RTGA
    OBJ += $(LIBRETRO_COMM_DIR)/formats/tga/rtga.o
