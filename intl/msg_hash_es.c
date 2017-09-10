@@ -2043,6 +2043,8 @@ const char *msg_hash_to_str_es(enum msg_hash_enums msg)
          return "Información del sistema";
       case MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_7ZIP_SUPPORT:
          return "Soporte de 7zip";
+      case MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_PHYSFS_SUPPORT:
+         return "Soporte de PhysFS";
       case MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_ALSA_SUPPORT:
          return "Soporte de ALSA";
       case MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_BUILD_DATE:
