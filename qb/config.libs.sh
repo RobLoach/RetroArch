@@ -331,7 +331,7 @@ if [ "$HAVE_ZLIB" != 'no' ]; then
 fi
 
 if [ "$HAVE_PHYSFS" != 'no' ]; then
-   add_include_dirs ./deps/physfs/src/
+   add_include_dirs ./deps/physfs/
    HAVE_PHYSFS='1'
    add_define_make HAVE_PHYSFS "$HAVE_PHYSFS"
 fi
