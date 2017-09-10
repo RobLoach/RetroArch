@@ -224,6 +224,12 @@ static const bool _7zip_supp = true;
 static const bool _7zip_supp = false;
 #endif
 
+#ifdef HAVE_PHYSFS
+static const bool _physfs_supp = true;
+#else
+static const bool _physfs_supp = false;
+#endif
+
 #ifdef HAVE_DYLIB
 static const bool _dylib_supp = true;
 #else
