@@ -54,6 +54,10 @@ ifeq ($(HAVE_FBO), 1)
    DEFINES += -DHAVE_FBO
 endif
 
+ifeq ($(HAVE_TEST), 1)
+   DEFINES += -DHAVE_TEST
+endif
+
 ifeq ($(HAVE_DYLIB), 1)
    DEFINES += -DHAVE_DYLIB
 endif

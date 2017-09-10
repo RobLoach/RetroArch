@@ -151,6 +151,9 @@ enum
    RA_OPT_SUBSYSTEM,
    RA_OPT_SIZE,
    RA_OPT_FEATURES,
+#if HAVE_TEST
+   RA_OPT_TEST,
+#endif
    RA_OPT_VERSION,
    RA_OPT_EOF_EXIT,
    RA_OPT_LOG_FILE,
@@ -405,6 +408,12 @@ static void retroarch_print_features(void)
 }
 #undef _PSUPP
 
+#if HAVE_TEST
+static void retroarch_test(void)
+{
+   print("Run Test");
+}
+
 static void retroarch_print_version(void)
 {
    char str[255];
@@ -442,6 +451,9 @@ static void retroarch_print_help(const char *arg0)
    puts("      --version         Show version.");
    puts("      --features        Prints available features compiled into "
          "program.");
+#ifdef HAVE_TEST
+   puts("      --test            Runs any unit available unit tests.");
+#endif
 #ifdef HAVE_MENU
    puts("      --menu            Do not require content or libretro core to "
          "be loaded,\n"
@@ -619,6 +631,9 @@ static void retroarch_parse_input(int argc, char *argv[])
       { "no-patch",     0, NULL, RA_OPT_NO_PATCH },
       { "detach",       0, NULL, 'D' },
       { "features",     0, NULL, RA_OPT_FEATURES },
+#if HAVE_TEST
+      { "test",         0, NULL, RA_OPT_TEST },
+#endif
       { "subsystem",    1, NULL, RA_OPT_SUBSYSTEM },
       { "max-frames",   1, NULL, RA_OPT_MAX_FRAMES },
       { "eof-exit",     0, NULL, RA_OPT_EOF_EXIT },
@@ -1015,6 +1030,12 @@ static void retroarch_parse_input(int argc, char *argv[])
             retroarch_print_features();
             exit(0);
 
+#if HAVE_TEST
+         case RA_OPT_TEST:
+            retroarch_test();
+            exit(0);
+#endif
+
          case RA_OPT_EOF_EXIT:
             bsv_movie_ctl(BSV_MOVIE_CTL_SET_END_EOF, NULL);
             break;
@@ -1367,10 +1388,10 @@ static bool rarch_game_specific_options(char **output)
 
    if (!retroarch_validate_game_options(game_path,
             game_path_size, false))
-      goto error; 
+      goto error;
 
    if (!config_file_exists(game_path))
-      goto error; 
+      goto error;
 
    RARCH_LOG("%s %s\n",
          msg_hash_to_str(MSG_GAME_SPECIFIC_CORE_OPTIONS_FOUND_AT),
