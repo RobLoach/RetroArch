@@ -917,8 +917,11 @@ static int cheevos_parse_condition(cheevos_condition_t *condition, const char* m
             {
                while (--condset >= condition->condsets)
                {
-                  if ((void*)condset->conds)
+                  if (condset->conds)
+                  {
                      free((void*)condset->conds);
+                     condset->conds = NULL;
+                  }
                }
 
                return -1;
@@ -943,14 +946,14 @@ static void cheevos_free_condition(cheevos_condition_t* condition)
       {
          if (condition->condsets[i].conds)
          {
-            free(condition->condsets[i].conds);
+            free((void*)condition->condsets[i].conds);
             condition->condsets[i].conds = NULL;
          }
       }
 
       if (condition->condsets)
       {
-         free(condition->condsets);
+         free((void*)condition->condsets);
          condition->condsets = NULL;
       }
    }
@@ -1015,7 +1018,7 @@ static int cheevos_parse_expression(cheevos_expr_t *expr, const char* mem)
          {
             if (expr->terms)
             {
-               free(expr->terms);
+               free((void*)expr->terms);
                expr->terms = NULL;
             }
             return -1;
@@ -1267,10 +1270,16 @@ static int cheevos_new_lboard(cheevos_readud_t *ud)
    return 0;
 
 error:
-   if ((void*)lboard->title)
+   if (lboard->title)
+   {
       free((void*)lboard->title);
-   if ((void*)lboard->description)
+      lboard->title = NULL;
+   }
+   if (lboard->description)
+   {
       free((void*)lboard->description);
+      lboard->description = NULL;
+   }
    return -1;
 }
 
@@ -1446,12 +1455,21 @@ static int cheevos_parse(const char *json)
    if (   !cheevos_locals.core.cheevos || !cheevos_locals.unofficial.cheevos
        || !cheevos_locals.leaderboards)
    {
-      if ((void*)cheevos_locals.core.cheevos)
+      if (cheevos_locals.core.cheevos)
+      {
          free((void*)cheevos_locals.core.cheevos);
-      if ((void*)cheevos_locals.unofficial.cheevos)
+         cheevos_locals.core.cheevos = NULL;
+      }
+      if (cheevos_locals.unofficial.cheevos)
+      {
          free((void*)cheevos_locals.unofficial.cheevos);
-      if ((void*)cheevos_locals.leaderboards)
+         cheevos_locals.unofficial.cheevos = NULL;
+      }
+      if (cheevos_locals.leaderboards)
+      {
          free((void*)cheevos_locals.leaderboards);
+         cheevos_locals.leaderboards = NULL;
+      }
       cheevos_locals.core.count = cheevos_locals.unofficial.count =
          cheevos_locals.lboard_count = 0;
 
@@ -2006,10 +2024,12 @@ static void cheevos_test_leaderboards(void)
 Free the loaded achievements.
 *****************************************************************************/
 
-static void cheevos_free_condset(const cheevos_condset_t *set)
+static void cheevos_free_condset(cheevos_condset_t *set)
 {
-   if (set->conds)
+   if (set->conds) {
       free((void*)set->conds);
+      set->conds = NULL;
+   }
 }
 
 static void cheevos_free_cheevo(const cheevo_t *cheevo)
@@ -2025,7 +2045,7 @@ static void cheevos_free_cheevo(const cheevo_t *cheevo)
    cheevos_free_condset(cheevo->condition.condsets);
 }
 
-static void cheevos_free_cheevo_set(const cheevoset_t *set)
+static void cheevos_free_cheevo_set(cheevoset_t *set)
 {
    const cheevo_t *cheevo = set->cheevos;
    const cheevo_t *end = cheevo + set->count;
@@ -2034,7 +2054,10 @@ static void cheevos_free_cheevo_set(const cheevoset_t *set)
       cheevos_free_cheevo(cheevo++);
 
    if (set->cheevos)
+   {
       free((void*)set->cheevos);
+      set->cheevos = NULL;
+   }
 }
 
 #ifndef CHEEVOS_DONT_DEACTIVATE
@@ -2807,13 +2830,20 @@ static int cheevos_iterate(coro_t* coro)
 #endif
       if (cheevos_parse(CHEEVOS_VAR_JSON))
       {
-         if ((void*)CHEEVOS_VAR_JSON)
+         if (CHEEVOS_VAR_JSON)
+         {
             free((void*)CHEEVOS_VAR_JSON);
+            CHEEVOS_VAR_JSON = NULL;
+         }
          CORO_STOP();
       }
 
-      if ((void*)CHEEVOS_VAR_JSON)
+      if (CHEEVOS_VAR_JSON)
+      {
          free((void*)CHEEVOS_VAR_JSON);
+         CHEEVOS_VAR_JSON = NULL;
+      }
+
       cheevos_loaded = true;
 
       /*
@@ -3104,14 +3134,18 @@ static int cheevos_iterate(coro_t* coro)
 
          if (cheevos_get_value(CHEEVOS_VAR_JSON, CHEEVOS_JSON_KEY_GAMEID, gameid, sizeof(gameid)))
          {
-            if ((void*)CHEEVOS_VAR_JSON)
+            if (CHEEVOS_VAR_JSON) {
                free((void*)CHEEVOS_VAR_JSON);
+               CHEEVOS_VAR_JSON = NULL;
+            }
             RARCH_ERR("[CHEEVOS]: error getting game_id.\n");
             CORO_RET();
          }
 
-         if ((void*)CHEEVOS_VAR_JSON)
+         if (CHEEVOS_VAR_JSON) {
             free((void*)CHEEVOS_VAR_JSON);
+            CHEEVOS_VAR_JSON = NULL;
+         }
          RARCH_LOG("[CHEEVOS]: got game id %s.\n", gameid);
          CHEEVOS_VAR_GAMEID = strtol(gameid, NULL, 10);
          CORO_RET();
@@ -3193,8 +3227,11 @@ static int cheevos_iterate(coro_t* coro)
       if (CHEEVOS_VAR_JSON)
       {
          int res = cheevos_get_value(CHEEVOS_VAR_JSON, CHEEVOS_JSON_KEY_TOKEN, cheevos_locals.token, sizeof(cheevos_locals.token));
-         if ((void*)CHEEVOS_VAR_JSON)
+         if (CHEEVOS_VAR_JSON)
+         {
             free((void*)CHEEVOS_VAR_JSON);
+            CHEEVOS_VAR_JSON = NULL;
+         }
 
          if (!res)
          {
