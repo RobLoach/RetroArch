@@ -1703,6 +1703,8 @@ MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_IMAGES,
       "Exibir Aba de Imagem")
 MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_MUSIC,
       "Exibir Aba de Música")
+MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_MAIN_MENU,
+      "Show Main Menu Tab")
 MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_SETTINGS,
       "Exibir Aba de Definições")
 MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_VIDEO,
@@ -2835,6 +2837,8 @@ MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_MUSIC,
       "Mostrar a aba de música dentro do menu princial.")
 MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_VIDEO,
       "Mostrar a aba de vídeo dentro do menu principal.")
+MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_MAIN_MENU,
+      "Show the main menu tab.")
 MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_SETTINGS,
       "Mostrar a aba de definições dentro do menu principal.")
 MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_HISTORY,

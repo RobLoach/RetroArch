@@ -917,7 +917,7 @@ int menu_setting_set(unsigned type, const char *label,
    int ret                    = 0;
    file_list_t *selection_buf = menu_entries_get_selection_buf_ptr(0);
    size_t selection           = menu_navigation_get_selection();
-   menu_file_list_cbs_t *cbs  = selection_buf ? 
+   menu_file_list_cbs_t *cbs  = selection_buf ?
       (menu_file_list_cbs_t*)file_list_get_actiondata_at_offset(selection_buf, selection) : NULL;
 
    if (!cbs)
@@ -1446,7 +1446,7 @@ static int setting_action_ok_bind_defaults(void *data, bool wraparound)
    return 0;
 }
 
-static void 
+static void
 setting_get_string_representation_st_float_video_refresh_rate_auto(
       void *data, char *s, size_t len)
 {
@@ -5651,6 +5651,21 @@ static bool setting_append_list(
                   MENU_ENUM_LABEL_MENU_SHOW_REBOOT,
                   MENU_ENUM_LABEL_VALUE_MENU_SHOW_REBOOT,
                   menu_show_reboot,
+                  MENU_ENUM_LABEL_VALUE_OFF,
+                  MENU_ENUM_LABEL_VALUE_ON,
+                  &group_info,
+                  &subgroup_info,
+                  parent_group,
+                  general_write_handler,
+                  general_read_handler,
+                  SD_FLAG_NONE);
+
+            CONFIG_BOOL(
+                  list, list_info,
+                  &settings->bools.menu_xmb_show_main_menu,
+                  MENU_ENUM_LABEL_XMB_SHOW_MAIN_MENU,
+                  MENU_ENUM_LABEL_VALUE_XMB_SHOW_MAIN_MENU,
+                  xmb_show_main_menu,
                   MENU_ENUM_LABEL_VALUE_OFF,
                   MENU_ENUM_LABEL_VALUE_ON,
                   &group_info,

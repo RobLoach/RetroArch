@@ -1217,6 +1217,7 @@ static struct config_bool_setting *populate_settings_bool(settings_t *settings, 
 #endif
 #ifdef HAVE_XMB
    SETTING_BOOL("xmb_shadows_enable",            &settings->bools.menu_xmb_shadows_enable, true, xmb_shadows_enable, false);
+   SETTING_BOOL("xmb_show_main_menu",            &settings->bools.menu_xmb_show_main_menu, true, xmb_show_main_menu, false);
    SETTING_BOOL("xmb_show_settings",             &settings->bools.menu_xmb_show_settings, true, xmb_show_settings, false);
    SETTING_BOOL("xmb_show_favorites",            &settings->bools.menu_xmb_show_favorites, true, xmb_show_favorites, false);
 #ifdef HAVE_IMAGEVIEWER
@@ -1864,7 +1865,7 @@ static void config_set_defaults(void)
       temp_str[0] = '\0';
 
       fill_pathname_expand_special(temp_str,
-            g_defaults.path.config, 
+            g_defaults.path.config,
             PATH_MAX_LENGTH * sizeof(char));
       path_set(RARCH_PATH_CONFIG, temp_str);
       free(temp_str);

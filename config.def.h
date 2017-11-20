@@ -275,6 +275,7 @@ static bool xmb_shadows_enable   = false;
 #else
 static bool xmb_shadows_enable   = true;
 #endif
+static bool xmb_show_main_menu   = true;
 static bool xmb_show_settings    = true;
 static bool xmb_show_favorites   = true;
 #ifdef HAVE_IMAGEVIEWER

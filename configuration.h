@@ -138,6 +138,7 @@ typedef struct settings
       bool menu_show_reboot;
       bool menu_materialui_icons_enable;
       bool menu_xmb_shadows_enable;
+      bool menu_xmb_show_main_menu;
       bool menu_xmb_show_settings;
       bool menu_xmb_show_favorites;
       bool menu_xmb_show_images;
