@@ -1779,6 +1779,8 @@ MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_IMAGES,
       "Afficher l'onglet Images")
 MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_MUSIC,
       "Afficher l'onglet Musique")
+MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_MAIN_MENU,
+      "Show Main Menu Tab")
 MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_SETTINGS,
       "Afficher l'onglet Paramètres")
 MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_VIDEO,
@@ -2941,6 +2943,8 @@ MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_VIDEO,
       "Affiche l'onglet des vidéos dans le menu principal.")
 MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_NETPLAY,
       "Affiche l'onglet de jeu en réseau dans le menu principal.")
+MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_MAIN_MENU,
+      "Show the main menu tab.")
 MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_SETTINGS,
       "Affiche l'onglet ces réglages dans le menu principal.")
 MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_HISTORY,

@@ -1811,6 +1811,8 @@ MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_IMAGES,
       "Visualizza colonna Immagini")
 MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_MUSIC,
       "Visualizza colonna Musica")
+MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_MAIN_MENU,
+      "Show Main Menu Tab")
 MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_SETTINGS,
       "Visualizza colonna Impostazioni")
 MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_VIDEO,
@@ -2993,6 +2995,8 @@ MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_VIDEO,
       "Mostra la colonna video all'interno del menu principale")
 MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_NETPLAY,
       "Mostra la colonna camere netplay all'interno del menu principale")
+MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_MAIN_MENU,
+      "Show the main menu tab.")
 MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_SETTINGS,
       "Mostra la colonna impostazioni all'interno del menu principale")
 MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_HISTORY,

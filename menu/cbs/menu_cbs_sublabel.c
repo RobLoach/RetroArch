@@ -321,6 +321,7 @@ default_sublabel_macro(action_bind_sublabel_menu_show_core_updater,             
 default_sublabel_macro(action_bind_sublabel_menu_music_tab,                        MENU_ENUM_SUBLABEL_XMB_SHOW_MUSIC)
 default_sublabel_macro(action_bind_sublabel_menu_video_tab,                        MENU_ENUM_SUBLABEL_XMB_SHOW_VIDEO)
 default_sublabel_macro(action_bind_sublabel_menu_netplay_tab,                      MENU_ENUM_SUBLABEL_XMB_SHOW_NETPLAY)
+default_sublabel_macro(action_bind_sublabel_menu_main_menu_tab,                    MENU_ENUM_SUBLABEL_XMB_SHOW_MAIN_MENU)
 default_sublabel_macro(action_bind_sublabel_menu_settings_tab,                     MENU_ENUM_SUBLABEL_XMB_SHOW_SETTINGS)
 default_sublabel_macro(action_bind_sublabel_menu_settings_tab_enable_password,     MENU_ENUM_SUBLABEL_XMB_SHOW_SETTINGS_PASSWORD)
 default_sublabel_macro(action_bind_sublabel_menu_history_tab,                      MENU_ENUM_SUBLABEL_XMB_SHOW_HISTORY)
@@ -601,6 +602,9 @@ int menu_cbs_init_bind_sublabel(menu_file_list_cbs_t *cbs,
             break;
          case MENU_ENUM_LABEL_XMB_SHOW_HISTORY:
             BIND_ACTION_SUBLABEL(cbs, action_bind_sublabel_menu_history_tab);
+            break;
+         case MENU_ENUM_LABEL_XMB_SHOW_MAIN_MENU:
+            BIND_ACTION_SUBLABEL(cbs, action_bind_sublabel_menu_main_menu_tab);
             break;
          case MENU_ENUM_LABEL_XMB_SHOW_SETTINGS:
             BIND_ACTION_SUBLABEL(cbs, action_bind_sublabel_menu_settings_tab);
