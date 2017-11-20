@@ -41,14 +41,19 @@ static void sanitize_to_string(char *s, const char *label, size_t len)
 
    new_label[0] = '\0';
 
-   strlcpy(new_label, label, sizeof(new_label));
-   strlcpy(s, new_label, len);
-   replace_chars(s, '_', ' ');
+   if (!string_is_empty(label))
+      strlcpy(new_label, label, sizeof(new_label));
+   if (s && !string_is_empty(new_label))
+   {
+      strlcpy(s, new_label, len);
+      replace_chars(s, '_', ' ');
+   }
 }
 
 static int fill_title(char *s, const char *title, const char *path, size_t len)
 {
-   fill_pathname_join_delim(s, title, path, ' ', len);
+   if (!string_is_empty(path) && !string_is_empty(title))
+      fill_pathname_join_delim(s, title, path, ' ', len);
    return 0;
 }
 
@@ -113,6 +118,7 @@ default_title_macro(action_get_onscreen_display_settings_list,  MENU_ENUM_LABEL_
 default_title_macro(action_get_onscreen_notifications_settings_list,  MENU_ENUM_LABEL_VALUE_ONSCREEN_NOTIFICATIONS_SETTINGS)
 default_title_macro(action_get_onscreen_overlay_settings_list,  MENU_ENUM_LABEL_VALUE_ONSCREEN_OVERLAY_SETTINGS)
 default_title_macro(action_get_menu_views_settings_list,        MENU_ENUM_LABEL_VALUE_MENU_VIEWS_SETTINGS)
+default_title_macro(action_get_quick_menu_views_settings_list,  MENU_ENUM_LABEL_VALUE_QUICK_MENU_VIEWS_SETTINGS)
 default_title_macro(action_get_menu_settings_list,              MENU_ENUM_LABEL_VALUE_MENU_SETTINGS)
 default_title_macro(action_get_user_interface_settings_list,    MENU_ENUM_LABEL_VALUE_USER_INTERFACE_SETTINGS)
 default_title_macro(action_get_menu_file_browser_settings_list, MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_SETTINGS)
@@ -371,6 +377,11 @@ static int menu_cbs_init_bind_title_compare_label(menu_file_list_cbs_t *cbs,
    else if (string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_DEFERRED_MENU_VIEWS_SETTINGS_LIST)))
    {
       BIND_ACTION_GET_TITLE(cbs, action_get_menu_views_settings_list);
+      return 0;
+   }
+   else if (string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_DEFERRED_QUICK_MENU_VIEWS_SETTINGS_LIST)))
+   {
+      BIND_ACTION_GET_TITLE(cbs, action_get_quick_menu_views_settings_list);
       return 0;
    }
    else if (string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_DEFERRED_MENU_SETTINGS_LIST)))

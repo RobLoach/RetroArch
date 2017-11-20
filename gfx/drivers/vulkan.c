@@ -25,6 +25,7 @@
 #include <formats/image.h>
 #include <retro_inline.h>
 #include <retro_miscellaneous.h>
+#include <retro_math.h>
 #include <retro_assert.h>
 #include <libretro.h>
 
@@ -2241,6 +2242,8 @@ static void vulkan_unload_texture(void *data, uintptr_t handle)
 }
 
 static const video_poke_interface_t vulkan_poke_interface = {
+   NULL,                   /* set_coords */
+   NULL,                   /* set_mvp */
    vulkan_load_texture,
    vulkan_unload_texture,
    vulkan_set_video_mode,

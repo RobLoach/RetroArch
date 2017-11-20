@@ -21,6 +21,7 @@
 #include <compat/msvc.h>
 #include <compat/strl.h>
 #include <file/file_path.h>
+#include "video_driver.h" /* video_context_driver_get_api */
 #include <rhash.h>
 #include <string/stdstring.h>
 #include <streams/file_stream.h>
@@ -524,16 +525,23 @@ bool video_shader_resolve_parameters(config_file_t *conf,
       char *line       = (char*)malloc(4096 * sizeof(char));
       const char *path = shader->pass[i].source.path;
 
+	  if (string_is_empty(path))
+	  {
+		  free(line);
+		  continue;
+	  }
+
 #ifdef HAVE_SLANG
       /* First try to use the more robust slang implementation to support #includes. */
       /* FIXME: The check for slang can be removed if it's sufficiently tested for
        * GLSL/Cg as well, it should be the same implementation. */
-      if (!string_is_empty(path) && (string_is_equal_fast(path_get_extension(path), "slang", 5)) &&
+      if (string_is_equal_fast(path_get_extension(path), "slang", 5) &&
             slang_preprocess_parse_parameters(shader->pass[i].source.path, shader))
       {
          free(line);
          continue;
       }
+
       /* If that doesn't work, fallback to the old path.
        * Ideally, we'd get rid of this path sooner or later. */
 #endif
@@ -1080,6 +1088,15 @@ void video_shader_write_conf_cgp(config_file_t *conf,
 enum rarch_shader_type video_shader_parse_type(const char *path,
       enum rarch_shader_type fallback)
 {
+   enum rarch_shader_type shader_type = RARCH_SHADER_NONE;
+   enum gfx_ctx_api api = video_context_driver_get_api();
+
+   #ifdef HAVE_CG
+   bool cg_supported = true;
+   #else
+   bool cg_supported = false;
+   #endif
+
    if (!path)
       return fallback;
 
@@ -1088,17 +1105,45 @@ enum rarch_shader_type video_shader_parse_type(const char *path,
    {
       case FILE_TYPE_SHADER_CG:
       case FILE_TYPE_SHADER_PRESET_CGP:
-         return RARCH_SHADER_CG;
+         shader_type = RARCH_SHADER_CG;
+         break;
       case FILE_TYPE_SHADER_GLSL:
       case FILE_TYPE_SHADER_PRESET_GLSLP:
-         return RARCH_SHADER_GLSL;
+         shader_type = RARCH_SHADER_GLSL;
+         break;
       case FILE_TYPE_SHADER_SLANG:
       case FILE_TYPE_SHADER_PRESET_SLANGP:
-         return RARCH_SHADER_SLANG;
+         shader_type = RARCH_SHADER_SLANG;
+         break;
       default:
          break;
    }
 
+   switch (api)
+   {
+      case GFX_CTX_OPENGL_API:
+      case GFX_CTX_OPENGL_ES_API:
+         if (shader_type == RARCH_SHADER_GLSL 
+            || (cg_supported && shader_type == RARCH_SHADER_CG))
+            return shader_type;
+         break;
+      case GFX_CTX_DIRECT3D9_API:
+         if (cg_supported && shader_type == RARCH_SHADER_CG)
+            return shader_type;
+         break;
+      case GFX_CTX_VULKAN_API:
+         if (shader_type == RARCH_SHADER_SLANG)
+            return shader_type;
+         break;
+      case GFX_CTX_GDI_API:
+      case GFX_CTX_OPENVG_API:
+      case GFX_CTX_DIRECT3D8_API:
+      case GFX_CTX_NONE:
+      default:
+         break;
+   }
+
+   RARCH_WARN("Rendering context is incompatible with shader type: %s\n", path);
    return fallback;
 }
 

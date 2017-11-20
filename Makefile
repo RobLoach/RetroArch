@@ -13,10 +13,6 @@ TARGET = retroarch
 
 OBJDIR := obj-unix
 
-ifeq ($(GLOBAL_CONFIG_DIR),)
-   GLOBAL_CONFIG_DIR = /etc
-endif
-
 OBJ :=
 LIBS :=
 DEFINES := -DHAVE_CONFIG_H -DRARCH_INTERNAL -DHAVE_OVERLAY
@@ -78,7 +74,7 @@ ifneq ($(findstring Win32,$(OS)),)
    LDFLAGS += -mwindows
 endif
 
-CFLAGS   += -Wall $(OPTIMIZE_FLAG) $(INCLUDE_DIRS) $(DEBUG_FLAG) -I.
+CFLAGS   += -Wall $(OPTIMIZE_FLAG) $(INCLUDE_DIRS) $(DEBUG_FLAG) -I. -Ideps -Ideps/stb
 
 APPEND_CFLAGS := $(CFLAGS)
 CXXFLAGS += $(APPEND_CFLAGS) -std=c++11 -D__STDC_CONSTANT_MACROS
@@ -208,7 +204,7 @@ install: $(TARGET)
 		rm -rf $(DESTDIR)$(ASSETS_DIR)/retroarch/assets/xmb/monochrome/src; \
 		rm -rf $(DESTDIR)$(ASSETS_DIR)/retroarch/assets/xmb/retroactive/src; \
 		rm -rf $(DESTDIR)$(ASSETS_DIR)/retroarch/assets/xmb/neoactive/src; \
-		rm -rf $(DESTDIR)$(ASSETS_DIR)/retroarch/assets/xmb/retroactive_marked/src; \
+		rm -rf $(DESTDIR)$(ASSETS_DIR)/retroarch/assets/xmb/retrosystem/src; \
 		rm -rf $(DESTDIR)$(ASSETS_DIR)/retroarch/assets/xmb/dot-art/src; \
 		echo "Asset copying done."; \
 	fi

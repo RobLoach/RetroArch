@@ -342,7 +342,7 @@ static bool video_thread_handle_packet(
       case CMD_INIT:
          thr->driver_data = thr->driver->init(&thr->info,
                thr->input, thr->input_data);
-         pkt.data.b = thr->driver_data;
+         pkt.data.b = (thr->driver_data != NULL);
          thr->driver->viewport_info(thr->driver_data, &thr->vp);
          video_thread_reply(thr, &pkt);
          break;
@@ -1257,6 +1257,8 @@ static struct video_shader *thread_get_current_shader(void *data)
 }
 
 static const video_poke_interface_t thread_poke = {
+   NULL,                            /* set_coords */
+   NULL,                            /* set_mvp */
    thread_load_texture,
    thread_unload_texture,
    thread_set_video_mode,

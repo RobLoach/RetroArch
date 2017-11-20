@@ -206,6 +206,8 @@ enum menu_settings_type
    MENU_SETTINGS_CHEAT_END = MENU_SETTINGS_CHEAT_BEGIN + (MAX_CHEAT_COUNTERS - 1),
    MENU_SETTINGS_INPUT_DESC_BEGIN,
    MENU_SETTINGS_INPUT_DESC_END = MENU_SETTINGS_INPUT_DESC_BEGIN + (MAX_USERS * (RARCH_FIRST_CUSTOM_BIND + 4)),
+   MENU_SETTINGS_INPUT_DESC_KBD_BEGIN,
+   MENU_SETTINGS_INPUT_DESC_KBD_END = MENU_SETTINGS_INPUT_DESC_KBD_BEGIN + 135,
    MENU_SETTINGS_LAST
 };
 
@@ -241,6 +243,7 @@ enum xmb_icon_theme
    XMB_ICON_THEME_MONOCHROME = 0,
    XMB_ICON_THEME_FLATUI,
    XMB_ICON_THEME_RETROACTIVE,
+   XMB_ICON_THEME_RETROSYSTEM,
    XMB_ICON_THEME_PIXEL,
    XMB_ICON_THEME_NEOACTIVE,
    XMB_ICON_THEME_SYSTEMATIC,
@@ -336,6 +339,9 @@ typedef struct menu_display_ctx_driver
 
 typedef struct
 {
+   uint64_t state;
+
+   char menu_state_msg[1024];
    /* Scratchpad variables. These are used for instance
     * by the filebrowser when having to store intermediary
     * paths (subdirs/previous dirs/current dir/path, etc).
@@ -346,13 +352,6 @@ typedef struct
 
    /* path to the currently loaded database playlist file. */
    char db_playlist_file[PATH_MAX_LENGTH];
-
-   uint64_t state;
-
-   struct
-   {
-      char msg[1024];
-   } menu_state;
 } menu_handle_t;
 
 typedef struct menu_display_ctx_draw

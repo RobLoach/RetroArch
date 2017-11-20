@@ -14,7 +14,7 @@ cc_works=0
 if [ "$CC" ]; then
 	"$CC" -o "$TEMP_EXE" "$TEMP_C" >/dev/null 2>&1 && cc_works=1
 else
-	for CC in ${CC:=$(which ${CROSS_COMPILE}gcc ${CROSS_COMPILE}cc ${CROSS_COMPILE}clang 2>/dev/null)} ''; do
+	for CC in $(printf %s "$(which ${CROSS_COMPILE}gcc ${CROSS_COMPILE}cc ${CROSS_COMPILE}clang 2>/dev/null)") ''; do
 		"$CC" -o "$TEMP_EXE" "$TEMP_C" >/dev/null 2>&1 && cc_works=1 && break
 	done
 fi
@@ -31,8 +31,7 @@ fi
 echo "Checking for suitable working C compiler ... $CC $cc_status"
 
 if [ "$cc_works" = '0' ] && [ "$USE_LANG_C" = 'yes' ]; then
-	echo "Error: Cannot proceed without a working C compiler."
-	exit 1
+	die 1 'Error: Cannot proceed without a working C compiler.'
 fi
 
 # Checking for working C++
@@ -45,7 +44,7 @@ cxx_works=0
 if [ "$CXX" ]; then
 	"$CXX" -o "$TEMP_EXE" "$TEMP_CXX" >/dev/null 2>&1 && cxx_works=1
 else
-	for CXX in ${CXX:=$(which ${CROSS_COMPILE}g++ ${CROSS_COMPILE}c++ ${CROSS_COMPILE}clang++ 2>/dev/null)} ''; do
+	for CXX in $(printf %s "$(which ${CROSS_COMPILE}g++ ${CROSS_COMPILE}c++ ${CROSS_COMPILE}clang++ 2>/dev/null)") ''; do
 		"$CXX" -o "$TEMP_EXE" "$TEMP_CXX" >/dev/null 2>&1 && cxx_works=1 && break
 	done
 fi
@@ -62,15 +61,14 @@ fi
 echo "Checking for suitable working C++ compiler ... $CXX $cxx_status"
 
 if [ "$cxx_works" = '0' ] && [ "$USE_LANG_CXX" = 'yes' ]; then
-	echo "Error: Cannot proceed without a working C++ compiler."
-	exit 1
+	die 1 'Error: Cannot proceed without a working C++ compiler.'
 fi
 
 if [ "$OS" = "Win32" ]; then
 	echobuf="Checking for windres"
 	if [ -z "$WINDRES" ]; then
 		WINDRES=$(which ${CROSS_COMPILE}windres)
-		[ "$WINDRES" ] || { echo "$echobuf ... Not found. Exiting."; exit 1; }
+		[ "$WINDRES" ] || die 1 "$echobuf ... Not found. Exiting."
 	fi
 	echo "$echobuf ... $WINDRES"
 fi
@@ -78,9 +76,9 @@ fi
 [ -n "$PKG_CONF_PATH" ] || {
 	PKG_CONF_PATH="none"
 
-	for path in $(which "${CROSS_COMPILE}pkg-config" 2>/dev/null) ''; do
-		[ -n "$path" ] && {
-			PKG_CONF_PATH=$path;
+	for p in $(which "${CROSS_COMPILE}pkg-config" 2>/dev/null) ''; do
+		[ -n "$p" ] && {
+			PKG_CONF_PATH=$p;
 			break;
 		}
 	done
@@ -90,5 +88,5 @@ fi
 echo "Checking for pkg-config ... $PKG_CONF_PATH"
 
 if [ "$PKG_CONF_PATH" = "none" ]; then
-	echo "Warning: pkg-config not found, package checks will fail."
+	die : 'Warning: pkg-config not found, package checks will fail.'
 fi

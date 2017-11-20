@@ -72,8 +72,7 @@ void path_set_redirect(void)
 
    new_savefile_dir[0] = new_savestate_dir[0]  = '\0';
 
-   if (info && info->info.library_name &&
-         !string_is_empty(info->info.library_name))
+   if (info && !string_is_empty(info->info.library_name))
       library_name_hash =
          msg_hash_calculate(info->info.library_name);
 
@@ -176,7 +175,7 @@ void path_set_redirect(void)
       {
          fill_pathname_dir(global->name.savefile, 
                !string_is_empty(path_main_basename) ? path_main_basename : 
-                  info->info.library_name,
+                  info ? info->info.library_name : NULL,
                file_path_str(FILE_PATH_SRM_EXTENSION),
                sizeof(global->name.savefile));
          RARCH_LOG("%s \"%s\".\n",
@@ -188,7 +187,7 @@ void path_set_redirect(void)
       {
          fill_pathname_dir(global->name.savestate, 
                !string_is_empty(path_main_basename) ? path_main_basename : 
-                  info->info.library_name,
+                  info ? info->info.library_name : NULL,
                file_path_str(FILE_PATH_STATE_EXTENSION),
                sizeof(global->name.savestate));
          RARCH_LOG("%s \"%s\".\n",

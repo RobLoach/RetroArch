@@ -225,7 +225,8 @@ typedef struct global
       char ups[8192];
       char bps[8192];
       char ips[8192];
-      char remapfile[8192];
+      char label[8192];
+      char *remapfile;
    } name;
 
    /* Recording. */
@@ -348,6 +349,12 @@ void rarch_menu_running_finished(void);
 bool retroarch_is_on_main_thread(void);
 
 rarch_system_info_t *runloop_get_system_info(void);
+
+#ifdef HAVE_THREADS
+void runloop_msg_queue_lock(void);
+
+void runloop_msg_queue_unlock(void);
+#endif
 
 RETRO_END_DECLS
 

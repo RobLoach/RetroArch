@@ -3,7 +3,9 @@ DEPS_DIR          := $(ROOT_DIR)/deps
 LIBRETRO_COMM_DIR := $(ROOT_DIR)/libretro-common
 WANT_WGL           = 0
 
-#CFLAGS += -fstack-usage
+ifeq ($(HAVE_STACK_USAGE), 1)
+CFLAGS += -fstack-usage
+endif
 
 ifeq ($(HAVE_GL_CONTEXT),)
    HAVE_GL_CONTEXT=0
@@ -48,10 +50,6 @@ endif
 
 ifeq ($(HAVE_VITA2D), 1)
 	DEFINES += -DHAVE_VITA2D
-endif
-
-ifeq ($(HAVE_FBO), 1)
-   DEFINES += -DHAVE_FBO
 endif
 
 ifeq ($(HAVE_DYLIB), 1)
@@ -727,10 +725,7 @@ endif
 ifeq ($(HAVE_NUKLEAR), 1)
    OBJ += menu/drivers/nuklear/nk_common.o
    OBJ += menu/drivers/nuklear/nk_menu.o
-   OBJ += menu/drivers/nuklear/nk_wnd_main.o
-   OBJ += menu/drivers/nuklear/nk_wnd_file_picker.o
-   OBJ += menu/drivers/nuklear/nk_wnd_shader_parameters.o
-   OBJ += menu/drivers/nuklear/nk_wnd_settings.o
+   OBJ += menu/drivers/nuklear/nk_wnd_debug.o
    OBJ += menu/drivers/nuklear.o
    DEFINES += -DHAVE_NUKLEAR
 endif
@@ -1002,7 +997,7 @@ OBJ += \
 ifeq ($(HAVE_GL_CONTEXT), 1)
    DEFINES += -DHAVE_OPENGL -DHAVE_GLSL
    OBJ += gfx/drivers/gl.o \
-			 gfx/drivers_renderchain/gl_legacy_renderchain.o \
+			 gfx/drivers_renderchain/gl2_renderchain.o \
 			 $(LIBRETRO_COMM_DIR)/gfx/gl_capabilities.o \
           gfx/common/gl_common.o \
           gfx/drivers_font/gl_raster_font.o \
@@ -1287,12 +1282,14 @@ OBJ += $(LIBRETRO_COMM_DIR)/file/archive_file.o \
 ifeq ($(HAVE_7ZIP),1)
    CFLAGS  += -I$(DEPS_DIR)/7zip
    HAVE_COMPRESSION = 1
-   DEFINES += -DHAVE_7ZIP
+   DEFINES += -DHAVE_7ZIP -D_7ZIP_ST
    7ZOBJ = $(DEPS_DIR)/7zip/7zIn.o \
            $(DEPS_DIR)/7zip/Bra86.o \
            $(DEPS_DIR)/7zip/7zFile.o \
            $(DEPS_DIR)/7zip/7zStream.o \
+           $(DEPS_DIR)/7zip/LzFind.o \
            $(DEPS_DIR)/7zip/LzmaDec.o \
+           $(DEPS_DIR)/7zip/LzmaEnc.o \
            $(DEPS_DIR)/7zip/7zCrcOpt.o \
            $(DEPS_DIR)/7zip/Bra.o \
            $(DEPS_DIR)/7zip/7zDec.o \
@@ -1304,6 +1301,33 @@ ifeq ($(HAVE_7ZIP),1)
 			  $(7ZOBJ)
 endif
 
+ifeq ($(HAVE_FLAC),1)
+   CFLAGS  += -I$(DEPS_DIR)/libFLAC/include
+   DEFINES += -DHAVE_FLAC -DHAVE_STDINT_H -DHAVE_LROUND -DFLAC__HAS_OGG=0 \
+              -DFLAC_PACKAGE_VERSION="\"retroarch\""
+   FLACOBJ = $(DEPS_DIR)/libFLAC/bitmath.o \
+             $(DEPS_DIR)/libFLAC/bitreader.o \
+             $(DEPS_DIR)/libFLAC/cpu.o \
+             $(DEPS_DIR)/libFLAC/crc.o \
+             $(DEPS_DIR)/libFLAC/fixed.o \
+             $(DEPS_DIR)/libFLAC/float.o \
+             $(DEPS_DIR)/libFLAC/format.o \
+             $(DEPS_DIR)/libFLAC/lpc.o \
+             $(DEPS_DIR)/libFLAC/lpc_intrin_avx2.o \
+             $(DEPS_DIR)/libFLAC/lpc_intrin_sse2.o \
+             $(DEPS_DIR)/libFLAC/lpc_intrin_sse41.o \
+             $(DEPS_DIR)/libFLAC/lpc_intrin_sse.o \
+             $(DEPS_DIR)/libFLAC/md5.o \
+             $(DEPS_DIR)/libFLAC/memory.o \
+             $(DEPS_DIR)/libFLAC/stream_decoder.o
+   ifneq ($(findstring Win32,$(OS)),)
+      DEFINES += -DHAVE_FSEEKO
+      # make sure not to use this on legacy Windows versions that don't have W-functions implemented
+      DEFINES += -DNEED_UTF8_SUPPORT
+      FLACOBJ += $(DEPS_DIR)/libFLAC/windows_unicode_filenames.o
+   endif
+   OBJ += $(FLACOBJ)
+endif
 
 ifeq ($(HAVE_ZLIB), 1)
    OBJ += $(LIBRETRO_COMM_DIR)/file/archive_file_zlib.o \
@@ -1312,6 +1336,7 @@ ifeq ($(HAVE_ZLIB), 1)
    DEFINES += -DHAVE_ZLIB
    HAVE_COMPRESSION = 1
    ifeq ($(HAVE_BUILTINZLIB), 1)
+      INCLUDE_DIRS += -I$(LIBRETRO_COMM_DIR)/include/compat
       DEFINES += -DWANT_ZLIB
    else
       LIBS += -lz
@@ -1413,6 +1438,19 @@ OBJ += $(ZLIB_OBJS)
 endif
 endif
 
+ifeq ($(HAVE_7ZIP),1)
+ifeq ($(HAVE_FLAC),1)
+     DEFINES += -DHAVE_CHD -DWANT_SUBCODE -DWANT_RAW_DATA_SECTOR
+     CFLAGS += -I$(LIBRETRO_COMM_DIR)/formats/libchdr
+     OBJ += $(LIBRETRO_COMM_DIR)/formats/libchdr/bitstream.o \
+            $(LIBRETRO_COMM_DIR)/formats/libchdr/cdrom.o \
+            $(LIBRETRO_COMM_DIR)/formats/libchdr/chd.o \
+            $(LIBRETRO_COMM_DIR)/formats/libchdr/flac.o \
+            $(LIBRETRO_COMM_DIR)/formats/libchdr/huffman.o \
+            $(LIBRETRO_COMM_DIR)/streams/chd_stream.o
+endif
+endif
+
 # Video4Linux 2
 
 ifeq ($(HAVE_V4L2),1)
@@ -1470,14 +1508,18 @@ ifeq ($(HAVE_NETWORKING), 1)
 			network/netplay/netplay_buf.o \
 			network/netplay/netplay_room_parse.o
 
-   # Retro Achievements (also depends on threads)
+   # Retro Achievements
 
    ifeq ($(HAVE_CHEEVOS), 1)
-      ifeq ($(HAVE_THREADS), 1)
-         DEFINES += -DHAVE_CHEEVOS
-         OBJ += cheevos/cheevos.o \
-					 $(LIBRETRO_COMM_DIR)/utils/md5.o
-      endif
+      DEFINES += -DHAVE_CHEEVOS
+      OBJ += cheevos/cheevos.o \
+         cheevos/var.o \
+         cheevos/cond.o \
+         $(LIBRETRO_COMM_DIR)/utils/md5.o
+   endif
+
+   ifeq ($(HAVE_KEYMAPPER), 1)
+      OBJ += input/input_mapper.o
    endif
 
    ifeq ($(HAVE_NETWORKGAMEPAD), 1)

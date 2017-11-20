@@ -25,6 +25,7 @@
 #include <compat/posix_string.h>
 #include <retro_assert.h>
 #include <string/stdstring.h>
+#include <streams/file_stream.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -48,6 +49,12 @@
 #include "lakka.h"
 
 #include "tasks/tasks_internal.h"
+
+static const char* invalid_filename_chars[] = {
+   /* https://support.microsoft.com/en-us/help/905231/information-about-the-characters-that-you-cannot-use-in-site-names--fo */
+   "~", "#", "%", "&", "*", "{", "}", "\\", ":", "[", "]", "?", "/", "|", "\'", "\"",
+   NULL
+};
 
 /* All config related settings go here. */
 
@@ -901,7 +908,6 @@ const char *config_get_default_location(void)
    return "null";
 }
 
-#ifdef HAVE_MENU
 /**
  * config_get_default_menu:
  *
@@ -911,6 +917,7 @@ const char *config_get_default_location(void)
  **/
 const char *config_get_default_menu(void)
 {
+#ifdef HAVE_MENU
    enum menu_driver_enum default_driver = MENU_DEFAULT_DRIVER;
 
    if (!string_is_empty(g_defaults.settings.menu))
@@ -931,11 +938,10 @@ const char *config_get_default_menu(void)
       case MENU_NULL:
          break;
    }
+#endif
 
    return "null";
 }
-
-#endif
 
 bool config_overlay_enable_default(void)
 {
@@ -990,7 +996,9 @@ static struct config_path_setting *populate_settings_path(settings_t *settings, 
    /* Paths */
 #ifdef HAVE_XMB
    SETTING_PATH("xmb_font",                   settings->paths.path_menu_xmb_font, false, NULL, true);
+   SETTING_PATH("xmb_show_settings_password", settings->paths.menu_xmb_show_settings_password, false, NULL, true);
 #endif
+   SETTING_PATH("kiosk_mode_password",        settings->paths.kiosk_mode_password, false, NULL, true);
    SETTING_PATH("netplay_nickname",           settings->paths.username, false, NULL, true);
    SETTING_PATH("video_filter",               settings->paths.path_softfilter_plugin, false, NULL, true);
    SETTING_PATH("audio_dsp_plugin",           settings->paths.path_audio_dsp_plugin, false, NULL, true);
@@ -1128,6 +1136,7 @@ static struct config_bool_setting *populate_settings_bool(settings_t *settings, 
    SETTING_BOOL("builtin_mediaplayer_enable",    &settings->bools.multimedia_builtin_mediaplayer_enable, false, false /* TODO */, false);
    SETTING_BOOL("builtin_imageviewer_enable",    &settings->bools.multimedia_builtin_imageviewer_enable, true, true, false);
    SETTING_BOOL("fps_show",                      &settings->bools.video_fps_show, true, false, false);
+   SETTING_BOOL("framecount_show",               &settings->bools.video_framecount_show, true, true, false);
    SETTING_BOOL("ui_menubar_enable",             &settings->bools.ui_menubar_enable, true, true, false);
    SETTING_BOOL("suspend_screensaver_enable",    &settings->bools.ui_suspend_screensaver_enable, true, true, false);
    SETTING_BOOL("rewind_enable",                 &settings->bools.rewind_enable, true, rewind_enable, false);
@@ -1191,6 +1200,18 @@ static struct config_bool_setting *populate_settings_bool(settings_t *settings, 
    SETTING_BOOL("menu_battery_level_enable",     &settings->bools.menu_battery_level_enable, true, true, false);
    SETTING_BOOL("menu_core_enable",              &settings->bools.menu_core_enable, true, true, false);
    SETTING_BOOL("menu_dynamic_wallpaper_enable", &settings->bools.menu_dynamic_wallpaper_enable, true, false, false);
+   SETTING_BOOL("quick_menu_show_take_screenshot",      &settings->bools.quick_menu_show_take_screenshot, true, quick_menu_show_take_screenshot, false);
+   SETTING_BOOL("quick_menu_show_save_load_state",      &settings->bools.quick_menu_show_save_load_state, true, quick_menu_show_save_load_state, false);
+   SETTING_BOOL("quick_menu_show_undo_save_load_state", &settings->bools.quick_menu_show_undo_save_load_state, true, quick_menu_show_undo_save_load_state, false);
+   SETTING_BOOL("quick_menu_show_add_to_favorites",     &settings->bools.quick_menu_show_add_to_favorites, true, quick_menu_show_add_to_favorites, false);
+   SETTING_BOOL("quick_menu_show_options",       &settings->bools.quick_menu_show_options, true, quick_menu_show_options, false);
+   SETTING_BOOL("quick_menu_show_controls",      &settings->bools.quick_menu_show_controls, true, quick_menu_show_controls, false);
+   SETTING_BOOL("quick_menu_show_cheats",        &settings->bools.quick_menu_show_cheats, true, quick_menu_show_cheats, false);
+   SETTING_BOOL("quick_menu_show_shaders",       &settings->bools.quick_menu_show_shaders, true, quick_menu_show_shaders, false);
+   SETTING_BOOL("quick_menu_show_save_core_overrides",  &settings->bools.quick_menu_show_save_core_overrides, true, quick_menu_show_save_core_overrides, false);
+   SETTING_BOOL("quick_menu_show_save_game_overrides",  &settings->bools.quick_menu_show_save_game_overrides, true, quick_menu_show_save_game_overrides, false);
+   SETTING_BOOL("quick_menu_show_information",   &settings->bools.quick_menu_show_information, true, quick_menu_show_information, false);
+   SETTING_BOOL("kiosk_mode_enable",             &settings->bools.kiosk_mode_enable, true, kiosk_mode_enable, false);
 #ifdef HAVE_MATERIALUI
    SETTING_BOOL("materialui_icons_enable",            &settings->bools.menu_materialui_icons_enable, true, materialui_icons_enable, false);
 #endif
@@ -1202,6 +1223,13 @@ static struct config_bool_setting *populate_settings_bool(settings_t *settings, 
    SETTING_BOOL("xmb_show_images",               &settings->bools.menu_xmb_show_images, true, xmb_show_images, false);
 #endif
    SETTING_BOOL("xmb_show_music",                &settings->bools.menu_xmb_show_music, true, xmb_show_music, false);
+   SETTING_BOOL("menu_show_load_core",           &settings->bools.menu_show_load_core, true, menu_show_load_core, false);
+   SETTING_BOOL("menu_show_load_content",        &settings->bools.menu_show_load_content, true, menu_show_load_content, false);
+   SETTING_BOOL("menu_show_information",         &settings->bools.menu_show_information, true, menu_show_information, false);
+   SETTING_BOOL("menu_show_configurations",      &settings->bools.menu_show_configurations, true, menu_show_configurations, false);
+   SETTING_BOOL("menu_show_help",                &settings->bools.menu_show_help, true, menu_show_help, false);
+   SETTING_BOOL("menu_show_quit_retroarch",      &settings->bools.menu_show_quit_retroarch, true, menu_show_quit_retroarch, false);
+   SETTING_BOOL("menu_show_reboot",              &settings->bools.menu_show_reboot, true, menu_show_reboot, false);
    SETTING_BOOL("menu_show_online_updater",      &settings->bools.menu_show_online_updater, true, menu_show_online_updater, false);
    SETTING_BOOL("menu_show_core_updater",        &settings->bools.menu_show_core_updater, true, menu_show_core_updater, false);
 #ifdef HAVE_FFMPEG
@@ -1226,6 +1254,7 @@ static struct config_bool_setting *populate_settings_bool(settings_t *settings, 
    SETTING_BOOL("cheevos_enable",               &settings->bools.cheevos_enable, true, cheevos_enable, false);
    SETTING_BOOL("cheevos_test_unofficial",      &settings->bools.cheevos_test_unofficial, true, false, false);
    SETTING_BOOL("cheevos_hardcore_mode_enable", &settings->bools.cheevos_hardcore_mode_enable, true, false, false);
+   SETTING_BOOL("cheevos_leaderboards_enable",  &settings->bools.cheevos_leaderboards_enable, true, false, false);
    SETTING_BOOL("cheevos_verbose_enable",       &settings->bools.cheevos_verbose_enable, true, false, false);
 #endif
 #ifdef HAVE_OVERLAY
@@ -1241,6 +1270,9 @@ static struct config_bool_setting *populate_settings_bool(settings_t *settings, 
 #ifdef HAVE_NETWORKGAMEPAD
    SETTING_BOOL("network_remote_enable",        &settings->bools.network_remote_enable, false, false /* TODO */, false);
 #endif
+#ifdef HAVE_KEYMAPPER
+   SETTING_BOOL("keymapper_enable",       &settings->bools.keymapper_enable, true, true /* TODO */, false);
+#endif
 #ifdef HAVE_NETWORKING
    SETTING_BOOL("netplay_nat_traversal",        &settings->bools.netplay_nat_traversal, true, true, false);
 #endif
@@ -1251,6 +1283,7 @@ static struct config_bool_setting *populate_settings_bool(settings_t *settings, 
    SETTING_BOOL("savestate_thumbnail_enable",   &settings->bools.savestate_thumbnail_enable, true, savestate_thumbnail_enable, false);
    SETTING_BOOL("history_list_enable",          &settings->bools.history_list_enable, true, def_history_list_enable, false);
    SETTING_BOOL("playlist_entry_remove",        &settings->bools.playlist_entry_remove, true, def_playlist_entry_remove, false);
+   SETTING_BOOL("playlist_entry_rename",        &settings->bools.playlist_entry_rename, true, def_playlist_entry_rename, false);
    SETTING_BOOL("game_specific_options",        &settings->bools.game_specific_options, true, default_game_specific_options, false);
    SETTING_BOOL("auto_overrides_enable",        &settings->bools.auto_overrides_enable, true, default_auto_overrides_enable, false);
    SETTING_BOOL("auto_remaps_enable",           &settings->bools.auto_remaps_enable, true, default_auto_remaps_enable, false);
@@ -1270,6 +1303,8 @@ static struct config_bool_setting *populate_settings_bool(settings_t *settings, 
    SETTING_BOOL("savefiles_in_content_dir",      &settings->bools.savefiles_in_content_dir, true, default_savefiles_in_content_dir, false);
    SETTING_BOOL("systemfiles_in_content_dir",    &settings->bools.systemfiles_in_content_dir, true, default_systemfiles_in_content_dir, false);
    SETTING_BOOL("screenshots_in_content_dir",    &settings->bools.screenshots_in_content_dir, true, default_screenshots_in_content_dir, false);
+
+   SETTING_BOOL("video_msg_bgcolor_enable",      &settings->bools.video_msg_bgcolor_enable, true, message_bgcolor_enable, false);
 
    if (global)
    {
@@ -1299,7 +1334,7 @@ static struct config_float_setting *populate_settings_float(settings_t *settings
 #endif
 #ifdef HAVE_MENU
    SETTING_FLOAT("menu_wallpaper_opacity",   &settings->floats.menu_wallpaper_opacity, true, menu_wallpaper_opacity, false);
-   SETTING_FLOAT("menu_framebuffer_opacity",   &settings->floats.menu_framebuffer_opacity, true, menu_framebuffer_opacity, false);
+   SETTING_FLOAT("menu_framebuffer_opacity", &settings->floats.menu_framebuffer_opacity, true, menu_framebuffer_opacity, false);
    SETTING_FLOAT("menu_footer_opacity",      &settings->floats.menu_footer_opacity,    true, menu_footer_opacity, false);
    SETTING_FLOAT("menu_header_opacity",      &settings->floats.menu_header_opacity,    true, menu_header_opacity, false);
 #endif
@@ -1309,6 +1344,7 @@ static struct config_float_setting *populate_settings_float(settings_t *settings
    SETTING_FLOAT("fastforward_ratio",        &settings->floats.fastforward_ratio,    true, fastforward_ratio, false);
    SETTING_FLOAT("slowmotion_ratio",         &settings->floats.slowmotion_ratio,     true, slowmotion_ratio, false);
    SETTING_FLOAT("input_axis_threshold",     input_driver_get_float(INPUT_ACTION_AXIS_THRESHOLD), true, axis_threshold, false);
+   SETTING_FLOAT("video_msg_bgcolor_opacity", &settings->floats.video_msg_bgcolor_opacity, true, message_bgcolor_opacity, false);
 
    *size = count;
 
@@ -1342,6 +1378,9 @@ static struct config_uint_setting *populate_settings_uint(settings_t *settings, 
 #endif
 #ifdef HAVE_NETWORKGAMEPAD
    SETTING_UINT("network_remote_base_port",     &settings->uints.network_remote_base_port, true, network_remote_base_port, false);
+#endif
+#ifdef HAVE_KEYMAPPER
+   SETTING_UINT("keymapper_port",               &settings->uints.keymapper_port, true, 0, false);
 #endif
 #ifdef GEKKO
    SETTING_UINT("video_viwidth",                &settings->uints.video_viwidth, true, video_viwidth, false);
@@ -1381,6 +1420,9 @@ static struct config_uint_setting *populate_settings_uint(settings_t *settings, 
    SETTING_UINT("bundle_assets_extract_version_current", &settings->uints.bundle_assets_extract_version_current, true, 0, false);
    SETTING_UINT("bundle_assets_extract_last_version",    &settings->uints.bundle_assets_extract_last_version, true, 0, false);
    SETTING_UINT("input_overlay_show_physical_inputs_port", &settings->uints.input_overlay_show_physical_inputs_port, true, 0, false);
+   SETTING_UINT("video_msg_bgcolor_red",        &settings->uints.video_msg_bgcolor_red, true, message_bgcolor_red, false);
+   SETTING_UINT("video_msg_bgcolor_green",        &settings->uints.video_msg_bgcolor_green, true, message_bgcolor_green, false);
+   SETTING_UINT("video_msg_bgcolor_blue",        &settings->uints.video_msg_bgcolor_blue, true, message_bgcolor_blue, false);
 
    *size = count;
 
@@ -1580,7 +1622,7 @@ static void config_set_defaults(void)
 #endif
 
    input_config_reset();
-   input_remapping_set_defaults();
+   input_remapping_set_defaults(true);
    input_autoconfigure_reset();
 
    /* Verify that binds are in proper order. */
@@ -1855,6 +1897,8 @@ static config_file_t *open_default_config_file(void)
    config_file_t *conf                    = NULL;
 
    application_data[0] = conf_path[0] = app_path[0] = '\0';
+
+   (void)path_size;
 
 #if defined(_WIN32) && !defined(_XBOX)
    fill_pathname_application_path(app_path, path_size);
@@ -2597,14 +2641,21 @@ static bool config_load_file(const char *path, bool set_defaults,
       }
    }
 
-   /* Safe-guard against older behavior. */
-   if (path_is_directory(path_get(RARCH_PATH_CORE)))
+#ifdef RARCH_CONSOLE
+   if (!string_is_empty(path_get(RARCH_PATH_CORE)))
    {
-      RARCH_WARN("\"libretro_path\" is a directory, using this for \"libretro_directory\" instead.\n");
-      strlcpy(settings->paths.directory_libretro, path_get(RARCH_PATH_CORE),
-            sizeof(settings->paths.directory_libretro));
-      path_clear(RARCH_PATH_CORE);
+#endif
+      /* Safe-guard against older behavior. */
+      if (path_is_directory(path_get(RARCH_PATH_CORE)))
+      {
+         RARCH_WARN("\"libretro_path\" is a directory, using this for \"libretro_directory\" instead.\n");
+         strlcpy(settings->paths.directory_libretro, path_get(RARCH_PATH_CORE),
+               sizeof(settings->paths.directory_libretro));
+         path_clear(RARCH_PATH_CORE);
+      }
+#ifdef RARCH_CONSOLE
    }
+#endif
 
    if (string_is_equal_fast(settings->paths.path_menu_wallpaper, "default", 7))
       *settings->paths.path_menu_wallpaper = '\0';
@@ -2878,7 +2929,7 @@ bool config_load_override(void)
    /* Restore the libretro_path we're using
     * since it will be overwritten by the override when reloading. */
    path_set(RARCH_PATH_CORE, buf);
-   runloop_msg_queue_push("Configuration override loaded.", 1, 100, true);
+   runloop_msg_queue_push(msg_hash_to_str(MSG_CONFIG_OVERRIDE_LOADED), 1, 100, true);
 
    /* Reset save paths. */
    retroarch_override_setting_set(RARCH_OVERRIDE_SETTING_STATE_PATH, NULL);
@@ -2995,7 +3046,7 @@ bool config_load_remap(void)
       RARCH_LOG("Remaps: game-specific remap found at %s.\n", game_path);
       if (input_remapping_load_file(new_conf, game_path))
       {
-         runloop_msg_queue_push("Game remap file loaded.", 1, 100, true);
+         runloop_msg_queue_push(msg_hash_to_str(MSG_GAME_REMAP_FILE_LOADED), 1, 100, true);
          rarch_ctl(RARCH_CTL_SET_REMAPS_GAME_ACTIVE, NULL);
          goto success;
       }
@@ -3003,7 +3054,7 @@ bool config_load_remap(void)
    else
    {
       RARCH_LOG("Remaps: no game-specific remap found at %s.\n", game_path);
-      input_remapping_set_defaults();
+      input_remapping_set_defaults(false);
    }
 
    /* Create a new config file from core_path */
@@ -3015,7 +3066,7 @@ bool config_load_remap(void)
       RARCH_LOG("Remaps: core-specific remap found at %s.\n", core_path);
       if (input_remapping_load_file(new_conf, core_path))
       {
-         runloop_msg_queue_push("Core remap file loaded.", 1, 100, true);
+         runloop_msg_queue_push(msg_hash_to_str(MSG_CORE_REMAP_FILE_LOADED), 1, 100, true);
          rarch_ctl(RARCH_CTL_SET_REMAPS_CORE_ACTIVE, NULL);
          goto success;
       }
@@ -3023,7 +3074,7 @@ bool config_load_remap(void)
    else
    {
       RARCH_LOG("Remaps: no core-specific remap found at %s.\n", core_path);
-      input_remapping_set_defaults();
+      input_remapping_set_defaults(false);
    }
 
    new_conf = NULL;
@@ -3399,6 +3450,7 @@ bool config_save_autoconf_profile(const char *path, unsigned user)
    unsigned i;
    char *buf                            = (char*)malloc(PATH_MAX_LENGTH * sizeof(char));
    char *autoconf_file                  = (char*)malloc(PATH_MAX_LENGTH * sizeof(char));
+   char *path_new                       = NULL;
    size_t path_size                     = PATH_MAX_LENGTH * sizeof(char);
    int32_t pid_user                     = 0;
    int32_t vid_user                     = 0;
@@ -3409,6 +3461,26 @@ bool config_save_autoconf_profile(const char *path, unsigned user)
    const char *joypad_ident             = settings->arrays.input_joypad_driver;
 
    buf[0] = autoconf_file[0]            = '\0';
+
+   if (string_is_empty(path))
+      goto error;
+
+   path_new = strdup(path);
+
+   for (i = 0; invalid_filename_chars[i]; i++)
+   {
+      while (1)
+      {
+         char *tmp = strstr(path_new, invalid_filename_chars[i]);
+
+         if (tmp)
+            *tmp = '_';
+         else
+            break;
+      }
+   }
+
+   path = path_new;
 
    fill_pathname_join(buf, autoconf_dir, joypad_ident, path_size);
 
@@ -3435,7 +3507,7 @@ bool config_save_autoconf_profile(const char *path, unsigned user)
             path_size);
    }
 
-   conf  = config_file_new(autoconf_file);
+   conf = config_file_new(autoconf_file);
 
    if (!conf)
    {
@@ -3471,11 +3543,15 @@ bool config_save_autoconf_profile(const char *path, unsigned user)
    config_file_free(conf);
    free(buf);
    free(autoconf_file);
+   if (path_new)
+      free(path_new);
    return ret;
 
 error:
    free(buf);
    free(autoconf_file);
+   if (path_new)
+      free(path_new);
    return false;
 }
 
@@ -3658,17 +3734,17 @@ bool config_save_file(const char *path)
 
 #ifdef HAVE_LAKKA
    if (settings->bools.ssh_enable)
-      fclose(fopen(LAKKA_SSH_PATH, "w"));
+      filestream_close(filestream_open(LAKKA_SSH_PATH, RFILE_MODE_WRITE, -1));
    else
-      remove(LAKKA_SSH_PATH);
+      path_file_remove(LAKKA_SSH_PATH);
    if (settings->bools.samba_enable)
-      fclose(fopen(LAKKA_SAMBA_PATH, "w"));
+      filestream_close(filestream_open(LAKKA_SAMBA_PATH, RFILE_MODE_WRITE, -1));
    else
-      remove(LAKKA_SAMBA_PATH);
+      path_file_remove(LAKKA_SAMBA_PATH);
    if (settings->bools.bluetooth_enable)
-      fclose(fopen(LAKKA_BLUETOOTH_PATH, "w"));
+      filestream_close(filestream_open(LAKKA_BLUETOOTH_PATH, RFILE_MODE_WRITE, -1));
    else
-      remove(LAKKA_BLUETOOTH_PATH);
+      path_file_remove(LAKKA_BLUETOOTH_PATH);
 #endif
 
    for (i = 0; i < MAX_USERS; i++)

@@ -62,6 +62,7 @@ enum menu_displaylist_ctl_state
    DISPLAYLIST_HORIZONTAL_CONTENT_ACTIONS,
    DISPLAYLIST_HISTORY,
    DISPLAYLIST_FAVORITES,
+   DISPLAYLIST_PLAYLIST,
    DISPLAYLIST_VIDEO_HISTORY,
    DISPLAYLIST_MUSIC_HISTORY,
    DISPLAYLIST_IMAGES_HISTORY,
@@ -126,6 +127,7 @@ enum menu_displaylist_ctl_state
    DISPLAYLIST_ONSCREEN_NOTIFICATIONS_SETTINGS_LIST,
    DISPLAYLIST_MENU_FILE_BROWSER_SETTINGS_LIST,
    DISPLAYLIST_MENU_VIEWS_SETTINGS_LIST,
+   DISPLAYLIST_QUICK_MENU_VIEWS_SETTINGS_LIST,
    DISPLAYLIST_MENU_SETTINGS_LIST,
    DISPLAYLIST_USER_INTERFACE_SETTINGS_LIST,
    DISPLAYLIST_RETRO_ACHIEVEMENTS_SETTINGS_LIST,
@@ -184,11 +186,11 @@ typedef struct menu_displaylist_info
    /* does the navigation index need to be cleared to 0 (first entry) ? */
    bool need_navigation_clear;
 
-   char path[PATH_MAX_LENGTH];
-   char path_b[PATH_MAX_LENGTH];
-   char path_c[PATH_MAX_LENGTH];
-   char exts[PATH_MAX_LENGTH];
-   char label[255];
+   char *path;
+   char *path_b;
+   char *path_c;
+   char *exts;
+   char *label;
    unsigned type;
    unsigned type_default;
    unsigned flags;
@@ -218,6 +220,10 @@ typedef struct menu_displaylist_ctx_entry
 bool menu_displaylist_process(menu_displaylist_info_t *info);
 
 bool menu_displaylist_push(menu_displaylist_ctx_entry_t *entry);
+
+void menu_displaylist_info_free(menu_displaylist_info_t *info);
+
+void menu_displaylist_info_init(menu_displaylist_info_t *info);
 
 bool menu_displaylist_ctl(enum menu_displaylist_ctl_state type, void *data);
 #ifdef HAVE_NETWORKING

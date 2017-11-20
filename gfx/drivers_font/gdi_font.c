@@ -127,6 +127,7 @@ static void gdi_render_msg(
          newX = (x * width * scale) - (len / 2);
          break;
       default:
+         newX = 0;
          break;
    }
 
@@ -139,7 +140,8 @@ static void gdi_render_msg(
    SelectObject(font->gdi->memDC, font->gdi->bmp_old);
 }
 
-static void gdi_font_flush_block(unsigned width, unsigned height, void* data)
+static void gdi_font_flush_block(unsigned width, unsigned height, void* data,
+      video_frame_info_t *video_info)
 {
    (void)data;
 }

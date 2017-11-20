@@ -86,7 +86,7 @@ static int init_tcp_connection(const struct addrinfo *res,
       int on = 0;
       if (res->ai_family == AF_INET6)
       {
-         if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&on, sizeof(on)) < 0)
+         if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&on, sizeof(on)) < 0)
             RARCH_WARN("Failed to listen on both IPv6 and IPv4\n");
       }
 #endif
@@ -184,7 +184,11 @@ static bool init_tcp_socket(netplay_t *netplay, void *direct_host,
    while (tmp_info)
    {
       struct sockaddr_storage sad;
-      int fd = init_tcp_connection(
+      int fd;
+
+      memset(&sad, 0, sizeof(sad));
+
+      fd = init_tcp_connection(
             tmp_info,
             direct_host || server,
             (struct sockaddr*)&sad,

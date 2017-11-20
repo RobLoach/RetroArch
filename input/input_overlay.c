@@ -39,31 +39,32 @@
 
 typedef struct input_overlay_state
 {
-   /* This is a bitmask of (1 << key_bind_id). */
-   uint64_t buttons;
    /* Left X, Left Y, Right X, Right Y */
    int16_t analog[4]; 
-
    uint32_t keys[RETROK_LAST / 32 + 1];
+   /* This is a bitmask of (1 << key_bind_id). */
+   uint64_t buttons;
 } input_overlay_state_t;
 
 struct input_overlay
 {
-   void *iface_data;
-   const video_overlay_interface_t *iface;
-   input_overlay_state_t overlay_state;
-   bool enable;
+   enum overlay_status state;
 
+   bool enable;
    bool blocked;
    bool alive;
 
-   struct overlay *overlays;
-   const struct overlay *active;
+   unsigned next_index;
+
    size_t index;
    size_t size;
 
-   unsigned next_index;
-   enum overlay_status state;
+   struct overlay *overlays;
+   const struct overlay *active;
+   void *iface_data;
+   const video_overlay_interface_t *iface;
+
+   input_overlay_state_t overlay_state;
 };
 
 input_overlay_t *overlay_ptr = NULL;
@@ -734,6 +735,12 @@ void input_state_overlay(input_overlay_t *ol, int16_t *ret,
       case RETRO_DEVICE_KEYBOARD:
          if (id < RETROK_LAST)
          {
+            /*RARCH_LOG("UDLR %u %u %u %u\n", 
+               OVERLAY_GET_KEY(ol_state, RETROK_UP), 
+               OVERLAY_GET_KEY(ol_state, RETROK_DOWN), 
+               OVERLAY_GET_KEY(ol_state, RETROK_LEFT),
+               OVERLAY_GET_KEY(ol_state, RETROK_RIGHT)
+            );*/
             if (OVERLAY_GET_KEY(ol_state, id))
                *ret |= 1;
          }

@@ -205,6 +205,8 @@ static void xshm_grab_mouse_toggle(void *data)
 #endif
 
 static video_poke_interface_t xshm_video_poke_interface = {
+   NULL,       /* set_coords */
+   NULL,       /* set_mvp */
    NULL,
    NULL,
    NULL,
@@ -255,7 +257,7 @@ video_driver_t video_xshm = {
    xshm_gfx_alive,
    xshm_gfx_focus,
    xshm_gfx_suppress_screensaver,
-   xshm_gfx_has_windowed,
+   NULL, /* has_windowed */
    xshm_gfx_set_shader,
    xshm_gfx_free,
    "xshm",

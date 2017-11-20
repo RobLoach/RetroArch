@@ -67,7 +67,7 @@ static void gdi_gfx_create(void)
 
    ctx->get_os(os, sizeof(os), &gdi_win_major, &gdi_win_minor);
 
-   // Are we running on Windows 98 or below?
+   /* Are we running on Windows 98 or below? */
    if (gdi_win_major < 4 || (gdi_win_major == 4 && gdi_win_minor <= 10))
    {
       RARCH_LOG("[GDI] Win98 or lower detected, using slow frame conversion method for RGB444.\n");
@@ -531,6 +531,8 @@ static void gdi_set_video_mode(void *data, unsigned width, unsigned height,
 }
 
 static const video_poke_interface_t gdi_poke_interface = {
+   NULL,                      /* set_coords */
+   NULL,                      /* set_mvp */
    NULL,
    NULL,
    gdi_set_video_mode,
@@ -538,11 +540,7 @@ static const video_poke_interface_t gdi_poke_interface = {
    gdi_get_video_output_size,
    gdi_get_video_output_prev,
    gdi_get_video_output_next,
-#ifdef HAVE_FBO
    NULL,
-#else
-   NULL,
-#endif
    NULL,
    NULL,
    NULL,

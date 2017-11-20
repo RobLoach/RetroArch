@@ -46,9 +46,6 @@ static void core_info_list_resolve_all_extensions(
    size_t all_ext_len    = 0;
    char *all_ext         = NULL;
 
-   if (!core_info_list)
-      return;
-
    for (i = 0; i < core_info_list->count; i++)
    {
       if (core_info_list->list[i].supported_extensions)
@@ -392,6 +389,10 @@ static core_info_list_t *core_info_list_new(const char *path)
                &tmp_bool))
             core_info[i].supports_no_game = tmp_bool;
 
+         if (config_get_bool(conf, "database_match_archive_member",
+               &tmp_bool))
+            core_info[i].database_match_archive_member = tmp_bool;
+
          core_info[i].config_data = conf;
       }
       else
@@ -405,10 +406,11 @@ static core_info_list_t *core_info_list_new(const char *path)
             strdup(path_basename(core_info[i].path));
    }
 
-   core_info_list_resolve_all_extensions(core_info_list);
-
    if (core_info_list)
+   {
+      core_info_list_resolve_all_extensions(core_info_list);
       core_info_list_resolve_all_firmware(core_info_list);
+   }
 
    dir_list_free(contents);
    return core_info_list;
@@ -825,43 +827,44 @@ size_t core_info_list_num_info_files(core_info_list_t *core_info_list)
    return num;
 }
 
-bool core_info_unsupported_content_path(const char *path)
+bool core_info_database_match_archive_member(const char *database_path)
 {
-   size_t i;
-   const char *archive_path = NULL;
-   const char *delim        = path_get_archive_delim(path);
+   char *database           = NULL;
+   const char *new_path     = path_basename(database_path);
 
-   if (delim)
-      archive_path = delim - 1;
-
-   if (!core_info_curr_list)
+   if (string_is_empty(new_path))
       return false;
 
-   /* if the path contains a compressed file and the core supports archives,
-    * we don't want to look at this file */
-   if (archive_path)
+   database                 = strdup(new_path);
+
+   if (string_is_empty(database))
+      goto error;
+
+   path_remove_extension(database);
+
+   if (core_info_curr_list)
    {
+      size_t i;
+
       for (i = 0; i < core_info_curr_list->count; i++)
       {
          const core_info_t *info = &core_info_curr_list->list[i];
 
-         if (     !string_list_find_elem(info->supported_extensions_list, "zip")
-               && !string_list_find_elem(info->supported_extensions_list, "7z"))
-            continue;
+         if (!info->database_match_archive_member)
+             continue;
 
-         return false;
+         if (!string_list_find_elem(info->databases_list, database))
+             continue;
+
+         free(database);
+         return true;
       }
    }
 
-   for (i = 0; i < core_info_curr_list->count; i++)
-   {
-      const core_info_t *info = &core_info_curr_list->list[i];
-
-      if (string_list_find_elem(info->supported_extensions_list, path_get_extension(path)))
-         return false;
-   }
-
-   return true;
+error:
+   if (database)
+      free(database);
+   return false;
 }
 
 bool core_info_database_supports_content_path(const char *database_path, const char *path)
@@ -875,43 +878,13 @@ bool core_info_database_supports_content_path(const char *database_path, const c
    database                 = strdup(new_path);
 
    if (string_is_empty(database))
-   {
-      if (database)
-         free(database);
-      return false;
-   }
+      goto error;
 
    path_remove_extension(database);
 
    if (core_info_curr_list)
    {
       size_t i;
-      const char *delim           = path_get_archive_delim(path);
-
-      if (delim)
-      {
-         const char *archive_path = delim - 1;
-
-         /* if the path contains a compressed file and the core supports archives,
-          * we don't want to look at this file */
-         if (archive_path)
-         {
-            for (i = 0; i < core_info_curr_list->count; i++)
-            {
-               const core_info_t *info = &core_info_curr_list->list[i];
-
-               if (!string_list_find_elem(info->databases_list, database))
-                  continue;
-
-               if (     !string_list_find_elem(info->supported_extensions_list, "zip")
-                     && !string_list_find_elem(info->supported_extensions_list, "7z"))
-                  continue;
-
-               free(database);
-               return false;
-            }
-         }
-      }
 
       for (i = 0; i < core_info_curr_list->count; i++)
       {
@@ -929,7 +902,9 @@ bool core_info_database_supports_content_path(const char *database_path, const c
       }
    }
 
-   free(database);
+error:
+   if (database)
+      free(database);
    return false;
 }
 

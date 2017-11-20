@@ -857,10 +857,10 @@ MSG_HASH(MENU_ENUM_LABEL_VALUE_INPUT_META_SLOWMOTION,
 	 "Câmera Lenta"
 	)
 MSG_HASH(MENU_ENUM_LABEL_VALUE_INPUT_META_STATE_SLOT_MINUS,
-	 "Box do Estado de Jogo -"
+	 "Posição do Estado de Jogo -"
 	)
 MSG_HASH(MENU_ENUM_LABEL_VALUE_INPUT_META_STATE_SLOT_PLUS,
-	 "Box do Estado de Jogo +"
+	 "Posição do Estado de Jogo +"
 	)
 MSG_HASH(MENU_ENUM_LABEL_VALUE_INPUT_META_VOLUME_DOWN,
 	 "Volume -"
@@ -1525,6 +1525,9 @@ MSG_HASH(MENU_ENUM_LABEL_VALUE_RIGHT_ANALOG,
 MSG_HASH(MENU_ENUM_LABEL_VALUE_ADD_TO_FAVORITES,
      "Adicionar aos Favoritos"
 	)
+MSG_HASH(MENU_ENUM_LABEL_VALUE_ADD_TO_FAVORITES_PLAYLIST,
+     "Adicionar aos Favoritos"
+	)
 MSG_HASH(MENU_ENUM_LABEL_VALUE_RUN,
 	 "Executar"
 	)
@@ -1661,7 +1664,7 @@ MSG_HASH(MENU_ENUM_LABEL_VALUE_START_VIDEO_PROCESSOR,
 	 "Iniciar Processador de Vídeo"
 	)
 MSG_HASH(MENU_ENUM_LABEL_VALUE_STATE_SLOT,
-	 "Box do Estado de Jogo"
+	 "Posição do Estado de Jogo"
 	)
 MSG_HASH(MENU_ENUM_LABEL_VALUE_STATUS,
 	 "Condição"
@@ -2212,6 +2215,9 @@ MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_PIXEL,
 MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_RETROACTIVE,
 	 "RetroActive"
 	)
+MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_RETROSYSTEM,
+	 "Retrosystem"
+	)
 MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_DOTART,
 	 "Dot-Art"
 	)
@@ -2729,7 +2735,7 @@ MSG_HASH(MSG_FOUND_FIRST_DATA_TRACK_ON_FILE,
 	 "Encontrada primeira faixa de dados no arquivo"
 	)
 MSG_HASH(MSG_FOUND_LAST_STATE_SLOT,
-	 "Encontrado último box de Estado de Jogo"
+	 "Encontrada última posição de Estado de Jogo"
 	)
 MSG_HASH(MSG_FOUND_SHADER,
 	 "Shader encontrado"
@@ -2798,10 +2804,10 @@ MSG_HASH(MSG_LIBRETRO_FRONTEND,
 	 "Frontend para Libretro"
 	)
 MSG_HASH(MSG_LOADED_STATE_FROM_SLOT,
-	 "Estado de Jogo carregado do box #%d."
+	 "Estado de Jogo carregado da posição #%d."
 	)
 MSG_HASH(MSG_LOADED_STATE_FROM_SLOT_AUTO,
-	 "Estado de Jogo carregado do box #-1 (automático)."
+	 "Estado de Jogo carregado da posição #-1 (automático)."
 	)
 MSG_HASH(MSG_LOADING,
 	 "Carregando"
@@ -2927,10 +2933,10 @@ MSG_HASH(MSG_SAVED_NEW_CONFIG_TO,
 	 "Nova configuração salva em"
 	)
 MSG_HASH(MSG_SAVED_STATE_TO_SLOT,
-	 "Estado de Jogo salvo no box #%d."
+	 "Estado de Jogo salvo na posição #%d."
 	)
 MSG_HASH(MSG_SAVED_STATE_TO_SLOT_AUTO,
-	 "Estado de Jogo salvo no box #-1 (automático)."
+	 "Estado de Jogo salvo na posição #-1 (automático)."
 	)
 MSG_HASH(MSG_SAVED_SUCCESSFULLY_TO,
 	 "Salvo com sucesso em"
@@ -2965,6 +2971,9 @@ MSG_HASH(MSG_SKIPPING_SRAM_LOAD,
 MSG_HASH(MSG_SLOW_MOTION,
 	 "Câmera Lenta."
 	)
+MSG_HASH(MSG_FAST_FORWARD,
+    "Avanço rápido."
+   )
 MSG_HASH(MSG_SLOW_MOTION_REWIND,
 	 "Voltar Atrás em Câmera Lenta."
 	)
@@ -2981,7 +2990,7 @@ MSG_HASH(MSG_STATE_SIZE,
 	 "Tamanho do Estado de Jogo"
 	)
 MSG_HASH(MSG_STATE_SLOT,
-	 "Box do Estado de Jogo"
+	 "Posição do Estado de Jogo"
 	)
 MSG_HASH(MSG_TAKING_SCREENSHOT,
 	 "Fazendo captura de tela"
@@ -3553,6 +3562,9 @@ MSG_HASH(MENU_ENUM_SUBLABEL_INFORMATION,
 MSG_HASH(MENU_ENUM_SUBLABEL_ADD_TO_FAVORITES,
      "Adicionar o item aos seus favoritos."
 	)
+MSG_HASH(MENU_ENUM_SUBLABEL_ADD_TO_FAVORITES_PLAYLIST,
+     "Adicionar o item aos seus favoritos."
+	)
 MSG_HASH(MENU_ENUM_SUBLABEL_RUN,
 	 "Iniciar o conteúdo."
 	)
@@ -3584,10 +3596,10 @@ MSG_HASH(MENU_ENUM_SUBLABEL_CLOSE_CONTENT,
 	 "Fecha o conteúdo atual. Alterações não salvas serão perdidas."
 	)
 MSG_HASH(MENU_ENUM_SUBLABEL_LOAD_STATE,
-	 "Carregar um Estado de Jogo do box selecionado atualmente."
+	 "Carregar um Estado de Jogo da posição selecionado atualmente."
 	)
 MSG_HASH(MENU_ENUM_SUBLABEL_SAVE_STATE,
-	 "Salvar um Estado de Jogo no box selecionado atualmente."
+	 "Salvar um Estado de Jogo na posição selecionado atualmente."
 	)
 MSG_HASH(MENU_ENUM_SUBLABEL_RESUME,
 	 "Retomar a execução do conteúdo atual e sair do Menu Rápido."
@@ -3596,7 +3608,7 @@ MSG_HASH(MENU_ENUM_SUBLABEL_RESUME_CONTENT,
 	 "Retomar a execução do conteúdo atual e sair do Menu Rápido."
 	)
 MSG_HASH(MENU_ENUM_SUBLABEL_STATE_SLOT,
-	 "Altera o box do Estado de Jogo selecionado atualmente."
+	 "Altera a posição do Estado de Jogo selecionado atualmente."
 	)
 MSG_HASH(MENU_ENUM_SUBLABEL_UNDO_LOAD_STATE,
 	 "Se um Estado de Jogo for carregado, o conteúdo voltará ao estado anterior ao carregamento."
@@ -3919,10 +3931,10 @@ MSG_HASH(MENU_ENUM_LABEL_VALUE_CORE_DELETE,
 MSG_HASH(MENU_ENUM_SUBLABEL_CORE_DELETE,
      "Remover este núcleo do disco."
 	)
-MSG_HASH(MENU_ENUM_SUBLABEL_PLAYLIST_ENTRY_RENAME,
+MSG_HASH(MENU_ENUM_SUBLABEL_RENAME_ENTRY,
      "Renomear o título do item."
 	)
-MSG_HASH(MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_RENAME,
+MSG_HASH(MENU_ENUM_LABEL_VALUE_RENAME_ENTRY,
      "Renomear"
 	)
 MSG_HASH(MENU_ENUM_LABEL_VALUE_MENU_FRAMEBUFFER_OPACITY,
@@ -3961,3 +3973,171 @@ MSG_HASH(MENU_ENUM_LABEL_VALUE_MATERIALUI_ICONS_ENABLE,
 MSG_HASH(MENU_ENUM_SUBLABEL_MATERIALUI_ICONS_ENABLE,
      "Habilitar/desabilitar os ícones exibidos do lado esquerdo dos itens de menu. "
 	)
+MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_MAIN_MENU_ENABLE_SETTINGS,
+	 "Enable Settings Tab"
+	)
+MSG_HASH(MENU_ENUM_LABEL_VALUE_XMB_SHOW_SETTINGS_PASSWORD,
+      "Set Password For Enabling Settings Tab"
+   )
+MSG_HASH(MSG_INPUT_ENABLE_SETTINGS_PASSWORD,
+      "Enter Password"
+   )
+MSG_HASH(MSG_INPUT_ENABLE_SETTINGS_PASSWORD_OK,
+      "Password correct."
+   )
+MSG_HASH(MSG_INPUT_ENABLE_SETTINGS_PASSWORD_NOK,
+      "Password incorrect."
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_XMB_MAIN_MENU_ENABLE_SETTINGS,
+	 "Enables the Settings tab. A restart is required for the tab to appear."
+	)
+MSG_HASH(MENU_ENUM_SUBLABEL_XMB_SHOW_SETTINGS_PASSWORD,
+      "Supplying a password when hiding the settings tab makes it possible to later restore it from the menu, by going to the Main Menu tab, selecting Enable Settings Tab and entering the password."
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_PLAYLIST_ENTRY_RENAME,
+      "Allow the user to rename entries in collections."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_RENAME,
+      "Allow to rename entries"
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CORE,
+      "Show Load Core"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_CORE,
+      "Show/hide the 'Load Core' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CONTENT,
+      "Show Load Content"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_CONTENT,
+      "Show/hide the 'Load Content' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_MENU_SHOW_INFORMATION,
+      "Show Information"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_MENU_SHOW_INFORMATION,
+      "Show/hide the 'Information' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_MENU_SHOW_CONFIGURATIONS,
+      "Show Configurations"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_MENU_SHOW_CONFIGURATIONS,
+      "Show/hide the 'Configurations' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_MENU_SHOW_HELP,
+      "Show Help"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_MENU_SHOW_HELP,
+      "Show/hide the 'Help' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_MENU_SHOW_QUIT_RETROARCH,
+      "Show Quit RetroArch"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_MENU_SHOW_QUIT_RETROARCH,
+      "Show/hide the 'Quit RetroArch' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_MENU_SHOW_REBOOT,
+      "Show Reboot"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_MENU_SHOW_REBOOT,
+      "Show/hide the 'Reboot' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_VIEWS_SETTINGS,
+      "Quick Menu"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_VIEWS_SETTINGS,
+      "Show or hide elements on the Quick Menu screen."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_TAKE_SCREENSHOT,
+      "Show Take Screenshot"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_TAKE_SCREENSHOT,
+      "Show/hide the 'Take Screenshot' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVE_LOAD_STATE,
+      "Show Save/Load State"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVE_LOAD_STATE,
+      "Show/hide the options for saving/loading state."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_UNDO_SAVE_LOAD_STATE,
+      "Show Undo Save/Load State"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_UNDO_SAVE_LOAD_STATE,
+      "Show/hide the options for undoing save/load state."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_ADD_TO_FAVORITES,
+      "Show Add to Favorites"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_ADD_TO_FAVORITES,
+      "Show/hide the 'Add to Favorites' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_OPTIONS,
+      "Show Options"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_OPTIONS,
+      "Show/hide the 'Options' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CONTROLS,
+      "Show Controls"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_CONTROLS,
+      "Show/hide the 'Controls' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CHEATS,
+      "Show Cheats"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_CHEATS,
+      "Show/hide the 'Cheats' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SHADERS,
+      "Show Shaders"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SHADERS,
+      "Show/hide the 'Shaders' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVE_CORE_OVERRIDES,
+      "Show Save Core Overrides"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVE_CORE_OVERRIDES,
+      "Show/hide the 'Save Core Overrides' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVE_GAME_OVERRIDES,
+      "Show Save Game Overrides"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVE_GAME_OVERRIDES,
+      "Show/hide the 'Save Game Overrides' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_INFORMATION,
+      "Show Information"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_INFORMATION,
+      "Show/hide the 'Information' option."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_MENU_DISABLE_KIOSK_MODE,
+      "Disable Kiosk Mode"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_MENU_DISABLE_KIOSK_MODE,
+      "Disables kiosk mode. A restart is required for the change to take full effect."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_MENU_ENABLE_KIOSK_MODE,
+      "Enable Kiosk Mode"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_MENU_ENABLE_KIOSK_MODE,
+      "Protects the setup by hiding all configuration related settings."
+   )
+MSG_HASH(MENU_ENUM_LABEL_VALUE_MENU_KIOSK_MODE_PASSWORD,
+      "Set Password For Disabling Kiosk Mode"
+   )
+MSG_HASH(MENU_ENUM_SUBLABEL_MENU_KIOSK_MODE_PASSWORD,
+      "Supplying a password when enabling kiosk mode makes it possible to later disable it from the menu, by going to the Main Menu, selecting Disable Kiosk Mode and entering the password."
+   )
+MSG_HASH(MSG_INPUT_KIOSK_MODE_PASSWORD,
+      "Enter Password"
+   )
+MSG_HASH(MSG_INPUT_KIOSK_MODE_PASSWORD_OK,
+      "Password correct."
+   )
+MSG_HASH(MSG_INPUT_KIOSK_MODE_PASSWORD_NOK,
+      "Password incorrect."
+   )

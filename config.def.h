@@ -64,6 +64,7 @@ static bool materialui_icons_enable      = true;
 
 static const bool def_history_list_enable = true;
 static const bool def_playlist_entry_remove = true;
+static const bool def_playlist_entry_rename = true;
 
 static const unsigned int def_user_language = 0;
 
@@ -235,7 +236,28 @@ static const bool display_keyboard_overlay = false;
 
 static bool default_block_config_read    = true;
 
+static bool quick_menu_show_take_screenshot      = true;
+static bool quick_menu_show_save_load_state      = true;
+static bool quick_menu_show_undo_save_load_state = true;
+static bool quick_menu_show_add_to_favorites     = true;
+static bool quick_menu_show_options              = true;
+static bool quick_menu_show_controls             = true;
+static bool quick_menu_show_cheats               = true;
+static bool quick_menu_show_shaders              = true;
+static bool quick_menu_show_save_core_overrides  = true;
+static bool quick_menu_show_save_game_overrides  = true;
+static bool quick_menu_show_information          = true;
+
+static bool kiosk_mode_enable            = false;
+
 static bool menu_show_online_updater     = true;
+static bool menu_show_load_core          = true;
+static bool menu_show_load_content       = true;
+static bool menu_show_information        = true;
+static bool menu_show_configurations     = true;
+static bool menu_show_help               = true;
+static bool menu_show_quit_retroarch     = true;
+static bool menu_show_reboot             = true;
 
 #if defined(HAVE_LAKKA) || defined(VITA)
 static bool menu_show_core_updater       = false;
@@ -353,6 +375,12 @@ static const float message_pos_offset_y = 0.05;
  * RGB hex value. */
 static const uint32_t message_color = 0xffff00;
 
+static const bool message_bgcolor_enable = false;
+static const uint32_t message_bgcolor_red = 0;
+static const uint32_t message_bgcolor_green = 0;
+static const uint32_t message_bgcolor_blue = 0;
+static const float message_bgcolor_opacity = 1.0f;
+
 /* Record post-filtered (CPU filter) video,
  * rather than raw game output. */
 static const bool post_filter_record = false;
@@ -452,6 +480,9 @@ static const int wasapi_sh_buffer_length = -16; /* auto */
 /* Enables displaying the current frames per second. */
 static const bool fps_show = false;
 
+/* Show frame count on FPS display */
+static const bool framecount_show = true;
+
 /* Enables use of rewind. This will incur some memory footprint
  * depending on the save state buffer. */
 static const bool rewind_enable = false;
@@ -497,7 +528,7 @@ static const bool netplay_nat_traversal = false;
 
 static const unsigned netplay_delay_frames = 16;
 
-static const int netplay_check_frames = 30;
+static const int netplay_check_frames = 600;
 
 static const bool netplay_use_mitm_server = false;
 
@@ -642,6 +673,8 @@ static char buildbot_server_url[] = "http://buildbot.libretro.com/nightly/window
 static char buildbot_server_url[] = "http://buildbot.libretro.com/nightly/linux/x86_64/latest/";
 #elif defined(__i386__) || defined(__i486__) || defined(__i686__)
 static char buildbot_server_url[] = "http://buildbot.libretro.com/nightly/linux/x86/latest/";
+#elif defined(__arm__) && __ARM_ARCH == 7 && defined(__ARM_PCS_VFP)
+static char buildbot_server_url[] = "http://buildbot.libretro.com/nightly/linux/armhf/latest/";
 #else
 static char buildbot_server_url[] = "";
 #endif
