@@ -1,4 +1,8 @@
-# 1.6.9 (future)
+# 1.7.0 (future)
+
+# 1.6.9
+- COMMON: Small memory leak.
+- NETPLAY: Fix network command only working once.
 
 # 1.6.8
 - Audio: Fix the Audio DSP picker
@@ -33,6 +37,8 @@
 - LINUX/PI: Broadcom VC4: Add Videocore config option
 - LINUX/UDEV: Fix - RetroArch reads keyboard input when not focused with the udev input driver.
 - NETPLAY: Fix disconnection not fully deinitializing Netplay.
+- NETPLAY: Fix lan rooms when there is more than one room
+- NETPLAY: Fix lan rooms on systems where all addresses are treated as IPv6
 - COMMON: Fix clear/free loop conditionals in playlists.
 - WINDOWS/GDI: Fix flickering of text.
 - WINDOWS/GDI: Fix graphics corruption on Windows 98
@@ -49,6 +55,7 @@
 - SCANNER: Support CHD files.
 - SCANNER: Support Gamecube ISO scanning.
 - SCANNER: Use primary data track of disc images for CRC lookups rather than cue files.  This is slower but finds matches more reliably, and is necessary for CHD files to work at all.  Update your databases!
+- SCANNER: Fall back on looking inside archives when matching MAME/FBA content (most recent cores only).  If you had difficulty with content being detected before, you may have better luck now.  Update your databases and core info!
 
 # 1.6.7
 - SCANNER: Fix directory scanning.
