@@ -299,18 +299,16 @@ static const char *font_renderer_ft_get_default_font(void)
 
    // Load osd-font.ttf path from the RetroArch assets directory.
    char osd_font_path[PATH_MAX_LENGTH];
-   strcpy(osd_font_path, config_get_ptr()->paths.directory_assets);
+   strncpy(osd_font_path, config_get_ptr()->paths.directory_assets, PATH_MAX_LENGTH);
    if (!string_is_empty(osd_font_path)) {
-      strcat(osd_font_path, "/fonts/osd-font.ttf");
+      strncat(osd_font_path, "/fonts/osd-font.ttf", PATH_MAX_LENGTH);
       font_paths[0] = osd_font_path;
    }
 
    for (i = 0; i < ARRAY_SIZE(font_paths); i++)
    {
-      if (path_file_exists(font_paths[i])) {
-         printf("Final Font: %s", font_paths[i]);
+      if (path_file_exists(font_paths[i]))
          return font_paths[i];
-      }
    }
 
    return NULL;
