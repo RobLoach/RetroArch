@@ -23,6 +23,7 @@
 
 #include <file/file_path.h>
 #include <retro_miscellaneous.h>
+#include <string/stdstring.h>
 #include "../../configuration.h"
 
 #ifdef WIIU
@@ -268,7 +269,7 @@ error:
  * but should hopefully work ... */
 
 static const char *font_paths[] = {
-   "@retroarch-assets/fonts/osd-font.ttf",
+   "osd-font.ttf", /* Magic font to search for, useful for distribution. */
 #if defined(_WIN32)
    "C:\\Windows\\Fonts\\consola.ttf",
    "C:\\Windows\\Fonts\\verdana.ttf",
@@ -286,7 +287,6 @@ static const char *font_paths[] = {
    "/usr/share/fonts/TTF/Vera.ttf",
    "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
 #endif
-   "osd-font.ttf", /* Magic font to search for, useful for distribution. */
 };
 
 /* Highly OS/platform dependent. */
@@ -297,19 +297,20 @@ static const char *font_renderer_ft_get_default_font(void)
 #else
    size_t i;
 
-   // Resolve the retroarch-assets osd-font path, if needed.
-   if (strcmp(font_paths[0], "@retroarch-assets/fonts/osd-font.ttf") == 0)
-   {
-      char osd_font_path[PATH_MAX_LENGTH];
-      strcpy(osd_font_path, config_get_ptr()->paths.directory_assets);
+   // Load osd-font.ttf path from the RetroArch assets directory.
+   char osd_font_path[PATH_MAX_LENGTH];
+   strcpy(osd_font_path, config_get_ptr()->paths.directory_assets);
+   if (!string_is_empty(osd_font_path)) {
       strcat(osd_font_path, "/fonts/osd-font.ttf");
       font_paths[0] = osd_font_path;
    }
 
    for (i = 0; i < ARRAY_SIZE(font_paths); i++)
    {
-      if (path_file_exists(font_paths[i]))
+      if (path_file_exists(font_paths[i])) {
+         printf("Final Font: %s", font_paths[i]);
          return font_paths[i];
+      }
    }
 
    return NULL;
