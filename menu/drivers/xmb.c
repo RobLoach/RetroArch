@@ -3505,8 +3505,9 @@ static void *xmb_init(void **userdata, bool video_is_threaded)
    xmb->old_depth                     = 1;
    xmb->alpha                         = 0;
 
-   xmb->system_tab_end                = 0;
-   xmb->tabs[xmb->system_tab_end]     = XMB_SYSTEM_TAB_MAIN;
+   xmb->system_tab_end                = -1;
+   if (settings->bools.menu_xmb_show_main_menu)
+      xmb->tabs[++xmb->system_tab_end] = XMB_SYSTEM_TAB_MAIN;
    if (settings->bools.menu_xmb_show_settings && !settings->bools.kiosk_mode_enable)
       xmb->tabs[++xmb->system_tab_end] = XMB_SYSTEM_TAB_SETTINGS;
    if (settings->bools.menu_xmb_show_favorites)
