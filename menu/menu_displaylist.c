@@ -3166,12 +3166,11 @@ static int menu_displaylist_parse_options_cheats(
    if (!cheat_manager_alloc_if_empty())
       return -1;
 
-   if (show_advanced_settings)
-      menu_entries_append_enum(info->list,
-            msg_hash_to_str(MENU_ENUM_LABEL_VALUE_CHEAT_START_OR_CONT),
-            msg_hash_to_str(MENU_ENUM_LABEL_CHEAT_START_OR_CONT),
-            MENU_ENUM_LABEL_CHEAT_START_OR_CONT,
-            MENU_SETTING_ACTION, 0, 0);
+   menu_entries_append_enum(info->list,
+         msg_hash_to_str(MENU_ENUM_LABEL_VALUE_CHEAT_START_OR_CONT),
+         msg_hash_to_str(MENU_ENUM_LABEL_CHEAT_START_OR_CONT),
+         MENU_ENUM_LABEL_CHEAT_START_OR_CONT,
+         MENU_SETTING_ACTION, 0, 0);
    menu_entries_append_enum(info->list,
          msg_hash_to_str(MENU_ENUM_LABEL_VALUE_CHEAT_FILE_LOAD),
          msg_hash_to_str(MENU_ENUM_LABEL_CHEAT_FILE_LOAD),
