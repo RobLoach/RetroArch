@@ -550,7 +550,7 @@ static void gdi_prune(database_info_handle_t *db, const char *name)
    {
       for (i = db->list_ptr; i < db->list->size; ++i)
       {
-         if (db->list->elems[i].data 
+         if (db->list->elems[i].data
                && string_is_equal(path, db->list->elems[i].data))
          {
             RARCH_LOG("Pruning file referenced by gdi: %s\n", path);
@@ -606,6 +606,11 @@ static enum msg_file_type extension_to_file_type(const char *ext)
          string_is_equal(ext, "LUTRO")
       )
       return FILE_TYPE_LUTRO;
+   if (
+         string_is_equal(ext, "pbp")  ||
+         string_is_equal(ext, "PBP")
+      )
+      return FILE_TYPE_PBP;
    return FILE_TYPE_NONE;
 }
 

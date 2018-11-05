@@ -320,8 +320,7 @@ int detect_gc_game(intfstream_t *fd, char *game_id)
  */
 int detect_serial_ascii_game(intfstream_t *fd, char *game_id)
 {
-   unsigned pos;
-   int numberOfAscii = 0;
+   unsigned pos, numberOfAscii;
    bool rv   = false;
 
    for (pos = 0; pos < 10000; pos++)
@@ -329,12 +328,17 @@ int detect_serial_ascii_game(intfstream_t *fd, char *game_id)
       intfstream_seek(fd, pos, SEEK_SET);
       if (intfstream_read(fd, game_id, 15) > 0)
       {
-         unsigned i;
+         unsigned i, numbersInString = 0;
          game_id[15] = '\0';
          numberOfAscii = 0;
 
-         /* When scanning WBFS files, "WBFS" is discovered as the first serial. Ignore it. */
-         if (string_is_equal(game_id, "WBFS")) {
+         /* A serial requires numbers in it, so ensure there's some number representation. */
+         for (i = 0; game_id[i] != '\0'; i++) {
+            if (game_id[i] >= '0' && game_id[i] <='9') {
+               numbersInString += 1;
+            }
+         }
+         if (numbersInString == 0) {
             continue;
          }
 
@@ -348,8 +352,8 @@ int detect_serial_ascii_game(intfstream_t *fd, char *game_id)
                break;
          }
 
-         /* If the length of the text is between 3 and 9 characters, it could be a serial. */
-         if (numberOfAscii > 3 && numberOfAscii < 9)
+         /* If the length of the text is between 3 and 10 characters, it could be a serial. */
+         if (numberOfAscii > 3 && numberOfAscii < 10)
          {
             /* Cut the string off, and return it as a valid serial. */
             game_id[numberOfAscii] = '\0';
