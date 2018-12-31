@@ -690,19 +690,22 @@ static void udev_input_poll(void *data)
       udev_input_get_pointer_position(&udev->pointer_x, &udev->pointer_y);
 #endif
 
-   for (i = 0; i < udev->num_devices; ++i)
+   if (video_driver_cb_has_focus())
    {
-      if (udev->devices[i]->type == UDEV_INPUT_KEYBOARD)
-         continue;
+      for (i = 0; i < udev->num_devices; ++i)
+      {
+         if (udev->devices[i]->type == UDEV_INPUT_KEYBOARD)
+            continue;
 
-      mouse = &udev->devices[i]->mouse;
+         mouse = &udev->devices[i]->mouse;
 
-      mouse->x_rel = 0;
-      mouse->y_rel = 0;
-      mouse->wu    = false;
-      mouse->wd    = false;
-      mouse->whu   = false;
-      mouse->whd   = false;
+         mouse->x_rel = 0;
+         mouse->y_rel = 0;
+         mouse->wu    = false;
+         mouse->wd    = false;
+         mouse->whu   = false;
+         mouse->whd   = false;
+      }
    }
 
    while (udev->monitor && udev_input_poll_hotplug_available(udev->monitor))
