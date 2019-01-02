@@ -698,7 +698,8 @@ static void udev_input_poll(void *data)
    {
       for (i = 0; i < udev->num_devices; ++i)
       {
-         if (udev->devices[i]->type == UDEV_INPUT_MOUSE) {
+         if (udev->devices[i]->type == UDEV_INPUT_MOUSE)
+         {
             mouse = &udev->devices[i]->mouse;
 
             mouse->x_rel = 0;
