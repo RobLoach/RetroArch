@@ -223,9 +223,8 @@ static udev_input_mouse_t *udev_get_mouse(struct udev_input *udev, unsigned port
    udev_input_mouse_t *mouse = NULL;
 
    // Only retrieve the mouse status when the window is active.
-   if (!video_driver_cb_has_focus()) {
+   if (!video_driver_cb_has_focus())
       return NULL;
-   }
 
    if (port >= MAX_USERS)
       return NULL;
