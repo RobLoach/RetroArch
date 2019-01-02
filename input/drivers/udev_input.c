@@ -222,6 +222,11 @@ static udev_input_mouse_t *udev_get_mouse(struct udev_input *udev, unsigned port
    settings_t *settings      = config_get_ptr();
    udev_input_mouse_t *mouse = NULL;
 
+   // Only retrieve the mouse status when the window is active.
+   if (!video_driver_cb_has_focus()) {
+      return NULL;
+   }
+
    if (port >= MAX_USERS)
       return NULL;
 
@@ -505,12 +510,12 @@ static bool udev_input_add_device(udev_input_t *udev,
 
    strlcpy(device->devnode, devnode, sizeof(device->devnode));
 
-  
+
    /* UDEV_INPUT_MOUSE may report in absolute coords too */
    if (type == UDEV_INPUT_MOUSE || type == UDEV_INPUT_TOUCHPAD )
    {
       if (ioctl(fd, EVIOCGABS(ABS_X), &absinfo) >= 0)
-      {      
+      {
          if (absinfo.minimum >= absinfo.maximum )
       	 {
             device->mouse.x_min = -1;
@@ -519,12 +524,12 @@ static bool udev_input_add_device(udev_input_t *udev,
          else
          {
             device->mouse.x_min = absinfo.minimum;
-            device->mouse.x_min = absinfo.maximum; 
-         }         
+            device->mouse.x_min = absinfo.maximum;
+         }
       }
 
       if (ioctl(fd, EVIOCGABS(ABS_Y), &absinfo) >= 0)
-      {      
+      {
          if (absinfo.minimum >= absinfo.maximum )
          {
             device->mouse.y_min = -1;
@@ -533,12 +538,12 @@ static bool udev_input_add_device(udev_input_t *udev,
 	     else
          {
            device->mouse.y_min = absinfo.minimum;
-           device->mouse.y_min = absinfo.maximum; 
-         }         
+           device->mouse.y_min = absinfo.maximum;
+         }
       }
    }
 
-   tmp = ( udev_input_device_t**)realloc(udev->devices, 
+   tmp = ( udev_input_device_t**)realloc(udev->devices,
          (udev->num_devices + 1) * sizeof(*udev->devices));
 
    if (!tmp)
@@ -694,17 +699,16 @@ static void udev_input_poll(void *data)
    {
       for (i = 0; i < udev->num_devices; ++i)
       {
-         if (udev->devices[i]->type == UDEV_INPUT_KEYBOARD)
-            continue;
+         if (udev->devices[i]->type == UDEV_INPUT_MOUSE) {
+            mouse = &udev->devices[i]->mouse;
 
-         mouse = &udev->devices[i]->mouse;
-
-         mouse->x_rel = 0;
-         mouse->y_rel = 0;
-         mouse->wu    = false;
-         mouse->wd    = false;
-         mouse->whu   = false;
-         mouse->whd   = false;
+            mouse->x_rel = 0;
+            mouse->y_rel = 0;
+            mouse->wu    = false;
+            mouse->wd    = false;
+            mouse->whu   = false;
+            mouse->whd   = false;
+         }
       }
    }
 
