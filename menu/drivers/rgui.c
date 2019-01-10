@@ -384,6 +384,16 @@ static const rgui_theme_t rgui_theme_anti_zenburn = {
    0xE0A0A0A0  /* border_light_color */
 };
 
+static const rgui_theme_t rgui_theme_monokai = {
+   0xFF336C6C, /* hover_color */
+   0xFF232333, /* normal_color */
+   0xFF205070, /* title_color */
+   0xE0C0C0C0, /* bg_dark_color */
+   0xE0C0C0C0, /* bg_light_color */
+   0xE0A0A0A0, /* border_dark_color */
+   0xE0A0A0A0  /* border_light_color */
+};
+
 typedef struct
 {
    uint16_t hover_color;
@@ -525,7 +535,7 @@ static const rgui_theme_t *get_theme(rgui_t *rgui)
       default:
          break;
    }
-   
+
    return &rgui_theme_classic_green;
 }
 
@@ -717,7 +727,7 @@ static void rgui_render_background(rgui_t *rgui)
    unsigned fb_width, fb_height;
    uint16_t             *src  = NULL;
    uint16_t             *dst  = NULL;
-   
+
    menu_display_get_fb_size(&fb_width, &fb_height,
          &fb_pitch);
 
@@ -919,7 +929,7 @@ static void rgui_render(void *data, bool is_idle)
       rgui->last_width  = fb_width;
       rgui->last_height = fb_height;
    }
-   
+
    if (rgui->bg_modified)
       rgui->bg_modified = false;
 
