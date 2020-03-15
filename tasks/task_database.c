@@ -93,6 +93,8 @@ int detect_psp_game(intfstream_t *fd, char *game_id);
 
 int detect_gc_game(intfstream_t *fd, char *game_id);
 
+int detect_scd_game(intfstream_t *fd, char *game_id);
+
 int detect_serial_ascii_game(intfstream_t *fd, char *game_id);
 
 static void database_info_set_type(
@@ -202,6 +204,12 @@ static int intfstream_get_serial(intfstream_t *fd, char *serial)
   else if (string_is_equal(system_name, "gc"))
   {
     if (detect_gc_game(fd, serial) == 0)
+      return 0;
+    RARCH_LOG("%s '%s'\n", msg_hash_to_str(MSG_FOUND_DISK_LABEL), serial);
+  }
+  else if (string_is_equal(system_name, "scd"))
+  {
+    if (detect_scd_game(fd, serial) == 0)
       return 0;
     RARCH_LOG("%s '%s'\n", msg_hash_to_str(MSG_FOUND_DISK_LABEL), serial);
   }
