@@ -433,7 +433,7 @@ int detect_scd_game(intfstream_t *fd, char *game_id)
       {
          raw_game_id[11] = '\0';
       }
-	  else
+      else
       {
          return false;
       }
@@ -527,7 +527,7 @@ int detect_sat_game(intfstream_t *fd, char *game_id)
       {
          raw_game_id[9] = '\0';
       }
-	  else
+      else
       {
          return false;
       }
@@ -670,7 +670,7 @@ int detect_dc_game(intfstream_t *fd, char *game_id)
       {
          raw_game_id[10] = '\0';
       }
-	  else
+      else
       {
          return false;
       }
