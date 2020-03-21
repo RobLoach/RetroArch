@@ -58,14 +58,14 @@ struct magic_entry
 };
 
 static struct magic_entry MAGIC_NUMBERS[] = {
-   { 0x008008,   "psp",        "\x50\x53\x50\x20\x47\x41\x4d\x45",                                      8},	
-   { 0x008008,   "ps1",        "\x50\x4c\x41\x59\x53\x54\x41\x54\x49\x4f\x4e",                          11},	
-   { 0x00001c,   "gc",         "\xc2\x33\x9f\x3d",                                                      4},	
-   { 0,          "scd",        "\x53\x45\x47\x41\x44\x49\x53\x43\x53\x59\x53\x54\x45\x4d",              14},
-   { 0,          "sat",        "\x53\x45\x47\x41\x20\x53\x45\x47\x41\x53\x41\x54\x55\x52\x4e",          15},
+   { 0x008008,     "psp",        "\x50\x53\x50\x20\x47\x41\x4d\x45",                                      8},	
+   { 0x008008,     "ps1",        "\x50\x4c\x41\x59\x53\x54\x41\x54\x49\x4f\x4e",                          11},	
+   { 0x00001c,     "gc",         "\xc2\x33\x9f\x3d",                                                      4},	
+   { 0,            "scd",        "\x53\x45\x47\x41\x44\x49\x53\x43\x53\x59\x53\x54\x45\x4d",              14},
+   { 0,            "sat",        "\x53\x45\x47\x41\x20\x53\x45\x47\x41\x53\x41\x54\x55\x52\x4e",          15},
+   { 0,            "dc",         "\x53\x45\x47\x41\x20\x53\x45\x47\x41\x4b\x41\x54\x41\x4e\x41",          15},
    /** [WIP] The following systems still need a dectct serial function and if not detected will be
-             captured by detect_serial_ascii_game function.
-   { 0,          "dc",         "\x53\x45\x47\x41\x20\x53\x45\x47\x41\x4b\x41\x54\x41\x4e\x41",          15},   
+             captured by detect_serial_ascii_game function.   
    { 0x000018,   "wii",        "\x5d\x1c\x9e\xa3",                                                      4},
    { 0x800008,   "cdi",        "\x43\x44\x2d\x52\x54\x4f\x53",                                          7},
    { 0x000820,   "pcecd",      "\x50\x43\x20\x45\x6e\x67\x69\x6e\x65\x20\x43\x44\x2d\x52\x4f\x4d",      16}, **/
@@ -323,6 +323,10 @@ int detect_gc_game(intfstream_t *fd, char *game_id)
    {
       raw_game_id[4] = '\0';
    }
+   else
+   {
+      return false;
+   }
 
    /** convert raw gamecube serial to redump serial.
    not enough is known about the disc data to properly
@@ -400,20 +404,11 @@ void remove_spaces (char* str_trimmed, const char* str_untrimmed)
    *str_trimmed = '\0';
 }
 
-int index_last_occurance(char str[], char ch)
+int index_last_occurance(char str[], char t)
 {
-   int i, index;
-   index = -1;
-
-   for(i = 0; str[i] != '\0'; i++)
-   {
-      if(str[i] == ch)
-      {
-         index = i;
-      }  
-   }
-   
-   return index;
+   const char * ret = strrchr(str, t);
+   if (ret) return ret-str;
+   else return -1;
 }
 
 int detect_scd_game(intfstream_t *fd, char *game_id)
@@ -431,12 +426,16 @@ int detect_scd_game(intfstream_t *fd, char *game_id)
    char lgame_id[10];
    char * rgame_id = "-50";
    
-   if (intfstream_seek(fd, 0x0183, SEEK_END) != 0)
+   if (intfstream_seek(fd, 0x0183, SEEK_SET) >= 0)
    {
 
       if (intfstream_read(fd, raw_game_id, 11) > 0)
       {
          raw_game_id[11] = '\0';
+      }
+	  else
+      {
+         return false;
       }
    }
    else
@@ -521,12 +520,16 @@ int detect_sat_game(intfstream_t *fd, char *game_id)
    char rgame_id[10];
    char * game_id50 = "-50";
    
-   if (intfstream_seek(fd, 0x0020, SEEK_END) != 0)
+   if (intfstream_seek(fd, 0x0020, SEEK_SET) >= 0)
    {
 
       if (intfstream_read(fd, raw_game_id, 9) > 0)
       {
          raw_game_id[9] = '\0';
+      }
+	  else
+      {
+         return false;
       }
    }
    else
@@ -534,7 +537,7 @@ int detect_sat_game(intfstream_t *fd, char *game_id)
       return false;
    }
    
-   if (intfstream_seek(fd, 0x0040, SEEK_END) != 0)
+   if (intfstream_seek(fd, 0x0040, SEEK_SET) >= 0)
    {
 
       if (intfstream_read(fd, raw_region_id, 1) > 0)
@@ -593,6 +596,256 @@ int detect_sat_game(intfstream_t *fd, char *game_id)
    return false;
 }
 
+int count_occurances_single_character(char *str, char t)
+{
+   int ctr = 0;
+   int index = -1;
+   int i;
+    
+   for (i = 0; str[i] != '\0'; ++i) {
+      if (t == str[i])
+         ++ctr;
+   }
+
+   index = ctr;
+   return index;
+}
+
+void replace_space_with_single_character(char *str, char t)
+{
+   int new_char;
+   int ctr=0; 
+   char *dest = str;
+	
+   while (str[ctr])
+   {
+      new_char=str[ctr];
+      if (isspace(new_char)) 
+      new_char=t;
+      *dest++ = new_char;
+      ctr++;
+   }
+
+   *dest = '\0';
+}
+
+void replace_multi_space_with_single_space(char *str)
+{
+   char *dest = str;
+
+   while (*str != '\0')
+   {
+      while (*str == ' ' && *(str + 1) == ' ')
+      str++;
+
+      *dest++ = *str++;
+   }
+  
+   *dest = '\0';
+}
+
+int detect_dc_game(intfstream_t *fd, char *game_id)
+{
+   char hyphen = '-';
+   char hyphen_str[] = "-";
+   int total_hyphens;
+   int total_hyphens_recalc;
+   char pre_game_id[50];
+   char raw_game_id[50];
+   char check_prefix_t_hyp[10];
+   char check_prefix_t[10];
+   char check_prefix_hdr_hyp[10];
+   char check_prefix_mk_hyp[10];
+   int length;
+   int length_recalc;
+   int index;
+   size_t size_t_var;
+   char lgame_id[20];
+   char rgame_id[20];
+
+   if (intfstream_seek(fd, 0x0040, SEEK_SET) >= 0)
+   {
+
+      if (intfstream_read(fd, raw_game_id, 10) > 0)
+      {
+         raw_game_id[10] = '\0';
+      }
+	  else
+      {
+         return false;
+      }
+   }
+   else
+   {
+      return false;
+   }
+   
+   left_and_right_trim_spaces(raw_game_id);
+   replace_multi_space_with_single_space(raw_game_id);
+   replace_space_with_single_character(raw_game_id, hyphen);
+   length = strlen(raw_game_id);
+   raw_game_id[length] = '\0';
+   total_hyphens = count_occurances_single_character(raw_game_id, hyphen);
+   
+   /** disect this raw serial into parts **/
+   strncpy(check_prefix_t_hyp, raw_game_id, 2);
+   check_prefix_t_hyp[2] = '\0';
+   strncpy(check_prefix_t, raw_game_id, 1);
+   check_prefix_t[1] = '\0';
+   strncpy(check_prefix_hdr_hyp, raw_game_id, 4);
+   check_prefix_hdr_hyp[4] = '\0';
+   strncpy(check_prefix_mk_hyp, raw_game_id, 3);
+   check_prefix_mk_hyp[3] = '\0';
+
+   /** redump serials are built differently for each prefix **/
+   if (!strcmp(check_prefix_t_hyp, "T-"))
+   {
+      if (total_hyphens >= 2)
+      {
+         index = index_last_occurance(raw_game_id, hyphen);
+         if (index < 0)
+         {
+            return false;
+         }
+         else
+         {
+            size_t_var = (size_t)index;
+         }
+         strncpy(lgame_id, &raw_game_id[0], size_t_var);
+         lgame_id[index] = '\0';
+         strncpy(rgame_id, &raw_game_id[index + 1], length - 1);
+         rgame_id[length - 1] = '\0';
+         strcat(game_id, lgame_id);
+         strcat(game_id, hyphen_str);
+         strcat(game_id, rgame_id);
+         return true;
+      }
+      else if (total_hyphens == 1)
+      {
+         if (length <= 7)
+         {
+            strncpy(game_id, raw_game_id, 7);
+            game_id[7] = '\0';
+            return true;
+         } 
+         else if (length >= 8)
+         {
+            strncpy(lgame_id, raw_game_id, 7);
+            lgame_id[7] = '\0'; 
+            strncpy(rgame_id, &raw_game_id[length - 2], length - 1);
+            rgame_id[length - 1] = '\0';
+            strcat(game_id, lgame_id);
+            strcat(game_id, hyphen_str);
+            strcat(game_id, rgame_id);
+            return true;
+         }
+      }
+   } else if (!strcmp(check_prefix_t, "T"))
+   {
+      strncpy(lgame_id, raw_game_id, 1);
+      lgame_id[1] = '\0';  			  
+      strncpy(rgame_id, &raw_game_id[1], length - 1);
+      rgame_id[length - 1] = '\0';		  
+      strcat(pre_game_id, lgame_id);
+      strcat(pre_game_id, hyphen_str);
+      strcat(pre_game_id, rgame_id);
+      
+      total_hyphens_recalc = count_occurances_single_character(pre_game_id, hyphen);
+      
+      if (total_hyphens_recalc >= 2)
+      {
+         index = index_last_occurance(pre_game_id, hyphen);
+         if (index < 0)
+         {
+            return false;
+         }
+         else
+         {
+            size_t_var = (size_t)index;
+         }
+         strncpy(lgame_id, pre_game_id, index);
+         lgame_id[index] = '\0';
+         length_recalc = strlen(pre_game_id);
+         strncpy(rgame_id, &pre_game_id[length_recalc - 2], length_recalc - 1);
+         rgame_id[length_recalc - 1] = '\0';
+         strcat(game_id, lgame_id);
+         strcat(game_id, hyphen_str);
+         strcat(game_id, rgame_id);
+         return true;
+      }
+      else if (total_hyphens_recalc == 1)
+      {
+         length_recalc = strlen(pre_game_id) - 1;
+         if (length_recalc <= 8)
+         {
+            strncpy(game_id, pre_game_id, 9);
+            game_id[9] = '\0';
+            return true;
+         }
+         else if (length_recalc >= 9)
+         {
+            strncpy(lgame_id, pre_game_id, 7);
+            lgame_id[7] = '\0';
+            strncpy(rgame_id, &pre_game_id[length_recalc - 2], length_recalc - 1);
+            rgame_id[length_recalc - 1] = '\0';
+            strcat(game_id, lgame_id);
+            strcat(game_id, hyphen_str);
+            strcat(game_id, rgame_id);
+            return true;
+         }
+      }
+   }
+   else if (!strcmp(check_prefix_hdr_hyp, "HDR-"))
+   {
+      if (total_hyphens >= 2)
+      {
+         index = index_last_occurance(raw_game_id, hyphen);
+         if (index < 0)
+         {
+            return false;
+         }
+         else
+         {
+            size_t_var = (size_t)index;
+         }
+         strncpy(lgame_id, raw_game_id, index - 1);
+         lgame_id[index - 1] = '\0';
+         strncpy(rgame_id, &raw_game_id[length - 4], length - 3);
+         rgame_id[length - 3] = '\0';
+         strcat(game_id, lgame_id);
+         strcat(game_id, hyphen_str);
+         strcat(game_id, rgame_id);
+         return true;
+      }
+      else
+      {
+         strcpy(game_id, raw_game_id);
+         return true;
+      }
+   }
+   else if (!strcmp(check_prefix_mk_hyp, "MK-"))
+   {
+      if (length <= 8)
+      {
+         strncpy(game_id, raw_game_id, 8);
+         game_id[8] = '\0';
+         return true;
+      }
+      else if (length >= 9)
+      {
+         strncpy(lgame_id, raw_game_id, 8);
+         lgame_id[8] = '\0';
+         strncpy(rgame_id, &raw_game_id[length - 2], length - 1);
+         rgame_id[length - 1] = '\0';				  
+         strcat(game_id, lgame_id);
+         strcat(game_id, hyphen_str);
+         strcat(game_id, rgame_id); 				  
+      }
+   }
+   
+   return false;
+}
+
 /**
  * Check for an ASCII serial in the first few bits of the ISO (Wii).
  */
@@ -642,41 +895,30 @@ int detect_serial_ascii_game(intfstream_t *fd, char *game_id)
 
 int detect_system(intfstream_t *fd, const char **system_name)
 {
-   int rv;
    int i;
-   int64_t read;
    char magic[50];
 
    RARCH_LOG("%s\n", msg_hash_to_str(MSG_COMPARING_WITH_KNOWN_MAGIC_NUMBERS));
    for (i = 0; MAGIC_NUMBERS[i].system_name != NULL; i++)
    {
-      intfstream_seek(fd, MAGIC_NUMBERS[i].offset, SEEK_SET);
-
-      read = intfstream_read(fd, magic, MAGIC_NUMBERS[i].length_magic);
-      if (read < 0)
+      if (intfstream_seek(fd, MAGIC_NUMBERS[i].offset, SEEK_SET) >= 0)
       {
-         RARCH_LOG("Could not read data at offset %d: %s\n",
-               MAGIC_NUMBERS[i].offset, strerror(errno));
-         rv = -errno;
-         goto clean;
-      }
-
-      if (read < MAGIC_NUMBERS[i].length_magic)
-         continue;
-
-      if (memcmp(MAGIC_NUMBERS[i].magic, magic, MAGIC_NUMBERS[i].length_magic) == 0)
-      {
-         *system_name = MAGIC_NUMBERS[i].system_name;
-         rv = 0;
-         goto clean;
+         if (intfstream_read(fd, magic, MAGIC_NUMBERS[i].length_magic) > 0)
+         {
+            magic[MAGIC_NUMBERS[i].length_magic] = '\0';
+            RARCH_LOG("=== Got here === Offset: %d\n", MAGIC_NUMBERS[i].offset);
+            RARCH_LOG("=== Got here === Read magic: %s\n", magic);
+            RARCH_LOG("=== Got here === Data magic: %s\n", MAGIC_NUMBERS[i].magic);
+            if (memcmp(MAGIC_NUMBERS[i].magic, magic, MAGIC_NUMBERS[i].length_magic) == 0)
+            {
+               *system_name = MAGIC_NUMBERS[i].system_name;
+               return true;
+            }
+         }
       }
    }
-
-   RARCH_LOG("%s\n", msg_hash_to_str(MSG_COULD_NOT_FIND_COMPATIBLE_SYSTEM));
-   rv = -EINVAL;
-
-clean:
-   return rv;
+   
+   return false;
 }
 
 static int64_t intfstream_get_file_size(const char *path)
