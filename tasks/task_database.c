@@ -42,6 +42,7 @@
 #include "../gfx/video_display_server.h"
 #endif
 #include "../verbosity.h"
+#include <retroarch.h>
 
 typedef struct database_state_handle
 {
@@ -96,6 +97,8 @@ int detect_gc_game(intfstream_t *fd, char *game_id);
 int detect_scd_game(intfstream_t *fd, char *game_id);
 
 int detect_sat_game(intfstream_t *fd, char *game_id);
+
+int detect_dc_game(intfstream_t *fd, char *game_id);
 
 int detect_serial_ascii_game(intfstream_t *fd, char *game_id);
 
@@ -175,22 +178,18 @@ static int task_database_iterate_start(retro_task_t *task,
 static int intfstream_get_serial(intfstream_t *fd, char *serial)
 {
   const char *system_name = NULL;
-
-  /* Check if the system was not auto-detected. */
-  if (detect_system(fd, &system_name) < 0)
-  {
-    /* Attempt to read an ASCII serial, like Wii. */
-    if (detect_serial_ascii_game(fd, serial))
-    {
-      /* ASCII serial (Wii) was detected. */
-      RARCH_LOG("%s '%s'\n", msg_hash_to_str(MSG_FOUND_DISK_LABEL), serial);
-      return 0;
-    }
-
-    /* Any other non-system specific detection methods? */
-    return 0;
+  char buf[16];
+  int test;
+  test = detect_system(fd, &system_name);
+  sprintf(buf,"%d",test);
+  const char* p = buf;
+  runloop_msg_queue_push(p, 0, 180, false, NULL, MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
+  
+  if (detect_system(fd, &system_name) >= 1)
+  {	  
+     runloop_msg_queue_push(system_name, 0, 180, false, NULL, MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
   }
-
+  
   if (string_is_equal(system_name, "psp"))
   {
     if (detect_psp_game(fd, serial) == 0)
@@ -218,6 +217,12 @@ static int intfstream_get_serial(intfstream_t *fd, char *serial)
   else if (string_is_equal(system_name, "sat"))
   {
     if (detect_sat_game(fd, serial) == 0)
+      return 0;
+    RARCH_LOG("%s '%s'\n", msg_hash_to_str(MSG_FOUND_DISK_LABEL), serial);
+  }
+  else if (string_is_equal(system_name, "dc"))
+  {
+    if (detect_dc_game(fd, serial) == 0)
       return 0;
     RARCH_LOG("%s '%s'\n", msg_hash_to_str(MSG_FOUND_DISK_LABEL), serial);
   }
