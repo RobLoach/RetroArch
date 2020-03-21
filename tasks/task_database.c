@@ -184,12 +184,12 @@ static int intfstream_get_serial(intfstream_t *fd, char *serial)
   sprintf(buf,"%d",test);
   const char* p = buf;
   runloop_msg_queue_push(p, 0, 180, false, NULL, MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
-  
+
   if (detect_system(fd, &system_name) >= 1)
-  {	  
+  {
      runloop_msg_queue_push(system_name, 0, 180, false, NULL, MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
   }
-  
+
   if (string_is_equal(system_name, "psp"))
   {
     if (detect_psp_game(fd, serial) == 0)

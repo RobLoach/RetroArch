@@ -58,14 +58,14 @@ struct magic_entry
 };
 
 static struct magic_entry MAGIC_NUMBERS[] = {
-   { 0x008008,     "psp",        "\x50\x53\x50\x20\x47\x41\x4d\x45",                                      8},	
-   { 0x008008,     "ps1",        "\x50\x4c\x41\x59\x53\x54\x41\x54\x49\x4f\x4e",                          11},	
-   { 0x00001c,     "gc",         "\xc2\x33\x9f\x3d",                                                      4},	
+   { 0x008008,     "psp",        "\x50\x53\x50\x20\x47\x41\x4d\x45",                                      8},
+   { 0x008008,     "ps1",        "\x50\x4c\x41\x59\x53\x54\x41\x54\x49\x4f\x4e",                          11},
+   { 0x00001c,     "gc",         "\xc2\x33\x9f\x3d",                                                      4},
    { 0,            "scd",        "\x53\x45\x47\x41\x44\x49\x53\x43\x53\x59\x53\x54\x45\x4d",              14},
    { 0,            "sat",        "\x53\x45\x47\x41\x20\x53\x45\x47\x41\x53\x41\x54\x55\x52\x4e",          15},
    { 0,            "dc",         "\x53\x45\x47\x41\x20\x53\x45\x47\x41\x4b\x41\x54\x41\x4e\x41",          15},
    /** [WIP] The following systems still need a dectct serial function and if not detected will be
-             captured by detect_serial_ascii_game function.   
+             captured by detect_serial_ascii_game function.
    { 0x000018,   "wii",        "\x5d\x1c\x9e\xa3",                                                      4},
    { 0x800008,   "cdi",        "\x43\x44\x2d\x52\x54\x4f\x53",                                          7},
    { 0x000820,   "pcecd",      "\x50\x43\x20\x45\x6e\x67\x69\x6e\x65\x20\x43\x44\x2d\x52\x4f\x4d",      16}, **/
@@ -316,7 +316,7 @@ int detect_gc_game(intfstream_t *fd, char *game_id)
    char * prefix = "DL-DOL-", pre_game_id[50], raw_game_id[50];
    int x = 7;
    int y = 11;
-   
+
    intfstream_seek(fd, 0, SEEK_SET);
 
    if (intfstream_read(fd, raw_game_id, 4) > 0)
@@ -330,7 +330,7 @@ int detect_gc_game(intfstream_t *fd, char *game_id)
    only fail with the following excpetions:  the disc
    is a multi disc game, and the subregions of europe
    P-UKV, P-AUS, X-UKV, X-EUU will not match redump.**/
-   
+
    /** insert prefix **/
    strncpy(pre_game_id, prefix, x);
    pre_game_id[x] = '\0';
@@ -348,38 +348,38 @@ int detect_gc_game(intfstream_t *fd, char *game_id)
 
    strncpy(game_id, pre_game_id, y);
    game_id[y] = '\0';
-   
+
    switch (region_id)
    {
       case 'E':
-         strcat(game_id + y, "-USA");  
+         strcat(game_id + y, "-USA");
          return true;
       case 'J':
-         strcat(game_id + y, "-JPN");  
+         strcat(game_id + y, "-JPN");
          return true;
       case 'P': /** NYI: P can also be P-UKV, P-AUS **/
-         strcat(game_id + y, "-EUR");  
+         strcat(game_id + y, "-EUR");
          return true;
       case 'X': /** NYI: X can also be X-UKV, X-EUU **/
-         strcat(game_id + y, "-EUR");  
+         strcat(game_id + y, "-EUR");
          return true;
       case 'Y':
-         strcat(game_id + y, "-FAH");  
+         strcat(game_id + y, "-FAH");
          return true;
       case 'D':
-         strcat(game_id + y, "-NOE");  
+         strcat(game_id + y, "-NOE");
          return true;
       case 'S':
-         strcat(game_id + y, "-ESP"); 
+         strcat(game_id + y, "-ESP");
          return true;
       case 'F':
-         strcat(game_id + y, "-FRA");  
+         strcat(game_id + y, "-FRA");
          return true;
       case 'I':
-         strcat(game_id + y, "-ITA");  
+         strcat(game_id + y, "-ITA");
          return true;
       case 'H':
-         strcat(game_id + y, "-HOL");  
+         strcat(game_id + y, "-HOL");
          return true;
    }
 
@@ -421,10 +421,9 @@ int detect_scd_game(intfstream_t *fd, char *game_id)
    int index;
    char lgame_id[10];
    char * rgame_id = "-50";
-   
+
    if (intfstream_seek(fd, 0x0183, SEEK_SET) >= 0)
    {
-
       if (intfstream_read(fd, raw_game_id, 11) > 0)
       {
          raw_game_id[11] = '\0';
@@ -435,9 +434,9 @@ int detect_scd_game(intfstream_t *fd, char *game_id)
       return false;
    }
    /** convert raw Sega - Mega-CD - Sega CD serial to redump serial. **/
-   
+
    /** process raw serial to a pre serial without spaces **/
-   remove_spaces(pre_game_id, raw_game_id);  /** rule: remove all spaces from the raw serial globally **/ 
+   remove_spaces(pre_game_id, raw_game_id);  /** rule: remove all spaces from the raw serial globally **/
 
    /** disect this pre serial into parts **/
    length = strlen(pre_game_id);
@@ -450,14 +449,14 @@ int detect_scd_game(intfstream_t *fd, char *game_id)
    check_prefix_mk_hyp[3] = '\0';
    strncpy(check_suffix_50, &pre_game_id[lengthref], length - 2 + 1);
    check_suffix_50[2] = '\0';
-   
+
    /** redump serials are built differently for each prefix **/
    if (!strcmp(check_prefix_t_hyp, "T-") || !strcmp(check_prefix_g_hyp, "G-"))
    {
       index = index_last_occurance(pre_game_id, hyphen);
       if (index == -1)
          return false;
-      strncpy(game_id, pre_game_id, index);  
+      strncpy(game_id, pre_game_id, index);
       return true;
    }
    else if (strcmp(check_prefix_mk_hyp, "MK-") == 0)
@@ -485,7 +484,7 @@ void left_and_right_trim_spaces(char *s)
    int  i,j;
 
    for(i=0;s[i]==' '||s[i]=='\t';i++);
-	
+
    for(j=0;s[i];i++)
    {
       s[j++]=s[i];
@@ -511,7 +510,7 @@ int detect_sat_game(intfstream_t *fd, char *game_id)
    char lgame_id[10];
    char rgame_id[10];
    char * game_id50 = "-50";
-   
+
    if (intfstream_seek(fd, 0x0020, SEEK_SET) >= 0)
    {
 
@@ -524,7 +523,7 @@ int detect_sat_game(intfstream_t *fd, char *game_id)
    {
       return false;
    }
-   
+
    if (intfstream_seek(fd, 0x0040, SEEK_SET) >= 0)
    {
 
@@ -537,9 +536,9 @@ int detect_sat_game(intfstream_t *fd, char *game_id)
    {
       return false;
    }
-   
+
    region_id = raw_region_id[0];
-   
+
    left_and_right_trim_spaces(raw_game_id);
 
    /** disect this raw serial into parts **/
@@ -549,7 +548,7 @@ int detect_sat_game(intfstream_t *fd, char *game_id)
    check_prefix_mk_hyp[3] = '\0';
    length = strlen(raw_game_id);
    raw_game_id[length] = '\0';
-         
+
    /** redump serials are built differently for each region **/
    switch (region_id)
    {
@@ -580,42 +579,42 @@ int detect_sat_game(intfstream_t *fd, char *game_id)
          game_id[length] = '\0';
          return true;
    }
-   
+
    return false;
 }
 
 int count_occurances_single_character(char *str, char t)
 {
-   
-    int ctr = 0;
-    int index = -1;
-	int i;
-    
-    for (i = 0; str[i] != '\0'; ++i) {
-        if (t == str[i])
-            ++ctr;
-    }
 
-    index = ctr;
-    return index;
+   int ctr = 0;
+   int index = -1;
+   int i;
+
+   for (i = 0; str[i] != '\0'; ++i) {
+      if (t == str[i])
+         ++ctr;
+   }
+
+   index = ctr;
+   return index;
 }
 
 void replace_space_with_single_character(char *str, char t)
 {
-    
-    int new_char;
-	int ctr=0; 
-    char *dest = str;
-	
-	
-	while (str[ctr])
-	{
-		new_char=str[ctr];
-		if (isspace(new_char)) 
-		new_char=t;
-		*dest++ = new_char;
-		ctr++;
-	}
+
+   int new_char;
+   int ctr=0;
+   char *dest = str;
+
+
+   while (str[ctr])
+   {
+      new_char=str[ctr];
+      if (isspace(new_char))
+         new_char=t;
+      *dest++ = new_char;
+      ctr++;
+   }
 
     *dest = '\0';
 }
@@ -631,7 +630,7 @@ void replace_multi_space_with_single_space(char *str)
 
        *dest++ = *str++;
     }
-  
+
     *dest = '\0';
 }
 
@@ -666,14 +665,14 @@ int detect_dc_game(intfstream_t *fd, char *game_id)
    {
       return false;
    }
-   
+
    left_and_right_trim_spaces(raw_game_id);
    replace_multi_space_with_single_space(raw_game_id);
    replace_space_with_single_character(raw_game_id, hyphen);
    length = strlen(raw_game_id);
    raw_game_id[length] = '\0';
    total_hyphens = count_occurances_single_character(raw_game_id, hyphen);
-   
+
    /** disect this raw serial into parts **/
    strncpy(check_prefix_t_hyp, raw_game_id, 2);
    check_prefix_t_hyp[2] = '\0';
@@ -714,11 +713,11 @@ int detect_dc_game(intfstream_t *fd, char *game_id)
             strncpy(game_id, raw_game_id, 7);
             game_id[7] = '\0';
             return true;
-         } 
+         }
          else if (length >= 8)
          {
             strncpy(lgame_id, raw_game_id, 7);
-            lgame_id[7] = '\0'; 
+            lgame_id[7] = '\0';
             strncpy(rgame_id, &raw_game_id[length - 2], length - 1);
             rgame_id[length - 1] = '\0';
             strcat(game_id, lgame_id);
@@ -730,15 +729,15 @@ int detect_dc_game(intfstream_t *fd, char *game_id)
    } else if (!strcmp(check_prefix_t, "T"))
    {
       strncpy(lgame_id, raw_game_id, 1);
-      lgame_id[1] = '\0';  			  
+      lgame_id[1] = '\0';
       strncpy(rgame_id, &raw_game_id[1], length - 1);
-      rgame_id[length - 1] = '\0';		  
+      rgame_id[length - 1] = '\0';
       strcat(pre_game_id, lgame_id);
       strcat(pre_game_id, hyphen_str);
       strcat(pre_game_id, rgame_id);
-      
+
       total_hyphens_recalc = count_occurances_single_character(pre_game_id, hyphen);
-      
+
       if (total_hyphens_recalc >= 2)
       {
          index = index_last_occurance(pre_game_id, hyphen);
@@ -823,13 +822,13 @@ int detect_dc_game(intfstream_t *fd, char *game_id)
          strncpy(lgame_id, raw_game_id, 8);
          lgame_id[8] = '\0';
          strncpy(rgame_id, &raw_game_id[length - 2], length - 1);
-         rgame_id[length - 1] = '\0';				  
+         rgame_id[length - 1] = '\0';
          strcat(game_id, lgame_id);
          strcat(game_id, hyphen_str);
-         strcat(game_id, rgame_id); 				  
+         strcat(game_id, rgame_id);
       }
    }
-   
+
    return false;
 }
 
@@ -884,27 +883,27 @@ int detect_system(intfstream_t *fd, const char **system_name)
 {
    int i;
    char magic[50];
-   
+
    RARCH_LOG("%s\n", msg_hash_to_str(MSG_COMPARING_WITH_KNOWN_MAGIC_NUMBERS));
    for (i = 0; MAGIC_NUMBERS[i].system_name != NULL; i++)
    {
-	  if (intfstream_seek(fd, MAGIC_NUMBERS[i].offset, SEEK_SET) >= 0)
+      if (intfstream_seek(fd, MAGIC_NUMBERS[i].offset, SEEK_SET) >= 0)
       {
-		 if (intfstream_read(fd, magic, MAGIC_NUMBERS[i].length_magic) > 0)
+         if (intfstream_read(fd, magic, MAGIC_NUMBERS[i].length_magic) > 0)
          {
-			 magic[MAGIC_NUMBERS[i].length_magic] = '\0';
-			 RARCH_LOG("=== Got here === Offset: %d\n", MAGIC_NUMBERS[i].offset);
-			 RARCH_LOG("=== Got here === Read magic: %s\n", magic);
-             RARCH_LOG("=== Got here === Data magic: %s\n", MAGIC_NUMBERS[i].magic);
+            magic[MAGIC_NUMBERS[i].length_magic] = '\0';
+            RARCH_LOG("=== Got here === Offset: %d\n", MAGIC_NUMBERS[i].offset);
+            RARCH_LOG("=== Got here === Read magic: %s\n", magic);
+            RARCH_LOG("=== Got here === Data magic: %s\n", MAGIC_NUMBERS[i].magic);
             if (memcmp(MAGIC_NUMBERS[i].magic, magic, MAGIC_NUMBERS[i].length_magic) == 0)
             {
                *system_name = MAGIC_NUMBERS[i].system_name;
-			   return true;
+               return true;
             }
-	     }
+         }
       }
    }
-   
+
    return false;
 }
 
