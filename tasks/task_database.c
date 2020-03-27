@@ -238,10 +238,6 @@ static int intfstream_get_serial(intfstream_t *fd, char *game_id, const char *fi
       RARCH_LOG("Serial: %s\n", game_id);
       return 1;
    }
-   else
-   {
-      return 0;
-   }
 
    return 0;
 }
