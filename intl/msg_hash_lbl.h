@@ -205,6 +205,10 @@ MSG_HASH(
    "camera_driver"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_BLUETOOTH_DRIVER,
+   "bluetooth_driver"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_CB_CORE_CONTENT_DIRS_LIST,
    "cb_core_content_dirs_list"
    )
@@ -517,12 +521,24 @@ MSG_HASH(
    "core_updater_show_experimental_cores"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_CORE_UPDATER_AUTO_BACKUP,
+   "core_updater_auto_backup"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CORE_UPDATER_AUTO_BACKUP_HISTORY_SIZE,
+   "core_updater_auto_backup_history_size"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_CORE_UPDATER_BUILDBOT_URL,
    "core_updater_buildbot_url"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_CORE_UPDATER_LIST,
    "core_updater_list"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CORE_MANAGER_LIST,
+   "core_manager_list"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_CPU_ARCHITECTURE,
@@ -761,6 +777,10 @@ MSG_HASH(
    "core_updater"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_CORE_MANAGER_LIST,
+   "deferred_core_manager_list"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_CURSOR_MANAGER_LIST,
    "deferred_cursor_manager_list"
    )
@@ -971,6 +991,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_CRT_SWITCHRES_SETTINGS_LIST,
    "deferred_crt_switchres_settings_list"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_BLUETOOTH_SETTINGS_LIST,
+   "deferred_bluetooth_settings_list"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_WIFI_SETTINGS_LIST,
@@ -1297,6 +1321,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_INPUT_HOTKEY_BINDS_BEGIN,
    "input_hotkey_binds_begin"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_INPUT_HOTKEY_BLOCK_DELAY,
+   "input_hotkey_block_delay"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_INPUT_ICADE_ENABLE,
@@ -1835,6 +1863,10 @@ MSG_HASH(
    "no_netplay_hosts_found"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_NO_BT_DEVICES_FOUND,
+   "no_bt_devices_found"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_NO_NETWORKS_FOUND,
    "no_networks_found"
    )
@@ -1917,6 +1949,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_OVERLAY_SCALE,
    "input_overlay_scale"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_OVERLAY_CENTER_X,
+   "input_overlay_center_x"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_OVERLAY_CENTER_Y,
+   "input_overlay_center_y"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_PAL60_ENABLE,
@@ -3059,12 +3099,32 @@ MSG_HASH(
    "video_shader_preset_save_as"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_SAVE_GLOBAL,
+   "video_shader_preset_save_global"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_SAVE_CORE,
+   "video_shader_preset_save_core"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_SAVE_PARENT,
+   "video_shader_preset_save_parent"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_SAVE_GAME,
+   "video_shader_preset_save_game"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_SHADER_SCALE_PASS,
    "video_shader_scale_pass"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_SHARED_CONTEXT,
    "video_shared_context"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_ADD_NULL_DRIVERS,
+   "ignore_null_drivers"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_SMOOTH,
@@ -3169,6 +3229,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_WIFI_SETTINGS,
    "wifi_settings"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_BLUETOOTH_SETTINGS,
+   "bluetooth_settings"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_XMB_ALPHA_FACTOR,
@@ -3495,6 +3559,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_MENU_SCROLL_FAST,
    "menu_scroll_fast"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CORE_LOCK,
+   "core_lock"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_CORE_DELETE,
@@ -4451,6 +4519,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_MANUAL_CONTENT_SCAN_FILE_EXTS,
    "manual_content_scan_file_exts"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_MANUAL_CONTENT_SCAN_SEARCH_RECURSIVELY,
+   "manual_content_scan_search_recursively"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_MANUAL_CONTENT_SCAN_SEARCH_ARCHIVES,

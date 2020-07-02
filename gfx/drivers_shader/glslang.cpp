@@ -172,22 +172,25 @@ SlangProcess::SlangProcess()
       const char *value_str = strtok(0, delims);
       int             value = (int)strtoul(value_str, nullptr, 0);
 
-      if (string_starts_with(token, "Max"))
+      if (string_starts_with_size(token, "Max", STRLEN_CONST("Max")))
       {
-         if (string_starts_with(token, "MaxCompute"))
+         if (string_starts_with_size(token, "MaxCompute", STRLEN_CONST("MaxCompute")))
          {
-            if (string_is_equal(token, "MaxComputeWorkGroupCountX"))
-               Resources.maxComputeWorkGroupCountX = value;
-            else if (string_is_equal(token, "MaxComputeWorkGroupCountY"))
-               Resources.maxComputeWorkGroupCountY = value;
-            else if (string_is_equal(token, "MaxComputeWorkGroupCountZ"))
-               Resources.maxComputeWorkGroupCountZ = value;
-            else if (string_is_equal(token, "MaxComputeWorkGroupSizeX"))
-               Resources.maxComputeWorkGroupSizeX = value;
-            else if (string_is_equal(token, "MaxComputeWorkGroupSizeY"))
-               Resources.maxComputeWorkGroupSizeY = value;
-            else if (string_is_equal(token, "MaxComputeWorkGroupSizeZ"))
-               Resources.maxComputeWorkGroupSizeZ = value;
+            if (string_starts_with_size(token, "MaxComputeWork", STRLEN_CONST("MaxComputeWork")))
+            {
+               if (string_is_equal(token, "MaxComputeWorkGroupCountX"))
+                  Resources.maxComputeWorkGroupCountX = value;
+               else if (string_is_equal(token, "MaxComputeWorkGroupCountY"))
+                  Resources.maxComputeWorkGroupCountY = value;
+               else if (string_is_equal(token, "MaxComputeWorkGroupCountZ"))
+                  Resources.maxComputeWorkGroupCountZ = value;
+               else if (string_is_equal(token, "MaxComputeWorkGroupSizeX"))
+                  Resources.maxComputeWorkGroupSizeX = value;
+               else if (string_is_equal(token, "MaxComputeWorkGroupSizeY"))
+                  Resources.maxComputeWorkGroupSizeY = value;
+               else if (string_is_equal(token, "MaxComputeWorkGroupSizeZ"))
+                  Resources.maxComputeWorkGroupSizeZ = value;
+            }
             else if (string_is_equal(token, "MaxComputeUniformComponents"))
                Resources.maxComputeUniformComponents = value;
             else if (string_is_equal(token, "MaxComputeTextureImageUnits"))
@@ -199,7 +202,7 @@ SlangProcess::SlangProcess()
             else if (string_is_equal(token, "MaxComputeAtomicCounterBuffers"))
                Resources.maxComputeAtomicCounterBuffers = value;
          }
-         else if (string_starts_with(token, "MaxVertex"))
+         else if (string_starts_with_size(token, "MaxVertex", STRLEN_CONST("MaxVertex")))
          {
             if (string_is_equal(token, "MaxVertexAttribs"))
                Resources.maxVertexAttribs = value;
@@ -220,42 +223,65 @@ SlangProcess::SlangProcess()
             else if (string_is_equal(token, "MaxVertexAtomicCounterBuffers"))
                Resources.maxVertexAtomicCounterBuffers = value;
          }
-         else if (string_starts_with(token, "MaxTess"))
+         else if (string_starts_with_size(token, "MaxTess", STRLEN_CONST("MaxTess")))
          {
-            if (string_is_equal(token, "MaxTessControlInputComponents"))
-               Resources.maxTessControlInputComponents = value;
-            else if (string_is_equal(token, "MaxTessControlOutputComponents"))
-               Resources.maxTessControlOutputComponents = value;
-            else if (string_is_equal(token, "MaxTessControlTextureImageUnits"))
-               Resources.maxTessControlTextureImageUnits = value;
-            else if (string_is_equal(token, "MaxTessControlUniformComponents"))
-               Resources.maxTessControlUniformComponents = value;
-            else if (string_is_equal(token, "MaxTessControlTotalOutputComponents"))
-               Resources.maxTessControlTotalOutputComponents = value;
-            else if (string_is_equal(token, "MaxTessEvaluationInputComponents"))
-               Resources.maxTessEvaluationInputComponents = value;
-            else if (string_is_equal(token, "MaxTessEvaluationOutputComponents"))
-               Resources.maxTessEvaluationOutputComponents = value;
-            else if (string_is_equal(token, "MaxTessEvaluationTextureImageUnits"))
-               Resources.maxTessEvaluationTextureImageUnits = value;
-            else if (string_is_equal(token, "MaxTessEvaluationUniformComponents"))
-               Resources.maxTessEvaluationUniformComponents = value;
+            if (string_starts_with_size(token, "MaxTessEvaluation", STRLEN_CONST("MaxTessEvaluation")))
+            {
+               if (string_is_equal(token, "MaxTessEvaluationInputComponents"))
+                  Resources.maxTessEvaluationInputComponents = value;
+               else if (string_is_equal(token, "MaxTessEvaluationOutputComponents"))
+                  Resources.maxTessEvaluationOutputComponents = value;
+               else if (string_is_equal(token, "MaxTessEvaluationTextureImageUnits"))
+                  Resources.maxTessEvaluationTextureImageUnits = value;
+               else if (string_is_equal(token, "MaxTessEvaluationUniformComponents"))
+                  Resources.maxTessEvaluationUniformComponents = value;
+               else if (string_is_equal(token, "MaxTessEvaluationAtomicCounters"))
+                  Resources.maxTessEvaluationAtomicCounters = value;
+               else if (string_is_equal(token, "MaxTessEvaluationAtomicCounterBuffers"))
+                  Resources.maxTessEvaluationAtomicCounterBuffers = value;
+               else if (string_is_equal(token, "MaxTessEvaluationImageUniforms"))
+                  Resources.maxTessEvaluationImageUniforms = value;
+            }
+            else if (string_starts_with_size(token, "MaxTessControl", STRLEN_CONST("MaxTessControl")))
+            {
+               if (string_is_equal(token, "MaxTessControlInputComponents"))
+                  Resources.maxTessControlInputComponents = value;
+               else if (string_is_equal(token, "MaxTessControlOutputComponents"))
+                  Resources.maxTessControlOutputComponents = value;
+               else if (string_is_equal(token, "MaxTessControlTextureImageUnits"))
+                  Resources.maxTessControlTextureImageUnits = value;
+               else if (string_is_equal(token, "MaxTessControlUniformComponents"))
+                  Resources.maxTessControlUniformComponents = value;
+               else if (string_is_equal(token, "MaxTessControlTotalOutputComponents"))
+                  Resources.maxTessControlTotalOutputComponents = value;
+               else if (string_is_equal(token, "MaxTessControlAtomicCounters"))
+                  Resources.maxTessControlAtomicCounters = value;
+               else if (string_is_equal(token, "MaxTessControlAtomicCounterBuffers"))
+                  Resources.maxTessControlAtomicCounterBuffers = value;
+               else if (string_is_equal(token, "MaxTessControlImageUniforms"))
+                  Resources.maxTessControlImageUniforms = value;
+            }
             else if (string_is_equal(token, "MaxTessPatchComponents"))
                Resources.maxTessPatchComponents = value;
             else if (string_is_equal(token, "MaxTessGenLevel"))
                Resources.maxTessGenLevel = value;
-            else if (string_is_equal(token, "MaxTessControlAtomicCounters"))
-               Resources.maxTessControlAtomicCounters = value;
-            else if (string_is_equal(token, "MaxTessEvaluationAtomicCounters"))
-               Resources.maxTessEvaluationAtomicCounters = value;
-            else if (string_is_equal(token, "MaxTessControlAtomicCounterBuffers"))
-               Resources.maxTessControlAtomicCounterBuffers = value;
-            else if (string_is_equal(token, "MaxTessEvaluationAtomicCounterBuffers"))
-               Resources.maxTessEvaluationAtomicCounterBuffers = value;
-            else if (string_is_equal(token, "MaxTessControlImageUniforms"))
-               Resources.maxTessControlImageUniforms = value;
-            else if (string_is_equal(token, "MaxTessEvaluationImageUniforms"))
-               Resources.maxTessEvaluationImageUniforms = value;
+         }
+         else if (string_starts_with_size(token, "MaxFragment", STRLEN_CONST("MaxFragment")))
+         {
+            if (string_is_equal(token, "MaxFragmentUniformComponents"))
+               Resources.maxFragmentUniformComponents = value;
+            else if (string_is_equal(token, "MaxFragmentUniformVectors"))
+               Resources.maxFragmentUniformVectors = value;
+            else if (string_is_equal(token, "MaxFragmentInputVectors"))
+               Resources.maxFragmentInputVectors = value;
+            else if (string_is_equal(token, "MaxFragmentInputComponents"))
+               Resources.maxFragmentInputComponents = value;
+            else if (string_is_equal(token, "MaxFragmentImageUniforms"))
+               Resources.maxFragmentImageUniforms = value;
+            else if (string_is_equal(token, "MaxFragmentAtomicCounters"))
+               Resources.maxFragmentAtomicCounters = value;
+            else if (string_is_equal(token, "MaxFragmentAtomicCounterBuffers"))
+               Resources.maxFragmentAtomicCounterBuffers = value;
          }
          else if (string_is_equal(token, "MaxLights"))
             Resources.maxLights = value;
@@ -271,18 +297,10 @@ SlangProcess::SlangProcess()
             Resources.maxCombinedTextureImageUnits = value;
          else if (string_is_equal(token, "MaxTextureImageUnits"))
             Resources.maxTextureImageUnits = value;
-         else if (string_is_equal(token, "MaxFragmentUniformComponents"))
-            Resources.maxFragmentUniformComponents = value;
          else if (string_is_equal(token, "MaxDrawBuffers"))
             Resources.maxDrawBuffers = value;
          else if (string_is_equal(token, "MaxVaryingVectors"))
             Resources.maxVaryingVectors = value;
-         else if (string_is_equal(token, "MaxFragmentUniformVectors"))
-            Resources.maxFragmentUniformVectors = value;
-         else if (string_is_equal(token, "MaxFragmentInputVectors"))
-            Resources.maxFragmentInputVectors = value;
-         else if (string_is_equal(token, "MinProgramTexelOffset"))
-            Resources.minProgramTexelOffset = value;
          else if (string_is_equal(token, "MaxProgramTexelOffset"))
             Resources.maxProgramTexelOffset = value;
          else if (string_is_equal(token, "MaxClipDistances"))
@@ -293,8 +311,6 @@ SlangProcess::SlangProcess()
             Resources.maxGeometryInputComponents = value;
          else if (string_is_equal(token, "MaxGeometryOutputComponents"))
             Resources.maxGeometryOutputComponents = value;
-         else if (string_is_equal(token, "MaxFragmentInputComponents"))
-            Resources.maxFragmentInputComponents = value;
          else if (string_is_equal(token, "MaxImageUnits"))
             Resources.maxImageUnits = value;
          else if (string_is_equal(token, "MaxCombinedImageUnitsAndFragmentOutputs"))
@@ -305,8 +321,6 @@ SlangProcess::SlangProcess()
             Resources.maxImageSamples = value;
          else if (string_is_equal(token, "MaxGeometryImageUniforms"))
             Resources.maxGeometryImageUniforms = value;
-         else if (string_is_equal(token, "MaxFragmentImageUniforms"))
-            Resources.maxFragmentImageUniforms = value;
          else if (string_is_equal(token, "MaxCombinedImageUniforms"))
             Resources.maxCombinedImageUniforms = value;
          else if (string_is_equal(token, "MaxGeometryTextureImageUnits"))
@@ -325,16 +339,12 @@ SlangProcess::SlangProcess()
             Resources.maxViewports = value;
          else if (string_is_equal(token, "MaxGeometryAtomicCounters"))
             Resources.maxGeometryAtomicCounters = value;
-         else if (string_is_equal(token, "MaxFragmentAtomicCounters"))
-            Resources.maxFragmentAtomicCounters = value;
          else if (string_is_equal(token, "MaxCombinedAtomicCounters"))
             Resources.maxCombinedAtomicCounters = value;
          else if (string_is_equal(token, "MaxAtomicCounterBindings"))
             Resources.maxAtomicCounterBindings = value;
          else if (string_is_equal(token, "MaxGeometryAtomicCounterBuffers"))
             Resources.maxGeometryAtomicCounterBuffers = value;
-         else if (string_is_equal(token, "MaxFragmentAtomicCounterBuffers"))
-            Resources.maxFragmentAtomicCounterBuffers = value;
          else if (string_is_equal(token, "MaxCombinedAtomicCounterBuffers"))
             Resources.maxCombinedAtomicCounterBuffers = value;
          else if (string_is_equal(token, "MaxAtomicCounterBufferSize"))
@@ -350,7 +360,7 @@ SlangProcess::SlangProcess()
          else if (string_is_equal(token, "MaxSamples"))
             Resources.maxSamples = value;
       }
-      else if (string_starts_with(token, "general"))
+      else if (string_starts_with_size(token, "general", STRLEN_CONST("general")))
       {
          if (string_is_equal(token, "generalUniformIndexing"))
             Resources.limits.generalUniformIndexing = (value != 0);
@@ -365,6 +375,8 @@ SlangProcess::SlangProcess()
          else if (string_is_equal(token, "generalConstantMatrixVectorIndexing"))
             Resources.limits.generalConstantMatrixVectorIndexing = (value != 0);
       }
+      else if (string_is_equal(token, "MinProgramTexelOffset"))
+         Resources.minProgramTexelOffset = value;
       else if (string_is_equal(token, "nonInductiveForLoops"))
          Resources.limits.nonInductiveForLoops = (value != 0);
       else if (string_is_equal(token, "whileLoops"))

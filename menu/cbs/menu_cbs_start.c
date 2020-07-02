@@ -34,8 +34,11 @@
 #include "../../core.h"
 #include "../../core_info.h"
 #include "../../managers/core_option_manager.h"
+#ifdef HAVE_CHEATS
 #include "../../managers/cheat_manager.h"
+#endif
 #include "../../retroarch.h"
+#include "../../verbosity.h"
 #include "../../performance_counters.h"
 #include "../../playlist.h"
 #include "../../manual_content_scan.h"
@@ -278,6 +281,7 @@ static int action_start_shader_num_passes(
 }
 #endif
 
+#ifdef HAVE_CHEATS
 static int action_start_cheat_num_passes(
       const char *path, const char *label,
       unsigned type, size_t idx, size_t entry_idx)
@@ -291,6 +295,7 @@ static int action_start_cheat_num_passes(
 
    return 0;
 }
+#endif
 
 static int action_start_core_setting(
       const char *path, const char *label,
@@ -309,10 +314,7 @@ static int action_start_playlist_association(
       const char *path, const char *label,
       unsigned type, size_t idx, size_t entry_idx)
 {
-   settings_t *settings         = config_get_ptr();
-   bool playlist_use_old_format = settings->bools.playlist_use_old_format;
-   bool playlist_compression    = settings->bools.playlist_compression;
-   playlist_t *playlist         = playlist_get_cached();
+   playlist_t *playlist = playlist_get_cached();
 
    if (!playlist)
       return -1;
@@ -320,8 +322,7 @@ static int action_start_playlist_association(
    /* Set default core path + name to DETECT */
    playlist_set_default_core_path(playlist, file_path_str(FILE_PATH_DETECT));
    playlist_set_default_core_name(playlist, file_path_str(FILE_PATH_DETECT));
-   playlist_write_file(
-         playlist, playlist_use_old_format, playlist_compression);
+   playlist_write_file(playlist);
 
    return 0;
 }
@@ -330,18 +331,14 @@ static int action_start_playlist_label_display_mode(
       const char *path, const char *label,
       unsigned type, size_t idx, size_t entry_idx)
 {
-   settings_t *settings         = config_get_ptr();
-   bool playlist_use_old_format = settings->bools.playlist_use_old_format;
-   bool playlist_compression    = settings->bools.playlist_compression;
-   playlist_t *playlist         = playlist_get_cached();
+   playlist_t *playlist = playlist_get_cached();
 
    if (!playlist)
       return -1;
 
    /* Set label display mode to the default */
    playlist_set_label_display_mode(playlist, LABEL_DISPLAY_MODE_DEFAULT);
-   playlist_write_file(
-         playlist, playlist_use_old_format, playlist_compression);
+   playlist_write_file(playlist);
 
    return 0;
 }
@@ -350,18 +347,14 @@ static int action_start_playlist_right_thumbnail_mode(
       const char *path, const char *label,
       unsigned type, size_t idx, size_t entry_idx)
 {
-   settings_t *settings         = config_get_ptr();
-   bool playlist_use_old_format = settings->bools.playlist_use_old_format;
-   bool playlist_compression    = settings->bools.playlist_compression;
-   playlist_t *playlist         = playlist_get_cached();
+   playlist_t *playlist = playlist_get_cached();
 
    if (!playlist)
       return -1;
 
    /* Set thumbnail_mode to default value */
    playlist_set_thumbnail_mode(playlist, PLAYLIST_THUMBNAIL_RIGHT, PLAYLIST_THUMBNAIL_MODE_DEFAULT);
-   playlist_write_file(
-         playlist, playlist_use_old_format, playlist_compression);
+   playlist_write_file(playlist);
 
    return 0;
 }
@@ -370,18 +363,14 @@ static int action_start_playlist_left_thumbnail_mode(
       const char *path, const char *label,
       unsigned type, size_t idx, size_t entry_idx)
 {
-   settings_t *settings         = config_get_ptr();
-   bool playlist_use_old_format = settings->bools.playlist_use_old_format;
-   bool playlist_compression    = settings->bools.playlist_compression;
-   playlist_t *playlist         = playlist_get_cached();
+   playlist_t *playlist = playlist_get_cached();
 
    if (!playlist)
       return -1;
 
    /* Set thumbnail_mode to default value */
    playlist_set_thumbnail_mode(playlist, PLAYLIST_THUMBNAIL_LEFT, PLAYLIST_THUMBNAIL_MODE_DEFAULT);
-   playlist_write_file(
-         playlist, playlist_use_old_format, playlist_compression);
+   playlist_write_file(playlist);
 
    return 0;
 }
@@ -390,18 +379,14 @@ static int action_start_playlist_sort_mode(
       const char *path, const char *label,
       unsigned type, size_t idx, size_t entry_idx)
 {
-   settings_t *settings         = config_get_ptr();
-   bool playlist_use_old_format = settings->bools.playlist_use_old_format;
-   bool playlist_compression    = settings->bools.playlist_compression;
-   playlist_t *playlist         = playlist_get_cached();
+   playlist_t *playlist = playlist_get_cached();
 
    if (!playlist)
       return -1;
 
    /* Set sort mode to the default */
    playlist_set_sort_mode(playlist, PLAYLIST_SORT_MODE_DEFAULT);
-   playlist_write_file(
-         playlist, playlist_use_old_format, playlist_compression);
+   playlist_write_file(playlist);
 
    return 0;
 }
@@ -495,6 +480,70 @@ static int action_start_core_updater_entry(
 }
 #endif
 
+static int action_start_core_lock(
+      const char *path, const char *label,
+      unsigned type, size_t idx, size_t entry_idx)
+{
+   const char *core_path = path;
+   bool refresh          = false;
+   int ret               = 0;
+
+   if (string_is_empty(core_path))
+      return -1;
+
+   /* Core should be unlocked by default
+    * > If it is currently unlocked, do nothing */
+   if (!core_info_get_core_lock(core_path, true))
+      return ret;
+
+   /* ...Otherwise, attempt to unlock it */
+   if (!core_info_set_core_lock(core_path, false))
+   {
+      const char *core_name = NULL;
+      core_info_ctx_find_t core_info;
+      char msg[PATH_MAX_LENGTH];
+
+      msg[0] = '\0';
+
+      /* Need to fetch core name for error message */
+      core_info.inf  = NULL;
+      core_info.path = core_path;
+
+      /* If core is found, use display name */
+      if (core_info_find(&core_info) &&
+          core_info.inf->display_name)
+         core_name = core_info.inf->display_name;
+      /* If not, use core file name */
+      else
+         core_name = path_basename(core_path);
+
+      /* Build error message */
+      strlcpy(msg, msg_hash_to_str(MSG_CORE_UNLOCK_FAILED), sizeof(msg));
+
+      if (!string_is_empty(core_name))
+         strlcat(msg, core_name, sizeof(msg));
+
+      /* Generate log + notification */
+      RARCH_ERR("%s\n", msg);
+
+      runloop_msg_queue_push(
+         msg,
+         1, 100, true,
+         NULL, MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
+
+      ret = -1;
+   }
+
+   /* Whenever lock status is changed, menu must be
+    * refreshed - do this even in the event of an error,
+    * since we don't want to leave the menu in an
+    * undefined state */
+   menu_entries_ctl(MENU_ENTRIES_CTL_SET_REFRESH, &refresh);
+   menu_driver_ctl(RARCH_MENU_CTL_SET_PREVENT_POPULATE, NULL);
+
+   return ret;
+}
+
 static int action_start_lookup_setting(
       const char *path, const char *label,
       unsigned type, size_t idx, size_t entry_idx)
@@ -546,7 +595,9 @@ static int menu_cbs_init_bind_start_compare_label(menu_file_list_cbs_t *cbs)
 #endif
             break;
          case MENU_ENUM_LABEL_CHEAT_NUM_PASSES:
+#ifdef HAVE_CHEATS
             BIND_ACTION_START(cbs, action_start_cheat_num_passes);
+#endif
             break;
          case MENU_ENUM_LABEL_SCREEN_RESOLUTION:
             BIND_ACTION_START(cbs, action_start_video_resolution);
@@ -636,6 +687,9 @@ static int menu_cbs_init_bind_start_compare_type(menu_file_list_cbs_t *cbs,
             BIND_ACTION_START(cbs, action_start_core_updater_entry);
             break;
 #endif
+         case MENU_SETTING_ACTION_CORE_LOCK:
+            BIND_ACTION_START(cbs, action_start_core_lock);
+            break;
          default:
             return -1;
       }

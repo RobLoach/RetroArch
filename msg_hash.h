@@ -164,6 +164,11 @@ enum msg_file_type
 enum msg_hash_enums
 {
    MSG_UNKNOWN = 0,
+   MSG_INTERNET,
+   MSG_INTERNET_RELAY,
+   MSG_READ_WRITE,
+   MSG_READ_ONLY,
+   MSG_LOCAL,
    MSG_SETTING_DISK_IN_TRAY,
    MSG_FAILED_TO_SET_DISK,
    MSG_FAILED_TO_SET_INITIAL_DISK,
@@ -368,7 +373,9 @@ enum msg_hash_enums
    MSG_TOGGLE_CONTENT_METADATA,
    MSG_NO_THUMBNAIL_AVAILABLE,
    MSG_PRESS_AGAIN_TO_QUIT,
+   MSG_BLUETOOTH_SCAN_COMPLETE,
    MSG_WIFI_SCAN_COMPLETE,
+   MSG_SCANNING_BLUETOOTH_DEVICES,
    MSG_SCANNING_WIRELESS_NETWORKS,
    MSG_FAILED_TO_TAKE_SCREENSHOT,
    MSG_CUSTOM_TIMING_GIVEN,
@@ -687,6 +694,7 @@ enum msg_hash_enums
    MENU_ENUM_LABEL_SYSTEM_INFO_ENTRY,
    MENU_ENUM_LABEL_SYSTEM_INFO_CONTROLLER_ENTRY,
    MENU_ENUM_LABEL_CORE_INFO_ENTRY,
+   MENU_ENUM_LABEL_CORE_MANAGER_ENTRY,
    MENU_ENUM_LABEL_PLAYLIST_ENTRY,
 
    MENU_LABEL(START_VIDEO_PROCESSOR),
@@ -708,6 +716,7 @@ enum msg_hash_enums
    MENU_ENUM_LABEL_INPUT_SETTINGS_BEGIN,
 
    MENU_LABEL(INPUT_HOTKEY_BINDS),
+   MENU_LABEL(INPUT_HOTKEY_BLOCK_DELAY),
    MENU_LABEL(INPUT_SPLIT_JOYCON),
 
    MENU_ENUM_LABEL_INPUT_HOTKEY_BINDS_BEGIN,
@@ -849,6 +858,49 @@ enum msg_hash_enums
    MENU_ENUM_LABEL_VALUE_INPUT_SAVE_AUTOCONFIG,
    MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_INDEX,
 
+   MENU_ENUM_SUBLABEL_INPUT_META_FAST_FORWARD_KEY,
+   MENU_ENUM_SUBLABEL_INPUT_META_FAST_FORWARD_HOLD_KEY,
+   MENU_ENUM_SUBLABEL_INPUT_META_SLOWMOTION_KEY,
+   MENU_ENUM_SUBLABEL_INPUT_META_SLOWMOTION_HOLD_KEY,
+   MENU_ENUM_SUBLABEL_INPUT_META_LOAD_STATE_KEY,
+   MENU_ENUM_SUBLABEL_INPUT_META_SAVE_STATE_KEY,
+   MENU_ENUM_SUBLABEL_INPUT_META_FULLSCREEN_TOGGLE_KEY,
+   MENU_ENUM_SUBLABEL_INPUT_META_QUIT_KEY,
+   MENU_ENUM_SUBLABEL_INPUT_META_RESTART_KEY,
+   MENU_ENUM_SUBLABEL_INPUT_META_STATE_SLOT_PLUS,
+   MENU_ENUM_SUBLABEL_INPUT_META_STATE_SLOT_MINUS,
+   MENU_ENUM_SUBLABEL_INPUT_META_REWIND_HOTKEY,
+   MENU_ENUM_SUBLABEL_INPUT_META_BSV_RECORD_TOGGLE,
+   MENU_ENUM_SUBLABEL_INPUT_META_PAUSE_TOGGLE,
+   MENU_ENUM_SUBLABEL_INPUT_META_FRAMEADVANCE,
+   MENU_ENUM_SUBLABEL_INPUT_META_RESET,
+   MENU_ENUM_SUBLABEL_INPUT_META_SHADER_NEXT,
+   MENU_ENUM_SUBLABEL_INPUT_META_SHADER_PREV,
+   MENU_ENUM_SUBLABEL_INPUT_META_CHEAT_INDEX_PLUS,
+   MENU_ENUM_SUBLABEL_INPUT_META_CHEAT_INDEX_MINUS,
+   MENU_ENUM_SUBLABEL_INPUT_META_CHEAT_TOGGLE,
+   MENU_ENUM_SUBLABEL_INPUT_META_SCREENSHOT,
+   MENU_ENUM_SUBLABEL_INPUT_META_MUTE,
+   MENU_ENUM_SUBLABEL_INPUT_META_OSK,
+   MENU_ENUM_SUBLABEL_INPUT_META_FPS_TOGGLE,
+   MENU_ENUM_SUBLABEL_INPUT_META_SEND_DEBUG_INFO,
+   MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_HOST_TOGGLE,
+   MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_GAME_WATCH,
+   MENU_ENUM_SUBLABEL_INPUT_META_ENABLE_HOTKEY,
+   MENU_ENUM_SUBLABEL_INPUT_META_VOLUME_UP,
+   MENU_ENUM_SUBLABEL_INPUT_META_VOLUME_DOWN,
+   MENU_ENUM_SUBLABEL_INPUT_META_OVERLAY_NEXT,
+   MENU_ENUM_SUBLABEL_INPUT_META_DISK_EJECT_TOGGLE,
+   MENU_ENUM_SUBLABEL_INPUT_META_DISK_NEXT,
+   MENU_ENUM_SUBLABEL_INPUT_META_DISK_PREV,
+   MENU_ENUM_SUBLABEL_INPUT_META_GRAB_MOUSE_TOGGLE,
+   MENU_ENUM_SUBLABEL_INPUT_META_GAME_FOCUS_TOGGLE,
+   MENU_ENUM_SUBLABEL_INPUT_META_UI_COMPANION_TOGGLE,
+   MENU_ENUM_SUBLABEL_INPUT_META_RECORDING_TOGGLE,
+   MENU_ENUM_SUBLABEL_INPUT_META_STREAMING_TOGGLE,
+   MENU_ENUM_SUBLABEL_INPUT_META_AI_SERVICE,
+   MENU_ENUM_SUBLABEL_INPUT_META_MENU_TOGGLE,
+
    MENU_LABEL(INPUT_MAX_USERS),
    MENU_LABEL(INPUT_USER_BINDS),
    MENU_LABEL(INPUT_DUTY_CYCLE),
@@ -925,6 +977,7 @@ enum msg_hash_enums
    MENU_LABEL(SCREEN_ORIENTATION),
    MENU_LABEL(VIDEO_SCALE),
    MENU_LABEL(VIDEO_RECORD_THREADS),
+   MENU_LABEL(ADD_NULL_DRIVERS),
    MENU_LABEL(VIDEO_SMOOTH),
    MENU_LABEL(VIDEO_CTX_SCALING),
 #ifdef HAVE_ODROIDGO2
@@ -1208,6 +1261,7 @@ enum msg_hash_enums
    MENU_LABEL(RETRO_ACHIEVEMENTS_SETTINGS),
    MENU_LABEL(MENU_FILE_BROWSER_SETTINGS),
    MENU_LABEL(UPDATER_SETTINGS),
+   MENU_LABEL(BLUETOOTH_SETTINGS),
    MENU_LABEL(WIFI_SETTINGS),
    MENU_LABEL(USER_SETTINGS),
    MENU_LABEL(DIRECTORY_SETTINGS),
@@ -1218,6 +1272,7 @@ enum msg_hash_enums
    MENU_LABEL(NETWORK_SETTINGS),
    MENU_LABEL(NETPLAY_LAN_SCAN_SETTINGS),
 
+   MENU_ENUM_LABEL_CONNECT_BLUETOOTH,
    MENU_ENUM_LABEL_CONNECT_WIFI,
    MENU_ENUM_LABEL_CONNECT_NETPLAY_ROOM,
    MENU_ENUM_LABEL_CONNECT_NETPLAY_LAN,
@@ -1335,6 +1390,7 @@ enum msg_hash_enums
    MENU_ENUM_LABEL_DEFERRED_RPL_ENTRY_ACTIONS,
    MENU_ENUM_LABEL_DEFERRED_CORE_LIST,
    MENU_ENUM_LABEL_DEFERRED_CORE_UPDATER_LIST,
+   MENU_ENUM_LABEL_DEFERRED_CORE_MANAGER_LIST,
    MENU_ENUM_LABEL_DEFERRED_THUMBNAILS_UPDATER_LIST,
    MENU_ENUM_LABEL_DEFERRED_PL_THUMBNAILS_UPDATER_LIST,
    MENU_ENUM_LABEL_DEFERRED_RECORDING_SETTINGS_LIST,
@@ -1377,6 +1433,7 @@ enum msg_hash_enums
    MENU_ENUM_LABEL_DEFERRED_MENU_FILE_BROWSER_SETTINGS_LIST,
    MENU_ENUM_LABEL_DEFERRED_RETRO_ACHIEVEMENTS_SETTINGS_LIST,
    MENU_ENUM_LABEL_DEFERRED_UPDATER_SETTINGS_LIST,
+   MENU_ENUM_LABEL_DEFERRED_BLUETOOTH_SETTINGS_LIST,
    MENU_ENUM_LABEL_DEFERRED_WIFI_SETTINGS_LIST,
    MENU_ENUM_LABEL_DEFERRED_SUBSYSTEM_SETTINGS_LIST,
    MENU_ENUM_LABEL_DEFERRED_NETWORK_HOSTING_SETTINGS_LIST,
@@ -1457,6 +1514,7 @@ enum msg_hash_enums
    MENU_LABEL(LOAD_CONTENT_SPECIAL),
    MENU_LABEL(NO_SETTINGS_FOUND),
    MENU_LABEL(NO_PRESETS_FOUND),
+   MENU_LABEL(NO_BT_DEVICES_FOUND),
    MENU_LABEL(NO_NETWORKS_FOUND),
    MENU_LABEL(NO_PERFORMANCE_COUNTERS),
    MENU_LABEL(FRAME_THROTTLE_SETTINGS),
@@ -1563,6 +1621,17 @@ enum msg_hash_enums
    MENU_LABEL(REWIND_GRANULARITY),
    MENU_LABEL(REWIND_BUFFER_SIZE),
    MENU_LABEL(REWIND_BUFFER_SIZE_STEP),
+   /* TODO/FIXME: INPUT_META_REWIND is incorrectly defined;
+    * the LABEL/SUBLABEL enums should be entered 'manually',
+    * like all the other hotkeys. Moreover, the resultant
+    * MENU_ENUM_SUBLABEL_INPUT_META_REWIND enum is incorrectly
+    * used for the MENU_ENUM_LABEL_REWIND_SETTINGS menu entry.
+    * Because of this mistake, we now have improper entries
+    * in all the translation files, which cannot easily be removed
+    * now that everything is handled via Crowdin.
+    * To work around this error, we have to use a separate
+    * MENU_ENUM_SUBLABEL_INPUT_META_REWIND_HOTKEY enum
+    * for the actual rewind hotkey sublabel... */
    MENU_LABEL(INPUT_META_REWIND),
    MENU_LABEL(INPUT_META_CHEAT_DETAILS),
    MENU_LABEL(INPUT_META_CHEAT_SEARCH),
@@ -1679,6 +1748,8 @@ enum msg_hash_enums
    MENU_LABEL(NETPLAY_MODE),
    MENU_LABEL(PERFCNT_ENABLE),
    MENU_LABEL(OVERLAY_SCALE),
+   MENU_LABEL(OVERLAY_CENTER_X),
+   MENU_LABEL(OVERLAY_CENTER_Y),
    MENU_LABEL(OVERLAY_PRESET),
    MENU_LABEL(OVERLAY_OPACITY),
 
@@ -1711,6 +1782,7 @@ enum msg_hash_enums
    MENU_LABEL(MENU_DRIVER),
    MENU_LABEL(LOCATION_DRIVER),
    MENU_LABEL(CAMERA_DRIVER),
+   MENU_LABEL(BLUETOOTH_DRIVER),
    MENU_LABEL(WIFI_DRIVER),
    MENU_LABEL(AUDIO_RESAMPLER_DRIVER),
    MENU_LABEL(RECORD_DRIVER),
@@ -1888,8 +1960,11 @@ enum msg_hash_enums
    MENU_LABEL(FAVORITES),
    MENU_LABEL(START_CORE),
    MENU_LABEL(CORE_UPDATER_LIST),
+   MENU_LABEL(CORE_MANAGER_LIST),
    MENU_LABEL(CORE_UPDATER_AUTO_EXTRACT_ARCHIVE),
    MENU_LABEL(CORE_UPDATER_SHOW_EXPERIMENTAL_CORES),
+   MENU_LABEL(CORE_UPDATER_AUTO_BACKUP),
+   MENU_LABEL(CORE_UPDATER_AUTO_BACKUP_HISTORY_SIZE),
    MENU_LABEL(CORE_UPDATER_BUILDBOT_URL),
    MENU_LABEL(BUILDBOT_ASSETS_URL),
    MENU_LABEL(CORE_SET_SUPPORTS_NO_CONTENT_ENABLE),
@@ -1900,6 +1975,9 @@ enum msg_hash_enums
    MENU_LABEL(SHUTDOWN),
    MENU_LABEL(REBOOT),
    MENU_LABEL(DISK_IMAGE_APPEND),
+
+   MENU_ENUM_SUBLABEL_DISK_IMAGE_APPEND_TRAY_OPEN,
+
    MENU_LABEL(SUBSYSTEM_ADD),
    MENU_LABEL(SUBSYSTEM_LOAD),
    MENU_LABEL(CORE_LIST),
@@ -1908,6 +1986,7 @@ enum msg_hash_enums
    MENU_LABEL(SIDELOAD_CORE_ERROR),
    MENU_LABEL(SIDELOAD_CORE_SUCCESS),
    MENU_LABEL(MANAGEMENT),
+   MENU_LABEL(BT_CONNECTED),
    MENU_LABEL(ONLINE),
    MENU_LABEL(ONLINE_UPDATER),
    MENU_LABEL(NETPLAY),
@@ -1925,7 +2004,12 @@ enum msg_hash_enums
    MENU_LABEL(ACHIEVEMENT_RESUME),
    MENU_LABEL(CORE_INFORMATION),
    MENU_LABEL(DISC_INFORMATION),
+   MENU_LABEL(CORE_LOCK),
    MENU_LABEL(CORE_DELETE),
+
+   MSG_CORE_LOCK_FAILED,
+   MSG_CORE_UNLOCK_FAILED,
+   MSG_CORE_DELETE_DISABLED,
 
    /* Core updater */
    MENU_LABEL(UPDATE_INSTALLED_CORES),
@@ -1941,6 +2025,8 @@ enum msg_hash_enums
    MSG_CHECKING_CORE,
    MSG_ALL_CORES_UPDATED,
    MSG_NUM_CORES_UPDATED,
+   MSG_NUM_CORES_LOCKED,
+   MSG_CORE_UPDATE_DISABLED,
 
    /* Core backup/restore */
    MENU_LABEL(CORE_CREATE_BACKUP),
@@ -1949,11 +2035,13 @@ enum msg_hash_enums
 
    MENU_ENUM_LABEL_CORE_RESTORE_BACKUP_ENTRY,
    MENU_ENUM_LABEL_CORE_DELETE_BACKUP_ENTRY,
+   MENU_ENUM_LABEL_VALUE_CORE_BACKUP_MODE_AUTO,
    MENU_ENUM_LABEL_VALUE_CORE_BACKUP_CRC,
 
    MSG_CORE_BACKUP_SCANNING_CORE,
    MSG_CORE_BACKUP_ALREADY_EXISTS,
    MSG_BACKING_UP_CORE,
+   MSG_PRUNING_CORE_BACKUP_HISTORY,
    MSG_CORE_BACKUP_COMPLETE,
    MSG_CORE_RESTORATION_ALREADY_INSTALLED,
    MSG_RESTORING_CORE,
@@ -1965,6 +2053,8 @@ enum msg_hash_enums
    MSG_CORE_BACKUP_FAILED,
    MSG_CORE_RESTORATION_FAILED,
    MSG_CORE_INSTALLATION_FAILED,
+   MSG_CORE_RESTORATION_DISABLED,
+   MSG_CORE_INSTALLATION_DISABLED,
 
    MENU_LABEL(VIDEO_SHADER_PARAMETERS),
    MENU_LABEL(VIDEO_SHADER_PRESET_PARAMETERS),
@@ -2737,6 +2827,7 @@ enum msg_hash_enums
    MENU_ENUM_SUBLABEL_SWITCH_CPU_PROFILE,
 
    MENU_ENUM_LABEL_VALUE_HOLD_START,
+   MENU_ENUM_LABEL_VALUE_HOLD_SELECT,
    MENU_ENUM_LABEL_VALUE_DOWN_SELECT,
    MENU_LABEL(PLAYLIST_USE_OLD_FORMAT),
    MENU_LABEL(PLAYLIST_COMPRESSION),
@@ -2800,6 +2891,7 @@ enum msg_hash_enums
    MENU_LABEL(MANUAL_CONTENT_SCAN_SYSTEM_NAME_CUSTOM),
    MENU_LABEL(MANUAL_CONTENT_SCAN_CORE_NAME),
    MENU_LABEL(MANUAL_CONTENT_SCAN_FILE_EXTS),
+   MENU_LABEL(MANUAL_CONTENT_SCAN_SEARCH_RECURSIVELY),
    MENU_LABEL(MANUAL_CONTENT_SCAN_SEARCH_ARCHIVES),
    MENU_LABEL(MANUAL_CONTENT_SCAN_DAT_FILE),
    MENU_LABEL(MANUAL_CONTENT_SCAN_DAT_FILE_FILTER),
@@ -2829,74 +2921,74 @@ enum msg_hash_enums
 const char *msg_hash_to_str(enum msg_hash_enums msg);
 
 const char *msg_hash_to_str_fr(enum msg_hash_enums msg);
-int menu_hash_get_help_fr_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_fr_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_ru(enum msg_hash_enums msg);
 
 const char *msg_hash_to_str_de(enum msg_hash_enums msg);
-int menu_hash_get_help_de_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_de_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_es(enum msg_hash_enums msg);
-int menu_hash_get_help_es_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_es_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_eo(enum msg_hash_enums msg);
-int menu_hash_get_help_eo_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_eo_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_it(enum msg_hash_enums msg);
-int menu_hash_get_help_it_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_it_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_jp(enum msg_hash_enums msg);
-int menu_hash_get_help_jp_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_jp_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_ko(enum msg_hash_enums msg);
-int menu_hash_get_help_ko_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_ko_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_pt_br(enum msg_hash_enums msg);
-int menu_hash_get_help_pt_br_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_pt_br_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_pt_pt(enum msg_hash_enums msg);
-int menu_hash_get_help_pt_pt_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_pt_pt_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_pl(enum msg_hash_enums msg);
-int menu_hash_get_help_pl_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_pl_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_nl(enum msg_hash_enums msg);
-int menu_hash_get_help_nl_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_nl_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_vn(enum msg_hash_enums msg);
-int menu_hash_get_help_vn_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_vn_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_chs(enum msg_hash_enums msg);
-int menu_hash_get_help_chs_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_chs_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_cht(enum msg_hash_enums msg);
-int menu_hash_get_help_cht_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_cht_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_us(enum msg_hash_enums msg);
-int menu_hash_get_help_us_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_us_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_ar(enum msg_hash_enums msg);
-int menu_hash_get_help_ar_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_ar_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_el(enum msg_hash_enums msg);
-int menu_hash_get_help_el_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_el_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_tr(enum msg_hash_enums msg);
-int menu_hash_get_help_tr_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_tr_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_sk(enum msg_hash_enums msg);
-int menu_hash_get_help_sk_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_sk_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_fa(enum msg_hash_enums msg);
-int menu_hash_get_help_fa_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_fa_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_he(enum msg_hash_enums msg);
-int menu_hash_get_help_he_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_he_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 const char *msg_hash_to_str_ast(enum msg_hash_enums msg);
-int menu_hash_get_help_ast_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_ast_enum(enum msg_hash_enums msg, char *s, size_t len);
 
-int menu_hash_get_help_enum(enum msg_hash_enums msg, char *s, size_t len);
+int msg_hash_get_help_enum(enum msg_hash_enums msg, char *s, size_t len);
 
 enum msg_file_type msg_hash_to_file_type(uint32_t hash);
 

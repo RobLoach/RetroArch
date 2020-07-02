@@ -217,7 +217,8 @@ static int database_cursor_iterate(libretrodb_cursor_t *cur,
          if (!string_is_empty(val_string))
             db_info->franchise = strdup(val_string);
       }
-      else if (string_ends_with(str, "_rating"))
+      else if (string_ends_with_size(str, "_rating",
+               strlen(str), STRLEN_CONST("_rating")))
       {
          if (string_is_equal(str, "bbfc_rating"))
          {
@@ -364,7 +365,7 @@ database_info_handle_t *database_info_dir_init(const char *dir,
    core_info_list_t *core_info_list = NULL;
    struct string_list       *list   = NULL;
    database_info_handle_t     *db   = (database_info_handle_t*)
-      calloc(1, sizeof(*db));
+      malloc(sizeof(*db));
 
    if (!db)
       return NULL;
@@ -383,10 +384,20 @@ database_info_handle_t *database_info_dir_init(const char *dir,
 
    dir_list_prioritize(list);
 
-   db->list           = list;
-   db->list_ptr       = 0;
-   db->status         = DATABASE_STATUS_ITERATE;
-   db->type           = type;
+   db->status             = DATABASE_STATUS_ITERATE;
+   db->type               = type;
+   db->list_ptr           = 0;
+   db->list               = list;
+
+   db->state.type         = ARCHIVE_TRANSFER_NONE;
+   db->state.archive_size = 0;
+   db->state.start_delta  = 0;
+   db->state.handle       = NULL;
+   db->state.stream       = NULL;
+   db->state.footer       = NULL;
+   db->state.directory    = NULL;
+   db->state.data         = NULL;
+   db->state.backend      = NULL;
 
    return db;
 }
@@ -397,7 +408,7 @@ database_info_handle_t *database_info_file_init(const char *path,
    union string_list_elem_attr attr;
    struct string_list        *list  = NULL;
    database_info_handle_t      *db  = (database_info_handle_t*)
-      calloc(1, sizeof(*db));
+      malloc(sizeof(*db));
 
    if (!db)
       return NULL;
@@ -414,10 +425,20 @@ database_info_handle_t *database_info_file_init(const char *path,
 
    string_list_append(list, path, attr);
 
-   db->list_ptr       = 0;
-   db->list           = list;
-   db->status         = DATABASE_STATUS_ITERATE;
-   db->type           = type;
+   db->status             = DATABASE_STATUS_ITERATE;
+   db->type               = type;
+   db->list_ptr           = 0;
+   db->list               = list;
+
+   db->state.type         = ARCHIVE_TRANSFER_NONE;
+   db->state.archive_size = 0;
+   db->state.start_delta  = 0;
+   db->state.handle       = NULL;
+   db->state.stream       = NULL;
+   db->state.footer       = NULL;
+   db->state.directory    = NULL;
+   db->state.data         = NULL;
+   db->state.backend      = NULL;
 
    return db;
 }
@@ -498,6 +519,10 @@ database_info_list_t *database_info_list_new(
                free(db_info.rom_name);
             if (db_info.serial)
                free(db_info.serial);
+            if (db_info.md5)
+               free(db_info.md5);
+            if (db_info.sha1)
+               free(db_info.sha1);
             database_info_list_free(database_info_list);
             free(database_info);
             free(database_info_list);

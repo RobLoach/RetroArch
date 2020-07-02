@@ -31,6 +31,10 @@
 #include "config.h"
 #endif
 
+#ifdef _MSC_VER
+#include <compat/msvc.h>
+#endif
+
 #include <streams/file_stream.h>
 #define VFS_FRONTEND
 #include <vfs/vfs_implementation.h>
@@ -111,7 +115,11 @@ bool filestream_exists(const char *path)
    if (!dummy)
       return false;
 
-   filestream_close(dummy);
+   if (filestream_close(dummy) != 0)
+      if (dummy)
+         free(dummy);
+
+   dummy = NULL;
    return true;
 }
 
@@ -203,9 +211,7 @@ char* filestream_gets(RFILE *stream, char *s, size_t len)
 int filestream_getc(RFILE *stream)
 {
    char c = 0;
-   if (!stream)
-      return EOF;
-   if (filestream_read(stream, &c, 1) == 1)
+   if (stream && filestream_read(stream, &c, 1) == 1)
       return (int)(unsigned char)c;
    return EOF;
 }
@@ -215,7 +221,6 @@ int filestream_scanf(RFILE *stream, const char* format, ...)
    char buf[4096];
    char subfmt[64];
    va_list args;
-
    const char * bufiter = buf;
    int64_t startpos     = filestream_tell(stream);
    int        ret       = 0;
@@ -233,7 +238,6 @@ int filestream_scanf(RFILE *stream, const char* format, ...)
       if (*format == '%')
       {
          int sublen;
-
          char* subfmtiter = subfmt;
          bool asterisk    = false;
 
@@ -243,19 +247,25 @@ int filestream_scanf(RFILE *stream, const char* format, ...)
 
          if (*format == '*')
          {
-            asterisk = true;
+            asterisk      = true;
             *subfmtiter++ = *format++;
          }
 
-         while (isdigit(*format)) *subfmtiter++ = *format++; /* width */
+         while (isdigit(*format))
+            *subfmtiter++ = *format++; /* width */
 
          /* length */
          if (*format == 'h' || *format == 'l')
          {
-            if (format[1] == format[0]) *subfmtiter++ = *format++;
-            *subfmtiter++ = *format++;
+            if (format[1] == format[0])
+               *subfmtiter++ = *format++;
+            *subfmtiter++    = *format++;
          }
-         else if (*format == 'j' || *format == 'z' || *format == 't' || *format == 'L')
+         else if (
+               *format == 'j' || 
+               *format == 'z' || 
+               *format == 't' || 
+               *format == 'L')
          {
             *subfmtiter++ = *format++;
          }
@@ -263,14 +273,16 @@ int filestream_scanf(RFILE *stream, const char* format, ...)
          /* specifier - always a single character (except ]) */
          if (*format == '[')
          {
-            while (*format != ']') *subfmtiter++ = *format++;
-            *subfmtiter++ = *format++;
+            while (*format != ']')
+               *subfmtiter++ = *format++;
+            *subfmtiter++    = *format++;
          }
-         else *subfmtiter++ = *format++;
+         else
+            *subfmtiter++    = *format++;
 
-         *subfmtiter++ = '%';
-         *subfmtiter++ = 'n';
-         *subfmtiter++ = '\0';
+         *subfmtiter++       = '%';
+         *subfmtiter++       = 'n';
+         *subfmtiter++       = '\0';
 
          if (sizeof(void*) != sizeof(long*)) abort(); /* all pointers must have the same size */
          if (asterisk)
@@ -439,7 +451,8 @@ int filestream_putc(RFILE *stream, int c)
 int filestream_vprintf(RFILE *stream, const char* format, va_list args)
 {
    static char buffer[8 * 1024];
-   int64_t num_chars = vsprintf(buffer, format, args);
+   int64_t num_chars = vsnprintf(buffer, sizeof(buffer),
+         format, args);
 
    if (num_chars < 0)
       return -1;
@@ -523,7 +536,9 @@ int64_t filestream_read_file(const char *path, void **buf, int64_t *len)
    if (ret < 0)
       goto error;
 
-   filestream_close(file);
+   if (filestream_close(file) != 0)
+      if (file)
+         free(file);
 
    *buf    = content_buf;
 
@@ -538,7 +553,8 @@ int64_t filestream_read_file(const char *path, void **buf, int64_t *len)
 
 error:
    if (file)
-      filestream_close(file);
+      if (filestream_close(file) != 0)
+         free(file);
    if (content_buf)
       free(content_buf);
    if (len)
@@ -567,7 +583,9 @@ bool filestream_write_file(const char *path, const void *data, int64_t size)
       return false;
 
    ret = filestream_write(file, data, size);
-   filestream_close(file);
+   if (filestream_close(file) != 0)
+      if (file)
+         free(file);
 
    if (ret != size)
       return false;

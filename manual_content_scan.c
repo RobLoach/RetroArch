@@ -39,6 +39,7 @@
  * with a manual content scan */
 typedef struct
 {
+   bool search_recursively;
    bool search_archives;
    bool filter_dat_content;
    bool overwrite_playlist;
@@ -68,6 +69,7 @@ typedef struct
  *   are not thread safe, but we only access them when pushing a
  *   task, not in the task thread itself, so all is well) */
 static scan_settings_t scan_settings = {
+   true,                                        /* search_recursively */
    false,                                       /* search_archives */
    false,                                       /* filter_dat_content */
    false,                                       /* overwrite_playlist */
@@ -133,6 +135,13 @@ size_t manual_content_scan_get_dat_file_path_size(void)
 }
 
 /* Returns a pointer to the internal
+ * 'search_recursively' bool */
+bool *manual_content_scan_get_search_recursively_ptr(void)
+{
+   return &scan_settings.search_recursively;
+}
+
+/* Returns a pointer to the internal
  * 'search_archives' bool */
 bool *manual_content_scan_get_search_archives_ptr(void)
 {
@@ -182,7 +191,8 @@ void manual_content_scan_scrub_system_name_custom(void)
     * and/or violate the No-Intro filename standard:
     * http://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).zip
     * Replace these characters with underscores */
-   while((scrub_char_pointer = strpbrk(scan_settings.system_name_custom, "&*/:`\"<>?\\|")))
+   while ((scrub_char_pointer = 
+            strpbrk(scan_settings.system_name_custom, "&*/:`\"<>?\\|")))
       *scrub_char_pointer = '_';
 }
 
@@ -256,8 +266,8 @@ enum manual_content_scan_dat_file_path_status
  * Returns true if content directory is valid. */
 bool manual_content_scan_set_menu_content_dir(const char *content_dir)
 {
-   const char *dir_name = NULL;
    size_t len;
+   const char *dir_name = NULL;
 
    /* Sanity check */
    if (string_is_empty(content_dir))
@@ -274,13 +284,11 @@ bool manual_content_scan_set_menu_content_dir(const char *content_dir)
 
    /* Remove trailing slash, if required */
    len = strlen(scan_settings.content_dir);
-   if (len > 0)
-   {
-      if (scan_settings.content_dir[len - 1] == path_default_slash_c())
-         scan_settings.content_dir[len - 1] = '\0';
-   }
-   else
+   if (len <= 0)
       goto error;
+
+   if (scan_settings.content_dir[len - 1] == PATH_DEFAULT_SLASH_C())
+      scan_settings.content_dir[len - 1] = '\0';
 
    /* Handle case where path was a single slash... */
    if (string_is_empty(scan_settings.content_dir))
@@ -866,6 +874,9 @@ bool manual_content_scan_get_task_config(
             sizeof(task_config->dat_file_path));
    }
 
+   /* Copy 'search recursively' setting */
+   task_config->search_recursively = scan_settings.search_recursively;
+
    /* Copy 'search inside archives' setting */
    task_config->search_archives = scan_settings.search_archives;
 
@@ -911,15 +922,14 @@ struct string_list *manual_content_scan_get_content_list(manual_content_scan_tas
    include_compressed = (!filter_exts || task_config->search_archives);
 
    /* Get directory listing
-    * > Exclude directories and hidden files
-    * > Scan recursively */
+    * > Exclude directories and hidden files */
    dir_list = dir_list_new(
          task_config->content_dir,
          filter_exts ? task_config->file_exts : NULL,
          false, /* include_dirs */
          false, /* include_hidden */
          include_compressed,
-         true   /* recursive */
+         task_config->search_recursively
    );
 
    /* Sanity check */
@@ -1094,8 +1104,7 @@ static bool manual_content_scan_get_playlist_content_label(
 void manual_content_scan_add_content_to_playlist(
       manual_content_scan_task_config_t *task_config,
       playlist_t *playlist, const char *content_path,
-      int content_type, logiqx_dat_t *dat_file,
-      bool fuzzy_archive_match)
+      int content_type, logiqx_dat_t *dat_file)
 {
    char playlist_content_path[PATH_MAX_LENGTH];
 
@@ -1113,7 +1122,7 @@ void manual_content_scan_add_content_to_playlist(
 
    /* Check whether content is already included
     * in playlist */
-   if (!playlist_entry_exists(playlist, playlist_content_path, fuzzy_archive_match))
+   if (!playlist_entry_exists(playlist, playlist_content_path))
    {
       struct playlist_entry entry = {0};
       char label[PATH_MAX_LENGTH];
@@ -1138,6 +1147,6 @@ void manual_content_scan_add_content_to_playlist(
       entry.db_name   = task_config->database_name;
 
       /* Add entry to playlist */
-      playlist_push(playlist, &entry, fuzzy_archive_match);
+      playlist_push(playlist, &entry);
    }
 }

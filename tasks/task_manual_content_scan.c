@@ -53,6 +53,7 @@ enum manual_scan_status
 typedef struct manual_scan_handle
 {
    manual_content_scan_task_config_t *task_config;
+   playlist_config_t playlist_config;
    playlist_t *playlist;
    struct string_list *content_list;
    logiqx_dat_t *dat_file;
@@ -61,9 +62,6 @@ typedef struct manual_scan_handle
    struct string_list *m3u_list;
    size_t m3u_index;
    enum manual_scan_status status;
-   bool fuzzy_archive_match;
-   bool use_old_format;
-   bool compress;
 } manual_scan_handle_t;
 
 /* Frees task handle + all constituent objects */
@@ -104,6 +102,82 @@ static void free_manual_content_scan_handle(manual_scan_handle_t *manual_scan)
 
    free(manual_scan);
    manual_scan = NULL;
+}
+
+static void cb_task_manual_content_scan(
+      retro_task_t *task, void *task_data,
+      void *user_data, const char *err)
+{
+   manual_scan_handle_t *manual_scan = NULL;
+   playlist_t *cached_playlist       = playlist_get_cached();
+#if defined(RARCH_INTERNAL) && defined(HAVE_MENU)
+   menu_ctx_environment_t menu_environ;
+   if (!task)
+      goto end;
+#else
+   if (!task)
+      return;
+#endif
+
+   manual_scan = (manual_scan_handle_t*)task->state;
+
+   if (!manual_scan)
+   {
+#if defined(RARCH_INTERNAL) && defined(HAVE_MENU)
+      goto end;
+#else
+      return;
+#endif
+   }
+
+   /* If the manual content scan task has modified the
+    * currently cached playlist, then it must be re-cached
+    * (otherwise changes will be lost if the currently
+    * cached playlist is saved to disk for any reason...) */
+   if (cached_playlist)
+   {
+      if (string_is_equal(
+            manual_scan->playlist_config.path,
+            playlist_get_conf_path(cached_playlist)))
+      {
+         playlist_config_t playlist_config;
+
+         /* Copy configuration of cached playlist
+          * (could use manual_scan->playlist_config,
+          * but doing it this way guarantees that
+          * the cached playlist is preserved in
+          * its original state) */
+         if (playlist_config_copy(
+               playlist_get_config(cached_playlist),
+               &playlist_config))
+         {
+            playlist_free_cached();
+            playlist_init_cached(&playlist_config);
+         }
+      }
+   }
+
+#if defined(RARCH_INTERNAL) && defined(HAVE_MENU)
+end:
+   /* When creating playlists, the playlist tabs of
+    * any active menu driver must be refreshed */
+   menu_environ.type = MENU_ENVIRON_RESET_HORIZONTAL_LIST;
+   menu_environ.data = NULL;
+
+   menu_driver_ctl(RARCH_MENU_CTL_ENVIRONMENT, &menu_environ);
+#endif
+}
+
+static void task_manual_content_scan_free(retro_task_t *task)
+{
+   manual_scan_handle_t *manual_scan = NULL;
+
+   if (!task)
+      return;
+
+   manual_scan = (manual_scan_handle_t*)task->state;
+
+   free_manual_content_scan_handle(manual_scan);
 }
 
 static void task_manual_content_scan_handler(retro_task_t *task)
@@ -157,8 +231,7 @@ static void task_manual_content_scan_handler(retro_task_t *task)
             }
 
             /* Open playlist */
-            manual_scan->playlist = playlist_init(
-                  manual_scan->task_config->playlist_file, COLLECTION_SIZE);
+            manual_scan->playlist = playlist_init(&manual_scan->playlist_config);
 
             if (!manual_scan->playlist)
                goto task_finished;
@@ -210,8 +283,7 @@ static void task_manual_content_scan_handler(retro_task_t *task)
                /* Add content to playlist */
                manual_content_scan_add_content_to_playlist(
                      manual_scan->task_config, manual_scan->playlist,
-                     content_path, content_type, manual_scan->dat_file,
-                     manual_scan->fuzzy_archive_match);
+                     content_path, content_type, manual_scan->dat_file);
 
                /* If this is an M3U file, add it to the
                 * M3U list for later processing */
@@ -282,9 +354,7 @@ static void task_manual_content_scan_handler(retro_task_t *task)
                       * content path of the M3U entry */
                      if (m3u_file_get_entry(m3u_file, i, &m3u_entry))
                         playlist_delete_by_path(
-                              manual_scan->playlist,
-                              m3u_entry->full_path,
-                              manual_scan->fuzzy_archive_match);
+                              manual_scan->playlist, m3u_entry->full_path);
                   }
 
                   m3u_file_free(m3u_file);
@@ -299,7 +369,6 @@ static void task_manual_content_scan_handler(retro_task_t *task)
          break;
       case MANUAL_SCAN_END:
          {
-            playlist_t *cached_playlist = playlist_get_cached();
             char task_title[PATH_MAX_LENGTH];
 
             task_title[0] = '\0';
@@ -310,27 +379,7 @@ static void task_manual_content_scan_handler(retro_task_t *task)
             playlist_qsort(manual_scan->playlist);
 
             /* Save playlist changes to disk */
-            playlist_write_file(
-                  manual_scan->playlist,
-                  manual_scan->use_old_format,
-                  manual_scan->compress);
-
-            /* If this is the currently cached playlist, then
-             * it must be re-cached (otherwise changes will be
-             * lost if the currently cached playlist is saved
-             * to disk for any reason...) */
-            if (cached_playlist)
-            {
-               if (string_is_equal(
-                     manual_scan->task_config->playlist_file,
-                     playlist_get_conf_path(cached_playlist)))
-               {
-                  playlist_free_cached();
-                  playlist_init_cached(
-                        manual_scan->task_config->playlist_file, COLLECTION_SIZE,
-                        manual_scan->use_old_format, manual_scan->compress);
-               }
-            }
+            playlist_write_file(manual_scan->playlist);
 
             /* Update progress display */
             task_free_title(task);
@@ -355,8 +404,6 @@ task_finished:
 
    if (task)
       task_set_finished(task, true);
-
-   free_manual_content_scan_handle(manual_scan);
 }
 
 static bool task_manual_content_scan_finder(retro_task_t *task, void *user_data)
@@ -374,35 +421,25 @@ static bool task_manual_content_scan_finder(retro_task_t *task, void *user_data)
       return false;
 
    return string_is_equal(
-         (const char*)user_data, manual_scan->task_config->playlist_file);
+         (const char*)user_data, manual_scan->playlist_config.path);
 }
 
-static void cb_task_manual_content_scan_refresh_menu(
-      retro_task_t *task, void *task_data,
-      void *user_data, const char *err)
-{
-#if defined(RARCH_INTERNAL) && defined(HAVE_MENU)
-   menu_ctx_environment_t menu_environ;
-   menu_environ.type = MENU_ENVIRON_RESET_HORIZONTAL_LIST;
-   menu_environ.data = NULL;
-
-   menu_driver_ctl(RARCH_MENU_CTL_ENVIRONMENT, &menu_environ);
-#endif
-}
-
-bool task_push_manual_content_scan(void)
+bool task_push_manual_content_scan(
+      const playlist_config_t *playlist_config,
+      const char *playlist_directory)
 {
    task_finder_data_t find_data;
    char task_title[PATH_MAX_LENGTH];
    retro_task_t *task                = NULL;
-   settings_t *settings              = config_get_ptr();
    manual_scan_handle_t *manual_scan = (manual_scan_handle_t*)
          calloc(1, sizeof(manual_scan_handle_t));
 
    task_title[0] = '\0';
 
    /* Sanity check */
-   if (!manual_scan)
+   if (!playlist_config ||
+       string_is_empty(playlist_directory) ||
+       !manual_scan)
       goto error;
 
    /* Configure handle */
@@ -415,9 +452,6 @@ bool task_push_manual_content_scan(void)
    manual_scan->m3u_list            = string_list_new();
    manual_scan->m3u_index           = 0;
    manual_scan->status              = MANUAL_SCAN_BEGIN;
-   manual_scan->fuzzy_archive_match = settings->bools.playlist_fuzzy_archive_match;
-   manual_scan->use_old_format      = settings->bools.playlist_use_old_format;
-   manual_scan->compress            = settings->bools.playlist_compression;
 
    if (!manual_scan->m3u_list)
       goto error;
@@ -430,9 +464,7 @@ bool task_push_manual_content_scan(void)
       goto error;
 
    if (!manual_content_scan_get_task_config(
-            manual_scan->task_config,
-            settings->paths.directory_playlist
-            ))
+         manual_scan->task_config, playlist_directory))
    {
       runloop_msg_queue_push(
             msg_hash_to_str(MSG_MANUAL_CONTENT_SCAN_INVALID_CONFIG),
@@ -441,10 +473,19 @@ bool task_push_manual_content_scan(void)
       goto error;
    }
 
+   /* > Cache playlist configuration */
+   if (!playlist_config_copy(playlist_config,
+         &manual_scan->playlist_config))
+      goto error;
+
+   playlist_config_set_path(
+         &manual_scan->playlist_config,
+         manual_scan->task_config->playlist_file);
+
    /* Concurrent scanning of content to the same
     * playlist is not allowed */
    find_data.func     = task_manual_content_scan_finder;
-   find_data.userdata = (void*)manual_scan->task_config->playlist_file;
+   find_data.userdata = (void*)manual_scan->playlist_config.path;
 
    if (task_queue_find(&find_data))
       goto error;
@@ -468,7 +509,8 @@ bool task_push_manual_content_scan(void)
    task->title                   = strdup(task_title);
    task->alternative_look        = true;
    task->progress                = 0;
-   task->callback                = cb_task_manual_content_scan_refresh_menu;
+   task->callback                = cb_task_manual_content_scan;
+   task->cleanup                 = task_manual_content_scan_free;
 
    /* > Push task */
    task_queue_push(task);

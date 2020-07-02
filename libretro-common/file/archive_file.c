@@ -84,25 +84,29 @@ static void file_archive_free(file_archive_file_data_t *data)
 
 static file_archive_file_data_t* file_archive_open(const char *path)
 {
-   file_archive_file_data_t *data = (file_archive_file_data_t*)calloc(1, sizeof(*data));
+   file_archive_file_data_t *data = (file_archive_file_data_t*)
+      malloc(sizeof(*data));
 
    if (!data)
       return NULL;
 
-   data->fd = open(path, O_RDONLY);
+   data->fd                       = open(path, O_RDONLY);
+   data->data                     = NULL;
+   data->size                     = 0;
 
    /* Failed to open archive. */
    if (data->fd < 0)
       goto error;
 
-   data->size = path_get_size(path);
+   data->size                     = path_get_size(path);
    if (!data->size)
       return data;
 
-   data->data = mmap(NULL, data->size, PROT_READ, MAP_SHARED, data->fd, 0);
+   data->data                     = mmap(NULL,
+         data->size, PROT_READ, MAP_SHARED, data->fd, 0);
    if (data->data == MAP_FAILED)
    {
-      data->data = NULL;
+      data->data                  = NULL;
 
       /* Failed to mmap() file */
       goto error;
@@ -128,21 +132,24 @@ static void file_archive_free(file_archive_file_data_t *data)
 
 static file_archive_file_data_t* file_archive_open(const char *path)
 {
-   int64_t ret            = -1;
-   bool read_from_file    = false;
+   int64_t ret                    = -1;
+   bool read_from_file            = false;
    file_archive_file_data_t *data = (file_archive_file_data_t*)
-      calloc(1, sizeof(*data));
+      malloc(sizeof(*data));
 
    if (!data)
       return NULL;
 
-   read_from_file = filestream_read_file(path, &data->data, &ret);
+   data->data                     = NULL;
+   data->size                     = 0;
+   read_from_file                 = filestream_read_file(
+         path, &data->data, &ret);
 
    /* Failed to open archive? */
    if (!read_from_file || ret < 0)
       goto error;
 
-   data->size = ret;
+   data->size                     = ret;
    return data;
 
 error:
@@ -236,7 +243,7 @@ static int file_archive_extract_cb(const char *name, const char *valid_exts,
       {
          strlcpy(wanted_file, delim + 1, sizeof(wanted_file));
 
-         if (!string_is_equal_noncase(userdata->extracted_file_path,
+         if (!string_is_equal_noncase(userdata->current_file_path,
                    wanted_file))
            return 1; /* keep searching for the right file */
       }
@@ -342,15 +349,13 @@ end:
          {
 #ifdef HAVE_7ZIP
             if (handle->backend != &sevenzip_backend)
+#endif
             {
                handle->backend->stream_free(handle->stream);
 
                if (handle->data)
                   free(handle->data);
             }
-#else
-            handle->backend->stream_free(handle->stream);
-#endif
          }
       }
    }
@@ -524,8 +529,8 @@ bool file_archive_extract_file(
    struct string_list *list                 = string_split(valid_exts, "|");
 
    userdata.archive_path[0]                 = '\0';
+   userdata.current_file_path[0]            = '\0';
    userdata.first_extracted_file_path       = NULL;
-   userdata.extracted_file_path             = NULL;
    userdata.extraction_directory            = extraction_directory;
    userdata.archive_path_size               = archive_path_size;
    userdata.ext                             = list;
@@ -533,7 +538,6 @@ bool file_archive_extract_file(
    userdata.found_file                      = false;
    userdata.list_only                       = false;
    userdata.context                         = NULL;
-   userdata.archive_name[0]                 = '\0';
    userdata.crc                             = 0;
    userdata.dec                             = NULL;
 
@@ -587,8 +591,8 @@ struct string_list *file_archive_get_file_list(const char *path,
    struct archive_extract_userdata userdata;
 
    strlcpy(userdata.archive_path, path, sizeof(userdata.archive_path));
+   userdata.current_file_path[0]            = '\0';
    userdata.first_extracted_file_path       = NULL;
-   userdata.extracted_file_path             = NULL;
    userdata.extraction_directory            = NULL;
    userdata.archive_path_size               = 0;
    userdata.ext                             = NULL;
@@ -596,7 +600,6 @@ struct string_list *file_archive_get_file_list(const char *path,
    userdata.found_file                      = false;
    userdata.list_only                       = true;
    userdata.context                         = NULL;
-   userdata.archive_name[0]                 = '\0';
    userdata.crc                             = 0;
    userdata.dec                             = NULL;
 
@@ -652,7 +655,7 @@ bool file_archive_perform_mode(const char *path, const char *valid_exts,
             {
                ret = handle.backend->stream_decompress_data_to_file_iterate(
                      handle.stream);
-            }while(ret == 0);
+            }while (ret == 0);
 
             if (!file_archive_decompress_data_to_file(&handle,
                      ret, path, valid_exts,
@@ -869,7 +872,7 @@ uint32_t file_archive_get_file_crc32(const char *path)
       /* Stop when the right file in the archive is found. */
       if (archive_path)
       {
-         if (string_is_equal(userdata.extracted_file_path, archive_path))
+         if (string_is_equal(userdata.current_file_path, archive_path))
             break;
       }
       else

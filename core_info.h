@@ -57,6 +57,7 @@ typedef struct
    bool supports_no_game;
    bool database_match_archive_member;
    bool is_experimental;
+   bool is_locked;
    size_t firmware_count;
    char *path;
    void *config_data;
@@ -128,6 +129,18 @@ enum core_info_list_qsort_type
    CORE_INFO_LIST_SORT_SYSTEM_NAME
 };
 
+struct core_info_state
+{
+#ifdef HAVE_COMPRESSION
+   const struct string_list *tmp_list;
+#endif
+   const char *tmp_path;
+   core_info_t *current;
+   core_info_list_t *curr_list;
+};
+
+typedef struct core_info_state core_info_state_t;
+
 size_t core_info_list_num_info_files(core_info_list_t *list);
 
 /* Non-reentrant, does not allocate. Returns pointer to internal state. */
@@ -154,7 +167,7 @@ void core_info_get_name(const char *path, char *s, size_t len,
 
 core_info_t *core_info_get(core_info_list_t *list, size_t i);
 
-void core_info_free_current_core(void);
+void core_info_free_current_core(core_info_state_t *p_coreinfo);
 
 bool core_info_init_current_core(void);
 
@@ -172,7 +185,9 @@ bool core_info_list_update_missing_firmware(core_info_ctx_firmware_t *info,
 
 bool core_info_find(core_info_ctx_find_t *info);
 
-bool core_info_load(core_info_ctx_find_t *info);
+bool core_info_load(
+      core_info_ctx_find_t *info,
+      core_info_state_t *p_coreinfo);
 
 bool core_info_database_supports_content_path(const char *database_path, const char *path);
 
@@ -186,6 +201,24 @@ bool core_info_list_get_info(core_info_list_t *core_info_list,
       core_info_t *out_info, const char *path);
 
 bool core_info_hw_api_supported(core_info_t *info);
+
+/* Sets 'locked' status of specified core
+ * > Returns true if successful
+ * > Like all functions that access the cached
+ *   core info list this is *not* thread safe */
+bool core_info_set_core_lock(const char *core_path, bool lock);
+/* Fetches 'locked' status of specified core
+ * > If 'validate_path' is 'true', will search
+ *   cached core info list for a corresponding
+ *   'sanitised' core file path. This is *not*
+ *   thread safe
+ * > If 'validate_path' is 'false', performs a
+ *   direct filesystem check. This *is* thread
+ *   safe, but validity of specified core path
+ *   must be checked externally */
+bool core_info_get_core_lock(const char *core_path, bool validate_path);
+
+core_info_state_t *coreinfo_get_ptr(void);
 
 RETRO_END_DECLS
 

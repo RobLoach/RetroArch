@@ -19,6 +19,7 @@
 #include <string/stdstring.h>
 #include <file/config_file.h>
 #include <file/file_path.h>
+#include <streams/file_stream.h>
 #include <lists/dir_list.h>
 #include <file/archive_file.h>
 
@@ -44,26 +45,6 @@ enum compare_op
    COMPARE_OP_GREATER,
    COMPARE_OP_GREATER_EQUAL
 };
-
-struct core_info_state
-{
-#ifdef HAVE_COMPRESSION
-   const struct string_list *tmp_list;
-#endif
-   const char *tmp_path;
-   core_info_t *current;
-   core_info_list_t *curr_list;
-};
-
-typedef struct core_info_state core_info_state_t;
-
-/* TODO/FIXME - global state - perhaps move outside this file */
-static core_info_state_t core_info_st;
-
-static core_info_state_t *coreinfo_get_ptr(void)
-{
-   return &core_info_st;
-}
 
 static void core_info_list_resolve_all_extensions(
       core_info_list_t *core_info_list)
@@ -133,31 +114,25 @@ static void core_info_list_resolve_all_firmware(
          char path_key[64];
          char desc_key[64];
          char opt_key[64];
+         struct config_entry_list 
+            *entry         = NULL;
          bool tmp_bool     = false;
-         char *tmp         = NULL;
          path_key[0]       = desc_key[0] = opt_key[0] = '\0';
 
          snprintf(path_key, sizeof(path_key), "firmware%u_path", c);
          snprintf(desc_key, sizeof(desc_key), "firmware%u_desc", c);
          snprintf(opt_key,  sizeof(opt_key),  "firmware%u_opt",  c);
 
-         if (config_get_string(config, path_key, &tmp))
-         {
-            if (!string_is_empty(tmp))
-               info->firmware[c].path = strdup(tmp);
-            free(tmp);
-            tmp = NULL;
-         }
-         if (config_get_string(config, desc_key, &tmp))
-         {
-            if (!string_is_empty(tmp))
-               info->firmware[c].desc = strdup(tmp);
-            free(tmp);
-            tmp = NULL;
-         }
-         if (tmp)
-            free(tmp);
-         tmp = NULL;
+         entry             = config_get_entry(config, path_key, NULL);
+
+         if (entry && !string_is_empty(entry->value))
+            info->firmware[c].path = strdup(entry->value);
+
+         entry             = config_get_entry(config, desc_key, NULL);
+
+         if (entry && !string_is_empty(entry->value))
+            info->firmware[c].desc     = strdup(entry->value);
+
          if (config_get_bool(config, opt_key , &tmp_bool))
             info->firmware[c].optional = tmp_bool;
       }
@@ -260,6 +235,36 @@ static config_file_t *core_info_list_iterate(
    return conf;
 }
 
+/* Returned path must be free()'d */
+static char *core_info_get_core_lock_file_path(const char *core_path)
+{
+   char *lock_file_path      = NULL;
+   const char *lock_file_ext = file_path_str(FILE_PATH_LOCK_EXTENSION);
+   size_t len;
+
+   if (string_is_empty(core_path))
+      return NULL;
+
+   /* Note: We follow the common 'core_info' trend of
+    * allocating all strings dynamically... */
+
+   /* Get path length */
+   len = (strlen(core_path) + strlen(lock_file_ext) + 1) * sizeof(char);
+
+   /* Allocate string */
+   lock_file_path = (char*)malloc(len);
+   if (!lock_file_path)
+      return NULL;
+
+   lock_file_path[0] = '\0';
+
+   /* Lock file is just core path + 'lock' extension */
+   strlcpy(lock_file_path, core_path, len);
+   strlcat(lock_file_path, lock_file_ext, len);
+
+   return lock_file_path;
+}
+
 static core_info_list_t *core_info_list_new(const char *path,
       const char *libretro_info_dir,
       const char *exts,
@@ -293,14 +298,20 @@ static core_info_list_t *core_info_list_new(const char *path,
    if (!contents)
       return NULL;
 
-   core_info_list = (core_info_list_t*)calloc(1, sizeof(*core_info_list));
+   core_info_list = (core_info_list_t*)malloc(sizeof(*core_info_list));
    if (!core_info_list)
    {
       string_list_free(contents);
       return NULL;
    }
 
-   core_info = (core_info_t*)calloc(contents->size, sizeof(*core_info));
+   core_info_list->list    = NULL;
+   core_info_list->count   = 0;
+   core_info_list->all_ext = NULL;
+
+   core_info               = (core_info_t*)
+      calloc(contents->size, sizeof(*core_info));
+
    if (!core_info)
    {
       core_info_list_free(core_info_list);
@@ -308,8 +319,8 @@ static core_info_list_t *core_info_list_new(const char *path,
       return NULL;
    }
 
-   core_info_list->list  = core_info;
-   core_info_list->count = contents->size;
+   core_info_list->list    = core_info;
+   core_info_list->count   = contents->size;
 
    for (i = 0; i < contents->size; i++)
    {
@@ -319,188 +330,130 @@ static core_info_list_t *core_info_list_new(const char *path,
 
       if (conf)
       {
-         char *tmp           = NULL;
+         bool tmp_bool      = false;
+         unsigned tmp_uint  = 0;
+         struct config_entry_list 
+            *entry = config_get_entry(conf, "display_name", NULL);
 
-         if (config_get_string(conf, "display_name", &tmp))
-         {
-            if (!string_is_empty(tmp))
-               core_info[i].display_name = strdup(tmp);
-            free(tmp);
-            tmp = NULL;
-         }
-         if (config_get_string(conf, "display_version", &tmp))
-         {
-            if (!string_is_empty(tmp))
-               core_info[i].display_version = strdup(tmp);
-            free(tmp);
-            tmp = NULL;
-         }
-         if (config_get_string(conf, "corename", &tmp))
-         {
-            if (!string_is_empty(tmp))
-               core_info[i].core_name = strdup(tmp);
-            free(tmp);
-            tmp = NULL;
-         }
+         if (entry && !string_is_empty(entry->value))
+            core_info[i].display_name = strdup(entry->value);
 
-         if (config_get_string(conf, "systemname", &tmp))
-         {
-            if (!string_is_empty(tmp))
-               core_info[i].systemname = strdup(tmp);
-            free(tmp);
-            tmp = NULL;
-         }
+         entry = config_get_entry(conf, "display_version", NULL);
 
-         if (config_get_string(conf, "systemid", &tmp))
-         {
-            if (!string_is_empty(tmp))
-               core_info[i].system_id = strdup(tmp);
-            free(tmp);
-            tmp = NULL;
-         }
+         if (entry && !string_is_empty(entry->value))
+            core_info[i].display_version = strdup(entry->value);
 
-         if (config_get_string(conf, "manufacturer", &tmp))
+         entry = config_get_entry(conf, "corename", NULL);
+
+         if (entry && !string_is_empty(entry->value))
+            core_info[i].core_name = strdup(entry->value);
+
+         entry = config_get_entry(conf, "systemname", NULL);
+
+         if (entry && !string_is_empty(entry->value))
+               core_info[i].systemname = strdup(entry->value);
+
+         entry = config_get_entry(conf, "systemid", NULL);
+
+         if (entry && !string_is_empty(entry->value))
+            core_info[i].system_id = strdup(entry->value);
+
+         entry = config_get_entry(conf, "manufacturer", NULL);
+
+         if (entry && !string_is_empty(entry->value))
+            core_info[i].system_manufacturer = strdup(entry->value);
+
+         config_get_uint(conf, "firmware_count", &tmp_uint);
+         core_info[i].firmware_count = tmp_uint;
+
+         entry = config_get_entry(conf, "supported_extensions", NULL);
+
+         if (entry && !string_is_empty(entry->value))
          {
-            if (!string_is_empty(tmp))
-               core_info[i].system_manufacturer = strdup(tmp);
-            free(tmp);
-            tmp = NULL;
+            core_info[i].supported_extensions      = strdup(entry->value);
+            core_info[i].supported_extensions_list =
+               string_split(core_info[i].supported_extensions, "|");
          }
 
+         entry = config_get_entry(conf, "authors", NULL);
+
+         if (entry && !string_is_empty(entry->value))
          {
-            unsigned count      = 0;
-            config_get_uint(conf, "firmware_count", &count);
-            core_info[i].firmware_count = count;
+            core_info[i].authors      = strdup(entry->value);
+            core_info[i].authors_list =
+               string_split(core_info[i].authors, "|");
          }
 
-         if (config_get_string(conf, "supported_extensions", &tmp))
-         {
-            if (!string_is_empty(tmp))
-            {
-               core_info[i].supported_extensions      = strdup(tmp);
-               core_info[i].supported_extensions_list =
-                  string_split(core_info[i].supported_extensions, "|");
-            }
+         entry = config_get_entry(conf, "permissions", NULL);
 
-            free(tmp);
-            tmp = NULL;
+         if (entry && !string_is_empty(entry->value))
+         {
+            core_info[i].permissions      = strdup(entry->value);
+            core_info[i].permissions_list =
+               string_split(core_info[i].permissions, "|");
          }
 
-         if (config_get_string(conf, "authors", &tmp))
-         {
-            if (!string_is_empty(tmp))
-            {
-               core_info[i].authors      = strdup(tmp);
-               core_info[i].authors_list =
-                  string_split(core_info[i].authors, "|");
-            }
+         entry = config_get_entry(conf, "license", NULL);
 
-            free(tmp);
-            tmp = NULL;
+         if (entry && !string_is_empty(entry->value))
+         {
+            core_info[i].licenses      = strdup(entry->value);
+            core_info[i].licenses_list =
+               string_split(core_info[i].licenses, "|");
          }
 
-         if (config_get_string(conf, "permissions", &tmp))
-         {
-            if (!string_is_empty(tmp))
-            {
-               core_info[i].permissions      = strdup(tmp);
-               core_info[i].permissions_list =
-                  string_split(core_info[i].permissions, "|");
-            }
+         entry = config_get_entry(conf, "categories", NULL);
 
-            free(tmp);
-            tmp = NULL;
+         if (entry && !string_is_empty(entry->value))
+         {
+            core_info[i].categories      = strdup(entry->value);
+            core_info[i].categories_list =
+               string_split(core_info[i].categories, "|");
          }
 
-         if (config_get_string(conf, "license", &tmp))
-         {
-            if (!string_is_empty(tmp))
-            {
-               core_info[i].licenses      = strdup(tmp);
-               core_info[i].licenses_list =
-                  string_split(core_info[i].licenses, "|");
-            }
+         entry = config_get_entry(conf, "database", NULL);
 
-            free(tmp);
-            tmp = NULL;
+         if (entry && !string_is_empty(entry->value))
+         {
+            core_info[i].databases      = strdup(entry->value);
+            core_info[i].databases_list =
+               string_split(core_info[i].databases, "|");
          }
 
-         if (config_get_string(conf, "categories", &tmp))
-         {
-            if (!string_is_empty(tmp))
-            {
-               core_info[i].categories      = strdup(tmp);
-               core_info[i].categories_list =
-                  string_split(core_info[i].categories, "|");
-            }
+         entry = config_get_entry(conf, "notes", NULL);
 
-            free(tmp);
-            tmp = NULL;
+         if (entry && !string_is_empty(entry->value))
+         {
+            core_info[i].notes     = strdup(entry->value);
+            core_info[i].note_list =
+               string_split(core_info[i].notes, "|");
          }
 
-         if (config_get_string(conf, "database", &tmp))
-         {
-            if (!string_is_empty(tmp))
-            {
-               core_info[i].databases      = strdup(tmp);
-               core_info[i].databases_list =
-                  string_split(core_info[i].databases, "|");
-            }
+         entry = config_get_entry(conf, "required_hw_api", NULL);
 
-            free(tmp);
-            tmp = NULL;
+         if (entry && !string_is_empty(entry->value))
+         {
+            core_info[i].required_hw_api      = strdup(entry->value);
+            core_info[i].required_hw_api_list =
+               string_split(core_info[i].required_hw_api, "|");
          }
 
-         if (config_get_string(conf, "notes", &tmp))
-         {
-            if (!string_is_empty(tmp))
-            {
-               core_info[i].notes     = strdup(tmp);
-               core_info[i].note_list = string_split(core_info[i].notes, "|");
-            }
+         entry = config_get_entry(conf, "description", NULL);
 
-            free(tmp);
-            tmp = NULL;
-         }
+         if (entry && !string_is_empty(entry->value))
+            core_info[i].description = strdup(entry->value);
 
-         if (config_get_string(conf, "required_hw_api", &tmp))
-         {
-            if (!string_is_empty(tmp))
-            {
-               core_info[i].required_hw_api = strdup(tmp);
-               core_info[i].required_hw_api_list = string_split(core_info[i].required_hw_api, "|");
-            }
+         if (config_get_bool(conf, "supports_no_game",
+                  &tmp_bool))
+            core_info[i].supports_no_game = tmp_bool;
 
-            free(tmp);
-            tmp = NULL;
-         }
+         if (config_get_bool(conf, "database_match_archive_member",
+                  &tmp_bool))
+            core_info[i].database_match_archive_member = tmp_bool;
 
-         if (config_get_string(conf, "description", &tmp))
-         {
-            if (!string_is_empty(tmp))
-               core_info[i].description = strdup(tmp);
-            free(tmp);
-            tmp = NULL;
-         }
-
-         if (tmp)
-            free(tmp);
-         tmp    = NULL;
-
-         {
-            bool tmp_bool       = false;
-            if (config_get_bool(conf, "supports_no_game",
-                     &tmp_bool))
-               core_info[i].supports_no_game = tmp_bool;
-
-            if (config_get_bool(conf, "database_match_archive_member",
-                     &tmp_bool))
-               core_info[i].database_match_archive_member = tmp_bool;
-
-            if (config_get_bool(conf, "is_experimental",
-                     &tmp_bool))
-               core_info[i].is_experimental = tmp_bool;
-         }
+         if (config_get_bool(conf, "is_experimental",
+                  &tmp_bool))
+            core_info[i].is_experimental = tmp_bool;
 
          core_info[i].config_data = conf;
       }
@@ -543,6 +496,9 @@ static core_info_list_t *core_info_list_new(const char *path,
                core_info[i].display_name = strdup(core_filename);
          }
       }
+
+      /* Get core lock status */
+      core_info[i].is_locked = core_info_get_core_lock(core_info[i].path, false);
    }
 
    if (core_info_list)
@@ -712,9 +668,8 @@ static bool core_info_list_update_missing_firmware_internal(
    return true;
 }
 
-void core_info_free_current_core(void)
+void core_info_free_current_core(core_info_state_t *p_coreinfo)
 {
-   core_info_state_t *p_coreinfo = coreinfo_get_ptr();
    if (p_coreinfo->current)
       free(p_coreinfo->current);
    p_coreinfo->current = NULL;
@@ -722,11 +677,47 @@ void core_info_free_current_core(void)
 
 bool core_info_init_current_core(void)
 {
-   core_info_state_t *p_coreinfo = coreinfo_get_ptr();
-   core_info_t *current          = (core_info_t*)calloc(1, sizeof(*current));
+   core_info_state_t *p_coreinfo          = coreinfo_get_ptr();
+   core_info_t *current                   = (core_info_t*)
+      malloc(sizeof(*current));
    if (!current)
       return false;
-   p_coreinfo->current = current;
+   current->supports_no_game              = false;
+   current->database_match_archive_member = false;
+   current->is_experimental               = false;
+   current->is_locked                     = false;
+   current->firmware_count                = 0;
+   current->path                          = NULL;
+   current->config_data                   = NULL;
+   current->display_name                  = NULL;
+   current->display_version               = NULL;
+   current->core_name                     = NULL;
+   current->system_manufacturer           = NULL;
+   current->systemname                    = NULL;
+   current->system_id                     = NULL;
+   current->supported_extensions          = NULL;
+   current->authors                       = NULL;
+   current->permissions                   = NULL;
+   current->licenses                      = NULL;
+   current->categories                    = NULL;
+   current->databases                     = NULL;
+   current->notes                         = NULL;
+   current->required_hw_api               = NULL;
+   current->description                   = NULL;
+   current->categories_list               = NULL;
+   current->databases_list                = NULL;
+   current->note_list                     = NULL;
+   current->supported_extensions_list     = NULL;
+   current->authors_list                  = NULL;
+   current->permissions_list              = NULL;
+   current->licenses_list                 = NULL;
+   current->required_hw_api_list          = NULL;
+   current->firmware                      = NULL;
+   current->core_file_id.str              = NULL;
+   current->core_file_id.len              = 0;
+   current->userdata                      = NULL;
+
+   p_coreinfo->current                    = current;
    return true;
 }
 
@@ -780,10 +771,11 @@ bool core_info_list_update_missing_firmware(core_info_ctx_firmware_t *info,
          set_missing_bios);
 }
 
-bool core_info_load(core_info_ctx_find_t *info)
+bool core_info_load(
+      core_info_ctx_find_t *info,
+      core_info_state_t *p_coreinfo)
 {
    core_info_t    *core_info     = NULL;
-   core_info_state_t *p_coreinfo = coreinfo_get_ptr();
 
    if (!info)
       return false;
@@ -898,8 +890,9 @@ void core_info_get_name(const char *path, char *s, size_t len,
 
    for (i = 0; i < contents->size; i++)
    {
+      struct config_entry_list 
+         *entry                       = NULL;
       config_file_t *conf             = NULL;
-      char *new_core_name             = NULL;
       const char *current_path        = contents->elems[i].data;
 
       if (!string_is_equal(path_basename(current_path), core_path_basename))
@@ -911,13 +904,13 @@ void core_info_get_name(const char *path, char *s, size_t len,
       if (!conf)
          continue;
 
-      if (config_get_string(conf, get_display_name 
-               ? "display_name" : "corename",
-            &new_core_name))
-      {
-         strlcpy(s, new_core_name, len);
-         free(new_core_name);
-      }
+      if (get_display_name)
+         entry = config_get_entry(conf, "display_name", NULL);
+      else
+         entry = config_get_entry(conf, "corename", NULL);
+
+      if (entry && !string_is_empty(entry->value))
+         strlcpy(s, entry->value, len);
 
       config_file_free(conf);
       break;
@@ -1063,17 +1056,17 @@ bool core_info_list_get_display_name(core_info_list_t *core_info_list,
 
 bool core_info_get_display_name(const char *path, char *s, size_t len)
 {
-   char       *tmp     = NULL;
+   struct config_entry_list 
+      *entry           = NULL;
    config_file_t *conf = config_file_new_from_path_to_string(path);
 
    if (!conf)
       return false;
 
-   if (config_get_string(conf, "display_name", &tmp))
-   {
-      strlcpy(s, tmp, len);
-      free(tmp);
-   }
+   entry               = config_get_entry(conf, "display_name", NULL);
+
+   if (entry && !string_is_empty(entry->value))
+      strlcpy(s, entry->value, len);
 
    config_file_free(conf);
    return true;
@@ -1086,7 +1079,8 @@ bool core_info_get_display_name(const char *path, char *s, size_t len)
  * Returns NULL if 'path' is invalid. */
 core_updater_info_t *core_info_get_core_updater_info(const char *path)
 {
-   char *tmp_str             = NULL;
+   struct config_entry_list 
+      *entry                 = NULL;
    bool tmp_bool             = false;
    core_updater_info_t *info = NULL;
    config_file_t *conf       = NULL;
@@ -1101,53 +1095,39 @@ core_updater_info_t *core_info_get_core_updater_info(const char *path)
       return NULL;
 
    /* Create info struct */
-   info = (core_updater_info_t*)calloc(1, sizeof(*info));
+   info = (core_updater_info_t*)malloc(sizeof(*info));
 
    if (!info)
       return NULL;
 
+   info->is_experimental     = false;
+   info->display_name        = NULL;
+   info->description         = NULL;
+   info->licenses            = NULL;
+
    /* Fetch required parameters */
 
    /* > is_experimental */
-   info->is_experimental = false;
    if (config_get_bool(conf, "is_experimental", &tmp_bool))
-      info->is_experimental = tmp_bool;
+      info->is_experimental  = tmp_bool;
 
    /* > display_name */
-   info->display_name = NULL;
-   if (config_get_string(conf, "display_name", &tmp_str))
-   {
-      if (!string_is_empty(tmp_str))
-         info->display_name = tmp_str;
-      else
-         free(tmp_str);
+   entry                     = config_get_entry(conf, "display_name", NULL);
 
-      tmp_str = NULL;
-   }
+   if (entry && !string_is_empty(entry->value))
+      info->display_name     = strdup(entry->value);
 
    /* > description */
-   info->description = NULL;
-   if (config_get_string(conf, "description", &tmp_str))
-   {
-      if (!string_is_empty(tmp_str))
-         info->description = tmp_str;
-      else
-         free(tmp_str);
+   entry                     = config_get_entry(conf, "description", NULL);
 
-      tmp_str = NULL;
-   }
+   if (entry && !string_is_empty(entry->value))
+      info->description      = strdup(entry->value);
 
    /* > licenses */
-   info->licenses = NULL;
-   if (config_get_string(conf, "license", &tmp_str))
-   {
-      if (!string_is_empty(tmp_str))
-         info->licenses = tmp_str;
-      else
-         free(tmp_str);
+   entry                     = config_get_entry(conf, "license", NULL);
 
-      tmp_str = NULL;
-   }
+   if (entry && !string_is_empty(entry->value))
+      info->licenses         = strdup(entry->value);
 
    /* Clean up */
    config_file_free(conf);
@@ -1524,4 +1504,145 @@ bool core_info_hw_api_supported(core_info_t *info)
 #else
    return true;
 #endif
+}
+
+/* Sets 'locked' status of specified core
+ * > Returns true if successful
+ * > Like all functions that access the cached
+ *   core info list this is *not* thread safe */
+bool core_info_set_core_lock(const char *core_path, bool lock)
+{
+   char *lock_file_path  = NULL;
+   RFILE *lock_file      = NULL;
+   bool lock_file_exists = false;
+   core_info_ctx_find_t core_info;
+
+   if (string_is_empty(core_path))
+      goto error;
+
+   /* Search for specified core */
+   core_info.inf  = NULL;
+   core_info.path = core_path;
+
+   if (!core_info_find(&core_info))
+      goto error;
+
+   /* Get associated lock file path */
+   lock_file_path = core_info_get_core_lock_file_path(core_info.inf->path);
+
+   if (string_is_empty(lock_file_path))
+      goto error;
+
+   /* Check whether lock file exists */
+   lock_file_exists = path_is_valid(lock_file_path);
+
+   /* Create or delete lock file, as required */
+   if (lock && !lock_file_exists)
+   {
+      lock_file = filestream_open(
+            lock_file_path,
+            RETRO_VFS_FILE_ACCESS_WRITE,
+            RETRO_VFS_FILE_ACCESS_HINT_NONE);
+
+      if (!lock_file)
+         goto error;
+
+      /* We have to write something - just output
+       * a single character */
+      if (filestream_putc(lock_file, 0) != 0)
+         goto error;
+
+      filestream_close(lock_file);
+      lock_file = NULL;
+   }
+   else if (!lock && lock_file_exists)
+      if (filestream_delete(lock_file_path) != 0)
+         goto error;
+
+   /* Clean up */
+   free(lock_file_path);
+   lock_file_path = NULL;
+
+   /* File operations were successful - update
+    * core info entry */
+   core_info.inf->is_locked = lock;
+
+   return true;
+
+error:
+   if (lock_file_path)
+   {
+      free(lock_file_path);
+      lock_file_path = NULL;
+   }
+
+   if (lock_file)
+   {
+      filestream_close(lock_file);
+      lock_file = NULL;
+   }
+
+   return false;
+}
+
+/* Fetches 'locked' status of specified core
+ * > If 'validate_path' is 'true', will search
+ *   cached core info list for a corresponding
+ *   'sanitised' core file path. This is *not*
+ *   thread safe
+ * > If 'validate_path' is 'false', performs a
+ *   direct filesystem check. This *is* thread
+ *   safe, but validity of specified core path
+ *   must be checked externally */
+bool core_info_get_core_lock(const char *core_path, bool validate_path)
+{
+   const char *core_file_path = NULL;
+   char *lock_file_path       = NULL;
+   bool is_locked             = false;
+   core_info_ctx_find_t core_info;
+
+   if (string_is_empty(core_path))
+      goto end;
+
+   /* Check whether core path is to be validated */
+   if (validate_path)
+   {
+      core_info.inf  = NULL;
+      core_info.path = core_path;
+
+      if (core_info_find(&core_info))
+         core_file_path = core_info.inf->path;
+   }
+   else
+      core_file_path = core_path;
+
+   /* A core cannot be locked if it does not exist... */
+   if (string_is_empty(core_file_path) ||
+       !path_is_valid(core_file_path))
+      goto end;
+
+   /* Get lock file path */
+   lock_file_path = core_info_get_core_lock_file_path(core_file_path);
+
+   if (string_is_empty(lock_file_path))
+      goto end;
+
+   /* Check whether lock file exists */
+   is_locked = path_is_valid(lock_file_path);
+
+   /* If core path has been validated (and a
+    * core info object is available), ensure
+    * that core info 'is_locked' field is
+    * up to date */
+   if (validate_path && core_info.inf)
+      core_info.inf->is_locked = is_locked;
+
+end:
+   if (lock_file_path)
+   {
+      free(lock_file_path);
+      lock_file_path = NULL;
+   }
+
+   return is_locked;
 }

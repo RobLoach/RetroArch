@@ -259,14 +259,14 @@ static bool input_autoconfigure_joypad_from_conf_dir(
    size_t i;
    char path[PATH_MAX_LENGTH];
    char best_path[PATH_MAX_LENGTH];
-   int ret                    = 0;
-   int index                  = -1;
-   int current_best           = 0;
-   config_file_t *best_conf   = NULL;
-   struct string_list *list   = NULL;
+   bool found                  = false;
+   int index                   = -1;
+   int current_best            = 0;
+   config_file_t *best_conf    = NULL;
+   struct string_list *list    = NULL;
 
-   best_path[0]               = '\0';
-   path[0]                    = '\0';
+   best_path[0]                = '\0';
+   path[0]                     = '\0';
 
    fill_pathname_application_special(path, sizeof(path),
          APPLICATION_SPECIAL_DIRECTORY_AUTOCONFIG);
@@ -316,7 +316,7 @@ static bool input_autoconfigure_joypad_from_conf_dir(
    if (index >= 0 && current_best > 0 && best_conf)
    {
       input_autoconfigure_joypad_add(best_conf, params, task);
-      ret = 1;
+      found = true;
    }
 
    if (best_conf)
@@ -324,9 +324,7 @@ static bool input_autoconfigure_joypad_from_conf_dir(
 
    string_list_free(list);
 
-   if (ret == 0)
-      return false;
-   return true;
+   return found;
 }
 
 static bool input_autoconfigure_joypad_from_conf_internal(
@@ -337,8 +335,16 @@ static bool input_autoconfigure_joypad_from_conf_internal(
    /* Load internal autoconfig files  */
    for (i = 0; input_builtin_autoconfs[i]; i++)
    {
-      config_file_t *conf = config_file_new_from_string(
-            input_builtin_autoconfs[i], NULL);
+      char *autoconf      = NULL;
+      config_file_t *conf = NULL;
+
+      if (string_is_empty(input_builtin_autoconfs[i]))
+         continue;
+
+      autoconf = strdup(input_builtin_autoconfs[i]);
+      conf     = config_file_new_from_string(autoconf, NULL);
+      free(autoconf);
+
       if (conf && input_autoconfigure_joypad_from_conf(conf, params, task))
         return true;
    }
@@ -422,15 +428,26 @@ static void input_autoconfigure_disconnect_handler(retro_task_t *task)
 bool input_autoconfigure_disconnect(unsigned i, const char *ident)
 {
    char msg[255];
-   retro_task_t         *task      = task_init();
-   autoconfig_disconnect_t *state  = (autoconfig_disconnect_t*)calloc(1, sizeof(*state));
+   autoconfig_disconnect_t 
+      *state     = NULL;
+   retro_task_t         
+      *task      = task_init();
 
-   if (!state || !task)
-      goto error;
+   if (!task)
+      return false;
 
-   msg[0]      = '\0';
+   state         = (autoconfig_disconnect_t*)
+      malloc(sizeof(*state));
 
-   state->idx  = i;
+   if (!state)
+   {
+      free(task);
+      return false;
+   }
+
+   state->idx    = i;
+   state->msg    = NULL;
+   msg[0]        = '\0';
 
    snprintf(msg, sizeof(msg), "%s #%u (%s).",
          msg_hash_to_str(MSG_DEVICE_DISCONNECTED_FROM_PORT),
@@ -449,18 +466,6 @@ bool input_autoconfigure_disconnect(unsigned i, const char *ident)
    task_queue_push(task);
 
    return true;
-
-error:
-   if (state)
-   {
-      if (!string_is_empty(state->msg))
-         free(state->msg);
-      free(state);
-   }
-   if (task)
-      free(task);
-
-   return false;
 }
 
 void input_autoconfigure_reset(void)
@@ -500,25 +505,44 @@ void input_autoconfigure_connect(
       unsigned pid)
 {
    unsigned i;
-   retro_task_t         *task = task_init();
-   autoconfig_params_t *state = (autoconfig_params_t*)calloc(1, sizeof(*state));
-   settings_t       *settings = config_get_ptr();
-   const char *dir_autoconf   = settings ? settings->paths.directory_autoconfig : NULL;
-   bool autodetect_enable     = settings ? settings->bools.input_autodetect_enable : false;
+   settings_t       *settings     = config_get_ptr();
+   const char *dir_autoconf       = 
+      settings ? settings->paths.directory_autoconfig : NULL;
+   bool autodetect_enable         = settings 
+      ? settings->bools.input_autodetect_enable : false;
+   autoconfig_params_t *state     = NULL;
+   retro_task_t         *task     = NULL;
 
-   if (!task || !state || !autodetect_enable)
+   if (!autodetect_enable)
+      goto error;
+   
+   task                           = task_init();
+
+   if (!task)
+      goto error;
+   
+   state                          = (autoconfig_params_t*)
+      malloc(sizeof(*state));
+
+   if (!state)
    {
-      if (state)
-      {
-         input_autoconfigure_params_free(state);
-         free(state);
-      }
-      if (task)
-         free(task);
-
-      input_config_set_device_name(idx, name);
-      return;
+      free(task);
+      goto error;
    }
+
+   state->vid                     = 0;
+   state->pid                     = 0;
+   state->idx                     = 0;
+   state->max_users               = 0;
+   state->name                    = NULL;
+   state->autoconfig_directory    = NULL;
+   state->show_hidden_files       = false;
+
+   state->vid                     = vid;
+   state->pid                     = pid;
+   state->idx                     = idx;
+   state->max_users               = *(
+         input_driver_get_uint(INPUT_ACTION_MAX_USERS));
 
    if (!string_is_empty(name))
       state->name                 = strdup(name);
@@ -527,11 +551,6 @@ void input_autoconfigure_connect(
       state->autoconfig_directory = strdup(dir_autoconf);
 
    state->show_hidden_files       = settings->bools.show_hidden_files;
-   state->idx                     = idx;
-   state->vid                     = vid;
-   state->pid                     = pid;
-   state->max_users               = *(
-         input_driver_get_uint(INPUT_ACTION_MAX_USERS));
 
 #ifdef HAVE_BLISSBOX
    if (state->vid == BLISSBOX_VID)
@@ -563,4 +582,9 @@ void input_autoconfigure_connect(
    task->handler                    = input_autoconfigure_connect_handler;
 
    task_queue_push(task);
+
+   return;
+
+error:
+   input_config_set_device_name(idx, name);
 }

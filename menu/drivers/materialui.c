@@ -45,7 +45,6 @@
 #include "../../gfx/gfx_thumbnail.h"
 
 #include "../../input/input_osk.h"
-#include "../widgets/menu_filebrowser.h"
 
 #include "../../core_info.h"
 #include "../../configuration.h"
@@ -1935,7 +1934,8 @@ static void materialui_context_reset_textures(materialui_handle_t *mui)
             materialui_texture_path(i), icon_path, &mui->textures.list[i],
             TEXTURE_FILTER_MIPMAP_LINEAR, NULL, NULL))
       {
-         RARCH_WARN("[GLUI] Asset missing: %s%s%s\n", icon_path, path_default_slash(), materialui_texture_path(i));
+         RARCH_WARN("[GLUI] Asset missing: %s%s%s\n", icon_path, 
+               PATH_DEFAULT_SLASH(), materialui_texture_path(i));
          has_all_assets = false;
       }
    }
@@ -2225,10 +2225,10 @@ static void materialui_render_messagebox(materialui_handle_t *mui,
       if (!string_is_empty(line))
          gfx_display_draw_text(
                mui->font_data.list.font, line,
-               x - longest_width/2.0,
+               x - longest_width / 2.0f,
                y + (i * mui->font_data.list.line_height) + mui->font_data.list.line_ascender,
                video_width, video_height, mui->colors.list_text,
-               TEXT_ALIGN_LEFT, 1.0f, false, 0, true);
+               TEXT_ALIGN_LEFT, 1.0f, false, 0.0f, true);
    }
 
 end:
@@ -3570,7 +3570,8 @@ static void materialui_render_menu_entry_default(
             video_width, video_height,
             (entry_selected || touch_feedback_active) ?
                   mui->colors.list_hint_text_highlighted : mui->colors.list_hint_text,
-            TEXT_ALIGN_LEFT, 1.0f, false, 0, draw_text_outside || (sublabel_y < 0));
+            TEXT_ALIGN_LEFT, 1.0f, false, 0.0f,
+            draw_text_outside || (sublabel_y < 0));
    }
    else
    {
@@ -3651,7 +3652,7 @@ static void materialui_render_menu_entry_default(
                   video_width, video_height,
                   (entry_selected || touch_feedback_active) ?
                         mui->colors.list_text_highlighted : mui->colors.list_text,
-                  TEXT_ALIGN_RIGHT, 1.0f, false, 0, draw_text_outside);
+                  TEXT_ALIGN_RIGHT, 1.0f, false, 0.0f, draw_text_outside);
          }
          break;
       case MUI_ENTRY_VALUE_SWITCH_ON:
@@ -3736,7 +3737,7 @@ static void materialui_render_menu_entry_default(
                video_width, video_height,
                (entry_selected || touch_feedback_active) ?
                      mui->colors.list_text_highlighted : mui->colors.list_text,
-               TEXT_ALIGN_LEFT, 1.0f, false, 0, draw_text_outside);
+               TEXT_ALIGN_LEFT, 1.0f, false, 0.0f, draw_text_outside);
       }
    }
 }
@@ -3889,7 +3890,8 @@ static void materialui_render_menu_entry_playlist_list(
             video_width, video_height,
             (entry_selected || touch_feedback_active) ?
                   mui->colors.list_hint_text_highlighted : mui->colors.list_hint_text,
-            TEXT_ALIGN_LEFT, 1.0f, false, 0, draw_text_outside || (sublabel_y < 0));
+            TEXT_ALIGN_LEFT, 1.0f, false, 0.0f,
+            draw_text_outside || (sublabel_y < 0));
    }
    /* If we don't have a sublabel, entry label is drawn
     * at the vertical centre of the current node */
@@ -3933,7 +3935,8 @@ static void materialui_render_menu_entry_playlist_list(
                video_width, video_height,
                (entry_selected || touch_feedback_active) ?
                      mui->colors.list_text_highlighted : mui->colors.list_text,
-               TEXT_ALIGN_LEFT, 1.0f, false, 0, draw_text_outside);
+               TEXT_ALIGN_LEFT, 1.0f, false, 0.0f,
+               draw_text_outside);
       }
    }
 
@@ -4094,7 +4097,8 @@ static void materialui_render_menu_entry_playlist_dual_icon(
                video_width, video_height,
                (entry_selected || touch_feedback_active) ?
                      mui->colors.list_text_highlighted : mui->colors.list_text,
-               TEXT_ALIGN_LEFT, 1.0f, false, 0, draw_text_outside);
+               TEXT_ALIGN_LEFT, 1.0f, false, 0.0f,
+               draw_text_outside);
       }
    }
 
@@ -4187,7 +4191,8 @@ static void materialui_render_menu_entry_playlist_desktop(
                video_width, video_height,
                (entry_selected || touch_feedback_active) ?
                      mui->colors.list_text_highlighted : mui->colors.list_text,
-               TEXT_ALIGN_LEFT, 1.0f, false, 0, draw_text_outside);
+               TEXT_ALIGN_LEFT, 1.0f, false, 0.0f,
+               draw_text_outside);
       }
    }
 
@@ -4452,7 +4457,8 @@ static void materialui_render_selected_entry_aux_playlist_desktop(
                      (float)mui->font_data.hint.line_centre_offset,
                video_width, video_height,
                text_color,
-               TEXT_ALIGN_LEFT, 1.0f, false, 0, draw_text_outside);
+               TEXT_ALIGN_LEFT, 1.0f, false, 0.0f,
+               draw_text_outside);
       }
    }
 }
@@ -4975,7 +4981,8 @@ static void materialui_render_header(
                   mui->sys_bar_cache.battery_percent_str,
                   (int)video_width - ((int)mui->sys_bar_cache.battery_percent_width + (int)mui->sys_bar_margin + (int)mui->nav_bar_layout_width),
                   sys_bar_text_y,
-                  video_width, video_height, mui->colors.sys_bar_text, TEXT_ALIGN_LEFT, 1.0f, false, 0, false);
+                  video_width, video_height, mui->colors.sys_bar_text,
+                  TEXT_ALIGN_LEFT, 1.0f, false, 0.0f, false);
 
             sys_bar_battery_width = mui->sys_bar_cache.battery_percent_width +
                   mui->sys_bar_margin + mui->sys_bar_icon_size;
@@ -5033,7 +5040,7 @@ static void materialui_render_header(
                   + (int)mui->nav_bar_layout_width),
                sys_bar_text_y,
                video_width, video_height, mui->colors.sys_bar_text,
-               TEXT_ALIGN_LEFT, 1.0f, false, 0, false);
+               TEXT_ALIGN_LEFT, 1.0f, false, 0.0f, false);
 
          usable_sys_bar_width -= sys_bar_clock_width;
       }
@@ -5079,7 +5086,8 @@ static void materialui_render_header(
       gfx_display_draw_text(mui->font_data.hint.font, core_title_buf,
             (int)mui->ticker_x_offset + (int)mui->sys_bar_margin,
             sys_bar_text_y,
-            video_width, video_height, mui->colors.sys_bar_text, TEXT_ALIGN_LEFT, 1.0f, false, 0, false);
+            video_width, video_height, mui->colors.sys_bar_text,
+            TEXT_ALIGN_LEFT, 1.0f, false, 0.0f, false);
    }
 
    /* Title bar items */
@@ -5223,7 +5231,8 @@ static void materialui_render_header(
    gfx_display_draw_text(mui->font_data.title.font, menu_title_buf,
          title_x,
          (int)(mui->sys_bar_height + (mui->title_bar_height / 2.0f) + mui->font_data.title.line_centre_offset),
-         video_width, video_height, mui->colors.header_text, TEXT_ALIGN_LEFT, 1.0f, false, 0, false);
+         video_width, video_height, mui->colors.header_text,
+         TEXT_ALIGN_LEFT, 1.0f, false, 0.0f, false);
 }
 
 /* Use separate functions for bottom/right navigation
@@ -9076,7 +9085,33 @@ static void materialui_list_insert(
    node = (materialui_node_t*)file_list_get_userdata_at_offset(list, i);
 
    if (!node)
-      node = (materialui_node_t*)calloc(1, sizeof(materialui_node_t));
+   {
+      node = (materialui_node_t*)malloc(sizeof(materialui_node_t));
+
+      node->has_icon                         = false;
+      node->icon_texture_index               = 0;
+      node->entry_width                      = 0.0f;
+      node->entry_height                     = 0.0f;
+      node->text_height                      = 0.0f;
+      node->x                                = 0.0f;
+      node->y                                = 0.0f;
+
+      node->thumbnails.primary.status        = GFX_THUMBNAIL_STATUS_UNKNOWN;
+      node->thumbnails.primary.texture       = 0;
+      node->thumbnails.primary.width         = 0;
+      node->thumbnails.primary.height        = 0;
+      node->thumbnails.primary.alpha         = 0.0f;
+      node->thumbnails.primary.delay_timer   = 0.0f;
+      node->thumbnails.primary.fade_active   = false;
+
+      node->thumbnails.secondary.status      = GFX_THUMBNAIL_STATUS_UNKNOWN;
+      node->thumbnails.secondary.texture     = 0;
+      node->thumbnails.secondary.width       = 0;
+      node->thumbnails.secondary.height      = 0;
+      node->thumbnails.secondary.alpha       = 0.0f;
+      node->thumbnails.secondary.delay_timer = 0.0f;
+      node->thumbnails.secondary.fade_active = false;
+   }
    else
    {
       /* If node already exists, must free any
@@ -9118,6 +9153,8 @@ static void materialui_list_insert(
             break;
          case FILE_TYPE_DOWNLOAD_CORE:
          case FILE_TYPE_CORE:
+         case MENU_SETTING_ACTION_CORE_MANAGER_OPTIONS:
+         case MENU_SETTING_ACTION_CORE_LOCK:
             node->icon_texture_index = MUI_TEXTURE_CORES;
             node->has_icon           = true;
             break;
@@ -9179,6 +9216,39 @@ static void materialui_list_insert(
          case MENU_SETTING_ACTION_CORE_RESTORE_BACKUP:
             node->icon_texture_index = MUI_TEXTURE_LOAD_STATE;
             node->has_icon           = true;
+            break;
+         case FILE_TYPE_RPL_ENTRY:
+         case MENU_SETTING_DROPDOWN_ITEM:
+         case MENU_SETTING_DROPDOWN_ITEM_RESOLUTION:
+         case MENU_SETTING_DROPDOWN_ITEM_VIDEO_SHADER_PARAM:
+         case MENU_SETTING_DROPDOWN_ITEM_VIDEO_SHADER_PRESET_PARAM:
+         case MENU_SETTING_DROPDOWN_ITEM_VIDEO_SHADER_NUM_PASS:
+         case MENU_SETTING_DROPDOWN_ITEM_PLAYLIST_DEFAULT_CORE:
+         case MENU_SETTING_DROPDOWN_ITEM_PLAYLIST_LABEL_DISPLAY_MODE:
+         case MENU_SETTING_DROPDOWN_ITEM_PLAYLIST_RIGHT_THUMBNAIL_MODE:
+         case MENU_SETTING_DROPDOWN_ITEM_PLAYLIST_LEFT_THUMBNAIL_MODE:
+         case MENU_SETTING_DROPDOWN_ITEM_PLAYLIST_SORT_MODE:
+         case MENU_SETTING_DROPDOWN_ITEM_MANUAL_CONTENT_SCAN_SYSTEM_NAME:
+         case MENU_SETTING_DROPDOWN_ITEM_MANUAL_CONTENT_SCAN_CORE_NAME:
+         case MENU_SETTING_DROPDOWN_ITEM_DISK_INDEX:
+         case MENU_SETTING_DROPDOWN_SETTING_CORE_OPTIONS_ITEM:
+         case MENU_SETTING_DROPDOWN_SETTING_STRING_OPTIONS_ITEM:
+         case MENU_SETTING_DROPDOWN_SETTING_FLOAT_ITEM:
+         case MENU_SETTING_DROPDOWN_SETTING_INT_ITEM:
+         case MENU_SETTING_DROPDOWN_SETTING_UINT_ITEM:
+         case MENU_SETTING_DROPDOWN_SETTING_CORE_OPTIONS_ITEM_SPECIAL:
+         case MENU_SETTING_DROPDOWN_SETTING_STRING_OPTIONS_ITEM_SPECIAL:
+         case MENU_SETTING_DROPDOWN_SETTING_FLOAT_ITEM_SPECIAL:
+         case MENU_SETTING_DROPDOWN_SETTING_INT_ITEM_SPECIAL:
+         case MENU_SETTING_DROPDOWN_SETTING_UINT_ITEM_SPECIAL:
+         case MENU_SETTINGS_CORE_INFO_NONE:
+         case MENU_SETTING_ITEM_CORE_RESTORE_BACKUP:
+         case MENU_SETTING_ITEM_CORE_DELETE_BACKUP:
+            /* None of these entries have icons - catch them
+             * here (and leave icon_texture_index/has_icon
+             * set to the default 'disabled' state) to avoid
+             * having to process the 'default' case of this
+             * switch */
             break;
          default:
             if (
@@ -9487,6 +9557,7 @@ static void materialui_list_insert(
                   string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_RETRO_ACHIEVEMENTS_SETTINGS)) ||
                   string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_ACCOUNTS_YOUTUBE)) ||
                   string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_ACCOUNTS_TWITCH)) ||
+                  string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_BLUETOOTH_SETTINGS)) ||
                   string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_WIFI_SETTINGS)) ||
                   string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_NETWORK_SETTINGS)) ||
                   string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_NETPLAY_LAN_SCAN_SETTINGS)) ||
@@ -9549,6 +9620,7 @@ static void materialui_list_insert(
                   string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_CHEAT_DELETE)) ||
                   string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_VIDEO_SHADER_PARAMETERS)) ||
                   string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_PLAYLIST_MANAGER_LIST)) ||
+                  string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_CORE_MANAGER_LIST)) ||
                   string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_SETTINGS))
                   )
                   {
@@ -9574,7 +9646,8 @@ static void materialui_list_insert(
                node->icon_texture_index = MUI_TEXTURE_PLAYLIST;
                node->has_icon           = true;
             }
-            else if (string_ends_with(label, "_input_binds_list"))
+            else if (string_ends_with_size(label, "_input_binds_list",
+                     strlen(label), STRLEN_CONST("_input_binds_list")))
             {
                unsigned i;
 

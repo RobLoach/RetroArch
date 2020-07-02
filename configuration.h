@@ -144,7 +144,6 @@ typedef struct settings
       bool input_overlay_auto_rotate;
       bool input_descriptor_label_show;
       bool input_descriptor_hide_unbound;
-      bool input_all_users_control_menu;
       bool input_menu_swap_ok_cancel_buttons;
       bool input_backtouch_enable;
       bool input_backtouch_toggle;
@@ -287,6 +286,7 @@ typedef struct settings
       bool network_buildbot_auto_extract_archive;
       bool network_buildbot_show_experimental_cores;
       bool network_on_demand_thumbnails;
+      bool core_updater_auto_backup;
 
       /* UI */
       bool ui_menubar_enable;
@@ -310,6 +310,9 @@ typedef struct settings
       /* Camera */
       bool camera_allow;
 
+      /* Bluetooth */
+      bool bluetooth_allow;
+
       /* WiFi */
       bool wifi_allow;
 
@@ -328,6 +331,7 @@ typedef struct settings
       bool driver_switch_enable;
 
       /* Misc. */
+      bool add_null_drivers;
       bool discord_enable;
       bool threaded_data_runloop_enable;
       bool set_supports_no_game_enable;
@@ -438,6 +442,8 @@ typedef struct settings
 
       float input_overlay_opacity;
       float input_overlay_scale;
+      float input_overlay_center_x;
+      float input_overlay_center_y;
 
       float slowmotion_ratio;
       float fastforward_ratio;
@@ -620,6 +626,8 @@ typedef struct settings
       unsigned ai_service_mode;
       unsigned ai_service_target_lang;
       unsigned ai_service_source_lang;
+
+      unsigned core_updater_auto_backup_history_size;
    } uints;
 
    struct
@@ -635,6 +643,7 @@ typedef struct settings
       char video_driver[32];
       char record_driver[32];
       char camera_driver[32];
+      char bluetooth_driver[32];
       char wifi_driver[32];
       char led_driver[32];
       char location_driver[32];
@@ -754,6 +763,15 @@ typedef struct settings
  * Returns: Default camera driver.
  **/
 const char *config_get_default_camera(void);
+
+/**
+ * config_get_default_bluetooth:
+ *
+ * Gets default bluetooth driver.
+ *
+ * Returns: Default bluetooth driver.
+ **/
+const char *config_get_default_bluetooth(void);
 
 /**
  * config_get_default_wifi:

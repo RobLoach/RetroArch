@@ -523,7 +523,6 @@ static bool ctr_frame(void* data, const void* frame,
       uint64_t frame_count,
       unsigned pitch, const char* msg, video_frame_info_t *video_info)
 {
-   extern bool select_pressed;
    static uint64_t currentTick,lastTick;
    touchPosition state_tmp_touch;
    extern GSPGPU_FramebufferInfo topFramebufferInfo;
@@ -560,12 +559,6 @@ static bool ctr_frame(void* data, const void* frame,
       return true;
    }
 
-   if (select_pressed)
-   {
-      command_event(CMD_EVENT_QUIT, NULL);
-      return true;
-   }
-
    state_tmp = hidKeysDown();
    hidTouchRead(&state_tmp_touch);
    if((state_tmp & KEY_TOUCH) && (state_tmp_touch.py < 120))
@@ -589,7 +582,7 @@ static bool ctr_frame(void* data, const void* frame,
 #if 0
       ctr->vsync_event_pending = true;
 #endif
-      while(ctr->vsync_event_pending)
+      while (ctr->vsync_event_pending)
       {
          task_queue_check();
          svcSleepThread(0);

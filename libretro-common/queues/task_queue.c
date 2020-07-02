@@ -111,31 +111,37 @@ static void task_queue_push_progress(retro_task_t *task)
 
 static void task_queue_put(task_queue_t *queue, retro_task_t *task)
 {
-   task->next = NULL;
+   task->next                   = NULL;
 
    if (queue->front)
    {
-      /* Make sure to insert in order - the queue is sorted by 'when' so items that aren't scheduled
-       * to run immediately are at the back of the queue. Items with the same 'when' are inserted after
-       * all the other items with the same 'when'. This primarily affects items with a 'when' of 0.
+      /* Make sure to insert in order - the queue is 
+       * sorted by 'when' so items that aren't scheduled
+       * to run immediately are at the back of the queue. 
+       * Items with the same 'when' are inserted after
+       * all the other items with the same 'when'. 
+       * This primarily affects items with a 'when' of 0.
        */
-      if (queue->back->when > task->when)
+      if (queue->back)
       {
-         retro_task_t** prev = &queue->front;
-         while (*prev && (*prev)->when <= task->when)
-            prev = &((*prev)->next);
+         if (queue->back->when > task->when)
+         {
+            retro_task_t** prev = &queue->front;
+            while (*prev && (*prev)->when <= task->when)
+               prev             = &((*prev)->next);
 
-         task->next = *prev;
-         *prev = task;
-         return;
+            task->next          = *prev;
+            *prev               = task;
+            return;
+         }
+
+         queue->back->next      = task;
       }
-
-      queue->back->next = task;
    }
    else
-      queue->front = task;
+      queue->front              = task;
 
-   queue->back = task;
+   queue->back                  = task;
 }
 
 static retro_task_t *task_queue_get(task_queue_t *queue)
@@ -875,9 +881,30 @@ char* task_get_title(retro_task_t *task)
 
 retro_task_t *task_init(void)
 {
-   retro_task_t *task      = (retro_task_t*)calloc(1, sizeof(*task));
+   retro_task_t *task      = (retro_task_t*)malloc(sizeof(*task));
 
+   if (!task)
+      return NULL;
+
+   task->handler           = NULL;
+   task->callback          = NULL;
+   task->cleanup           = NULL;
+   task->finished          = false;
+   task->cancelled         = false;
+   task->mute              = false;
+   task->task_data         = NULL;
+   task->user_data         = NULL;
+   task->state             = NULL;
+   task->error             = NULL;
+   task->progress          = 0;
+   task->progress_cb       = NULL;
+   task->title             = NULL;
+   task->type              = TASK_TYPE_NONE;
    task->ident             = task_count++;
+   task->frontend_userdata = NULL;
+   task->alternative_look  = false;
+   task->next              = NULL;
+   task->when              = 0;
 
    return task;
 }

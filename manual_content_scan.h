@@ -78,6 +78,7 @@ typedef struct
    char file_exts[PATH_MAX_LENGTH];
    char dat_file_path[PATH_MAX_LENGTH];
    bool core_set;
+   bool search_recursively;
    bool search_archives;
    bool filter_dat_content;
    bool overwrite_playlist;
@@ -116,6 +117,10 @@ char *manual_content_scan_get_dat_file_path_ptr(void);
 /* Returns size of the internal
  * 'dat_file_path' string */
 size_t manual_content_scan_get_dat_file_path_size(void);
+
+/* Returns a pointer to the internal
+ * 'search_recursively' bool */
+bool *manual_content_scan_get_search_recursively_ptr(void);
 
 /* Returns a pointer to the internal
  * 'search_archives' bool */
@@ -233,8 +238,7 @@ struct string_list *manual_content_scan_get_content_list(manual_content_scan_tas
 void manual_content_scan_add_content_to_playlist(
       manual_content_scan_task_config_t *task_config,
       playlist_t *playlist, const char *content_path,
-      int content_type, logiqx_dat_t *dat_file,
-      bool fuzzy_archive_match);
+      int content_type, logiqx_dat_t *dat_file);
 
 RETRO_END_DECLS
 

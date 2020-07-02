@@ -224,6 +224,7 @@ typedef struct rarch_resolution
 
 typedef struct global
 {
+   bool launched_from_cli;
    struct
    {
       char savefile[8192];
@@ -715,7 +716,6 @@ void recording_driver_update_streaming_url(void);
 
 #include "gfx/video_defines.h"
 #include "gfx/video_coord_array.h"
-#include "gfx/video_filter.h"
 
 #include "input/input_driver.h"
 #include "input/input_types.h"
@@ -1536,12 +1536,6 @@ void video_driver_apply_state_changes(void);
 bool video_driver_read_viewport(uint8_t *buffer, bool is_idle);
 
 void video_driver_cached_frame(void);
-
-void video_driver_default_settings(void);
-
-void video_driver_load_settings(config_file_t *conf);
-
-void video_driver_save_settings(config_file_t *conf);
 
 bool video_driver_is_hw_context(void);
 

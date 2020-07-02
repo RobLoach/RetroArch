@@ -203,13 +203,13 @@ typedef struct
     size_t size;
     float overlay_opacity;
     float overlay_scale;
+    float overlay_center_x;
+    float overlay_center_y;
     struct overlay *overlays;
     struct overlay *active;
 } overlay_task_data_t;
 
 void input_overlay_free_overlay(struct overlay *overlay);
-
-bool input_overlay_key_pressed(input_overlay_t *ol, unsigned key);
 
 void input_overlay_set_visibility(int overlay_idx,enum overlay_visibility vis);
 

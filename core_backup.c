@@ -27,7 +27,6 @@
 
 #include "frontend/frontend_driver.h"
 #include "file_path_special.h"
-#include "core_info.h"
 #include "verbosity.h"
 
 #include "core_backup.h"
@@ -532,27 +531,32 @@ core_backup_list_t *core_backup_list_init(
    if (dir_list->size < 1)
       goto error;
 
-   /* Ensure list is sorted in alphabetical order */
+   /* Ensure list is sorted in alphabetical order
+    * > This corresponds to 'timestamp' order */
    dir_list_sort(dir_list, true);
 
    /* Create core backup list */
-   backup_list = (core_backup_list_t*)calloc(1, sizeof(*backup_list));
+   backup_list = (core_backup_list_t*)malloc(sizeof(*backup_list));
 
    if (!backup_list)
       goto error;
+
+   backup_list->entries  = NULL;
+   backup_list->capacity = 0;
+   backup_list->size     = 0;
 
    /* Create entries array
     * (Note: Set this to the full size of the directory
     * list - this may be larger than we need, but saves
     * many inefficiencies later)   */
-   entries = (core_backup_list_entry_t*)calloc(dir_list->size, sizeof(*entries));
+   entries               = (core_backup_list_entry_t*)
+      calloc(dir_list->size, sizeof(*entries));
 
    if (!entries)
       goto error;
 
    backup_list->entries  = entries;
    backup_list->capacity = dir_list->size;
-   backup_list->size     = 0;
 
    /* Loop over backup files and parse file names */
    for (i = 0; i < dir_list->size; i++)
@@ -620,6 +624,30 @@ size_t core_backup_list_size(core_backup_list_t *backup_list)
       return 0;
 
    return backup_list->size;
+}
+
+/* Returns number of entries of specified 'backup mode'
+ * (manual or automatic) in core backup list */
+size_t core_backup_list_get_num_backups(
+      core_backup_list_t *backup_list,
+      enum core_backup_mode backup_mode)
+{
+   size_t i;
+   size_t num_backups = 0;
+
+   if (!backup_list || !backup_list->entries)
+      return 0;
+
+   for (i = 0; i < backup_list->size; i++)
+   {
+      core_backup_list_entry_t *current_entry = &backup_list->entries[i];
+
+      if (current_entry &&
+          (current_entry->backup_mode == backup_mode))
+         num_backups++;
+   }
+
+   return num_backups;
 }
 
 /* Fetches core backup list entry corresponding

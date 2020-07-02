@@ -71,6 +71,8 @@ uintptr_t ozone_entries_icon_get_texture(ozone_handle_t *ozone,
          return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_ACHIEVEMENT_LIST];
       case MENU_ENUM_LABEL_ACHIEVEMENT_LIST_HARDCORE:
          return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_ACHIEVEMENT_LIST];
+      case MENU_ENUM_LABEL_STATE_SLOT:
+         return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_SETTING];
       case MENU_ENUM_LABEL_SAVE_STATE:
       case MENU_ENUM_LABEL_CORE_CREATE_BACKUP:
          return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_SAVESTATE];
@@ -129,6 +131,7 @@ uintptr_t ozone_entries_icon_get_texture(ozone_handle_t *ozone,
       case MENU_ENUM_LABEL_SAVE_CURRENT_CONFIG_OVERRIDE_CORE:
       case MENU_ENUM_LABEL_REMAP_FILE_SAVE_CORE:
       case MENU_ENUM_LABEL_SET_CORE_ASSOCIATION:
+      case MENU_ENUM_LABEL_CORE_INFORMATION:
             return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_CORE];
       case MENU_ENUM_LABEL_LOAD_CONTENT_LIST:
       case MENU_ENUM_LABEL_SUBSYSTEM_SETTINGS:
@@ -188,6 +191,8 @@ uintptr_t ozone_entries_icon_get_texture(ozone_handle_t *ozone,
             return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_AUDIO];
       case MENU_ENUM_LABEL_AUDIO_MIXER_SETTINGS:
             return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_MIXER];
+      case MENU_ENUM_LABEL_SCREEN_RESOLUTION:
+         return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_SUBSETTING];
       case MENU_ENUM_LABEL_INPUT_SETTINGS:
       case MENU_ENUM_LABEL_UPDATE_AUTOCONFIG_PROFILES:
       case MENU_ENUM_LABEL_INPUT_USER_1_BINDS:
@@ -238,6 +243,8 @@ uintptr_t ozone_entries_icon_get_texture(ozone_handle_t *ozone,
       case MENU_ENUM_LABEL_DELETE_PLAYLIST:
       case MENU_ENUM_LABEL_CORE_DELETE_BACKUP_LIST:
             return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_CLOSE];
+      case MENU_ENUM_LABEL_CORE_LOCK:
+            return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_CORE];
       case MENU_ENUM_LABEL_ONSCREEN_DISPLAY_SETTINGS:
             return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_OSD];
       case MENU_ENUM_LABEL_SHOW_WIMP:
@@ -260,6 +267,8 @@ uintptr_t ozone_entries_icon_get_texture(ozone_handle_t *ozone,
       case MENU_ENUM_LABEL_NETWORK_INFO_ENTRY:
       case MENU_ENUM_LABEL_NETWORK_HOSTING_SETTINGS:
             return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_NETWORK];
+      case MENU_ENUM_LABEL_BLUETOOTH_SETTINGS:
+            return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_BLUETOOTH];
       case MENU_ENUM_LABEL_PLAYLIST_SETTINGS:
             return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_PLAYLIST];
       case MENU_ENUM_LABEL_USER_SETTINGS:
@@ -371,6 +380,7 @@ uintptr_t ozone_entries_icon_get_texture(ozone_handle_t *ozone,
       case MENU_SETTING_ACTION_RESUME_ACHIEVEMENTS:
          return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_RESUME];
       case MENU_SETTING_ACTION_CLOSE:
+      case MENU_SETTING_ACTION_CLOSE_HORIZONTAL:
       case MENU_SETTING_ACTION_DELETE_ENTRY:
          return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_CLOSE];
       case MENU_SETTING_ACTION_SAVESTATE:
@@ -378,7 +388,6 @@ uintptr_t ozone_entries_icon_get_texture(ozone_handle_t *ozone,
       case MENU_SETTING_ACTION_LOADSTATE:
          return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_LOADSTATE];
       case FILE_TYPE_RDB_ENTRY:
-      case MENU_SETTING_ACTION_CORE_INFORMATION:
          return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_CORE_INFO];
       case MENU_SETTING_ACTION_CORE_OPTIONS:
          return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_CORE_OPTIONS];
@@ -404,6 +413,8 @@ uintptr_t ozone_entries_icon_get_texture(ozone_handle_t *ozone,
 #endif
       case MENU_INFO_MESSAGE:
          return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_CORE_INFO];
+      case MENU_BLUETOOTH:
+         return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_BLUETOOTH];
       case MENU_WIFI:
          return ozone->icons_textures[OZONE_ENTRIES_ICONS_TEXTURE_WIFI];
 #ifdef HAVE_NETWORKING
@@ -586,6 +597,8 @@ switch (id)
          return "undo.png";
       case OZONE_ENTRIES_ICONS_TEXTURE_CORE_INFO:
          return "core-infos.png";
+      case OZONE_ENTRIES_ICONS_TEXTURE_BLUETOOTH:
+         return "bluetooth.png";
       case OZONE_ENTRIES_ICONS_TEXTURE_WIFI:
          return "wifi.png";
       case OZONE_ENTRIES_ICONS_TEXTURE_CORE_OPTIONS:
@@ -804,12 +817,14 @@ bool ozone_reset_theme_textures(ozone_handle_t *ozone)
       for (i = 0; i < OZONE_THEME_TEXTURE_LAST; i++)
       {
          char filename[PATH_MAX_LENGTH];
-         strlcpy(filename, OZONE_THEME_TEXTURES_FILES[i], sizeof(filename));
+         strlcpy(filename, OZONE_THEME_TEXTURES_FILES[i],
+               sizeof(filename));
          strlcat(filename, ".png", sizeof(filename));
 
          if (!gfx_display_reset_textures_list(filename, theme_path, &theme->textures[i], TEXTURE_FILTER_MIPMAP_LINEAR, NULL, NULL))
          {
-            RARCH_WARN("[OZONE] Asset missing: %s%s%s\n", theme_path, path_default_slash(), filename);
+            RARCH_WARN("[OZONE] Asset missing: %s%s%s\n", theme_path,
+                  PATH_DEFAULT_SLASH(), filename);
             result = false;
          }
       }
