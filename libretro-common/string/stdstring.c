@@ -419,7 +419,7 @@ unsigned string_hex_to_unsigned(const char *str)
 /**
  * Get the total number of occurrences of a character in the given string.
  */
-static int count_occurrences_single_character(char *str, char t)
+int *count_occurrences_single_character(char *str, char t)
 {
    int ctr = 0;
    int i;
@@ -435,7 +435,7 @@ static int count_occurrences_single_character(char *str, char t)
 /**
  * Replaces all spaces with the given character.
  */
-static void replace_whitespace_with_single_character(char *str, char t)
+void replace_whitespace_with_single_character(char *str, char t)
 {
 
    while (*str) {
@@ -448,7 +448,7 @@ static void replace_whitespace_with_single_character(char *str, char t)
 /**
  * Replaces multiple spaces with a single space in a string.
  */
-static void replace_multi_space_with_single_space(char *str)
+void replace_multi_space_with_single_space(char *str)
 {
    char *dest = str;
 
@@ -466,7 +466,7 @@ static void replace_multi_space_with_single_space(char *str)
 /**
  * Remove all spaces from the given string.
  */
-static void remove_all_whitespace (char* str_trimmed, const char* str_untrimmed)
+void remove_all_whitespace (char* str_trimmed, const char* str_untrimmed)
 {
    while (*str_untrimmed != '\0')
    {
@@ -483,7 +483,7 @@ static void remove_all_whitespace (char* str_trimmed, const char* str_untrimmed)
 /**
  * Retrieve the last occurance of the given character in a string.
  */
-static int index_last_occurance(char str[], char t)
+int *index_last_occurance(char str[], char t)
 {
    const char * ret = strrchr(str, t);
    if (ret)
@@ -495,7 +495,7 @@ static int index_last_occurance(char str[], char t)
 /**
  * Find the position of a substring in a string.
  */
-static int find_index_substring_string(const char* str1, const char* str2)
+int *find_index_substring_string(const char* str1, const char* str2)
 {
    int index;
 
@@ -515,7 +515,7 @@ static int find_index_substring_string(const char* str1, const char* str2)
 /**
  * Given a filename and position, find the associated disc number.
  */
-static int find_disc_number(const char* str1, int index)
+int *find_disc_number(const char* str1, int index)
 {
    char disc;
    int disc_number = 0;
@@ -574,7 +574,7 @@ static int find_disc_number(const char* str1, int index)
 /**
  * Given a title and filename, append the appropriate disc number to it.
  */
-static void append_multi_disc_suffix (char * str1, const char *filename)
+void append_multi_disc_suffix (char * str1, const char *filename)
 {
    char * dest = str1;
    int result = 0;
