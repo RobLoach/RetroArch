@@ -46,13 +46,14 @@
 #include "../../wifi/wifi_driver.h"
 #include "../../playlist.h"
 #include "../../manual_content_scan.h"
+#include "../misc/cpufreq/cpufreq.h"
 
 #ifdef HAVE_NETWORKING
 #include "../../network/netplay/netplay.h"
 #endif
 
 #ifdef HAVE_CHEEVOS
-#include "../../cheevos/cheevos.h"
+#include "../../cheevos/cheevos_menu.h"
 #endif
 
 #ifndef BIND_ACTION_GET_VALUE
@@ -128,7 +129,7 @@ static void menu_action_setting_disp_set_label_cheevos_entry(
    *w = 19;
    strlcpy(s2, path, len2);
 
-   rcheevos_get_achievement_state(type - MENU_SETTINGS_CHEEVOS_START, s, len);
+   rcheevos_menu_get_state(type - MENU_SETTINGS_CHEEVOS_START, s, len);
 }
 #endif
 
@@ -411,13 +412,17 @@ static void menu_action_setting_disp_set_label_menu_file_core(
       const char *path,
       char *s2, size_t len2)
 {
-   const char *alt = NULL;
-   strcpy_literal(s, "(CORE)");
-
-   menu_entries_get_at_offset(list, i, NULL,
-         NULL, NULL, NULL, &alt);
-
-   *w = (unsigned)strlen(s);
+   const char *alt = list->list[i].alt
+      ? list->list[i].alt
+      : list->list[i].path;
+   s[0] = '(';
+   s[1] = 'C';
+   s[2] = 'O';
+   s[3] = 'R';
+   s[4] = 'E';
+   s[5] = ')';
+   s[6] = '\0';
+   *w   = (unsigned)STRLEN_CONST("(CORE)");
    if (alt)
       strlcpy(s2, alt, len2);
 }
@@ -433,13 +438,11 @@ static void menu_action_setting_disp_set_label_core_updater_entry(
 {
    core_updater_list_t *core_list         = core_updater_list_get_cached();
    const core_updater_list_entry_t *entry = NULL;
-   const char *alt                        = NULL;
-
-   *s = '\0';
-   *w = 0;
-
-   menu_entries_get_at_offset(list, i, NULL,
-         NULL, NULL, NULL, &alt);
+   const char *alt                        = list->list[i].alt
+      ? list->list[i].alt
+      : list->list[i].path;
+   *s                                     = '\0';
+   *w                                     = 0;
 
    if (alt)
       strlcpy(s2, alt, len2);
@@ -449,27 +452,31 @@ static void menu_action_setting_disp_set_label_core_updater_entry(
        core_updater_list_get_filename(core_list, path, &entry) &&
        !string_is_empty(entry->local_core_path))
    {
-      core_info_ctx_find_t core_info;
+      core_info_t *core_info = NULL;
 
       /* Check whether core is installed
        * > Note: We search core_info here instead
        *   of calling path_is_valid() since we don't
        *   want to perform disk access every frame */
-      core_info.inf  = NULL;
-      core_info.path = entry->local_core_path;
-
-      if (core_info_find(&core_info))
+      if (core_info_find(entry->local_core_path, &core_info))
       {
          /* Highlight locked cores */
-         if (core_info.inf->is_locked)
+         if (core_info->is_locked)
          {
-            strcpy_literal(s, "[#!]");
-            *w = (unsigned)STRLEN_CONST("[#!]");
+            s[0] = '[';
+            s[1] = '#';
+            s[2] = '!';
+            s[3] = ']';
+            s[4] = '\0';
+            *w   = (unsigned)STRLEN_CONST("[#!]");
          }
          else
          {
-            strcpy_literal(s, "[#]");
-            *w = (unsigned)STRLEN_CONST("[#]");
+            s[0] = '[';
+            s[1] = '#';
+            s[2] = ']';
+            s[3] = '\0';
+            *w   = (unsigned)STRLEN_CONST("[#]");
          }
       }
    }
@@ -484,14 +491,12 @@ static void menu_action_setting_disp_set_label_core_manager_entry(
       const char *path,
       char *s2, size_t len2)
 {
-   const char *alt = NULL;
-   core_info_ctx_find_t core_info;
-
-   *s = '\0';
-   *w = 0;
-
-   menu_entries_get_at_offset(list, i, NULL,
-         NULL, NULL, NULL, &alt);
+   core_info_t *core_info = NULL;
+   const char *alt        = list->list[i].alt
+         ? list->list[i].alt
+         : list->list[i].path;
+   *s                     = '\0';
+   *w                     = 0;
 
    if (alt)
       strlcpy(s2, alt, len2);
@@ -500,16 +505,169 @@ static void menu_action_setting_disp_set_label_core_manager_entry(
     * > Note: We search core_info here instead of
     *   calling core_info_get_core_lock() since we
     *   don't want to perform disk access every frame */
-   core_info.inf  = NULL;
-   core_info.path = path;
-
-   if (core_info_find(&core_info) &&
-       core_info.inf->is_locked)
+   if (core_info_find(path, &core_info) &&
+       core_info->is_locked)
    {
-      strcpy_literal(s, "[!]");
-      *w = (unsigned)STRLEN_CONST("[!]");
+      s[0] = '[';
+      s[1] = '!';
+      s[2] = ']';
+      s[3] = '\0';
+      *w   = (unsigned)STRLEN_CONST("[!]");
    }
 }
+
+#ifndef HAVE_LAKKA_SWITCH
+#ifdef HAVE_LAKKA
+static void menu_action_setting_disp_cpu_gov_mode(
+      file_list_t* list,
+      unsigned *w, unsigned type, unsigned i,
+      const char *label,
+      char *s, size_t len,
+      const char *path,
+      char *s2, size_t len2)
+{
+   const char *alt        = list->list[i].alt
+         ? list->list[i].alt
+         : list->list[i].path;
+   enum cpu_scaling_mode mode = get_cpu_scaling_mode(NULL);
+
+   if (alt)
+      strlcpy(s2, alt, len2);
+
+   strlcpy(s, msg_hash_to_str(
+      MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_MANAGED_PERF + (int)mode), len);
+}
+
+static void menu_action_setting_disp_cpu_gov_choose(
+      file_list_t* list,
+      unsigned *w, unsigned type, unsigned i,
+      const char *label,
+      char *s, size_t len,
+      const char *path,
+      char *s2, size_t len2)
+{
+   const char *alt        = list->list[i].alt
+         ? list->list[i].alt
+         : list->list[i].path;
+   int fnum = atoi(list->list[i].label);
+   cpu_scaling_opts_t opts;
+   enum cpu_scaling_mode mode = get_cpu_scaling_mode(&opts);
+
+   if (alt)
+      strlcpy(s2, alt, len2);
+
+   if (!fnum)
+      strlcpy(s, opts.main_policy, len);
+   else
+      strlcpy(s, opts.menu_policy, len);
+}
+
+static void menu_action_setting_disp_set_label_cpu_policy(
+      file_list_t* list,
+      unsigned *w, unsigned type, unsigned i,
+      const char *label,
+      char *s, size_t len,
+      const char *path,
+      char *s2, size_t len2)
+{
+   unsigned policyid = atoi(path);
+   cpu_scaling_driver_t **drivers = get_cpu_scaling_drivers(false);
+   cpu_scaling_driver_t *d = drivers[policyid];
+
+   *s = '\0';
+   *w = 0;
+
+   if (d->affected_cpus)
+      snprintf(s2, len2, "%s %d [CPU(s) %s]", msg_hash_to_str(
+         MENU_ENUM_LABEL_VALUE_CPU_POLICY_ENTRY), policyid,
+         d->affected_cpus);
+   else
+      snprintf(s2, len2, "%s %d", msg_hash_to_str(
+         MENU_ENUM_LABEL_VALUE_CPU_POLICY_ENTRY), policyid);
+}
+
+static void menu_action_cpu_managed_freq_label(
+      file_list_t* list,
+      unsigned *w, unsigned type, unsigned i,
+      const char *label,
+      char *s, size_t len,
+      const char *path,
+      char *s2, size_t len2)
+{
+   uint32_t freq = 0;
+   cpu_scaling_opts_t opts;
+   enum cpu_scaling_mode mode = get_cpu_scaling_mode(&opts);
+
+   switch (type) {
+   case MENU_SETTINGS_CPU_MANAGED_SET_MINFREQ:
+      strlcpy(s2, msg_hash_to_str(
+         MENU_ENUM_LABEL_VALUE_CPU_MANAGED_MIN_FREQ), len2);
+      freq = opts.min_freq;
+      break;
+   case MENU_SETTINGS_CPU_MANAGED_SET_MAXFREQ:
+      strlcpy(s2, msg_hash_to_str(
+         MENU_ENUM_LABEL_VALUE_CPU_MANAGED_MAX_FREQ), len2);
+      freq = opts.max_freq;
+      break;
+   };
+
+   if (freq == 1)
+      strlcpy(s, "Min.", len);
+   else if (freq == ~0U)
+      strlcpy(s, "Max.", len);
+   else
+      snprintf(s, len, "%u MHz", freq / 1000);
+}
+
+static void menu_action_cpu_freq_label(
+      file_list_t* list,
+      unsigned *w, unsigned type, unsigned i,
+      const char *label,
+      char *s, size_t len,
+      const char *path,
+      char *s2, size_t len2)
+{
+   unsigned policyid = atoi(path);
+   cpu_scaling_driver_t **drivers = get_cpu_scaling_drivers(false);
+   cpu_scaling_driver_t *d = drivers[policyid];
+
+   switch (type) {
+   case MENU_SETTINGS_CPU_POLICY_SET_MINFREQ:
+      strlcpy(s2, msg_hash_to_str(
+         MENU_ENUM_LABEL_VALUE_CPU_POLICY_MIN_FREQ), len2);
+      snprintf(s, len, "%u MHz", d->min_policy_freq / 1000);
+      break;
+   case MENU_SETTINGS_CPU_POLICY_SET_MAXFREQ:
+      strlcpy(s2, msg_hash_to_str(
+         MENU_ENUM_LABEL_VALUE_CPU_POLICY_MAX_FREQ), len2);
+      snprintf(s, len, "%u MHz", d->max_policy_freq / 1000);
+      break;
+   case MENU_SETTINGS_CPU_POLICY_SET_GOVERNOR:
+      strlcpy(s2, msg_hash_to_str(
+         MENU_ENUM_LABEL_VALUE_CPU_POLICY_GOVERNOR), len2);
+      strlcpy(s, d->scaling_governor, len);
+      break;
+   };
+}
+
+static void menu_action_cpu_governor_label(
+      file_list_t* list,
+      unsigned *w, unsigned type, unsigned i,
+      const char *label,
+      char *s, size_t len,
+      const char *path,
+      char *s2, size_t len2)
+{
+   unsigned policyid = atoi(path);
+   cpu_scaling_driver_t **drivers = get_cpu_scaling_drivers(false);
+   cpu_scaling_driver_t *d = drivers[policyid];
+
+   strlcpy(s2, msg_hash_to_str(
+      MENU_ENUM_LABEL_VALUE_CPU_POLICY_GOVERNOR), len2);
+   strlcpy(s, d->scaling_governor, len);
+}
+#endif
+#endif
 
 static void menu_action_setting_disp_set_label_core_lock(
       file_list_t* list,
@@ -519,14 +677,12 @@ static void menu_action_setting_disp_set_label_core_lock(
       const char *path,
       char *s2, size_t len2)
 {
-   const char *alt = NULL;
-   core_info_ctx_find_t core_info;
-
-   *s = '\0';
-   *w = 0;
-
-   menu_entries_get_at_offset(list, i, NULL,
-         NULL, NULL, NULL, &alt);
+   core_info_t *core_info = NULL;
+   const char *alt        = list->list[i].alt
+         ? list->list[i].alt
+         : list->list[i].path;
+   *s                     = '\0';
+   *w                     = 0;
 
    if (alt)
       strlcpy(s2, alt, len2);
@@ -535,11 +691,8 @@ static void menu_action_setting_disp_set_label_core_lock(
     * > Note: We search core_info here instead of
     *   calling core_info_get_core_lock() since we
     *   don't want to perform disk access every frame */
-   core_info.inf  = NULL;
-   core_info.path = path;
-
-   if (core_info_find(&core_info) &&
-       core_info.inf->is_locked)
+   if (core_info_find(path, &core_info) &&
+       core_info->is_locked)
       strlcpy(s, msg_hash_to_str(MENU_ENUM_LABEL_VALUE_ON), len);
    else
       strlcpy(s, msg_hash_to_str(MENU_ENUM_LABEL_VALUE_OFF), len);
@@ -556,30 +709,33 @@ static void menu_action_setting_disp_set_label_input_desc(
       char *s2, size_t len2)
 {
    unsigned remap_idx;
-   settings_t *settings                  = config_get_ptr();
-   const char* descriptor                = NULL;
-   unsigned user_idx                     = (type - MENU_SETTINGS_INPUT_DESC_BEGIN) / (RARCH_FIRST_CUSTOM_BIND + 8);
-   unsigned btn_idx                      = (type - MENU_SETTINGS_INPUT_DESC_BEGIN) - (RARCH_FIRST_CUSTOM_BIND + 8) * user_idx;
+   unsigned mapped_port;
+   settings_t *settings   = config_get_ptr();
+   const char* descriptor = NULL;
+   unsigned user_idx      = (type - MENU_SETTINGS_INPUT_DESC_BEGIN) / (RARCH_FIRST_CUSTOM_BIND + 8);
+   unsigned btn_idx       = (type - MENU_SETTINGS_INPUT_DESC_BEGIN) - (RARCH_FIRST_CUSTOM_BIND + 8) * user_idx;
 
    if (!settings)
       return;
 
-   remap_idx =
-      settings->uints.input_remap_ids[user_idx][btn_idx];
+   mapped_port = settings->uints.input_remap_ports[user_idx];
+   remap_idx   = settings->uints.input_remap_ids[user_idx][btn_idx];
 
    if (remap_idx != RARCH_UNMAPPED)
-      descriptor = 
-         runloop_get_system_info()->input_desc_btn[user_idx][remap_idx];
+      descriptor = runloop_get_system_info()->input_desc_btn[mapped_port][remap_idx];
 
-   strcpy_literal(s, "---");
+   s[0] = '-';
+   s[1] = '-';
+   s[2] = '-';
+   s[3] = '\0';
 
    if (!string_is_empty(descriptor))
    {
       if (remap_idx < RARCH_FIRST_CUSTOM_BIND)
          strlcpy(s, descriptor, len);
-      else if (!string_is_empty(descriptor) && remap_idx >= RARCH_FIRST_CUSTOM_BIND && remap_idx % 2 == 0)
+      else if (!string_is_empty(descriptor) && remap_idx % 2 == 0)
          snprintf(s, len, "%s %c", descriptor, '+');
-      else if (remap_idx >= RARCH_FIRST_CUSTOM_BIND && remap_idx % 2 != 0)
+      else if (remap_idx % 2 != 0)
          snprintf(s, len, "%s %c", descriptor, '-');
    }
 
@@ -598,17 +754,16 @@ static void menu_action_setting_disp_set_label_input_desc_kbd(
    char desc[PATH_MAX_LENGTH];
    unsigned key_id, btn_idx;
    unsigned remap_id;
-   unsigned user_idx = 0;
+   unsigned user_idx;
 
    settings_t *settings = config_get_ptr();
 
    if (!settings)
       return;
 
-   user_idx = (type - MENU_SETTINGS_INPUT_DESC_KBD_BEGIN) / RARCH_FIRST_CUSTOM_BIND;
-   btn_idx  = (type - MENU_SETTINGS_INPUT_DESC_KBD_BEGIN) - RARCH_FIRST_CUSTOM_BIND * user_idx;
-   remap_id =
-      settings->uints.input_keymapper_ids[user_idx][btn_idx];
+   user_idx = (type - MENU_SETTINGS_INPUT_DESC_KBD_BEGIN) / RARCH_ANALOG_BIND_LIST_END;
+   btn_idx  = (type - MENU_SETTINGS_INPUT_DESC_KBD_BEGIN) - RARCH_ANALOG_BIND_LIST_END * user_idx;
+   remap_id = settings->uints.input_keymapper_ids[user_idx][btn_idx];
 
    for (key_id = 0; key_id < RARCH_MAX_KEYS - 1; key_id++)
    {
@@ -622,7 +777,12 @@ static void menu_action_setting_disp_set_label_input_desc_kbd(
       strlcpy(s, desc, len);
    }
    else
-      strcpy_literal(s, "---");
+   {
+      s[0] = '-';
+      s[1] = '-';
+      s[2] = '-';
+      s[3] = '\0';
+   }
 
    *w = 19;
    strlcpy(s2, path, len2);
@@ -970,7 +1130,7 @@ static void menu_action_setting_disp_set_label_generic(
       char *s2, size_t len2)
 {
    *s = '\0';
-   *w = (unsigned)strlen(s);
+   *w = 0;
    strlcpy(s2, path, len2);
 }
 
@@ -1120,7 +1280,7 @@ static void menu_action_setting_disp_set_label_menu_file_cheat(
          path, "(CHEAT)", STRLEN_CONST("(CHEAT)"), s2, len2);
 }
 
-static void menu_action_setting_disp_set_label_core_option_create(
+static void menu_action_setting_disp_set_label_core_option_override_info(
       file_list_t* list,
       unsigned *w, unsigned type, unsigned i,
       const char *label,
@@ -1128,13 +1288,26 @@ static void menu_action_setting_disp_set_label_core_option_create(
       const char *path,
       char *s2, size_t len2)
 {
+   const char *override_path       = path_get(RARCH_PATH_CORE_OPTIONS);
+   core_option_manager_t *coreopts = NULL;
+   const char *options_file        = NULL;
+
    *s = '\0';
    *w = 19;
 
-   strcpy_literal(s, "");
+   if (!string_is_empty(override_path))
+      options_file = path_basename_nocompression(override_path);
+   else if (rarch_ctl(RARCH_CTL_CORE_OPTIONS_LIST_GET, &coreopts))
+   {
+      const char *options_path = coreopts->conf_path;
+      if (!string_is_empty(options_path))
+         options_file = path_basename_nocompression(options_path);
+   }
 
-   if (!string_is_empty(path_get(RARCH_PATH_BASENAME)))
-      strlcpy(s, path_basename(path_get(RARCH_PATH_BASENAME)), len);
+   if (!string_is_empty(options_file))
+      strlcpy(s, options_file, len);
+   else
+      strlcpy(s, msg_hash_to_str(MENU_ENUM_LABEL_VALUE_NOT_AVAILABLE), len);
 
    strlcpy(s2, path, len2);
 }
@@ -1318,6 +1491,41 @@ static void menu_action_setting_disp_set_label_playlist_sort_mode(
 }
 
 static void menu_action_setting_disp_set_label_core_options(
+      file_list_t* list,
+      unsigned *w, unsigned type, unsigned i,
+      const char *label,
+      char *s, size_t len,
+      const char *path,
+      char *s2, size_t len2)
+{
+   const char *category = path;
+   const char *desc     = NULL;
+
+   /* Add 'more' value text */
+   strlcpy(s, msg_hash_to_str(MENU_ENUM_LABEL_VALUE_MORE), len);
+   *w = 19;
+
+   /* If this is an options subcategory, fetch
+    * the category description */
+   if (!string_is_empty(category))
+   {
+      core_option_manager_t *coreopts = NULL;
+
+      if (rarch_ctl(RARCH_CTL_CORE_OPTIONS_LIST_GET, &coreopts))
+         desc = core_option_manager_get_category_desc(
+               coreopts, category);
+   }
+
+   /* If this isn't a subcategory (or something
+    * went wrong...), use top level core options
+    * menu label */
+   if (string_is_empty(desc))
+      desc = msg_hash_to_str(MENU_ENUM_LABEL_VALUE_CORE_OPTIONS);
+
+   strlcpy(s2, desc, len2);
+}
+
+static void menu_action_setting_disp_set_label_core_option(
       file_list_t* list,
       unsigned *w, unsigned type, unsigned i,
       const char *label,
@@ -1543,6 +1751,9 @@ static int menu_cbs_init_bind_get_string_representation_compare_label(
          case MENU_ENUM_LABEL_BLUETOOTH_DRIVER:
          case MENU_ENUM_LABEL_WIFI_DRIVER:
          case MENU_ENUM_LABEL_MENU_DRIVER:
+#ifdef HAVE_LAKKA
+         case MENU_ENUM_LABEL_TIMEZONE:
+#endif
             BIND_ACTION_GET_VALUE(cbs, menu_action_setting_disp_set_label);
             break;
          case MENU_ENUM_LABEL_CONNECT_BLUETOOTH:
@@ -1607,11 +1818,15 @@ static int menu_cbs_init_bind_get_string_representation_compare_label(
             BIND_ACTION_GET_VALUE(cbs,
                   menu_action_setting_disp_set_label_menu_video_resolution);
             break;
+         case MENU_ENUM_LABEL_CORE_OPTIONS:
+            BIND_ACTION_GET_VALUE(cbs,
+                  menu_action_setting_disp_set_label_core_options);
+            break;
          case MENU_ENUM_LABEL_PLAYLISTS_TAB:
          case MENU_ENUM_LABEL_LOAD_CONTENT_HISTORY:
          case MENU_ENUM_LABEL_DOWNLOADED_FILE_DETECT_CORE_LIST:
          case MENU_ENUM_LABEL_FAVORITES:
-         case MENU_ENUM_LABEL_CORE_OPTIONS:
+         case MENU_ENUM_LABEL_CORE_OPTION_OVERRIDE_LIST:
          case MENU_ENUM_LABEL_CORE_CHEAT_OPTIONS:
          case MENU_ENUM_LABEL_SHADER_OPTIONS:
          case MENU_ENUM_LABEL_VIDEO_SHADER_PARAMETERS:
@@ -1679,6 +1894,38 @@ static int menu_cbs_init_bind_get_string_representation_compare_label(
             BIND_ACTION_GET_VALUE(cbs,
                   menu_action_setting_disp_set_label_core_manager_entry);
             break;
+         case MENU_ENUM_LABEL_CORE_OPTION_OVERRIDE_INFO:
+            BIND_ACTION_GET_VALUE(cbs,
+                  menu_action_setting_disp_set_label_core_option_override_info);
+            break;
+         #ifndef HAVE_LAKKA_SWITCH
+         #ifdef HAVE_LAKKA
+         case MENU_ENUM_LABEL_CPU_PERF_MODE:
+            BIND_ACTION_GET_VALUE(cbs,
+                  menu_action_setting_disp_cpu_gov_mode);
+            break;
+         case MENU_ENUM_LABEL_CPU_POLICY_CORE_GOVERNOR:
+         case MENU_ENUM_LABEL_CPU_POLICY_MENU_GOVERNOR:
+            BIND_ACTION_GET_VALUE(cbs,
+                  menu_action_setting_disp_cpu_gov_choose);
+            break;
+         case MENU_ENUM_LABEL_CPU_POLICY_ENTRY:
+            BIND_ACTION_GET_VALUE(cbs,
+                  menu_action_setting_disp_set_label_cpu_policy);
+            break;
+         case MENU_ENUM_LABEL_CPU_POLICY_MIN_FREQ:
+         case MENU_ENUM_LABEL_CPU_POLICY_MAX_FREQ:
+            BIND_ACTION_GET_VALUE(cbs, menu_action_cpu_freq_label);
+            break;
+         case MENU_ENUM_LABEL_CPU_MANAGED_MIN_FREQ:
+         case MENU_ENUM_LABEL_CPU_MANAGED_MAX_FREQ:
+            BIND_ACTION_GET_VALUE(cbs, menu_action_cpu_managed_freq_label);
+            break;
+         case MENU_ENUM_LABEL_CPU_POLICY_GOVERNOR:
+            BIND_ACTION_GET_VALUE(cbs, menu_action_cpu_governor_label);
+            break;
+         #endif
+         #endif
          default:
             return -1;
       }
@@ -1757,10 +2004,6 @@ static int menu_cbs_init_bind_get_string_representation_compare_type(
 
    switch (type)
    {
-      case MENU_SETTINGS_CORE_OPTION_CREATE:
-         BIND_ACTION_GET_VALUE(cbs,
-               menu_action_setting_disp_set_label_core_option_create);
-         break;
       case FILE_TYPE_CORE:
       case FILE_TYPE_DIRECT_LOAD:
          BIND_ACTION_GET_VALUE(cbs,
@@ -1807,6 +2050,7 @@ static int menu_cbs_init_bind_get_string_representation_compare_type(
          break;
 #endif
       case FILE_TYPE_FONT:
+      case FILE_TYPE_VIDEO_FONT:
          BIND_ACTION_GET_VALUE(cbs,
                menu_action_setting_disp_set_label_menu_file_font);
          break;
@@ -1970,7 +2214,7 @@ int menu_cbs_init_bind_get_string_representation(menu_file_list_cbs_t *cbs,
        (type < MENU_SETTINGS_CHEEVOS_START))
    {
       BIND_ACTION_GET_VALUE(cbs,
-         menu_action_setting_disp_set_label_core_options);
+         menu_action_setting_disp_set_label_core_option);
       return 0;
    }
 

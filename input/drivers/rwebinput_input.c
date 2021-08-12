@@ -315,7 +315,7 @@ static void *rwebinput_input_init(const char *joypad_driver)
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
       RARCH_ERR(
-         "[EMSCRIPTEN/INPUT] failed to create keydown callback: %d\n", r);
+         "[EMSCRIPTEN/INPUT] failed to create keyup callback: %d\n", r);
    }
 
    r = emscripten_set_keypress_callback(
@@ -515,6 +515,7 @@ static int16_t rwebinput_input_state(
                device == RARCH_DEVICE_MOUSE_SCREEN);
       case RETRO_DEVICE_POINTER:
       case RARCH_DEVICE_POINTER_SCREEN:
+         if (idx == 0)
          {
             struct video_viewport vp;
             rwebinput_mouse_state_t 

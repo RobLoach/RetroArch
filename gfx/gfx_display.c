@@ -20,12 +20,6 @@
 #include "../configuration.h"
 #include "../verbosity.h"
 
-/* Number of pixels corner-to-corner on a 1080p
- * display:
- * > sqrt((1920 * 1920) + (1080 * 1080))
- * Note: This is a double, so no suffix */
-#define DIAGONAL_PIXELS_1080P 2202.90717008229831581901
-
 /* Standard reference DPI value, used when determining
  * DPI-aware scaling factors */
 #define REFERENCE_DPI 96.0f
@@ -52,13 +46,7 @@ static bool gfx_display_null_font_init_first(
    return false;
 }
 
-static const float *gfx_display_null_get_default_vertices(void)
-{
-   static float dummy[16] = {0.0f};
-   return &dummy[0];
-}
-
-static const float *gfx_display_null_get_default_tex_coords(void)
+static const float *null_get_default_matrix(void)
 {
    static float dummy[16] = {0.0f};
    return &dummy[0];
@@ -70,8 +58,8 @@ gfx_display_ctx_driver_t gfx_display_ctx_null = {
    NULL,                                     /* blend_begin     */
    NULL,                                     /* blend_end       */
    NULL,                                     /* get_default_mvp */
-   gfx_display_null_get_default_vertices,
-   gfx_display_null_get_default_tex_coords,
+   null_get_default_matrix,
+   null_get_default_matrix,
    gfx_display_null_font_init_first,
    GFX_VIDEO_DRIVER_GENERIC,
    "null",
@@ -130,7 +118,7 @@ static gfx_display_ctx_driver_t *gfx_display_ctx_drivers[] = {
    NULL,
 };
 
-static float gfx_display_get_adjusted_scale_internal(
+float gfx_display_get_adjusted_scale(
       gfx_display_t *p_disp,
       float base_scale, float scale_factor, unsigned width)
 {
@@ -230,7 +218,7 @@ static bool gfx_display_check_compatibility(
    return false;
 }
 
-static float gfx_display_get_dpi_scale_internal(
+float gfx_display_get_dpi_scale_internal(
       unsigned width, unsigned height)
 {
    float dpi;
@@ -372,7 +360,10 @@ static float gfx_display_get_dpi_scale_internal(
    return scale;
 }
 
-float gfx_display_get_dpi_scale(unsigned width, unsigned height)
+float gfx_display_get_dpi_scale(
+      gfx_display_t *p_disp,
+      void *settings_data,
+      unsigned width, unsigned height)
 {
    static unsigned last_width                          = 0;
    static unsigned last_height                         = 0;
@@ -382,9 +373,8 @@ float gfx_display_get_dpi_scale(unsigned width, unsigned height)
    static float last_menu_scale_factor                 = 0.0f;
    static enum menu_driver_id_type last_menu_driver_id = MENU_DRIVER_ID_UNKNOWN;
    static float adjusted_scale                         = 1.0f;
-   settings_t *settings                                = config_get_ptr();
+   settings_t *settings                                = (settings_t*)settings_data;
    float menu_scale_factor                             = settings->floats.menu_scale_factor;
-   gfx_display_t *p_disp                               = disp_get_ptr();
 
    /* Scale is based on display metrics - these are a fixed
     * hardware property. To minimise performance overheads
@@ -407,160 +397,7 @@ float gfx_display_get_dpi_scale(unsigned width, unsigned height)
        (menu_scale_factor != last_menu_scale_factor) ||
        (p_disp->menu_driver_id != last_menu_driver_id))
    {
-      adjusted_scale         = gfx_display_get_adjusted_scale_internal(
-            p_disp,
-            scale, menu_scale_factor, width);
-      last_menu_scale_factor = menu_scale_factor;
-      last_menu_driver_id    = p_disp->menu_driver_id;
-   }
-
-   return adjusted_scale;
-}
-
-float gfx_display_get_widget_dpi_scale(
-      unsigned width, unsigned height, bool fullscreen)
-{
-   static unsigned last_width                          = 0;
-   static unsigned last_height                         = 0;
-   static float scale                                  = 0.0f;
-   static bool scale_cached                            = false;
-   bool scale_updated                                  = false;
-   static float last_menu_scale_factor                 = 0.0f;
-   static enum menu_driver_id_type last_menu_driver_id = MENU_DRIVER_ID_UNKNOWN;
-   static float adjusted_scale                         = 1.0f;
-   settings_t *settings                                = config_get_ptr();
-   bool gfx_widget_scale_auto                          = settings->bools.menu_widget_scale_auto;
-#if (defined(RARCH_CONSOLE) || defined(RARCH_MOBILE))
-   float menu_widget_scale_factor                      = settings->floats.menu_widget_scale_factor;
-#else
-   float menu_widget_scale_factor_fullscreen           = settings->floats.menu_widget_scale_factor;
-   float menu_widget_scale_factor_windowed             = settings->floats.menu_widget_scale_factor_windowed;
-   float menu_widget_scale_factor                      = fullscreen ?
-         menu_widget_scale_factor_fullscreen : menu_widget_scale_factor_windowed;
-#endif
-   gfx_display_t *p_disp                               = disp_get_ptr();
-
-   float menu_scale_factor                             = menu_widget_scale_factor;
-
-   if (gfx_widget_scale_auto)
-   {
-#ifdef HAVE_RGUI
-      /* When using RGUI, _menu_scale_factor
-       * is ignored
-       * > If we are not using a widget scale factor override,
-       *   just set menu_scale_factor to 1.0 */
-      if (p_disp->menu_driver_id == MENU_DRIVER_ID_RGUI)
-         menu_scale_factor                             = 1.0f;
-      else
-#endif
-      {
-         float _menu_scale_factor                      = 
-            settings->floats.menu_scale_factor;
-         menu_scale_factor                             = _menu_scale_factor;
-      }
-   }
-
-   /* Scale is based on display metrics - these are a fixed
-    * hardware property. To minimise performance overheads
-    * we therefore only call video_context_driver_get_metrics()
-    * on first run, or when the current video resolution changes */
-   if (!scale_cached ||
-       (width  != last_width) ||
-       (height != last_height))
-   {
-      scale         = gfx_display_get_dpi_scale_internal(width, height);
-      scale_cached  = true;
-      scale_updated = true;
-      last_width    = width;
-      last_height   = height;
-   }
-
-   /* Adjusted scale calculation may also be slow, so
-    * only update if something changes */
-   if (scale_updated ||
-       (menu_scale_factor != last_menu_scale_factor) ||
-       (p_disp->menu_driver_id != last_menu_driver_id))
-   {
-      adjusted_scale         = gfx_display_get_adjusted_scale_internal(
-            p_disp,
-            scale, menu_scale_factor, width);
-      last_menu_scale_factor = menu_scale_factor;
-      last_menu_driver_id    = p_disp->menu_driver_id;
-   }
-
-   return adjusted_scale;
-}
-
-float gfx_display_get_widget_pixel_scale(
-      unsigned width, unsigned height, bool fullscreen)
-{
-   static unsigned last_width                          = 0;
-   static unsigned last_height                         = 0;
-   static float scale                                  = 0.0f;
-   static bool scale_cached                            = false;
-   bool scale_updated                                  = false;
-   static float last_menu_scale_factor                 = 0.0f;
-   static enum menu_driver_id_type last_menu_driver_id = MENU_DRIVER_ID_UNKNOWN;
-   static float adjusted_scale                         = 1.0f;
-   settings_t *settings                                = config_get_ptr();
-   bool gfx_widget_scale_auto                          = settings->bools.menu_widget_scale_auto;
-#if (defined(RARCH_CONSOLE) || defined(RARCH_MOBILE))
-   float menu_widget_scale_factor                      = settings->floats.menu_widget_scale_factor;
-#else
-   float menu_widget_scale_factor_fullscreen           = settings->floats.menu_widget_scale_factor;
-   float menu_widget_scale_factor_windowed             = settings->floats.menu_widget_scale_factor_windowed;
-   float menu_widget_scale_factor                      = fullscreen ?
-         menu_widget_scale_factor_fullscreen : menu_widget_scale_factor_windowed;
-#endif
-   gfx_display_t *p_disp                               = disp_get_ptr();
-   float menu_scale_factor                             = menu_widget_scale_factor;
-
-   if (gfx_widget_scale_auto)
-   {
-#ifdef HAVE_RGUI
-      /* When using RGUI, _menu_scale_factor
-       * is ignored
-       * > If we are not using a widget scale factor override,
-       *   just set menu_scale_factor to 1.0 */
-      if (p_disp->menu_driver_id == MENU_DRIVER_ID_RGUI)
-         menu_scale_factor                             = 1.0f;
-      else
-#endif
-      {
-         float _menu_scale_factor                      = 
-            settings->floats.menu_scale_factor;
-         menu_scale_factor                             = _menu_scale_factor;
-      }
-   }
-
-   /* We need to perform a square root here, which
-    * can be slow on some platforms (not *slow*, but
-    * it involves enough work that it's worth trying
-    * to optimise). We therefore cache the pixel scale,
-    * and only update on first run or when the video
-    * size changes */
-   if (!scale_cached ||
-       (width  != last_width) ||
-       (height != last_height))
-   {
-      /* Baseline reference is a 1080p display */
-      scale = (float)(
-            sqrt((double)((width * width) + (height * height))) /
-            DIAGONAL_PIXELS_1080P);
-
-      scale_cached  = true;
-      scale_updated = true;
-      last_width    = width;
-      last_height   = height;
-   }
-
-   /* Adjusted scale calculation may also be slow, so
-    * only update if something changes */
-   if (scale_updated ||
-       (menu_scale_factor != last_menu_scale_factor) ||
-       (p_disp->menu_driver_id != last_menu_driver_id))
-   {
-      adjusted_scale         = gfx_display_get_adjusted_scale_internal(
+      adjusted_scale         = gfx_display_get_adjusted_scale(
             p_disp,
             scale, menu_scale_factor, width);
       last_menu_scale_factor = menu_scale_factor;
@@ -571,12 +408,13 @@ float gfx_display_get_widget_pixel_scale(
 }
 
 /* Begin scissoring operation */
-void gfx_display_scissor_begin(void *userdata,
+void gfx_display_scissor_begin(
+      gfx_display_t *p_disp,
+      void *userdata,
       unsigned video_width,
       unsigned video_height,
       int x, int y, unsigned width, unsigned height)
 {
-   gfx_display_t            *p_disp  = disp_get_ptr();
    gfx_display_ctx_driver_t *dispctx = p_disp->dispctx;
    if (dispctx && dispctx->scissor_begin)
    {
@@ -618,11 +456,11 @@ void gfx_display_scissor_begin(void *userdata,
 }
 
 font_data_t *gfx_display_font_file(
+      gfx_display_t *p_disp,
       char* fontpath, float menu_font_size, bool is_threaded)
 {
    font_data_t            *font_data = NULL;
    float                  font_size  = menu_font_size;
-   gfx_display_t            *p_disp  = disp_get_ptr();
    gfx_display_ctx_driver_t *dispctx = p_disp->dispctx;
 
    if (!dispctx)
@@ -635,21 +473,22 @@ font_data_t *gfx_display_font_file(
       font_size = 2.0f;
 
    if (!dispctx->font_init_first((void**)&font_data,
-            video_driver_get_ptr(false),
+            video_driver_get_ptr(),
             fontpath, font_size, is_threaded))
       return NULL;
 
    return font_data;
 }
 
-void gfx_display_draw_bg(gfx_display_ctx_draw_t *draw,
+void gfx_display_draw_bg(
+      gfx_display_t *p_disp,
+      gfx_display_ctx_draw_t *draw,
       void *userdata, bool add_opacity_to_wallpaper,
       float override_opacity)
 {
    static struct video_coords coords;
    const float           *new_vertex = NULL;
    const float        *new_tex_coord = NULL;
-   gfx_display_t            *p_disp  = disp_get_ptr();
    gfx_display_ctx_driver_t *dispctx = p_disp->dispctx;
    if (!dispctx || !draw)
       return;
@@ -688,6 +527,7 @@ void gfx_display_draw_bg(gfx_display_ctx_draw_t *draw,
 }
 
 void gfx_display_draw_quad(
+      gfx_display_t *p_disp,
       void *data,
       unsigned video_width,
       unsigned video_height,
@@ -697,8 +537,6 @@ void gfx_display_draw_quad(
 {
    gfx_display_ctx_draw_t draw;
    struct video_coords coords;
-   gfx_display_t            
-      *p_disp              = disp_get_ptr();
    gfx_display_ctx_driver_t 
       *dispctx             = p_disp->dispctx;
 
@@ -734,6 +572,7 @@ void gfx_display_draw_quad(
 }
 
 void gfx_display_draw_polygon(
+      gfx_display_t *p_disp,
       void *userdata,
       unsigned video_width,
       unsigned video_height,
@@ -747,7 +586,6 @@ void gfx_display_draw_polygon(
    float vertex[8];
    gfx_display_ctx_draw_t draw;
    struct video_coords coords;
-   gfx_display_t            *p_disp  = disp_get_ptr();
    gfx_display_ctx_driver_t *dispctx = p_disp->dispctx;
 
    if (width == 0 || height == 0)
@@ -822,6 +660,7 @@ static void gfx_display_draw_texture(
  * The middle sections will only scale in the X axis, and the side
  * sections will only scale in the Y axis. */
 void gfx_display_draw_texture_slice(
+      gfx_display_t *p_disp,
       void *userdata,
       unsigned video_width,
       unsigned video_height,
@@ -834,8 +673,6 @@ void gfx_display_draw_texture_slice(
    gfx_display_ctx_rotate_draw_t rotate_draw;
    struct video_coords coords;
    math_matrix_4x4 mymat;
-   gfx_display_t            
-      *p_disp               = disp_get_ptr();
    gfx_display_ctx_driver_t 
       *dispctx              = p_disp->dispctx;
    float V_BL[2], V_BR[2], V_TL[2], V_TR[2], T_BL[2], T_BR[2], T_TL[2], T_TR[2];
@@ -951,7 +788,7 @@ void gfx_display_draw_texture_slice(
    draw.pipeline_id         = 0;
    coords.color             = (const float*)(color == NULL ? colors : color);
 
-   gfx_display_rotate_z(&rotate_draw, userdata);
+   gfx_display_rotate_z(p_disp, &rotate_draw, userdata);
 
    draw.texture             = texture;
    draw.x                   = 0;
@@ -1153,11 +990,11 @@ void gfx_display_draw_texture_slice(
    dispctx->draw(&draw, userdata, video_width, video_height);
 }
 
-void gfx_display_rotate_z(gfx_display_ctx_rotate_draw_t *draw, void *data)
+void gfx_display_rotate_z(gfx_display_t *p_disp,
+      gfx_display_ctx_rotate_draw_t *draw, void *data)
 {
    math_matrix_4x4 matrix_rotated, matrix_scaled;
    math_matrix_4x4                *b = NULL;
-   gfx_display_t            *p_disp  = disp_get_ptr();
    gfx_display_ctx_driver_t *dispctx = p_disp->dispctx;
 
    if (
@@ -1188,6 +1025,7 @@ void gfx_display_rotate_z(gfx_display_ctx_rotate_draw_t *draw, void *data)
  * Draw a hardware cursor on top of the screen for the mouse.
  */
 void gfx_display_draw_cursor(
+      gfx_display_t *p_disp,
       void *userdata,
       unsigned video_width,
       unsigned video_height,
@@ -1197,7 +1035,6 @@ void gfx_display_draw_cursor(
 {
    gfx_display_ctx_draw_t draw;
    struct video_coords coords;
-   gfx_display_t            *p_disp  = disp_get_ptr();
    gfx_display_ctx_driver_t *dispctx = p_disp->dispctx;
 
    if (!dispctx)
@@ -1218,6 +1055,8 @@ void gfx_display_draw_cursor(
    draw.texture         = texture;
    draw.prim_type       = GFX_DISPLAY_PRIM_TRIANGLESTRIP;
    draw.pipeline_id     = 0;
+   draw.scale_factor    = 1.0f;
+   draw.rotation        = 0.0f;
 
    if (dispctx->blend_begin)
       dispctx->blend_begin(userdata);
@@ -1227,66 +1066,22 @@ void gfx_display_draw_cursor(
       dispctx->blend_end(userdata);
 }
 
-void gfx_display_push_quad(
-      unsigned width, unsigned height,
-      const float *colors, int x1, int y1,
-      int x2, int y2)
-{
-   float vertex[8];
-   video_coords_t coords;
-   const float       *coord_draw_ptr = NULL;
-   gfx_display_t            *p_disp  = disp_get_ptr();
-   video_coord_array_t *p_dispca     = &p_disp->dispca;
-   gfx_display_ctx_driver_t *dispctx = p_disp->dispctx;
-
-   vertex[0]             = x1 / (float)width;
-   vertex[1]             = y1 / (float)height;
-   vertex[2]             = x2 / (float)width;
-   vertex[3]             = y1 / (float)height;
-   vertex[4]             = x1 / (float)width;
-   vertex[5]             = y2 / (float)height;
-   vertex[6]             = x2 / (float)width;
-   vertex[7]             = y2 / (float)height;
-
-   if (dispctx && dispctx->get_default_tex_coords)
-      coord_draw_ptr     = dispctx->get_default_tex_coords();
-
-   coords.color          = colors;
-   coords.vertex         = vertex;
-   coords.tex_coord      = coord_draw_ptr;
-   coords.lut_tex_coord  = coord_draw_ptr;
-   coords.vertices       = 3;
-
-   video_coord_array_append(p_dispca, &coords, 3);
-
-   coords.color         += 4;
-   coords.vertex        += 2;
-   coords.tex_coord     += 2;
-   coords.lut_tex_coord += 2;
-
-   video_coord_array_append(p_dispca, &coords, 3);
-}
-
 /* Setup: Initializes the font associated
  * to the menu driver */
 font_data_t *gfx_display_font(
+      gfx_display_t *p_disp,
       enum application_special_type type,
       float menu_font_size,
       bool is_threaded)
 {
    char fontpath[PATH_MAX_LENGTH];
-   gfx_display_t            *p_disp  = disp_get_ptr();
-   gfx_display_ctx_driver_t *dispctx = p_disp->dispctx;
-
-   if (!dispctx)
-      return NULL;
 
    fontpath[0] = '\0';
 
    fill_pathname_application_special(
          fontpath, sizeof(fontpath), type);
 
-   return gfx_display_font_file(fontpath, menu_font_size, is_threaded);
+   return gfx_display_font_file(p_disp, fontpath, menu_font_size, is_threaded);
 }
 
 /* Returns the OSK key at a given position */
@@ -1344,12 +1139,6 @@ void gfx_display_set_framebuffer_pitch(size_t pitch)
    p_disp->framebuf_pitch = pitch;
 }
 
-bool gfx_display_get_msg_force(void)
-{
-   gfx_display_t *p_disp   = disp_get_ptr();
-   return p_disp->msg_force;
-}
-
 void gfx_display_set_msg_force(bool state)
 {
    gfx_display_t *p_disp   = disp_get_ptr();
@@ -1357,6 +1146,7 @@ void gfx_display_set_msg_force(bool state)
 }
 
 void gfx_display_draw_keyboard(
+      gfx_display_t *p_disp,
       void *userdata,
       unsigned video_width,
       unsigned video_height,
@@ -1367,7 +1157,6 @@ void gfx_display_draw_keyboard(
 {
    unsigned i;
    int ptr_width, ptr_height;
-   gfx_display_t            *p_disp  = disp_get_ptr();
    gfx_display_ctx_driver_t *dispctx = p_disp->dispctx;
 
    static float white[16] =  {
@@ -1400,6 +1189,7 @@ void gfx_display_draw_keyboard(
    coords.color             = (const float*)&white[0];
 
    gfx_display_draw_quad(
+         p_disp,
          userdata,
          video_width,
          video_height,
@@ -1417,7 +1207,7 @@ void gfx_display_draw_keyboard(
    if (ptr_width >= ptr_height)
       ptr_width = ptr_height;
 
-   gfx_display_rotate_z(&rotate_draw, userdata);
+   gfx_display_rotate_z(p_disp, &rotate_draw, userdata);
 
    draw.coords             = &coords;
    draw.matrix_data        = &mymat;
@@ -1488,9 +1278,6 @@ bool gfx_display_reset_textures_list(
       return false;
 
    fill_pathname_join(texpath, iconpath, texture_path, sizeof(texpath));
-
-   if (!path_is_valid(texpath))
-      return false;
 
    if (!image_texture_load(&ti, texpath))
       return false;
@@ -1563,10 +1350,10 @@ bool gfx_display_driver_exists(const char *s)
    return false;
 }
 
-bool gfx_display_init_first_driver(bool video_is_threaded)
+bool gfx_display_init_first_driver(gfx_display_t *p_disp,
+      bool video_is_threaded)
 {
    unsigned i;
-   gfx_display_t            *p_disp  = disp_get_ptr();
 
    for (i = 0; gfx_display_ctx_drivers[i]; i++)
    {

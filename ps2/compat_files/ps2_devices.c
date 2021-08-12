@@ -20,6 +20,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <lists/string_list.h>
 
 #define DEVICE_SLASH "/"
 
@@ -154,30 +155,46 @@ enum BootDeviceIDs getBootDeviceID(char *path)
       return BOOT_DEVICE_UNKNOWN;
 }
 
+/* This method returns true if it can extract needed info from path, otherwise false.
+ * In case of true, it also updates mountString, mountPoint and newCWD parameters
+ * It splits path by ":", and requires a minimum of 3 elements
+ * Example: if path = hdd0:__common:pfs:/retroarch/ then
+ * mountString = "pfs:"
+ * mountPoint = "hdd0:__common"
+ * newCWD = pfs:/retroarch/
+ * return true
+*/
+bool getMountInfo(char *path, char *mountString, char *mountPoint, char *newCWD)
+{
+   struct string_list *str_list = string_split(path, ":");
+   if (str_list->size < 3 )
+   {
+      return false;
+   }
+
+   sprintf(mountPoint, "%s:%s", str_list->elems[0].data, str_list->elems[1].data);
+   sprintf(mountString, "%s:", str_list->elems[2].data);
+   sprintf(newCWD, "%s%s", mountString, str_list->size == 4 ? str_list->elems[3].data : "");
+
+   return true;
+}
+
 /* HACK! If booting from a USB device, keep trying to
  * open this program again until it succeeds.
  *
  * This will ensure that the emulator will be able to load its files.
  */
 
-bool waitUntilDeviceIsReady(enum BootDeviceIDs device_id)
+bool waitUntilDeviceIsReady(char *path)
 {
-   struct stat buffer;   
+   struct stat buffer;
    int ret = -1;
-   int retries = 10;
-   char *rootDevice = rootDevicePath(device_id);
+   int retries = 50;
 
    while(ret != 0 && retries > 0)
    {
-      ret = stat(rootDevice, &buffer);
+      ret = stat(path, &buffer);
       /* Wait untill the device is ready */
-      nopdelay();
-      nopdelay();
-      nopdelay();
-      nopdelay();
-      nopdelay();
-      nopdelay();
-      nopdelay();
       nopdelay();
 
       retries--;

@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <rhash.h>
+#include <lrc_hash.h>
 #include <string/stdstring.h>
 #include <libretro.h>
 
@@ -146,9 +146,13 @@ const char *get_user_language_iso639_1(bool limit)
       case RETRO_LANGUAGE_VIETNAMESE:
          return "vi";
       case RETRO_LANGUAGE_CHINESE_SIMPLIFIED:
-         return "zh";
+         if (limit)
+            return "zh";
+         return "zh_cn";
       case RETRO_LANGUAGE_CHINESE_TRADITIONAL:
-         return "zh";
+         if (limit)
+            return "zh";
+         return "zh_tw";
       case RETRO_LANGUAGE_ARABIC:
          return "ar";
       case RETRO_LANGUAGE_GREEK:
@@ -531,4 +535,25 @@ void msg_hash_set_uint(enum msg_hash_action type, unsigned val)
       case MSG_HASH_NONE:
          break;
    }
+}
+
+const char *msg_hash_get_wideglyph_str(void)
+{
+#ifdef HAVE_LANGEXTRA
+   switch (uint_user_language)
+   {
+      case RETRO_LANGUAGE_CHINESE_SIMPLIFIED:
+         return msg_hash_get_wideglyph_str_chs();
+      case RETRO_LANGUAGE_CHINESE_TRADITIONAL:
+         return msg_hash_get_wideglyph_str_cht();
+      case RETRO_LANGUAGE_JAPANESE:
+         return msg_hash_get_wideglyph_str_jp();
+      case RETRO_LANGUAGE_KOREAN:
+         return msg_hash_get_wideglyph_str_ko();
+      default:
+         break;
+   }
+#endif
+   
+   return NULL;
 }

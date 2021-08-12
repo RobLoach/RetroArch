@@ -133,7 +133,7 @@ static int task_http_iterate_transfer(retro_task_t *task)
          task_set_progress(task, (signed)(pos * 100 / tot));
       else
          /* but invert the logic if it would cause an overflow */
-         task_set_progress(task, MAX((signed)pos / (tot / 100), 100));
+         task_set_progress(task, MIN((signed)pos / (tot / 100), 100));
       return -1;
    }
 
@@ -191,15 +191,28 @@ task_finished:
             free(tmp);
 
          if (task_get_cancelled(task))
+         {
             task_set_error(task, strdup("Task cancelled."));
-         else if (!task->mute)
-            task_set_error(task, strdup("Download failed."));
+         }
+         else
+         {
+            data = (http_transfer_data_t*)malloc(sizeof(*data));
+            data->data   = NULL;
+            data->len    = 0;
+            data->status = net_http_status(http->handle);
+
+            task_set_data(task, data);
+
+            if (!task->mute)
+               task_set_error(task, strdup("Download failed."));
+         }
       }
       else
       {
-         data       = (http_transfer_data_t*)malloc(sizeof(*data));
-         data->data = tmp;
-         data->len  = len;
+         data = (http_transfer_data_t*)malloc(sizeof(*data));
+         data->data   = tmp;
+         data->len    = len;
+         data->status = net_http_status(http->handle);
 
          task_set_data(task, data);
       }
@@ -209,6 +222,17 @@ task_finished:
       task_set_error(task, strdup("Internal error."));
 
    free(http);
+}
+
+static void task_http_transfer_cleanup(retro_task_t *task)
+{
+   http_transfer_data_t* data = (http_transfer_data_t*)task_get_data(task);
+   if (data)
+   {
+      if (data->data)
+         free(data->data);
+      free(data);
+   }
 }
 
 static bool task_http_finder(retro_task_t *task, void *user_data)
@@ -256,24 +280,35 @@ static void* task_push_http_transfer_generic(
       const char *url, bool mute, const char *type,
       retro_task_callback_t cb, void *user_data)
 {
-   task_finder_data_t find_data;
    retro_task_t  *t        = NULL;
    http_handle_t *http     = NULL;
-
-   find_data.func          = task_http_finder;
-   find_data.userdata      = (void*)url;
-
-   /* Concurrent download of the same file is not allowed */
-   if (task_queue_find(&find_data))
-   {
-      if (conn)
-         net_http_connection_free(conn);
-
-      return NULL;
-   }
+   const char    *method   = NULL;
 
    if (!conn)
       return NULL;
+
+   method = net_http_connection_method(conn);
+   if (method && (method[0] == 'P' || method[0] == 'p'))
+   {
+      /* POST requests usually mutate the server, so assume multiple calls are
+       * intended, even if they're duplicated. Additionally, they may differ
+       * only by the POST data, and task_http_finder doesn't look at that, so
+       * unique requests could be misclassified as duplicates.
+       */
+   }
+   else
+   {
+      task_finder_data_t find_data;
+      find_data.func = task_http_finder;
+      find_data.userdata = (void*)url;
+
+      /* Concurrent download of the same file is not allowed */
+      if (task_queue_find(&find_data))
+      {
+         net_http_connection_free(conn);
+         return NULL;
+      }
+   }
 
    http                    = (http_handle_t*)malloc(sizeof(*http));
 
@@ -305,6 +340,7 @@ static void* task_push_http_transfer_generic(
    t->mute                 = mute;
    t->callback             = cb;
    t->progress_cb          = http_transfer_progress_cb;
+   t->cleanup              = task_http_transfer_cleanup;
    t->user_data            = user_data;
    t->progress             = -1;
 

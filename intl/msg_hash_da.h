@@ -39,6 +39,10 @@ MSG_HASH(
 
 /* Main Menu */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SETTINGS,
+   "Indstillinger"
+   )
 
 /* Main Menu > Load Core */
 
@@ -48,6 +52,22 @@ MSG_HASH(
 
 /* Main Menu > Load Content > Playlists */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_GOTO_FAVORITES,
+   "Favoritter"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_GOTO_MUSIC,
+   "Musik"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_GOTO_IMAGES,
+   "Billeder"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_GOTO_VIDEO,
+   "Videoer"
+   )
 
 /* Main Menu > Online Updater */
 
@@ -85,6 +105,8 @@ MSG_HASH(
 /* Settings > Video */
 
 #if defined(DINGUX)
+#if defined(RS90)
+#endif
 #endif
 
 /* Settings > Video > CRT SwitchRes */
@@ -92,6 +114,8 @@ MSG_HASH(
 
 /* Settings > Video > Output */
 
+#if defined(DINGUX) && defined(DINGUX_BETA)
+#endif
 
 /* Settings > Video > Fullscreen Mode */
 
@@ -130,6 +154,8 @@ MSG_HASH(
 
 /* Settings > Input */
 
+#if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
+#endif
 
 /* Settings > Input > Haptic Feedback/Vibration */
 
@@ -139,10 +165,10 @@ MSG_HASH(
 /* Settings > Input > Menu Controls */
 
 
-/* Settings > Input > Hotkey Binds */
+/* Settings > Input > Hotkeys */
 
 
-/* Settings > Input > Port # Binds */
+/* Settings > Input > Port # Controls */
 
 
 /* Settings > Latency */
@@ -194,10 +220,18 @@ MSG_HASH(
 /* Settings > User Interface */
 
 
-/* Settings > User Interface > Views */
+/* Settings > User Interface > Menu Item Visibility */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SETTINGS_VIEWS_SETTINGS,
+   "Indstillinger"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MENU_ADD_CONTENT_ENTRY_DISPLAY_MAIN_TAB,
+   "Hovedmenu"
+   )
 
-/* Settings > User Interface > Views > Quick Menu */
+/* Settings > User Interface > Menu Item Visibility > Quick Menu */
 
 
 /* Settings > User Interface > Views > Settings */
@@ -225,6 +259,10 @@ MSG_HASH(
 
 /* Settings > Playlists */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_HISTORY_LIST_ENABLE,
+   "Historik"
+   )
 
 /* Settings > Playlists > Playlist Management */
 
@@ -247,6 +285,9 @@ MSG_HASH(
 /* Settings > User > Accounts > Twitch */
 
 
+/* Settings > User > Accounts > Facebook Gaming */
+
+
 /* Settings > Directory */
 
 
@@ -261,13 +302,13 @@ MSG_HASH(
 /* Netplay > Host */
 
 
-/* Import content */
+/* Import Content */
 
 
-/* Import content > Scan File */
+/* Import Content > Scan File */
 
 
-/* Import content > Manual Scan */
+/* Import Content > Manual Scan */
 
 
 /* Explore tab */
@@ -286,6 +327,11 @@ MSG_HASH(
 
 /* Quick Menu > Options */
 
+
+/* Quick Menu > Options > Manage Core Options */
+
+
+/* - Legacy (unused) */
 
 /* Quick Menu > Controls */
 
@@ -316,7 +362,7 @@ MSG_HASH(
 
 /* Quick Menu > Shaders > Save */
 
-   
+
 
 
 /* Quick Menu > Shaders > Remove */
@@ -363,9 +409,17 @@ MSG_HASH(
 
 /* Qt (Desktop Menu) */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_TITLE,
+   "Indstillinger"
+   )
 
 /* Unsorted */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_LOAD_CONTENT_HISTORY,
+   "Historik"
+   )
 
 /* Unused (Only Exist in Translation Files) */
 

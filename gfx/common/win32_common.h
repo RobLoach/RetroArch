@@ -47,6 +47,7 @@ RETRO_BEGIN_DECLS
 #if !defined(_XBOX)
 extern unsigned g_win32_resize_width;
 extern unsigned g_win32_resize_height;
+extern float g_win32_refresh_rate;
 extern bool g_win32_inited;
 extern bool g_win32_restore_desktop;
 extern ui_window_win32_t main_window;
@@ -98,6 +99,8 @@ HWND win32_get_window(void);
 
 bool win32_has_focus(void *data);
 
+void win32_clip_window(bool grab);
+
 void win32_check_window(void *data,
       bool *quit,
       bool *resize, unsigned *width, unsigned *height);
@@ -125,12 +128,16 @@ float win32_get_refresh_rate(void *data);
 #if defined(HAVE_D3D8) || defined(HAVE_D3D9) || defined (HAVE_D3D10) || defined (HAVE_D3D11) || defined (HAVE_D3D12)
 LRESULT CALLBACK wnd_proc_d3d_dinput(HWND hwnd, UINT message,
       WPARAM wparam, LPARAM lparam);
+LRESULT CALLBACK wnd_proc_d3d_winraw(HWND hwnd, UINT message,
+      WPARAM wparam, LPARAM lparam);
 LRESULT CALLBACK wnd_proc_d3d_common(HWND hwnd, UINT message,
       WPARAM wparam, LPARAM lparam);
 #endif
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGL1) || defined(HAVE_OPENGL_CORE)
 LRESULT CALLBACK wnd_proc_wgl_dinput(HWND hwnd, UINT message,
+      WPARAM wparam, LPARAM lparam);
+LRESULT CALLBACK wnd_proc_wgl_winraw(HWND hwnd, UINT message,
       WPARAM wparam, LPARAM lparam);
 LRESULT CALLBACK wnd_proc_wgl_common(HWND hwnd, UINT message,
       WPARAM wparam, LPARAM lparam);
@@ -139,11 +146,15 @@ LRESULT CALLBACK wnd_proc_wgl_common(HWND hwnd, UINT message,
 #if defined(HAVE_VULKAN)
 LRESULT CALLBACK wnd_proc_vk_dinput(HWND hwnd, UINT message,
       WPARAM wparam, LPARAM lparam);
+LRESULT CALLBACK wnd_proc_vk_winraw(HWND hwnd, UINT message,
+      WPARAM wparam, LPARAM lparam);
 LRESULT CALLBACK wnd_proc_vk_common(HWND hwnd, UINT message,
       WPARAM wparam, LPARAM lparam);
 #endif
 
 LRESULT CALLBACK wnd_proc_gdi_dinput(HWND hwnd, UINT message,
+      WPARAM wparam, LPARAM lparam);
+LRESULT CALLBACK wnd_proc_gdi_winraw(HWND hwnd, UINT message,
       WPARAM wparam, LPARAM lparam);
 LRESULT CALLBACK wnd_proc_gdi_common(HWND hwnd, UINT message,
       WPARAM wparam, LPARAM lparam);
@@ -159,6 +170,8 @@ void win32_setup_pixel_format(HDC hdc, bool supports_gl);
 void win32_unset_input_userdata(void);
 
 void win32_set_input_userdata(void *data);
+
+void win32_update_title(void);
 
 RETRO_END_DECLS
 

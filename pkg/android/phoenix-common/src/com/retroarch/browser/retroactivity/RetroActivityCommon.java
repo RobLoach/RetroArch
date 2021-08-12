@@ -33,8 +33,6 @@ import android.os.VibrationEffect;
 import android.util.Log;
 
 import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -100,6 +98,7 @@ public class RetroActivityCommon extends NativeActivity
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    cleanupSymlinks();
     updateSymlinks();
 
     SplitInstallManager manager = SplitInstallManagerFactory.create(this);
@@ -404,12 +403,14 @@ public class RetroActivityCommon extends NativeActivity
     SplitInstallManager manager = SplitInstallManagerFactory.create(this);
     String[] modules = manager.getInstalledModules().toArray(new String[0]);
     List<String> cores = new ArrayList<>();
+    List<String> availableCores = Arrays.asList(getAvailableCores());
 
     SharedPreferences prefs = UserPreferences.getPreferences(this);
 
     for(int i = 0; i < modules.length; i++) {
       String coreName = unsanitizeCoreName(modules[i]);
-      if(!prefs.getBoolean("core_deleted_" + coreName, false)) {
+      if(!prefs.getBoolean("core_deleted_" + coreName, false)
+              && availableCores.contains(coreName)) {
         cores.add(coreName);
       }
     }
@@ -535,7 +536,27 @@ public class RetroActivityCommon extends NativeActivity
    * @return The path to the RetroArch cores directory
    */
   private String getCorePath() {
-    return getApplicationInfo().dataDir + "/cores/";
+    String path = getApplicationInfo().dataDir + "/cores/";
+    new File(path).mkdirs();
+
+    return path;
+  }
+
+  /**
+   * Cleans up existing symlinks before new ones are created.
+   */
+  private void cleanupSymlinks() {
+    if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return;
+
+    File[] files = new File(getCorePath()).listFiles();
+    for(int i = 0; i < files.length; i++) {
+      try {
+        Os.readlink(files[i].getAbsolutePath());
+        files[i].delete();
+      } catch (Exception e) {
+        // File is not a symlink, so don't delete.
+      }
+    }
   }
 
   /**
@@ -543,6 +564,8 @@ public class RetroActivityCommon extends NativeActivity
    * are installed to.
    */
   private void updateSymlinks() {
+    if(!isPlayStoreBuild()) return;
+
     traverseFilesystem(getFilesDir());
     traverseFilesystem(new File(getApplicationInfo().nativeLibraryDir));
   }
@@ -563,8 +586,12 @@ public class RetroActivityCommon extends NativeActivity
    * @param filenames List of filenames to update.
    */
   private void traverseFilesystem(File file) {
+    if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return;
+
     File[] list = file.listFiles();
     if(list == null) return;
+
+    List<String> availableCores = Arrays.asList(getAvailableCores());
 
     // Check each file in a directory to see if it's a native library.
     for(int i = 0; i < list.length; i++) {
@@ -577,25 +604,14 @@ public class RetroActivityCommon extends NativeActivity
         String filename = child.getAbsolutePath();
 
         SharedPreferences prefs = UserPreferences.getPreferences(this);
-        if(!prefs.getBoolean("core_deleted_" + core, false)) {
+        if(!prefs.getBoolean("core_deleted_" + core, false)
+                && availableCores.contains(core)) {
           // Generate the destination filename and delete any existing symlinks / cores
           String newFilename = getCorePath() + core + "_libretro_android.so";
           new File(newFilename).delete();
 
           try {
-            // On Android 5.0+, use the official API for creating a symlink.
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-              Os.symlink(filename, newFilename);
-            } else {
-              // On older versions, resort to using reflection instead.
-              Class<?> clazz = Class.forName("libcore.io.Libcore");
-              Field field = clazz.getDeclaredField("os");
-              field.setAccessible(true);
-
-              Object os = field.get(null);
-              Method method = os.getClass().getMethod("symlink", String.class, String.class);
-              method.invoke(os, filename, newFilename);
-            }
+            Os.symlink(filename, newFilename);
           } catch (Exception e) {
             // Symlink failed to be created. Should never happen.
           }

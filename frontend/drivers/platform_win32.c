@@ -512,7 +512,7 @@ enum frontend_powerstate frontend_win32_get_powerstate(int *seconds, int *percen
    return ret;
 }
 
-enum frontend_architecture frontend_win32_get_architecture(void)
+enum frontend_architecture frontend_win32_get_arch(void)
 {
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0500
    /* Windows 2000 and later */
@@ -565,7 +565,7 @@ static int frontend_win32_parse_drive_list(void *data, bool load_content)
    return 0;
 }
 
-static void frontend_win32_environment_get(int *argc, char *argv[],
+static void frontend_win32_env_get(int *argc, char *argv[],
       void *args, void *params_data)
 {
    const char *tmp_dir = getenv("TMP");
@@ -943,17 +943,36 @@ static bool terminate_win32_process(PROCESS_INFORMATION pi)
 
 static PROCESS_INFORMATION g_pi;
 
-static bool create_win32_process(char* cmd)
+static bool create_win32_process(char* cmd, const char * input)
 {
    STARTUPINFO si;
+   HANDLE rd = NULL;
+   bool ret;
    memset(&si, 0, sizeof(si));
    si.cb = sizeof(si);
    memset(&g_pi, 0, sizeof(g_pi));
 
-   if (!CreateProcess(NULL, cmd, NULL, NULL, FALSE, CREATE_NO_WINDOW,
-                      NULL, NULL, &si, &g_pi))
-      return false;
-   return true;
+   if (input)
+   {
+      DWORD dummy;
+      HANDLE wr;
+      if (!CreatePipe(&rd, &wr, NULL, strlen(input))) return false;
+      
+      SetHandleInformation(rd, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+      
+      WriteFile(wr, input, strlen(input), &dummy, NULL);
+      CloseHandle(wr);
+      
+      si.dwFlags |= STARTF_USESTDHANDLES;
+      si.hStdInput = rd;
+      si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+      si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+   }
+
+   ret = CreateProcess(NULL, cmd, NULL, NULL, TRUE, CREATE_NO_WINDOW,
+                      NULL, NULL, &si, &g_pi);
+   if (rd) CloseHandle(rd);
+   return ret;
 }
 
 static bool is_narrator_running_windows(void)
@@ -1011,13 +1030,13 @@ static bool is_narrator_running_windows(void)
 static bool accessibility_speak_windows(int speed,
       const char* speak_text, int priority)
 {
-   char cmd[1200];
+   char cmd[512];
    const char *voice      = get_user_language_iso639_1(true);
    const char *language   = accessibility_win_language_code(voice);
    const char *langid     = accessibility_win_language_id(voice);
    bool res               = false;
    const char* speeds[10] = {"-10", "-7.5", "-5", "-2.5", "0", "2", "4", "6", "8", "10"};
-
+   size_t nbytes_cmd = 0;
    if (speed < 1)
       speed = 1;
    else if (speed > 10)
@@ -1035,21 +1054,16 @@ static bool accessibility_speak_windows(int speed,
    
    if (USE_POWERSHELL)
    {
-      if (strlen(language) > 0) 
-         snprintf(cmd, sizeof(cmd),
-               "powershell.exe -NoProfile -WindowStyle Hidden -Command \"Add-Type -AssemblyName System.Speech; $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; $synth.SelectVoice(\\\"%s\\\"); $synth.Rate = %s; $synth.Speak(\\\"%s\\\");\"", language, speeds[speed-1], (char*) speak_text); 
+      const char * template_lang = "powershell.exe -NoProfile -WindowStyle Hidden -Command \"Add-Type -AssemblyName System.Speech; $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; $synth.SelectVoice(\\\"%s\\\"); $synth.Rate = %s; $synth.Speak($input);\"";
+      const char * template_nolang = "powershell.exe -NoProfile -WindowStyle Hidden -Command \"Add-Type -AssemblyName System.Speech; $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; $synth.Rate = %s; $synth.Speak($input);\"";
+      if (strlen(language) > 0)
+         snprintf(cmd, sizeof(cmd), template_lang, language, speeds[speed-1]);
       else
-         snprintf(cmd, sizeof(cmd),
-               "powershell.exe -NoProfile -WindowStyle Hidden -Command \"Add-Type -AssemblyName System.Speech; $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; $synth.Rate = %s; $synth.Speak(\\\"%s\\\");\"", speeds[speed-1], (char*) speak_text); 
+         snprintf(cmd, sizeof(cmd), template_nolang, speeds[speed-1]);
+
       if (pi_set)
          terminate_win32_process(g_pi);
-      res = create_win32_process(cmd);
-      if (!res)
-      {
-         pi_set = false;
-         return true;
-      }
-      pi_set = true;
+      pi_set = create_win32_process(cmd, speak_text);
    }
 #ifdef HAVE_NVDA
    else if (USE_NVDA)
@@ -1096,13 +1110,8 @@ static bool accessibility_speak_windows(int speed,
       if (SUCCEEDED(hr))
       {
          wchar_t        *wc = utf8_to_utf16_string_alloc(speak_text);
-
-         snprintf(cmd, sizeof(cmd),
-               "<rate speed=\"%s\"/><volume level=\"80\"/><lang langid=\"%s\"/>%s", speeds[speed], langid, speak_text);
-
          if (!wc)
             return false;
-
          hr = ISpVoice_Speak(pVoice, wc, SPF_ASYNC /*SVSFlagsAsync*/, NULL);
          free(wc);
       }
@@ -1114,9 +1123,9 @@ static bool accessibility_speak_windows(int speed,
 #endif
 
 frontend_ctx_driver_t frontend_ctx_win32 = {
-   frontend_win32_environment_get,
-   frontend_win32_init,
-   NULL,                           /* deinit */
+   frontend_win32_env_get,         /* env_get   */
+   frontend_win32_init,            /* init      */
+   NULL,                           /* deinit    */
 #if defined(_WIN32) && !defined(_XBOX)
    frontend_win32_respawn,         /* exitspawn */
 #else
@@ -1129,35 +1138,36 @@ frontend_ctx_driver_t frontend_ctx_win32 = {
 #else
    NULL,                           /* set_fork */
 #endif
-   NULL,                           /* shutdown */
-   NULL,                           /* get_name */
+   NULL,                           /* shutdown                  */
+   NULL,                           /* get_name                  */
    frontend_win32_get_os,
-   NULL,                           /* get_rating */
-   NULL,                           /* load_content */
-   frontend_win32_get_architecture,
+   NULL,                           /* get_rating                */
+   NULL,                           /* content_loaded            */
+   frontend_win32_get_arch,        /* get_architecture          */
    frontend_win32_get_powerstate,
    frontend_win32_parse_drive_list,
    frontend_win32_get_total_mem,
    frontend_win32_get_free_mem,
-   NULL,                            /* install_signal_handler */
-   NULL,                            /* get_sighandler_state */
-   NULL,                            /* set_sighandler_state */
+   NULL,                            /* install_signal_handler   */
+   NULL,                            /* get_sighandler_state     */
+   NULL,                            /* set_sighandler_state     */
    NULL,                            /* destroy_sighandler_state */
-   frontend_win32_attach_console,   /* attach_console */
-   frontend_win32_detach_console,   /* detach_console */
-   NULL,                            /* get_lakka_version */
-   NULL,                            /* set_screen_brightness */
-   NULL,                            /* watch_path_for_changes */
-   NULL,                            /* check_for_path_changes */
+   frontend_win32_attach_console,   /* attach_console           */
+   frontend_win32_detach_console,   /* detach_console           */
+   NULL,                            /* get_lakka_version        */
+   NULL,                            /* set_screen_brightness    */
+   NULL,                            /* watch_path_for_changes   */
+   NULL,                            /* check_for_path_changes   */
    NULL,                            /* set_sustained_performance_mode */
    frontend_win32_get_cpu_model_name,
    frontend_win32_get_user_language,
 #if defined(_WIN32) && !defined(_XBOX)
-   is_narrator_running_windows,
-   accessibility_speak_windows,
+   is_narrator_running_windows,     /* is_narrator_running */
+   accessibility_speak_windows,     /* accessibility_speak */
 #else
-   NULL,                         /* is_narrator_running */
-   NULL,                         /* accessibility_speak */
+   NULL,                            /* is_narrator_running */
+   NULL,                            /* accessibility_speak */
 #endif
-   "win32"
+   "win32",                         /* ident               */
+   NULL                             /* get_video_driver    */
 };

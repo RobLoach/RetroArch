@@ -227,6 +227,7 @@ static void gfx_widget_progress_message_frame(void *data, void *user_data)
       unsigned video_width                 = video_info->width;
       unsigned video_height                = video_info->height;
       void *userdata                       = video_info->userdata;
+      gfx_display_t *p_disp                = (gfx_display_t*)video_info->disp_userdata;
 
       float *backdrop_color                = p_dispwidget->backdrop_orig;
       unsigned text_color                  = COLOR_TEXT_ALPHA(0xFFFFFFFF, (unsigned)(state->alpha * 255.0f));
@@ -240,6 +241,7 @@ static void gfx_widget_progress_message_frame(void *data, void *user_data)
       gfx_display_set_alpha(backdrop_color, state->alpha * DEFAULT_BACKDROP);
 
       gfx_display_draw_quad(
+            p_disp,
             userdata,
             video_width,
             video_height,
@@ -255,6 +257,7 @@ static void gfx_widget_progress_message_frame(void *data, void *user_data)
       gfx_display_set_alpha(state->bar_bg_color, state->alpha);
 
       gfx_display_draw_quad(
+            p_disp,
             userdata,
             video_width,
             video_height,
@@ -270,7 +273,8 @@ static void gfx_widget_progress_message_frame(void *data, void *user_data)
       if (state->progress >= 0)
       {
          bar_width = (unsigned)((((float)state->progress / 100.0f) * (float)state->bar_max_width) + 0.5f);
-         bar_width = (bar_width > state->bar_max_width) ? state->bar_max_width : bar_width;
+         if (bar_width > state->bar_max_width)
+            bar_width = state->bar_max_width;
 
          bar_color = state->bar_color;
       }
@@ -278,6 +282,7 @@ static void gfx_widget_progress_message_frame(void *data, void *user_data)
       gfx_display_set_alpha(bar_color, state->alpha);
 
       gfx_display_draw_quad(
+            p_disp,
             userdata,
             video_width,
             video_height,

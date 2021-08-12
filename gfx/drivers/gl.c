@@ -237,11 +237,22 @@ typedef struct gl2_renderchain_data
 /* Prototypes */
 #ifdef IOS
 /* There is no default frame buffer on iOS. */
-void cocoagl_bind_game_view_fbo(void);
-#define gl2_renderchain_bind_backbuffer() cocoagl_bind_game_view_fbo()
+void glkitview_bind_fbo(void);
+#define gl2_renderchain_bind_backbuffer() glkitview_bind_fbo()
 #else
 #define gl2_renderchain_bind_backbuffer() gl2_bind_fb(0)
 #endif
+
+static unsigned gl2_get_alignment(unsigned pitch)
+{
+   if (pitch & 1)
+      return 1;
+   if (pitch & 2)
+      return 2;
+   if (pitch & 4)
+      return 4;
+   return 8;
+}
 
 static bool gl2_shader_info(gl_t *gl,
       video_shader_ctx_info_t *shader_info)
@@ -299,7 +310,7 @@ static void gl2_load_texture_image(GLenum target,
       GLenum type,
       const GLvoid * data)
 {
-#if !defined(HAVE_PSGL) && !defined(ORBIS)
+#if !defined(HAVE_PSGL) && !defined(ORBIS) && !defined(VITA)
 #ifdef HAVE_OPENGLES2
    enum gl_capability_enum cap = GL_CAPS_TEX_STORAGE_EXT;
 #else
@@ -352,7 +363,7 @@ static bool gl2_recreate_fbo(
          == RARCH_GL_FRAMEBUFFER_COMPLETE)
       return true;
 
-   RARCH_WARN("Failed to reinitialize FBO texture.\n");
+   RARCH_WARN("[GL]: Failed to reinitialize FBO texture.\n");
    return false;
 }
 
@@ -1001,7 +1012,7 @@ static void gl2_renderchain_recompute_pass_sizes(
       }
 
       if (size_modified)
-         RARCH_WARN("FBO textures exceeded maximum size of GPU (%dx%d). Resizing to fit.\n", max_size, max_size);
+         RARCH_WARN("[GL]: FBO textures exceeded maximum size of GPU (%dx%d). Resizing to fit.\n", max_size, max_size);
 
       last_width      = fbo_rect->img_width;
       last_height     = fbo_rect->img_height;
@@ -1439,7 +1450,7 @@ static void gl2_renderchain_copy_frame(
 #endif
    {
       glPixelStorei(GL_UNPACK_ALIGNMENT,
-            video_pixel_get_alignment(width * gl->base_size));
+            gl2_get_alignment(width * gl->base_size));
 
       /* Fallback for GLES devices without GL_BGRA_EXT. */
       if (gl->base_size == 4 && use_rgba)
@@ -1492,7 +1503,7 @@ static void gl2_renderchain_copy_frame(
 #else
    {
       const GLvoid *data_buf = frame;
-      glPixelStorei(GL_UNPACK_ALIGNMENT, video_pixel_get_alignment(pitch));
+      glPixelStorei(GL_UNPACK_ALIGNMENT, gl2_get_alignment(pitch));
 
       if (gl->base_size == 2 && !gl->have_es2_compat)
       {
@@ -2040,8 +2051,8 @@ static bool gl2_shader_init(gl_t *gl, const gfx_ctx_driver_t *ctx_driver,
    if (type != parse_type)
    {
       if (!string_is_empty(shader_path))
-         RARCH_WARN("[GL] Shader preset %s is using unsupported shader type %s, falling back to stock %s.\n",
-            shader_path, video_shader_to_str(parse_type), video_shader_to_str(type));
+         RARCH_WARN("[GL]: Shader preset %s is using unsupported shader type %s, falling back to stock %s.\n",
+            shader_path, video_shader_type_to_str(parse_type), video_shader_type_to_str(type));
 
       shader_path = NULL;
    }
@@ -2124,7 +2135,7 @@ static void gl2_update_input_size(gl_t *gl, unsigned width,
       if (clear)
       {
          glPixelStorei(GL_UNPACK_ALIGNMENT,
-               video_pixel_get_alignment(width * sizeof(uint32_t)));
+               gl2_get_alignment(width * sizeof(uint32_t)));
 #if defined(HAVE_PSGL)
          glBufferSubData(GL_TEXTURE_REFERENCE_BUFFER_SCE,
                gl->tex_w * gl->tex_h * gl->tex_index * gl->base_size,
@@ -2261,7 +2272,7 @@ static void gl2_set_texture_frame(void *data,
 
    gl_load_texture_data(gl->menu_texture,
          RARCH_WRAP_EDGE, menu_filter,
-         video_pixel_get_alignment(width * base_size),
+         gl2_get_alignment(width * base_size),
          width, height, frame,
          base_size);
 
@@ -2486,7 +2497,7 @@ static void gl2_pbo_async_readback(gl_t *gl)
    gl->pbo_readback_valid[gl->pbo_readback_index] = true;
 
    gl2_renderchain_readback(gl, gl->renderchain_data,
-         video_pixel_get_alignment(gl->vp.width * sizeof(uint32_t)),
+         gl2_get_alignment(gl->vp.width * sizeof(uint32_t)),
          fmt, type, NULL);
    gl2_renderchain_unbind_pbo();
 }
@@ -2515,7 +2526,7 @@ static void gl2_video_layout_fbo_init(gl_t *gl, unsigned width, unsigned height)
 
    if (gl2_check_fb_status(RARCH_GL_FRAMEBUFFER) != 
          RARCH_GL_FRAMEBUFFER_COMPLETE)
-      RARCH_LOG("Unable to create FBO for video_layout\n");
+      RARCH_LOG("[GL]: Unable to create FBO for video_layout\n");
 
    gl2_bind_fb(0);
 }
@@ -2618,11 +2629,8 @@ static void gl2_video_layout_free(gl_t *gl)
 
 static void *gl2_video_layout_take_image(void *video_driver_data, struct texture_image image)
 {
-   unsigned alignment;
-   GLuint tex;
-
-   tex = 0;
-   alignment = video_pixel_get_alignment(image.width * sizeof(uint32_t));
+   GLuint tex          = 0;
+   unsigned alignment  = gl2_get_alignment(image.width * sizeof(uint32_t));
 
    glGenTextures(1, &tex);
 
@@ -3244,8 +3252,6 @@ static void gl2_set_nonblock_state(
    if (!gl)
       return;
 
-   RARCH_LOG("[GL]: VSync => %s\n", state ? "off" : "on");
-
    gl2_context_bind_hw_render(gl, false);
 
    if (!state)
@@ -3294,7 +3300,7 @@ static bool gl2_resolve_extensions(gl_t *gl, const char *context_ident, const vi
    {
       video_driver_set_rgba();
       RARCH_WARN("[GL]: GLES implementation does not have BGRA8888 extension.\n"
-                 "32-bit path will require conversion.\n");
+                 "[GL]: 32-bit path will require conversion.\n");
    }
    /* TODO/FIXME - No extensions for float FBO currently. */
 #endif
@@ -3729,7 +3735,15 @@ static void *gl2_init(const video_info_t *video,
       gl_query_core_context_set(true);
       gl->core_context_in_use = true;
 
-      gl_set_core_context(hwr->context_type);
+      if (hwr->context_type == RETRO_HW_CONTEXT_OPENGL_CORE)
+      {
+         /* Ensure that the rest of the frontend knows we have a core context */
+         gfx_ctx_flags_t flags;
+         flags.flags = 0;
+         BIT32_SET(flags.flags, GFX_CTX_FLAGS_GL_CORE_CONTEXT);
+
+         video_context_driver_set_flags(&flags);
+      }
 
       RARCH_LOG("[GL]: Using Core GL context, setting up VAO...\n");
       if (!gl_check_capability(GL_CAPS_VAO))
@@ -3953,7 +3967,7 @@ static void *gl2_init(const video_info_t *video,
 
    if (!gl_check_error(&error_string))
    {
-      RARCH_ERR("%s\n", error_string);
+      RARCH_ERR("[GL]: %s\n", error_string);
       free(error_string);
       goto error;
    }
@@ -4089,7 +4103,7 @@ static bool gl2_set_shader(void *data,
    if (type != fallback)
    {
       RARCH_ERR("[GL]: %s shader not supported, falling back to stock %s\n",
-            video_shader_to_str(type), video_shader_to_str(fallback));
+            video_shader_type_to_str(type), video_shader_type_to_str(fallback));
       path = NULL;
    }
 
@@ -4294,7 +4308,7 @@ static bool gl2_overlay_load(void *data,
 
    for (i = 0; i < num_images; i++)
    {
-      unsigned alignment = video_pixel_get_alignment(images[i].width
+      unsigned alignment = gl2_get_alignment(images[i].width
             * sizeof(uint32_t));
 
       gl_load_texture_data(gl->overlay_tex[i],

@@ -96,12 +96,9 @@ static void fix_asset_directory(void)
    rename(src_path_buf, dst_path_buf);
 }
 
-static void frontend_wiiu_get_environment_settings(int *argc, char *argv[],
+static void frontend_wiiu_get_env_settings(int *argc, char *argv[],
       void *args, void *params_data)
 {
-   unsigned i;
-   (void)args;
-
    fill_pathname_basedir(g_defaults.dirs[DEFAULT_DIR_PORT], elf_path_cst, sizeof(g_defaults.dirs[DEFAULT_DIR_PORT]));
 
    fill_pathname_join(g_defaults.dirs[DEFAULT_DIR_CORE_ASSETS], g_defaults.dirs[DEFAULT_DIR_PORT],
@@ -159,12 +156,9 @@ static void frontend_wiiu_init(void *data)
    DEBUG_LINE();
 }
 
-static int frontend_wiiu_get_rating(void)
-{
-   return 10;
-}
+static int frontend_wiiu_get_rating(void) { return 10; }
 
-enum frontend_architecture frontend_wiiu_get_architecture(void)
+enum frontend_architecture frontend_wiiu_get_arch(void)
 {
    return FRONTEND_ARCH_PPC;
 }
@@ -298,7 +292,7 @@ static void frontend_wiiu_exitspawn(char *s, size_t len, char *args)
 
 frontend_ctx_driver_t frontend_ctx_wiiu =
 {
-   frontend_wiiu_get_environment_settings,
+   frontend_wiiu_get_env_settings,
    frontend_wiiu_init,
    frontend_wiiu_deinit,
    frontend_wiiu_exitspawn,
@@ -313,29 +307,29 @@ frontend_ctx_driver_t frontend_ctx_wiiu =
    NULL,                         /* get_name */
    NULL,                         /* get_os */
    frontend_wiiu_get_rating,
-   NULL,                         /* load_content */
-   frontend_wiiu_get_architecture,
+   NULL,                         /* content_loaded */
+   frontend_wiiu_get_arch,       /* get_architecture */
    NULL,                         /* get_powerstate */
    frontend_wiiu_parse_drive_list,
-   NULL,                         /* get_mem_total */
-   NULL,                         /* get_mem_free */
+   NULL,                         /* get_total_mem */
+   NULL,                         /* get_free_mem */
    NULL,                         /* install_signal_handler */
    NULL,                         /* get_signal_handler_state */
-   NULL,                         /* set_signal_handler_state */
-   NULL,                         /* destroy_signal_handler_state */
-   NULL,                         /* attach_console */
-   NULL,                         /* detach_console */
-   NULL,                         /* get_lakka_version */
-   NULL,                         /* set_screen_brightness */
-   NULL,                         /* watch_path_for_changes */
-   NULL,                         /* check_for_path_changes */
+   NULL,                         /* set_signal_handler_state       */
+   NULL,                         /* destroy_signal_handler_state   */
+   NULL,                         /* attach_console                 */
+   NULL,                         /* detach_console                 */
+   NULL,                         /* get_lakka_version              */
+   NULL,                         /* set_screen_brightness          */
+   NULL,                         /* watch_path_for_changes         */
+   NULL,                         /* check_for_path_changes         */
    NULL,                         /* set_sustained_performance_mode */
-   NULL,                         /* get_cpu_model_name */
-   NULL,                         /* get_user_language */
-   NULL,                         /* is_narrator_running */
-   NULL,                         /* accessibility_speak */
-   "wiiu",
-   NULL,                         /* get_video_driver */
+   NULL,                         /* get_cpu_model_name             */
+   NULL,                         /* get_user_language              */
+   NULL,                         /* is_narrator_running            */
+   NULL,                         /* accessibility_speak            */
+   "wiiu",                       /* ident                          */
+   NULL                          /* get_video_driver               */
 };
 
 /* main() and its supporting functions */
@@ -458,7 +452,7 @@ static void main_loop(void)
 
    for (;;)
    {
-      if (video_driver_get_ptr(false))
+      if (video_driver_get_ptr())
       {
          start_time = OSGetSystemTime();
          task_queue_wait(swap_is_pending, &start_time);

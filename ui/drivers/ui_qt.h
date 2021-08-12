@@ -102,9 +102,7 @@ class MainWindow;
 class ThumbnailWidget;
 class ThumbnailLabel;
 class GridView;
-#if defined(HAVE_CG) || defined(HAVE_GLSL) || defined(HAVE_SLANG) || defined(HAVE_HLSL)
 class ShaderParamsDialog;
-#endif
 class CoreOptionsDialog;
 class CoreInfoDialog;
 class PlaylistEntryDialog;
@@ -370,7 +368,7 @@ public:
    QToolButton* runPushButton();
    QToolButton* stopPushButton();
    QTabWidget* browserAndPlaylistTabWidget();
-   QString getPlaylistDefaultCore(QString dbName);
+   QString getPlaylistDefaultCore(QString plName);
    ViewOptionsDialog* viewOptionsDialog();
    QSettings* settings();
    QVector<QHash<QString, QString> > getCoreInfo();
@@ -462,8 +460,6 @@ public slots:
    void onFileDropWidgetContextMenuRequested(const QPoint &pos);
    void showAbout();
    void showDocs();
-   void updateRetroArchNightly();
-   void onUpdateRetroArchFinished(bool success);
    void onThumbnailPackExtractFinished(bool success);
    void deferReloadShaderParams();
    void downloadThumbnail(QString system, QString title, QUrl url = QUrl());
@@ -509,13 +505,6 @@ private slots:
    void onDownloadScrollAgain(QString path);
    int onExtractArchive(QString path, QString extractionDir, QString tempExtension, retro_task_callback_t cb);
 
-   void onUpdateNetworkError(QNetworkReply::NetworkError code);
-   void onUpdateNetworkSslErrors(const QList<QSslError> &errors);
-   void onRetroArchUpdateDownloadFinished();
-   void onUpdateDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
-   void onUpdateDownloadReadyRead();
-   void onUpdateDownloadCanceled();
-
    void onThumbnailDownloadNetworkError(QNetworkReply::NetworkError code);
    void onThumbnailDownloadNetworkSslErrors(const QList<QSslError> &errors);
    void onThumbnailDownloadFinished();
@@ -548,7 +537,6 @@ private:
    bool isContentLessCore();
    bool updateCurrentPlaylistEntry(const QHash<QString, QString> &contentHash);
    int extractArchive(QString path);
-   void removeUpdateTempFiles();
    bool addDirectoryFilesToList(QProgressDialog *dialog, QStringList &list, QDir &dir, QStringList &extensions);
    void renamePlaylistItem(QListWidgetItem *item, QString newName);
    bool currentPlaylistIsSpecial();
@@ -618,9 +606,7 @@ private:
    int m_allPlaylistsGridMaxCount;
    PlaylistEntryDialog *m_playlistEntryDialog;
    QElapsedTimer m_statusMessageElapsedTimer;
-#if defined(HAVE_CG) || defined(HAVE_GLSL) || defined(HAVE_SLANG) || defined(HAVE_HLSL)
    QPointer<ShaderParamsDialog> m_shaderParamsDialog;
-#endif
    QPointer<CoreOptionsDialog> m_coreOptionsDialog;
    QNetworkAccessManager *m_networkManager;
 

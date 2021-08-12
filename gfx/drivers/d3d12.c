@@ -22,20 +22,7 @@
 #include <file/file_path.h>
 #include <formats/image.h>
 
-#include "../font_driver.h"
-#include "../common/d3d_common.h"
-#include "../common/win32_common.h"
-#include "../common/dxgi_common.h"
-#include "../common/d3d12_common.h"
-#include "../common/d3dcompiler_common.h"
-
-#include "../../driver.h"
-#include "../../verbosity.h"
-#include "../../configuration.h"
-#include "../../retroarch.h"
-#ifdef HAVE_REWIND
-#include "../../state_manager.h"
-#endif
+#include <dxgi.h>
 
 #ifdef HAVE_MENU
 #include "../../menu/menu_driver.h"
@@ -44,7 +31,31 @@
 #include "../gfx_widgets.h"
 #endif
 
-#include "wiiu/wiiu_dbg.h"
+#include "../../driver.h"
+#include "../../verbosity.h"
+#include "../../configuration.h"
+#include "../../retroarch.h"
+#include "../font_driver.h"
+#include "../common/win32_common.h"
+#include "../../performance_counters.h"
+#include "../../menu/menu_driver.h"
+#include "../video_shader_parse.h"
+#include "../drivers_shader/slang_process.h"
+#ifdef HAVE_REWIND
+#include "../../state_manager.h"
+#endif
+
+#include "../common/d3d_common.h"
+#include "../common/dxgi_common.h"
+#include "../common/d3d12_common.h"
+#include "../common/d3dcompiler_common.h"
+#ifdef HAVE_SLANG
+#include "../drivers_shader/slang_process.h"
+#endif
+
+#ifdef __WINRT__
+#include "../../uwp/uwp_func.h"
+#endif
 
 /* Temporary workaround for d3d12 not being able to poll flags during init */
 static gfx_ctx_driver_t d3d12_fake_context;
@@ -52,6 +63,7 @@ static uint32_t d3d12_get_flags(void *data);
 
 static void d3d12_gfx_sync(d3d12_video_t* d3d12)
 {
+   D3D12SignalCommandQueue(d3d12->queue.handle, d3d12->queue.fence, ++d3d12->queue.fenceValue);
    if (D3D12GetCompletedValue(d3d12->queue.fence) < d3d12->queue.fenceValue)
    {
       D3D12SetEventOnCompletion(
@@ -342,7 +354,6 @@ static bool d3d12_gfx_set_shader(void* data, enum rarch_shader_type type, const 
 {
 #if defined(HAVE_SLANG) && defined(HAVE_SPIRV_CROSS)
    unsigned         i;
-   config_file_t* conf     = NULL;
    d3d12_texture_t* source = NULL;
    d3d12_video_t*   d3d12  = (d3d12_video_t*)data;
 
@@ -357,16 +368,13 @@ static bool d3d12_gfx_set_shader(void* data, enum rarch_shader_type type, const 
 
    if (type != RARCH_SHADER_SLANG)
    {
-      RARCH_WARN("[D3D12] Only Slang shaders are supported. Falling back to stock.\n");
+      RARCH_WARN("[D3D12]: Only Slang shaders are supported. Falling back to stock.\n");
       return false;
    }
 
-   if (!(conf = video_shader_read_preset(path)))
-      return false;
-
    d3d12->shader_preset = (struct video_shader*)calloc(1, sizeof(*d3d12->shader_preset));
 
-   if (!video_shader_read_conf_preset(conf, d3d12->shader_preset))
+   if (!video_shader_load_preset_into_shader(path, d3d12->shader_preset))
       goto error;
 
    source = &d3d12->frame.texture[0];
@@ -488,7 +496,8 @@ static bool d3d12_gfx_set_shader(void* data, enum rarch_shader_type type, const 
 
          d3d12->pass[i].rt.rt_view.ptr =
                d3d12->desc.rtv_heap.cpu.ptr +
-               (countof(d3d12->chain.renderTargets) + i) * d3d12->desc.rtv_heap.stride;
+               (countof(d3d12->chain.renderTargets) + (2 * i)) * d3d12->desc.rtv_heap.stride;
+         d3d12->pass[i].feedback.rt_view.ptr = d3d12->pass[i].rt.rt_view.ptr + d3d12->desc.rtv_heap.stride;
 
          d3d12->pass[i].textures.ptr =
                d3d12->desc.srv_heap.gpu.ptr + i * SLANG_NUM_SEMANTICS * d3d12->desc.srv_heap.stride;
@@ -532,9 +541,6 @@ static bool d3d12_gfx_set_shader(void* data, enum rarch_shader_type type, const 
 
       image_texture_free(&image);
    }
-
-   video_shader_resolve_current_parameters(conf, d3d12->shader_preset);
-   config_file_free(conf);
 
    d3d12->resize_render_targets = true;
    d3d12->init_history          = true;
@@ -918,6 +924,10 @@ static void *d3d12_gfx_init(const video_info_t* video,
    if (string_is_equal(settings->arrays.input_driver, "dinput"))
       wndclass.lpfnWndProc = wnd_proc_d3d_dinput;
 #endif
+#ifdef HAVE_WINRAWINPUT
+   if (string_is_equal(settings->arrays.input_driver, "raw"))
+      wndclass.lpfnWndProc = wnd_proc_d3d_winraw;
+#endif
 #ifdef HAVE_WINDOW
    win32_window_init(&wndclass, true, NULL);
 #endif
@@ -1029,7 +1039,7 @@ static void *d3d12_gfx_init(const video_info_t* video,
    return d3d12;
 
 error:
-   RARCH_ERR("[D3D12]: failed to init video driver.\n");
+   RARCH_ERR("[D3D12]: Failed to init video driver.\n");
    d3d12_gfx_free(d3d12);
    return NULL;
 }
@@ -1116,7 +1126,7 @@ static void d3d12_init_render_targets(d3d12_video_t* d3d12, unsigned width, unsi
          height = d3d12->vp.height;
       }
 
-      RARCH_LOG("[d3d12]: Updating framebuffer size %u x %u.\n", width, height);
+      RARCH_LOG("[D3D12]: Updating framebuffer size %u x %u.\n", width, height);
 
       if ((i != (d3d12->shader_preset->passes - 1)) || (width != d3d12->vp.width) ||
           (height != d3d12->vp.height))
@@ -1174,6 +1184,9 @@ static bool d3d12_gfx_frame(
    unsigned         i;
    d3d12_texture_t* texture       = NULL;
    d3d12_video_t*   d3d12         = (d3d12_video_t*)data;
+   bool vsync                     = d3d12->chain.vsync;
+   unsigned sync_interval         = (vsync) ? d3d12->chain.swap_interval : 0;
+   unsigned present_flags         = (vsync) ? 0 : DXGI_PRESENT_ALLOW_TEARING;
    const char *stat_text          = video_info->stat_text;
    bool statistics_show           = video_info->statistics_show;
    unsigned video_width           = video_info->width;
@@ -1185,8 +1198,6 @@ static bool d3d12_gfx_frame(
    bool widgets_active            = video_info->widgets_active;
 #endif
 
-   d3d12_gfx_sync(d3d12);
-
    if (d3d12->resize_chain)
    {
       unsigned i;
@@ -1194,7 +1205,7 @@ static bool d3d12_gfx_frame(
       for (i = 0; i < countof(d3d12->chain.renderTargets); i++)
          Release(d3d12->chain.renderTargets[i]);
 
-      DXGIResizeBuffers(d3d12->chain.handle, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+      DXGIResizeBuffers(d3d12->chain.handle, 0, 0, 0, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING);
 
       for (i = 0; i < countof(d3d12->chain.renderTargets); i++)
       {
@@ -1590,22 +1601,6 @@ static bool d3d12_gfx_frame(
       D3D12IASetVertexBuffers(d3d12->queue.cmd, 0, 1, &d3d12->sprites.vbo_view);
 
       font_driver_render_msg(d3d12, msg, NULL, NULL);
-#ifndef __WINRT__
-      {
-         const ui_window_t* window = ui_companion_driver_get_window_ptr();
-         if (window)
-         {
-            char title[128];
-
-            title[0] = '\0';
-
-            video_driver_get_window_title(title, sizeof(title));
-
-            if (title[0])
-               window->set_title(&main_window, title);
-         }
-      }
-#endif
    }
    d3d12->sprites.enabled = false;
 
@@ -1615,14 +1610,19 @@ static bool d3d12_gfx_frame(
    D3D12CloseGraphicsCommandList(d3d12->queue.cmd);
 
    D3D12ExecuteGraphicsCommandLists(d3d12->queue.handle, 1, &d3d12->queue.cmd);
-   D3D12SignalCommandQueue(d3d12->queue.handle, d3d12->queue.fence, ++d3d12->queue.fenceValue);
-
+   
+#if defined(_WIN32) && !defined(__WINRT__)
+   win32_update_title();
+#endif
 #if 1
-   DXGIPresent(d3d12->chain.handle, !!d3d12->chain.vsync, 0);
+   DXGIPresent(d3d12->chain.handle, sync_interval, present_flags);
 #else
    DXGI_PRESENT_PARAMETERS pp = { 0 };
    DXGIPresent1(d3d12->swapchain, 0, 0, &pp);
 #endif
+
+   /* Sync after Present for minimal delay */
+   d3d12_gfx_sync(d3d12);
 
    return true;
 }
@@ -1631,8 +1631,9 @@ static void d3d12_gfx_set_nonblock_state(void* data, bool toggle,
       bool adaptive_vsync_enabled,
       unsigned swap_interval)
 {
-   d3d12_video_t* d3d12 = (d3d12_video_t*)data;
-   d3d12->chain.vsync   = !toggle;
+   d3d12_video_t* d3d12       = (d3d12_video_t*)data;
+   d3d12->chain.vsync         = !toggle;
+   d3d12->chain.swap_interval = swap_interval;
 }
 
 static bool d3d12_gfx_alive(void* data)

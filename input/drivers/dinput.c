@@ -58,9 +58,9 @@
 /* Context has to be global as joypads also ride on this context. */
 LPDIRECTINPUT8 g_dinput_ctx;
 
-struct pointer_status
+struct dinput_pointer_status
 {
-   struct pointer_status *next;
+   struct dinput_pointer_status *next;
    int pointer_id;
    int pointer_x;
    int pointer_y;
@@ -72,7 +72,7 @@ struct dinput_input
    LPDIRECTINPUTDEVICE8 keyboard;
    LPDIRECTINPUTDEVICE8 mouse;
    const input_device_driver_t *joypad;
-   struct pointer_status pointer_head;  /* dummy head for easier iteration */
+   struct dinput_pointer_status pointer_head;  /* dummy head for easier iteration */
 
    int window_pos_x;
    int window_pos_y;
@@ -387,7 +387,7 @@ static int16_t dinput_lightgun_aiming_state(
    int y                       = 0;
    unsigned num                = 0;
 
-   struct pointer_status 
+   struct dinput_pointer_status 
       *check_pos               = di->pointer_head.next;
 
    vp.x                        = 0;
@@ -437,6 +437,41 @@ static int16_t dinput_lightgun_aiming_state(
          break;
       case RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN:
          return !inside;
+      default:
+         break;
+   }
+
+   return 0;
+}
+
+static unsigned dinput_retro_id_to_rarch(unsigned id)
+{
+   switch (id)
+   {
+      case RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT:
+         return RARCH_LIGHTGUN_DPAD_RIGHT;
+      case RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT:
+         return RARCH_LIGHTGUN_DPAD_LEFT;
+      case RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP:
+         return RARCH_LIGHTGUN_DPAD_UP;
+      case RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN:
+         return RARCH_LIGHTGUN_DPAD_DOWN;
+      case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
+         return RARCH_LIGHTGUN_SELECT;
+      case RETRO_DEVICE_ID_LIGHTGUN_PAUSE:
+         return RARCH_LIGHTGUN_START;
+      case RETRO_DEVICE_ID_LIGHTGUN_RELOAD:
+         return RARCH_LIGHTGUN_RELOAD;
+      case RETRO_DEVICE_ID_LIGHTGUN_TRIGGER:
+         return RARCH_LIGHTGUN_TRIGGER;
+      case RETRO_DEVICE_ID_LIGHTGUN_AUX_A:
+         return RARCH_LIGHTGUN_AUX_A;
+      case RETRO_DEVICE_ID_LIGHTGUN_AUX_B:
+         return RARCH_LIGHTGUN_AUX_B;
+      case RETRO_DEVICE_ID_LIGHTGUN_AUX_C:
+         return RARCH_LIGHTGUN_AUX_C;
+      case RETRO_DEVICE_ID_LIGHTGUN_START:
+         return RARCH_LIGHTGUN_START;
       default:
          break;
    }
@@ -633,7 +668,7 @@ static int16_t dinput_input_state(
             int16_t res_screen_x        = 0;
             int16_t res_screen_y        = 0;
             unsigned num                = 0;
-            struct pointer_status *
+            struct dinput_pointer_status *
                check_pos                = di->pointer_head.next;
 
             vp.x                        = 0;
@@ -711,66 +746,43 @@ static int16_t dinput_input_state(
             case RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT:
             case RETRO_DEVICE_ID_LIGHTGUN_PAUSE:
                {
-                  unsigned new_id = 0;
-                  settings        = config_get_ptr();
-                  switch (id)
-                  {
-                     case RETRO_DEVICE_ID_LIGHTGUN_TRIGGER:
-                        new_id = RARCH_LIGHTGUN_TRIGGER;
-                        break;
-                     case RETRO_DEVICE_ID_LIGHTGUN_RELOAD:
-                        new_id = RARCH_LIGHTGUN_RELOAD;
-                        break;
-                     case RETRO_DEVICE_ID_LIGHTGUN_AUX_A:
-                        new_id = RARCH_LIGHTGUN_AUX_A;
-                        break;
-                     case RETRO_DEVICE_ID_LIGHTGUN_AUX_B:
-                        new_id = RARCH_LIGHTGUN_AUX_B;
-                        break;
-                     case RETRO_DEVICE_ID_LIGHTGUN_AUX_C:
-                        new_id = RARCH_LIGHTGUN_AUX_C;
-                        break;
-                     case RETRO_DEVICE_ID_LIGHTGUN_START:
-                        new_id = RARCH_LIGHTGUN_START;
-                        break;
-                     case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
-                        new_id = RARCH_LIGHTGUN_SELECT;
-                        break;
-                     case RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP:
-                        new_id = RARCH_LIGHTGUN_DPAD_UP;
-                        break;
-                     case RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN:
-                        new_id = RARCH_LIGHTGUN_DPAD_DOWN;
-                        break;
-                     case RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT:
-                        new_id = RARCH_LIGHTGUN_DPAD_LEFT;
-                        break;
-                     case RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT:
-                        new_id = RARCH_LIGHTGUN_DPAD_RIGHT;
-                        break;
-                     case RETRO_DEVICE_ID_LIGHTGUN_PAUSE:
-                        new_id = RARCH_LIGHTGUN_START;
-                        break;
-                  }
+                  unsigned new_id                = dinput_retro_id_to_rarch(id);
+                  const uint64_t bind_joykey     = input_config_binds[port][new_id].joykey;
+                  const uint64_t bind_joyaxis    = input_config_binds[port][new_id].joyaxis;
+                  const uint64_t autobind_joykey = input_autoconf_binds[port][new_id].joykey;
+                  const uint64_t autobind_joyaxis= input_autoconf_binds[port][new_id].joyaxis;
+                  uint16_t port                  = joypad_info->joy_idx;
+                  float axis_threshold           = joypad_info->axis_threshold;
+                  const uint64_t joykey          = (bind_joykey != NO_BTN)
+                     ? bind_joykey  : autobind_joykey;
+                  const uint32_t joyaxis         = (bind_joyaxis != AXIS_NONE)
+                     ? bind_joyaxis : autobind_joyaxis;
                   if (binds[port][new_id].valid)
                   {
-                     if (button_is_pressed(joypad,
-                              joypad_info,
-                              binds[port], port, new_id))
+                     if ((uint16_t)joykey != NO_BTN && joypad->button(
+                              port, (uint16_t)joykey))
+                        return 1;
+                     if (joyaxis != AXIS_NONE &&
+                           ((float)abs(joypad->axis(port, joyaxis)) 
+                            / 0x8000) > axis_threshold)
                         return 1;
                      else if (
-                               binds[port][new_id].key < RETROK_LAST
+                           binds[port][new_id].key < RETROK_LAST
                            && !keyboard_mapping_blocked
                            && di->state[rarch_keysym_lut
                            [(enum retro_key)binds[port][new_id].key]] & 0x80
                            )
                         return 1;
-                     else if (
-                           settings->uints.input_mouse_index[port] == 0
-                           && dinput_mouse_button_pressed(
-                              di, port, binds[port][new_id].mbutton)
+                     else
+                     {
+                        settings = config_get_ptr();
+                        if (
+                              settings->uints.input_mouse_index[port] == 0
+                              && dinput_mouse_button_pressed(
+                                 di, port, binds[port][new_id].mbutton)
                            )
-                        return 1;
+                           return 1;
+                     }
                   }
                }
                break;
@@ -806,7 +818,7 @@ static int16_t dinput_input_state(
 
 /* Stores x/y in client coordinates. */
 static void dinput_pointer_store_pos(
-      struct pointer_status *pointer, WPARAM lParam)
+      struct dinput_pointer_status *pointer, WPARAM lParam)
 {
    POINT point;
 
@@ -818,9 +830,9 @@ static void dinput_pointer_store_pos(
 }
 
 static void dinput_add_pointer(struct dinput_input *di,
-      struct pointer_status *new_pointer)
+      struct dinput_pointer_status *new_pointer)
 {
-   struct pointer_status *insert_pos = NULL;
+   struct dinput_pointer_status *insert_pos = NULL;
 
    new_pointer->next                 = NULL;
    insert_pos                        = &di->pointer_head;
@@ -832,13 +844,13 @@ static void dinput_add_pointer(struct dinput_input *di,
 
 static void dinput_delete_pointer(struct dinput_input *di, int pointer_id)
 {
-   struct pointer_status *check_pos  = &di->pointer_head;
+   struct dinput_pointer_status *check_pos  = &di->pointer_head;
 
    while (check_pos && check_pos->next)
    {
       if (check_pos->next->pointer_id == pointer_id)
       {
-         struct pointer_status *to_delete = check_pos->next;
+         struct dinput_pointer_status *to_delete = check_pos->next;
          check_pos->next                  = check_pos->next->next;
          free(to_delete);
       }
@@ -846,10 +858,10 @@ static void dinput_delete_pointer(struct dinput_input *di, int pointer_id)
    }
 }
 
-static struct pointer_status *dinput_find_pointer(
+static struct dinput_pointer_status *dinput_find_pointer(
       struct dinput_input *di, int pointer_id)
 {
-   struct pointer_status *check_pos = di->pointer_head.next;
+   struct dinput_pointer_status *check_pos = di->pointer_head.next;
 
    while (check_pos)
    {
@@ -863,11 +875,11 @@ static struct pointer_status *dinput_find_pointer(
 
 static void dinput_clear_pointers(struct dinput_input *di)
 {
-   struct pointer_status *pointer = &di->pointer_head;
+   struct dinput_pointer_status *pointer = &di->pointer_head;
 
    while (pointer->next)
    {
-      struct pointer_status *del = pointer->next;
+      struct dinput_pointer_status *del = pointer->next;
 
       pointer->next = pointer->next->next;
       free(del);
@@ -897,8 +909,8 @@ bool dinput_handle_message(void *data,
          break;
       case WM_POINTERDOWN:
          {
-            struct pointer_status *new_pointer =
-               (struct pointer_status *)malloc(sizeof(struct pointer_status));
+            struct dinput_pointer_status *new_pointer =
+               (struct dinput_pointer_status *)malloc(sizeof(struct dinput_pointer_status));
 
             if (!new_pointer)
                return false;
@@ -917,7 +929,7 @@ bool dinput_handle_message(void *data,
       case WM_POINTERUPDATE:
          {
             int pointer_id                 = GET_POINTERID_WPARAM(wParam);
-            struct pointer_status *pointer = dinput_find_pointer(di, pointer_id);
+            struct dinput_pointer_status *pointer = dinput_find_pointer(di, pointer_id);
             if (pointer)
                dinput_pointer_store_pos(pointer, lParam);
             return true;
@@ -1003,10 +1015,12 @@ static void dinput_grab_mouse(void *data, bool state)
    IDirectInputDevice8_Unacquire(di->mouse);
    IDirectInputDevice8_SetCooperativeLevel(di->mouse,
       (HWND)video_driver_window_get(),
-      state ?
-      (DISCL_EXCLUSIVE    | DISCL_FOREGROUND) :
       (DISCL_NONEXCLUSIVE | DISCL_FOREGROUND));
    IDirectInputDevice8_Acquire(di->mouse);
+
+#ifndef _XBOX
+   win32_clip_window(state);
+#endif
 }
 
 static uint64_t dinput_get_capabilities(void *data)

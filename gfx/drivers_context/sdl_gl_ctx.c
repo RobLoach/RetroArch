@@ -32,6 +32,10 @@
 #include "../common/sdl2_common.h"
 #endif
 
+#if defined(WEBOS) && defined(HAVE_SDL2)
+#include <SDL_webOS.h>
+#endif
+
 typedef struct gfx_ctx_sdl_data
 {
    int  width;
@@ -41,6 +45,7 @@ typedef struct gfx_ctx_sdl_data
 
    bool full;
    bool resized;
+   bool subsystem_inited;
 
 #ifdef HAVE_SDL2
    SDL_Window    *win;
@@ -71,45 +76,6 @@ static void sdl_ctx_destroy_resources(gfx_ctx_sdl_data_t *sdl)
       SDL_FreeSurface(sdl->win);
 #endif
    sdl->win = NULL;
-
-   SDL_QuitSubSystem(SDL_INIT_VIDEO);
-}
-
-static void *sdl_ctx_init(void *video_driver)
-{
-   gfx_ctx_sdl_data_t *sdl = (gfx_ctx_sdl_data_t*)
-      calloc(1, sizeof(gfx_ctx_sdl_data_t));
-
-   if (!sdl)
-      return NULL;
-
-#ifdef HAVE_X11
-   XInitThreads();
-#endif
-
-   if (SDL_WasInit(0) == 0)
-   {
-      if (SDL_Init(SDL_INIT_VIDEO) < 0)
-         goto error;
-   }
-   else if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
-      goto error;
-
-   RARCH_LOG("[SDL_GL] SDL %i.%i.%i gfx context driver initialized.\n",
-         SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
-
-   return sdl;
-
-error:
-   RARCH_WARN("[SDL_GL]: Failed to initialize SDL gfx context driver: %s\n",
-         SDL_GetError());
-
-   sdl_ctx_destroy_resources(sdl);
-
-   if (sdl)
-      free(sdl);
-
-   return NULL;
 }
 
 static void sdl_ctx_destroy(void *data)
@@ -120,8 +86,57 @@ static void sdl_ctx_destroy(void *data)
       return;
 
    sdl_ctx_destroy_resources(sdl);
+   if (sdl->subsystem_inited)
+      SDL_QuitSubSystem(SDL_INIT_VIDEO);
    free(sdl);
 }
+
+static void *sdl_ctx_init(void *video_driver)
+{
+   gfx_ctx_sdl_data_t *sdl      = (gfx_ctx_sdl_data_t*)
+      calloc(1, sizeof(gfx_ctx_sdl_data_t));
+   uint32_t sdl_subsystem_flags = SDL_WasInit(0);
+
+   if (!sdl)
+      return NULL;
+
+#ifdef HAVE_X11
+   XInitThreads();
+#endif
+
+#ifdef WEBOS
+   SDL_SetHint(SDL_HINT_WEBOS_ACCESS_POLICY_KEYS_BACK, "true");
+   SDL_SetHint(SDL_HINT_WEBOS_ACCESS_POLICY_KEYS_EXIT, "true");
+   SDL_SetHint(SDL_HINT_WEBOS_CURSOR_SLEEP_TIME, "1000");
+#endif
+
+   /* Initialise graphics subsystem, if required */
+   if (sdl_subsystem_flags == 0)
+   {
+      if (SDL_Init(SDL_INIT_VIDEO) < 0)
+         goto error;
+   }
+   else if ((sdl_subsystem_flags & SDL_INIT_VIDEO) == 0)
+   {
+      if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
+         goto error;
+      sdl->subsystem_inited = true;
+   }
+
+   RARCH_LOG("[SDL_GL] SDL %i.%i.%i gfx context driver initialized.\n",
+         SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
+
+   return sdl;
+
+error:
+   RARCH_WARN("[SDL_GL]: Failed to initialize SDL gfx context driver: %s\n",
+         SDL_GetError());
+
+   sdl_ctx_destroy(sdl);
+
+   return NULL;
+}
+
 
 static enum gfx_ctx_api sdl_ctx_get_api(void *data) { return sdl_api; }
 
@@ -198,7 +213,8 @@ static bool sdl_ctx_set_video_mode(void *data,
    {
       unsigned display = video_monitor_index;
 
-      sdl->win = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED_DISPLAY(display),
+      sdl->win = SDL_CreateWindow("RetroArch",
+                               SDL_WINDOWPOS_UNDEFINED_DISPLAY(display),
                                SDL_WINDOWPOS_UNDEFINED_DISPLAY(display),
                                width, height, SDL_WINDOW_OPENGL | fsflag);
    }

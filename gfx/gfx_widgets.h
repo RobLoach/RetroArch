@@ -30,6 +30,7 @@
 #endif
 
 #include "gfx_animation.h"
+#include "gfx_display.h"
 
 #define DEFAULT_BACKDROP               0.75f
 
@@ -233,7 +234,9 @@ struct gfx_widget
 {
    /* called when the widgets system is initialized
     * -> initialize the widget here */
-   bool (*init)(bool video_is_threaded, bool fullscreen);
+   bool (*init)(gfx_display_t *p_disp,
+         gfx_animation_t *p_anim,
+         bool video_is_threaded, bool fullscreen);
 
    /* called when the widgets system is freed
     * -> free the widget here */
@@ -303,12 +306,16 @@ void gfx_widgets_flush_text(
 typedef struct gfx_widget gfx_widget_t;
 
 bool gfx_widgets_init(
+      void *data,
+      void *data_disp,
+      void *data_anim,
+      void *settings_data,
       uintptr_t widgets_active_ptr,
       bool video_is_threaded,
       unsigned width, unsigned height, bool fullscreen,
       const char *dir_assets, char *font_path);
 
-bool gfx_widgets_deinit(bool widgets_persisting);
+void gfx_widgets_deinit(void *data, bool widgets_persisting);
 
 void gfx_widgets_msg_queue_push(
       void *data,
@@ -326,6 +333,7 @@ void gfx_widget_volume_update_and_show(float new_volume,
 void gfx_widgets_iterate(
       void *data,
       void *data_disp,
+      void *settings_data,
       unsigned width, unsigned height, bool fullscreen,
       const char *dir_assets, char *font_path,
       bool is_threaded);
@@ -346,6 +354,7 @@ void gfx_widgets_ai_service_overlay_unload(dispgfx_widget_t *p_dispwidget);
 #ifdef HAVE_CHEEVOS
 void gfx_widgets_push_achievement(const char *title, const char *badge);
 void gfx_widgets_set_leaderboard_display(unsigned id, const char* value);
+void gfx_widgets_set_challenge_display(unsigned id, const char* badge);
 #endif
 
 /* Warning: not thread safe! */

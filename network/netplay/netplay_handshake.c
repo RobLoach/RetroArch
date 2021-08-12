@@ -22,7 +22,7 @@
 #include <boolean.h>
 #include <compat/strl.h>
 #include <string/stdstring.h>
-#include <rhash.h>
+#include <lrc_hash.h>
 #include <retro_timers.h>
 
 #include "netplay_private.h"
@@ -36,6 +36,7 @@
 #include "../../content.h"
 #include "../../retroarch.h"
 #include "../../version.h"
+#include "../../menu/menu_input.h"
 
 struct nick_buf_s
 {
@@ -128,15 +129,11 @@ static void netplay_log_connection(
    }
 
    if (str)
-   {
       snprintf(s, len, msg_hash_to_str(MSG_GOT_CONNECTION_FROM_NAME),
             nick, str);
-   }
    else
-   {
       snprintf(s, len, msg_hash_to_str(MSG_GOT_CONNECTION_FROM),
             nick);
-   }
 }
 #else
 static void netplay_log_connection(
@@ -872,7 +869,7 @@ static bool netplay_handshake_pre_info(netplay_t *netplay,
       return true;
    }
 
-   RECV(&info_buf.core_name, cmd_size)
+   RECV(&info_buf.content_crc, cmd_size)
    {
       RARCH_ERR("Failed to receive netplay info payload.\n");
       return false;

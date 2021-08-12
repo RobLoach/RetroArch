@@ -67,10 +67,6 @@
 #include "../network/net_logger.c"
 #endif
 
-#if TARGET_OS_OSX
-#include "../ui/drivers/cocoa/ui_cocoa_application.c"
-#endif
-
 /*============================================================
 COMPATIBILITY
 ============================================================ */
@@ -195,10 +191,13 @@ ACHIEVEMENTS
 #include "../network/net_http_special.c"
 
 #include "../cheevos/cheevos.c"
-#include "../cheevos/badges.c"
-#include "../cheevos/cheevos_memory.c"
+#include "../cheevos/cheevos_client.c"
+#include "../cheevos/cheevos_menu.c"
 #include "../cheevos/cheevos_parser.c"
 
+#include "../deps/rcheevos/src/rapi/rc_api_common.c"
+#include "../deps/rcheevos/src/rapi/rc_api_runtime.c"
+#include "../deps/rcheevos/src/rapi/rc_api_user.c"
 #include "../deps/rcheevos/src/rcheevos/alloc.c"
 #include "../deps/rcheevos/src/rcheevos/compat.c"
 #include "../deps/rcheevos/src/rcheevos/condition.c"
@@ -208,6 +207,7 @@ ACHIEVEMENTS
 #include "../deps/rcheevos/src/rcheevos/lboard.c"
 #include "../deps/rcheevos/src/rcheevos/memref.c"
 #include "../deps/rcheevos/src/rcheevos/operand.c"
+#include "../deps/rcheevos/src/rcheevos/rc_libretro.c"
 #include "../deps/rcheevos/src/rcheevos/richpresence.c"
 #include "../deps/rcheevos/src/rcheevos/runtime.c"
 #include "../deps/rcheevos/src/rcheevos/runtime_progress.c"
@@ -229,7 +229,7 @@ CHEATS
 #ifdef HAVE_CHEATS
 #include "../cheat_manager.c"
 #endif
-#include "../libretro-common/hash/rhash.c"
+#include "../libretro-common/hash/lrc_hash.c"
 
 /*============================================================
 UI COMMON CONTEXT
@@ -272,8 +272,10 @@ VIDEO CONTEXT
 #include "../gfx/drivers_context/qnx_ctx.c"
 #elif defined(EMSCRIPTEN)
 #include "../gfx/drivers_context/emscriptenegl_ctx.c"
-#elif defined(__APPLE__) && !defined(TARGET_IPHONE_SIMULATOR) && !defined(TARGET_OS_IPHONE)
-#include "../gfx/drivers_context/cgl_ctx.c"
+#elif defined(__PSL1GHT__)
+#include "../gfx/drivers_context/psl1ght_ctx.c"
+#elif defined(__PS3__)
+#include "../gfx/drivers_context/ps3_ctx.c"
 #endif
 
 #if defined(HAVE_VIVANTE_FBDEV)
@@ -469,6 +471,14 @@ VIDEO DRIVER
 #include "../gfx/common/sdl2_common.c"
 #endif
 
+#if defined(DINGUX) && defined(HAVE_SDL_DINGUX)
+#if defined(RS90)
+#include "../gfx/drivers/sdl_rs90_gfx.c"
+#else
+#include "../gfx/drivers/sdl_dingux_gfx.c"
+#endif
+#endif
+
 #ifdef HAVE_VG
 #include "../gfx/drivers/vg.c"
 #endif
@@ -521,7 +531,7 @@ VIDEO DRIVER
 #endif
 
 #if defined(__PSL1GHT__)
-#include "../gfx/drivers/gcm_gfx.c"
+#include "../gfx/drivers/rsx_gfx.c"
 #elif defined(GEKKO)
 #include "../gfx/drivers/gx_gfx.c"
 #elif defined(PSP)
@@ -681,17 +691,18 @@ INPUT
 
 #include "../input/input_autodetect_builtin.c"
 
-#if defined(__PSL1GHT__)
-#include "../input/drivers/psl1ght_input.c"
-#elif defined(SN_TARGET_PSP2) || defined(PSP) || defined(VITA)
+#if defined(SN_TARGET_PSP2) || defined(PSP) || defined(VITA)
 #include "../input/drivers/psp_input.c"
 #include "../input/drivers_joypad/psp_joypad.c"
-#elif defined(ORBIS)
-#include "../input/drivers/ps4_input.c"
-#include "../input/drivers_joypad/ps4_joypad.c"
 #elif defined(PS2)
 #include "../input/drivers/ps2_input.c"
 #include "../input/drivers_joypad/ps2_joypad.c"
+#elif defined(__PS3__) || defined(__PSL1GHT__)
+#include "../input/drivers/ps3_input.c"
+#include "../input/drivers_joypad/ps3_joypad.c"
+#elif defined(ORBIS)
+#include "../input/drivers/ps4_input.c"
+#include "../input/drivers_joypad/ps4_joypad.c"
 #elif defined(HAVE_COCOA) || defined(HAVE_COCOATOUCH) || defined(HAVE_COCOA_METAL)
 #include "../input/drivers/cocoa_input.c"
 #elif defined(_3DS)
@@ -773,15 +784,12 @@ INPUT
 #endif
 
 #if defined(HAVE_LIBSHAKE)
-#if TARGET_OS_OSX
 #include "../deps/libShake/src/common/error.c"
 #include "../deps/libShake/src/common/helpers.c"
 #include "../deps/libShake/src/common/presets.c"
+#if defined(OSX)
 #include "../deps/libShake/src/osx/shake.c"
 #elif defined(__linux__) || (defined(BSD) && !defined(__MACH__))
-#include "../deps/libShake/src/common/error.c"
-#include "../deps/libShake/src/common/helpers.c"
-#include "../deps/libShake/src/common/presets.c"
 #include "../deps/libShake/src/linux/shake.c"
 #endif
 #endif
@@ -896,7 +904,7 @@ RSOUND
 /*============================================================
 AUDIO
 ============================================================ */
-#if defined(__PSL1GHT__)
+#if defined(__PS3__) || defined (__PSL1GHT__)
 #include "../audio/drivers/ps3_audio.c"
 #elif defined(XENON)
 #include "../audio/drivers/xenon360_audio.c"
@@ -977,7 +985,9 @@ MIDI
 /*============================================================
 DRIVERS
 ============================================================ */
+#ifdef HAVE_CRTSWITCHRES
 #include "../gfx/video_crt_switch.c"
+#endif
 #include "../gfx/gfx_animation.c"
 #include "../gfx/gfx_display.c"
 #include "../gfx/gfx_thumbnail_path.c"
@@ -1022,6 +1032,7 @@ FILTERS
 #include "../gfx/video_filters/dot_matrix_3x.c"
 #include "../gfx/video_filters/dot_matrix_4x.c"
 #include "../gfx/video_filters/upscale_1_5x.c"
+#include "../gfx/video_filters/upscale_256x_320x240.c"
 #endif
 
 #ifdef HAVE_DSP_FILTER
@@ -1070,6 +1081,7 @@ FILE
 #include "../file_path_special.c"
 #include "../libretro-common/lists/dir_list.c"
 #include "../libretro-common/lists/string_list.c"
+#include "../libretro-common/lists/nested_list.c"
 #include "../libretro-common/lists/file_list.c"
 #include "../libretro-common/file/retro_dirent.c"
 #include "../libretro-common/streams/file_stream.c"
@@ -1137,21 +1149,21 @@ FRONTEND
 #include "../frontend/drivers/platform_xdk.c"
 #endif
 
-#if defined(__PSL1GHT__)
-#include "../frontend/drivers/platform_ps3.c"
-#elif defined(GEKKO)
+#if defined(GEKKO)
 #include "../frontend/drivers/platform_gx.c"
 #ifdef HW_RVL
 #include "../frontend/drivers/platform_wii.c"
 #endif
 #elif defined(__wiiu__)
 #include "../frontend/drivers/platform_wiiu.c"
-#elif defined(PSP) || defined(VITA)
-#include "../frontend/drivers/platform_psp.c"
-#elif defined(ORBIS)
-#include "../frontend/drivers/platform_orbis.c"
 #elif defined(PS2)
 #include "../frontend/drivers/platform_ps2.c"
+#elif defined(__PS3__)
+#include "../frontend/drivers/platform_ps3.c"
+#elif defined(ORBIS)
+#include "../frontend/drivers/platform_orbis.c"
+#elif defined(PSP) || defined(VITA)
+#include "../frontend/drivers/platform_psp.c"
 #elif defined(_3DS)
 #include "../frontend/drivers/platform_ctr.c"
 #elif defined(SWITCH) && defined(HAVE_LIBNX)
@@ -1172,6 +1184,7 @@ FRONTEND
 
 #include "../core_info.c"
 #include "../core_backup.c"
+#include "../core_option_manager.c"
 
 #if defined(HAVE_NETWORKING)
 #include "../core_updater_list.c"
@@ -1182,10 +1195,6 @@ UI
 ============================================================ */
 #if defined(_WIN32) && !defined(_XBOX) && !defined(__WINRT__)
 #include "../ui/drivers/ui_win32.c"
-#include "../ui/drivers/win32/ui_win32_window.c"
-#include "../ui/drivers/win32/ui_win32_browser_window.c"
-#include "../ui/drivers/win32/ui_win32_msg_window.c"
-#include "../ui/drivers/win32/ui_win32_application.c"
 #endif
 
 /*============================================================
@@ -1200,6 +1209,7 @@ GIT
 RETROARCH
 ============================================================ */
 #include "../retroarch.c"
+#include "../command.c"
 #include "../libretro-common/queues/task_queue.c"
 
 #include "../msg_hash.c"
@@ -1262,26 +1272,6 @@ THREAD
 
 #if defined(XENON)
 #include "../thread/xenon_sdl_threads.c"
-#elif defined(PSP)
-#include "../deps/pthreads/platform/helper/tls-helper.c"
-#include "../deps/pthreads/platform/psp/psp_osal.c"
-#include "../deps/pthreads/pte_main.c"
-#include "../deps/pthreads/pte.c"
-#include "../deps/pthreads/pthread_attr.c"
-#include "../deps/pthreads/pthread_barrier.c"
-#include "../deps/pthreads/pthread_cond.c"
-#include "../deps/pthreads/pthread_condattr.c"
-#include "../deps/pthreads/pthread_get.c"
-#include "../deps/pthreads/pthread_key.c"
-#include "../deps/pthreads/pthread_mutex.c"
-#include "../deps/pthreads/pthread_mutexattr.c"
-#include "../deps/pthreads/pthread_rwlock.c"
-#include "../deps/pthreads/pthread_rwlockattr.c"
-#include "../deps/pthreads/pthread_set.c"
-#include "../deps/pthreads/pthread_spin.c"
-#include "../deps/pthreads/pthread.c"
-#include "../deps/pthreads/sched.c"
-#include "../deps/pthreads/sem.c"
 #endif
 
 #include "../libretro-common/rthreads/rthreads.c"
@@ -1296,14 +1286,9 @@ THREAD
 NETPLAY
 ============================================================ */
 #ifdef HAVE_NETWORKING
-#include "../network/netplay/netplay_delta.c"
 #include "../network/netplay/netplay_handshake.c"
-#include "../network/netplay/netplay_init.c"
 #include "../network/netplay/netplay_io.c"
-#include "../network/netplay/netplay_keyboard.c"
-#include "../network/netplay/netplay_sync.c"
 #include "../network/netplay/netplay_discovery.c"
-#include "../network/netplay/netplay_buf.c"
 #include "../network/netplay/netplay_room_parse.c"
 #include "../libretro-common/net/net_compat.c"
 #include "../libretro-common/net/net_socket.c"
@@ -1326,6 +1311,9 @@ DATA RUNLOOP
 ============================================================ */
 #include "../tasks/task_powerstate.c"
 #include "../tasks/task_content.c"
+#ifdef HAVE_CDROM
+#include "../tasks/task_content_disc.c"
+#endif
 #ifdef HAVE_PATCH
 #include "../tasks/task_patch.c"
 #endif
@@ -1379,13 +1367,15 @@ MENU
 
 #ifdef HAVE_MENU
 #include "../menu/menu_setting.c"
+#if defined(HAVE_MATERIALUI) || defined(HAVE_XMB) || defined(HAVE_OZONE)
+#include "../menu/menu_screensaver.c"
+#endif
 
 #include "../menu/cbs/menu_cbs_ok.c"
 #include "../menu/cbs/menu_cbs_cancel.c"
 #include "../menu/cbs/menu_cbs_select.c"
 #include "../menu/cbs/menu_cbs_start.c"
 #include "../menu/cbs/menu_cbs_info.c"
-#include "../menu/cbs/menu_cbs_refresh.c"
 #include "../menu/cbs/menu_cbs_left.c"
 #include "../menu/cbs/menu_cbs_right.c"
 #include "../menu/cbs/menu_cbs_title.c"
@@ -1394,9 +1384,6 @@ MENU
 #include "../menu/cbs/menu_cbs_get_value.c"
 #include "../menu/cbs/menu_cbs_label.c"
 #include "../menu/cbs/menu_cbs_sublabel.c"
-#include "../menu/cbs/menu_cbs_up.c"
-#include "../menu/cbs/menu_cbs_down.c"
-#include "../menu/cbs/menu_cbs_contentlist_switch.c"
 #include "../menu/menu_displaylist.c"
 #ifdef HAVE_LIBRETRODB
 #include "../menu/menu_explore.c"
@@ -1501,20 +1488,23 @@ DEPENDENCIES
 #endif
 
 #ifdef HAVE_7ZIP
-#include "../deps/7zip/7zIn.c"
+#include "../deps/7zip/7zArcIn.c"
+#include "../deps/7zip/7zBuf.c"
+#include "../deps/7zip/7zCrc.c"
+#include "../deps/7zip/7zCrcOpt.c"
+#include "../deps/7zip/7zDec.c"
+#include "../deps/7zip/CpuArch.c"
+#include "../deps/7zip/Delta.c"
+#include "../deps/7zip/LzFind.c"
+#include "../deps/7zip/LzmaDec.c"
+#include "../deps/7zip/Lzma2Dec.c"
+#include "../deps/7zip/LzmaEnc.c"
+#include "../deps/7zip/Bra.c"
 #include "../deps/7zip/Bra86.c"
+#include "../deps/7zip/BraIA64.c"
+#include "../deps/7zip/Bcj2.c"
 #include "../deps/7zip/7zFile.c"
 #include "../deps/7zip/7zStream.c"
-#include "../deps/7zip/LzmaDec.c"
-#include "../deps/7zip/LzmaEnc.c"
-#include "../deps/7zip/7zCrcOpt.c"
-#include "../deps/7zip/Bra.c"
-#include "../deps/7zip/7zDec.c"
-#include "../deps/7zip/Bcj2.c"
-#include "../deps/7zip/7zCrc.c"
-#include "../deps/7zip/Lzma2Dec.c"
-#include "../deps/7zip/LzFind.c"
-#include "../deps/7zip/7zBuf.c"
 #endif
 
 #ifdef WANT_LIBFAT
@@ -1531,9 +1521,9 @@ DEPENDENCIES
 #endif
 
 #ifdef WANT_IOSUHAX
-#include "../deps/libiosuhax/iosuhax.c"
-#include "../deps/libiosuhax/iosuhax_devoptab.c"
-#include "../deps/libiosuhax/iosuhax_disc_interface.c"
+#include "../deps/libiosuhax/source/iosuhax.c"
+#include "../deps/libiosuhax/source/iosuhax_devoptab.c"
+#include "../deps/libiosuhax/source/iosuhax_disc_interface.c"
 #endif
 
 /*============================================================

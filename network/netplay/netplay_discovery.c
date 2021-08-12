@@ -55,6 +55,11 @@
 #define HAVE_INET6 1
 #endif
 
+/* TODO/FIXME - globals referenced outside */
+struct netplay_room *netplay_room_list = NULL;
+int netplay_room_count                 = 0;
+
+#ifdef HAVE_NETPLAYDISCOVERY
 struct ad_packet
 {
    uint32_t header;
@@ -71,30 +76,175 @@ struct ad_packet
    char subsystem_name[NETPLAY_HOST_STR_LEN];
 };
 
-/* TODO/FIXME - globals referenced outside */
-struct netplay_room *netplay_room_list = NULL;
-int netplay_room_count                 = 0;
-
 /* TODO/FIXME - static globals */
+
 /* LAN discovery sockets */
 static int lan_ad_server_fd            = -1;
 static int lan_ad_client_fd            = -1;
+
 /* Packet buffer for advertisement and responses */
 static struct ad_packet ad_packet_buffer;
+
 /* List of discovered hosts */
 static struct netplay_host_list discovered_hosts;
+
 static size_t discovered_hosts_allocated;
 
-/* Forward declarations */
-#ifdef HAVE_NETPLAYDISCOVERY
-static bool netplay_lan_ad_client(void);
+#ifdef HAVE_SOCKET_LEGACY
+
+#ifndef htons
+/* The fact that I need to write this is deeply depressing */
+static int16_t htons_for_morons(int16_t value)
+{
+   union {
+      int32_t l;
+      int16_t s[2];
+   } val;
+   val.l = htonl(value);
+   return val.s[1];
+}
+#define htons htons_for_morons
 #endif
+
+#endif
+
+static bool netplay_lan_ad_client(void)
+{
+   unsigned i;
+   fd_set fds;
+   socklen_t addr_size;
+   struct sockaddr their_addr;
+   struct timeval tmp_tv    = {0};
+
+   if (lan_ad_client_fd < 0)
+      return false;
+
+   their_addr.sa_family     = 0;
+   for (i = 0; i < 14; i++)
+      their_addr.sa_data[i] = 0;
+
+   /* Check for any ad queries */
+   for (;;)
+   {
+      FD_ZERO(&fds);
+      FD_SET(lan_ad_client_fd, &fds);
+      if (socket_select(lan_ad_client_fd + 1,
+               &fds, NULL, NULL, &tmp_tv) <= 0)
+         break;
+
+      if (!FD_ISSET(lan_ad_client_fd, &fds))
+         break;
+
+      /* Somebody queried, so check that it's valid */
+      addr_size = sizeof(their_addr);
+
+      if (recvfrom(lan_ad_client_fd, (char*)&ad_packet_buffer,
+            sizeof(struct ad_packet), 0, &their_addr, &addr_size) >=
+            (ssize_t) sizeof(struct ad_packet))
+      {
+         struct netplay_host *host = NULL;
+
+         /* Make sure it's a valid response */
+         if (memcmp((void *) &ad_packet_buffer, "RANS", 4))
+            continue;
+
+         /* For this version */
+         if (ntohl(ad_packet_buffer.protocol_version) 
+               != NETPLAY_PROTOCOL_VERSION)
+            continue;
+
+         /* And that we know how to handle it */
+         if (their_addr.sa_family == AF_INET)
+         {
+            struct sockaddr_in *sin = NULL;
+
+            RARCH_WARN ("[Discovery] Using IPv4 for discovery\n");
+            sin           = (struct sockaddr_in *) &their_addr;
+            sin->sin_port = htons(ntohl(ad_packet_buffer.port));
+
+         }
+#ifdef HAVE_INET6
+         else if (their_addr.sa_family == AF_INET6)
+         {
+            struct sockaddr_in6 *sin6 = NULL;
+            RARCH_WARN ("[Discovery] Using IPv6 for discovery\n");
+            sin6            = (struct sockaddr_in6 *) &their_addr;
+            sin6->sin6_port = htons(ad_packet_buffer.port);
+
+         }
+#endif
+         else
+            continue;
+
+         /* Allocate space for it */
+         if (discovered_hosts.size >= discovered_hosts_allocated)
+         {
+            size_t allocated               = discovered_hosts_allocated;
+            struct netplay_host *new_hosts = NULL;
+
+            if (allocated == 0)
+               allocated  = 2;
+            else
+               allocated *= 2;
+
+            if (discovered_hosts.hosts)
+               new_hosts  = (struct netplay_host *)
+                  realloc(discovered_hosts.hosts, allocated * sizeof(struct
+                  netplay_host));
+            else
+               /* Should be equivalent to realloc, 
+                * but I don't trust screwy libcs */
+               new_hosts = (struct netplay_host *)
+                  malloc(allocated * sizeof(struct netplay_host));
+
+            if (!new_hosts)
+               return false;
+
+            discovered_hosts.hosts     = new_hosts;
+            discovered_hosts_allocated = allocated;
+         }
+
+         /* Get our host structure */
+         host = &discovered_hosts.hosts[discovered_hosts.size++];
+
+         /* Copy in the response */
+         memset(host, 0, sizeof(struct netplay_host));
+         host->addr    = their_addr;
+         host->addrlen = addr_size;
+
+         host->port = ntohl(ad_packet_buffer.port);
+
+         strlcpy(host->address, ad_packet_buffer.address, NETPLAY_HOST_STR_LEN);
+         strlcpy(host->nick, ad_packet_buffer.nick, NETPLAY_HOST_STR_LEN);
+         strlcpy(host->core, ad_packet_buffer.core, NETPLAY_HOST_STR_LEN);
+         strlcpy(host->retroarch_version, ad_packet_buffer.retroarch_version,
+            NETPLAY_HOST_STR_LEN);
+         strlcpy(host->core_version, ad_packet_buffer.core_version,
+            NETPLAY_HOST_STR_LEN);
+         strlcpy(host->content, ad_packet_buffer.content,
+            NETPLAY_HOST_LONGSTR_LEN);
+         strlcpy(host->subsystem_name, ad_packet_buffer.subsystem_name,
+            NETPLAY_HOST_LONGSTR_LEN);
+         strlcpy(host->frontend, ad_packet_buffer.frontend,
+            NETPLAY_HOST_STR_LEN);
+
+         host->content_crc                  =
+            atoi(ad_packet_buffer.content_crc);
+         host->nick[NETPLAY_HOST_STR_LEN-1] =
+            host->core[NETPLAY_HOST_STR_LEN-1] =
+            host->core_version[NETPLAY_HOST_STR_LEN-1] =
+            host->content[NETPLAY_HOST_LONGSTR_LEN-1] = '\0';
+      }
+   }
+
+   return true;
+}
 
 /** Initialize Netplay discovery (client) */
 bool init_netplay_discovery(void)
 {
    struct addrinfo *addr = NULL;
-   int fd = socket_init((void **) &addr, 0, NULL, SOCKET_TYPE_DATAGRAM);
+   int fd = socket_init((void **)&addr, 0, NULL, SOCKET_TYPE_DATAGRAM);
 
    if (fd < 0)
       goto error;
@@ -112,11 +262,12 @@ bool init_netplay_discovery(void)
 error:
    if (addr)
       freeaddrinfo_retro(addr);
-   RARCH_ERR("[discovery] Failed to initialize netplay advertisement client socket.\n");
+   RARCH_ERR("[Discovery] Failed to initialize netplay advertisement client socket.\n");
    return false;
 }
 
 /** Deinitialize and free Netplay discovery */
+/* TODO/FIXME - this is apparently never called? */
 void deinit_netplay_discovery(void)
 {
    if (lan_ad_client_fd >= 0)
@@ -127,12 +278,12 @@ void deinit_netplay_discovery(void)
 }
 
 /** Discovery control */
-/* Todo: implement net_ifinfo and ntohs for consoles */
-bool netplay_discovery_driver_ctl(enum rarch_netplay_discovery_ctl_state state, void *data)
+/* TODO/FIXME: implement net_ifinfo and ntohs for consoles */
+bool netplay_discovery_driver_ctl(
+      enum rarch_netplay_discovery_ctl_state state, void *data)
 {
-#ifdef HAVE_NETPLAYDISCOVERY
-   char port_str[6];
    int ret;
+   char port_str[6];
    unsigned k = 0;
 
    if (lan_ad_client_fd < 0)
@@ -144,7 +295,7 @@ bool netplay_discovery_driver_ctl(enum rarch_netplay_discovery_ctl_state state, 
       {
          net_ifinfo_t interfaces;
          struct addrinfo hints = {0}, *addr;
-         int canBroadcast      = 1;
+         int can_broadcast     = 1;
 
          if (!net_ifinfo_new(&interfaces))
             return false;
@@ -157,8 +308,8 @@ bool netplay_discovery_driver_ctl(enum rarch_netplay_discovery_ctl_state state, 
          /* Make it broadcastable */
 #if defined(SOL_SOCKET) && defined(SO_BROADCAST)
          if (setsockopt(lan_ad_client_fd, SOL_SOCKET, SO_BROADCAST,
-                  (const char *)&canBroadcast, sizeof(canBroadcast)) < 0)
-            RARCH_WARN("[discovery] Failed to set netplay discovery port to broadcast\n");
+                  (const char *)&can_broadcast, sizeof(can_broadcast)) < 0)
+            RARCH_WARN("[Discovery] Failed to set netplay discovery port to broadcast\n");
 #endif
 
          /* Put together the request */
@@ -174,7 +325,7 @@ bool netplay_discovery_driver_ctl(enum rarch_netplay_discovery_ctl_state state, 
             ret = (int)sendto(lan_ad_client_fd, (const char *) &ad_packet_buffer,
                sizeof(struct ad_packet), 0, addr->ai_addr, addr->ai_addrlen);
             if (ret < (ssize_t) (2*sizeof(uint32_t)))
-               RARCH_WARN("[discovery] Failed to send netplay discovery query (error: %d)\n", errno);
+               RARCH_WARN("[Discovery] Failed to send netplay discovery query (error: %d)\n", errno);
          }
 
          freeaddrinfo_retro(addr);
@@ -196,11 +347,9 @@ bool netplay_discovery_driver_ctl(enum rarch_netplay_discovery_ctl_state state, 
       default:
          return false;
    }
-#endif
    return true;
 }
 
-#ifdef HAVE_NETPLAYDISCOVERY
 static bool init_lan_ad_server_socket(netplay_t *netplay, uint16_t port)
 {
    struct addrinfo *addr = NULL;
@@ -223,10 +372,8 @@ static bool init_lan_ad_server_socket(netplay_t *netplay, uint16_t port)
 error:
    if (addr)
       freeaddrinfo_retro(addr);
-   RARCH_ERR("[discovery] Failed to initialize netplay advertisement socket\n");
    return false;
 }
-#endif
 
 /**
  * netplay_lan_ad_server
@@ -235,8 +382,7 @@ error:
  */
 bool netplay_lan_ad_server(netplay_t *netplay)
 {
-/* Todo: implement net_ifinfo and ntohs for consoles */
-#ifdef HAVE_NETPLAYDISCOVERY
+   /* TODO/FIXME: implement net_ifinfo and ntohs for consoles */
    fd_set fds;
    int ret;
    unsigned i;
@@ -262,7 +408,10 @@ bool netplay_lan_ad_server(netplay_t *netplay)
 
    if (     (lan_ad_server_fd < 0)
          && !init_lan_ad_server_socket(netplay, RARCH_DEFAULT_PORT))
+   {
+      RARCH_ERR("[Discovery] Failed to initialize netplay advertisement socket\n");
       return false;
+   }
 
    /* Check for any ad queries */
    for (;;)
@@ -286,7 +435,7 @@ bool netplay_lan_ad_server(netplay_t *netplay)
          /* Make sure it's a valid query */
          if (memcmp((void *) &ad_packet_buffer, "RANQ", 4))
          {
-            RARCH_LOG("[discovery] invalid query\n");
+            RARCH_LOG("[Discovery] Invalid query\n");
             continue;
          }
 
@@ -294,7 +443,7 @@ bool netplay_lan_ad_server(netplay_t *netplay)
          if (ntohl(ad_packet_buffer.protocol_version) !=
                NETPLAY_PROTOCOL_VERSION)
          {
-            RARCH_LOG("[discovery] invalid protocol version\n");
+            RARCH_LOG("[Discovery] Invalid protocol version\n");
             continue;
          }
 
@@ -323,7 +472,7 @@ bool netplay_lan_ad_server(netplay_t *netplay)
                {
                   struct retro_system_info *info = runloop_get_libretro_system_info();
 
-                  RARCH_LOG ("[discovery] query received on common interface: %s/%s (theirs / ours) \n",
+                  RARCH_LOG ("[Discovery] Query received on common interface: %s/%s (theirs / ours) \n",
                      reply_addr, interfaces.entries[k].host);
 
                   /* Now build our response */
@@ -384,7 +533,7 @@ bool netplay_lan_ad_server(netplay_t *netplay)
                   if (getaddrinfo_retro(reply_addr, port_str, &hints, &our_addr) < 0)
                      continue;
 
-                  RARCH_LOG ("[discovery] sending reply to %s \n", reply_addr);
+                  RARCH_LOG ("[Discovery] Sending reply to %s \n", reply_addr);
 
                   /* And send it */
                   sendto(lan_ad_server_fd, (const char*)&ad_packet_buffer,
@@ -400,155 +549,6 @@ bool netplay_lan_ad_server(netplay_t *netplay)
       }
    }
    net_ifinfo_free(&interfaces);
-#endif
-   return true;
-}
-
-#ifdef HAVE_SOCKET_LEGACY
-
-#ifndef htons
-/* The fact that I need to write this is deeply depressing */
-static int16_t htons_for_morons(int16_t value)
-{
-   union {
-      int32_t l;
-      int16_t s[2];
-   } val;
-   val.l = htonl(value);
-   return val.s[1];
-}
-#define htons htons_for_morons
-#endif
-
-#endif
-
-#ifdef HAVE_NETPLAYDISCOVERY
-static bool netplay_lan_ad_client(void)
-{
-   unsigned i;
-   fd_set fds;
-   socklen_t addr_size;
-   struct sockaddr their_addr;
-   struct timeval tmp_tv    = {0};
-
-   if (lan_ad_client_fd < 0)
-      return false;
-
-   their_addr.sa_family     = 0;
-   for (i = 0; i < 14; i++)
-      their_addr.sa_data[i] = 0;
-
-   /* Check for any ad queries */
-   for (;;)
-   {
-      FD_ZERO(&fds);
-      FD_SET(lan_ad_client_fd, &fds);
-      if (socket_select(lan_ad_client_fd + 1,
-               &fds, NULL, NULL, &tmp_tv) <= 0)
-         break;
-
-      if (!FD_ISSET(lan_ad_client_fd, &fds))
-         break;
-
-      /* Somebody queried, so check that it's valid */
-      addr_size = sizeof(their_addr);
-
-      if (recvfrom(lan_ad_client_fd, (char*)&ad_packet_buffer,
-            sizeof(struct ad_packet), 0, &their_addr, &addr_size) >=
-            (ssize_t) sizeof(struct ad_packet))
-      {
-         struct netplay_host *host = NULL;
-
-         /* Make sure it's a valid response */
-         if (memcmp((void *) &ad_packet_buffer, "RANS", 4))
-            continue;
-
-         /* For this version */
-         if (ntohl(ad_packet_buffer.protocol_version) != NETPLAY_PROTOCOL_VERSION)
-            continue;
-
-         /* And that we know how to handle it */
-         if (their_addr.sa_family == AF_INET)
-         {
-            struct sockaddr_in *sin = NULL;
-
-            RARCH_WARN ("[discovery] using IPv4 for discovery\n");
-            sin           = (struct sockaddr_in *) &their_addr;
-            sin->sin_port = htons(ntohl(ad_packet_buffer.port));
-
-         }
-#ifdef HAVE_INET6
-         else if (their_addr.sa_family == AF_INET6)
-         {
-            struct sockaddr_in6 *sin6 = NULL;
-            RARCH_WARN ("[discovery] using IPv6 for discovery\n");
-            sin6            = (struct sockaddr_in6 *) &their_addr;
-            sin6->sin6_port = htons(ad_packet_buffer.port);
-
-         }
-#endif
-         else continue;
-
-         /* Allocate space for it */
-         if (discovered_hosts.size >= discovered_hosts_allocated)
-         {
-            size_t allocated               = discovered_hosts_allocated;
-            struct netplay_host *new_hosts = NULL;
-
-            if (allocated == 0)
-               allocated  = 2;
-            else
-               allocated *= 2;
-
-            if (discovered_hosts.hosts)
-               new_hosts  = (struct netplay_host *)
-                  realloc(discovered_hosts.hosts, allocated * sizeof(struct
-                  netplay_host));
-            else
-               /* Should be equivalent to realloc, but I don't trust screwy libcs */
-               new_hosts = (struct netplay_host *)
-                  malloc(allocated * sizeof(struct netplay_host));
-
-            if (!new_hosts)
-               return false;
-
-            discovered_hosts.hosts     = new_hosts;
-            discovered_hosts_allocated = allocated;
-         }
-
-         /* Get our host structure */
-         host = &discovered_hosts.hosts[discovered_hosts.size++];
-
-         /* Copy in the response */
-         memset(host, 0, sizeof(struct netplay_host));
-         host->addr    = their_addr;
-         host->addrlen = addr_size;
-
-         host->port = ntohl(ad_packet_buffer.port);
-
-         strlcpy(host->address, ad_packet_buffer.address, NETPLAY_HOST_STR_LEN);
-         strlcpy(host->nick, ad_packet_buffer.nick, NETPLAY_HOST_STR_LEN);
-         strlcpy(host->core, ad_packet_buffer.core, NETPLAY_HOST_STR_LEN);
-         strlcpy(host->retroarch_version, ad_packet_buffer.retroarch_version,
-            NETPLAY_HOST_STR_LEN);
-         strlcpy(host->core_version, ad_packet_buffer.core_version,
-            NETPLAY_HOST_STR_LEN);
-         strlcpy(host->content, ad_packet_buffer.content,
-            NETPLAY_HOST_LONGSTR_LEN);
-         strlcpy(host->subsystem_name, ad_packet_buffer.subsystem_name,
-            NETPLAY_HOST_LONGSTR_LEN);
-         strlcpy(host->frontend, ad_packet_buffer.frontend,
-            NETPLAY_HOST_STR_LEN);
-
-         host->content_crc                  =
-            atoi(ad_packet_buffer.content_crc);
-         host->nick[NETPLAY_HOST_STR_LEN-1] =
-            host->core[NETPLAY_HOST_STR_LEN-1] =
-            host->core_version[NETPLAY_HOST_STR_LEN-1] =
-            host->content[NETPLAY_HOST_LONGSTR_LEN-1] = '\0';
-      }
-   }
-
    return true;
 }
 #endif

@@ -101,17 +101,18 @@ static void *ds4_pad_init(void *data, uint32_t slot, hid_driver_t *driver)
 
 static void ds4_packet_handler(void *data, uint8_t *packet, uint16_t size)
 {
+#ifdef DEBUG
    ds4_instance_t *instance = (ds4_instance_t *)data;
    if (!instance)
       return;
-
    RARCH_LOG_BUFFER(packet, size);
+#endif
 }
 
 static void ds4_set_rumble(void *data, enum retro_rumble_effect effect, uint16_t strength) { }
 static int16_t ds4_get_axis(void *data, unsigned axis) { return 0; }
 static const char *ds4_get_name(void *data) { return "Sony DualShock 4"; }
-static int16_t ds4_button(void *data, uint16_t joykey) { return 0; }
+static int32_t ds4_button(void *data, uint16_t joykey) { return 0; }
 static void ds4_pad_deinit(void *data) { }
 static void ds4_get_buttons(void *data, input_bits_t *state) { }
 

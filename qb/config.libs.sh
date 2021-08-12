@@ -136,7 +136,7 @@ if [ "$HAVE_EGL" = 'yes' ]; then
    EGL_LIBS="$EGL_LIBS $EXTRA_GL_LIBS"
 fi
 
-check_lib '' SSA -lass ass_library_init
+check_lib '' SSA '-lfribidi -lass' ass_library_init
 check_lib '' SSE '-msse -msse2'
 check_pkgconf EXYNOS libdrm_exynos
 
@@ -163,6 +163,8 @@ check_platform DOS LANGEXTRA 'Extra languages are' false
 check_lib '' THREADS "$PTHREADLIB" pthread_create
 check_enabled THREADS THREAD_STORAGE 'Thread Local Storage' 'Threads are' false
 check_lib '' THREAD_STORAGE "$PTHREADLIB" pthread_key_create
+
+check_pkgconf LIBCHECK check 0.15
 
 if [ "$OS" = 'Linux' ]; then
    check_header '' CDROM sys/ioctl.h scsi/sg.h
@@ -243,13 +245,24 @@ check_platform Darwin METAL 'Metal is' true
 if [ "$OS" = 'Darwin' ]; then
    check_lib '' COREAUDIO "-framework AudioUnit" AudioUnitInitialize
    check_lib '' CORETEXT "-framework CoreText" CTFontCreateWithName
-   check_lib '' COCOA "-framework AppKit" NSApplicationMain
+
+   if [ "$HAVE_METAL" = yes ]; then
+      check_lib '' COCOA_METAL "-framework AppKit" NSApplicationMain
+      add_opt OPENGL no
+      add_opt OPENGL1 no
+      add_opt OPENGL_CORE no
+      die : 'Notice: Metal cannot coexist with OpenGL (yet), so disabling OpenGL.'
+   else
+      check_lib '' COCOA "-framework AppKit" NSApplicationMain
+   fi
+
    check_lib '' AVFOUNDATION "-framework AVFoundation"
    check_lib '' CORELOCATION "-framework CoreLocation"
    check_lib '' IOHIDMANAGER "-framework IOKit" IOHIDManagerCreate
    check_lib '' AL "-framework OpenAL" alcOpenDevice
    HAVE_X11=no # X11 breaks on recent OSXes even if present.
    HAVE_SDL=no
+   HAVE_SW2=no
 else
    check_lib '' AL -lopenal alcOpenDevice
 fi
@@ -488,6 +501,7 @@ check_pkgconf DBUS dbus-1
 check_val '' UDEV "-ludev" '' libudev '' '' false
 check_val '' V4L2 -lv4l2 '' libv4l2 '' '' false
 check_val '' FREETYPE -lfreetype freetype2 freetype2 '' '' false
+check_val '' FONTCONFIG -lfontconfig fontconfig fontconfig '' '' false
 check_val '' X11 -lX11 '' x11 '' '' false
 
 if [ "$HAVE_X11" != 'no' ]; then
@@ -644,6 +658,10 @@ check_macro NEON __ARM_NEON__
 
 add_define MAKEFILE OS "$OS"
 
+if [ "$ARCHITECTURE_NAME" = 'Power Macintosh' ]; then
+   HAVE_LANGEXTRA='no'
+fi
+
 if [ "$HAVE_DEBUG" = 'yes' ]; then
    add_define MAKEFILE DEBUG 1
    if [ "$HAVE_OPENGL" = 'yes' ] ||
@@ -659,3 +677,11 @@ fi
 
 check_enabled 'ZLIB BUILTINZLIB' RPNG RPNG 'zlib is' false
 check_enabled V4L2 VIDEOPROCESSOR 'video processor' 'Video4linux2 is' true
+
+if [ "$HAVE_CXX11" = 'yes' ]; then
+   if [ "$OS" = 'Linux' ]; then
+      check_enabled 'VIDEOCORE X11' SR2 'CRT modeswitching' 'CRT is' true
+   else
+      check_platform Win32 SR2 'CRT modeswitching is' true
+   fi
+fi

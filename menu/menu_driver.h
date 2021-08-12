@@ -28,7 +28,6 @@
 #include <retro_common_api.h>
 #include <formats/image.h>
 #include <queues/task_queue.h>
-#include <lists/string_list.h>
 
 #include "menu_defines.h"
 #include "menu_input.h"
@@ -37,6 +36,10 @@
 #include "../gfx/gfx_display.h"
 
 #include "../gfx/font_driver.h"
+
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
 
 RETRO_BEGIN_DECLS
 
@@ -51,7 +54,6 @@ RETRO_BEGIN_DECLS
 #define MENU_SETTINGS_CORE_INFO_NONE             0xffff
 #define MENU_SETTINGS_CORE_OPTION_NONE           0xffff
 #define MENU_SETTINGS_CHEEVOS_NONE               0xffff
-#define MENU_SETTINGS_CORE_OPTION_CREATE         0x05000
 #define MENU_SETTINGS_CORE_OPTION_START          0x10000
 #define MENU_SETTINGS_CHEEVOS_START              0x40000
 #define MENU_SETTINGS_NETPLAY_ROOMS_START        0x80000
@@ -83,6 +85,8 @@ enum menu_settings_type
    MENU_SETTING_DROPDOWN_ITEM_MANUAL_CONTENT_SCAN_SYSTEM_NAME,
    MENU_SETTING_DROPDOWN_ITEM_MANUAL_CONTENT_SCAN_CORE_NAME,
    MENU_SETTING_DROPDOWN_ITEM_DISK_INDEX,
+   MENU_SETTING_DROPDOWN_ITEM_INPUT_DEVICE_TYPE,
+   MENU_SETTING_DROPDOWN_ITEM_INPUT_DEVICE_INDEX,
    MENU_SETTING_DROPDOWN_ITEM_INPUT_DESCRIPTION,
    MENU_SETTING_DROPDOWN_ITEM_INPUT_DESCRIPTION_KBD,
    MENU_SETTING_DROPDOWN_SETTING_CORE_OPTIONS_ITEM,
@@ -102,6 +106,7 @@ enum menu_settings_type
    MENU_SETTING_ACTION_CLOSE,
    MENU_SETTING_ACTION_CLOSE_HORIZONTAL,
    MENU_SETTING_ACTION_CORE_OPTIONS,
+   MENU_SETTING_ACTION_CORE_OPTION_OVERRIDE_LIST,
    MENU_SETTING_ACTION_CORE_INPUT_REMAPPING_OPTIONS,
    MENU_SETTING_ACTION_CORE_CHEAT_OPTIONS,
    MENU_SETTING_ACTION_CORE_MANAGER_OPTIONS,
@@ -114,6 +119,7 @@ enum menu_settings_type
    MENU_SETTING_ACTION_RESET,
    MENU_SETTING_ACTION_CORE_LOCK,
    MENU_SETTING_ACTION_CORE_DELETE,
+   MENU_SETTING_ACTION_FAVORITES_DIR, /* "Start Directory" */
    MENU_SETTING_STRING_OPTIONS,
    MENU_SETTING_GROUP,
    MENU_SETTING_SUBGROUP,
@@ -180,7 +186,9 @@ enum menu_settings_type
    MENU_SETTINGS_CHEAT_BEGIN,
    MENU_SETTINGS_CHEAT_END = MENU_SETTINGS_CHEAT_BEGIN + (MAX_CHEAT_COUNTERS - 1),
 
+   MENU_SETTINGS_INPUT_LIBRETRO_DEVICE,
    MENU_SETTINGS_INPUT_ANALOG_DPAD_MODE,
+   MENU_SETTINGS_INPUT_INPUT_REMAP_PORT,
    MENU_SETTINGS_INPUT_BEGIN,
    MENU_SETTINGS_INPUT_END = MENU_SETTINGS_INPUT_BEGIN + RARCH_CUSTOM_BIND_LIST_END + 6,
    MENU_SETTINGS_INPUT_DESC_BEGIN,
@@ -204,6 +212,12 @@ enum menu_settings_type
    MENU_SET_SWITCH_CPU_PROFILE,
 #endif
 
+   MENU_SETTINGS_CPU_POLICY_SET_MINFREQ,
+   MENU_SETTINGS_CPU_POLICY_SET_MAXFREQ,
+   MENU_SETTINGS_CPU_POLICY_SET_GOVERNOR,
+   MENU_SETTINGS_CPU_MANAGED_SET_MINFREQ,
+   MENU_SETTINGS_CPU_MANAGED_SET_MAXFREQ,
+
    MENU_SET_CDROM_LIST,
    MENU_SET_LOAD_CDROM_LIST,
    MENU_SET_CDROM_INFO,
@@ -225,6 +239,12 @@ enum menu_settings_type
    MENU_SETTING_ACTION_VIDEO_FILTER_REMOVE,
    MENU_SETTING_ACTION_AUDIO_DSP_PLUGIN_REMOVE,
 
+   MENU_SETTING_ACTION_GAME_SPECIFIC_CORE_OPTIONS_CREATE,
+   MENU_SETTING_ACTION_GAME_SPECIFIC_CORE_OPTIONS_REMOVE,
+   MENU_SETTING_ACTION_FOLDER_SPECIFIC_CORE_OPTIONS_CREATE,
+   MENU_SETTING_ACTION_FOLDER_SPECIFIC_CORE_OPTIONS_REMOVE,
+   MENU_SETTING_ACTION_CORE_OPTIONS_RESET,
+
    MENU_SETTINGS_LAST
 };
 
@@ -234,7 +254,6 @@ typedef struct menu_ctx_driver
    void  (*set_texture)(void *data);
    /* Render a messagebox to the screen. */
    void  (*render_messagebox)(void *data, const char *msg);
-   int   (*iterate)(void *data, void *userdata, enum menu_action action);
    void  (*render)(void *data, unsigned width, unsigned height, bool is_idle);
    void  (*frame)(void *data, video_frame_info_t *video_info);
    /* Initializes the menu driver. (setup) */
@@ -314,11 +333,6 @@ typedef struct
 {
    uint64_t state;
 
-   /* Holds a list of search terms that may be
-    * used to filter the currently displayed
-    * menu list */
-   struct string_list *search_terms;
-
    const menu_ctx_driver_t *driver_ctx;
    void *userdata;
    char *core_buf;
@@ -334,6 +348,7 @@ typedef struct
    } scratchpad;
    unsigned rpl_entry_selection_ptr;
 
+#if defined(HAVE_CG) || defined(HAVE_GLSL) || defined(HAVE_SLANG) || defined(HAVE_HLSL)
    /* Used to cache the type and directory
     * of the last shader preset/pass loaded
     * via the menu file browser */
@@ -343,8 +358,20 @@ typedef struct
       enum rarch_shader_type pass_type;
 
       char preset_dir[PATH_MAX_LENGTH];
+      char preset_file_name[PATH_MAX_LENGTH];
+
       char pass_dir[PATH_MAX_LENGTH];
+      char pass_file_name[PATH_MAX_LENGTH];
    } last_shader_selection;
+#endif
+
+   /* Used to cache the last start content
+    * loaded via the menu file browser */
+   struct
+   {
+      char directory[PATH_MAX_LENGTH];
+      char file_name[PATH_MAX_LENGTH];
+   } last_start_content;
 
    char menu_state_msg[8192];
    /* Scratchpad variables. These are used for instance
@@ -374,34 +401,6 @@ typedef struct menu_ctx_displaylist
    menu_displaylist_info_t *info;
    unsigned type;
 } menu_ctx_displaylist_t;
-
-typedef struct menu_ctx_iterate
-{
-   enum menu_action action;
-
-   struct
-   {
-      int16_t x;
-      int16_t y;
-      bool touch;
-   } pointer;
-
-   struct
-   {
-      int16_t x;
-      int16_t y;
-      struct
-      {
-         bool left;
-         bool right;
-      } buttons;
-      struct
-      {
-         bool up;
-         bool down;
-      } wheel;
-   } mouse;
-} menu_ctx_iterate_t;
 
 typedef struct menu_ctx_environment
 {
@@ -447,8 +446,7 @@ bool menu_driver_ctl(enum rarch_menu_ctl_state state, void *data);
 
 void menu_driver_frame(bool menu_is_alive, video_frame_info_t *video_info);
 
-bool menu_driver_iterate(menu_ctx_iterate_t *iterate,
-      retro_time_t current_time);
+int menu_driver_deferred_push_content_list(file_list_t *list);
 
 bool menu_driver_list_cache(menu_ctx_list_t *list);
 
@@ -471,6 +469,8 @@ bool menu_driver_list_get_selection(menu_ctx_list_t *list);
 bool menu_driver_list_get_entry(menu_ctx_list_t *list);
 
 bool menu_driver_list_get_size(menu_ctx_list_t *list);
+
+bool menu_driver_screensaver_supported(void);
 
 retro_time_t menu_driver_get_current_time(void);
 
@@ -508,22 +508,23 @@ void menu_explore_free(void);
 /* Returns true if search filter is enabled
  * for the specified menu list */
 bool menu_driver_search_filter_enabled(const char *label, unsigned type);
-bool menu_driver_search_push(const char *search_term);
-bool menu_driver_search_pop(void);
-void menu_driver_search_clear(void);
-struct string_list *menu_driver_search_get_terms(void);
-/* Convenience function: Appends list of current
- * search terms to specified string */
-void menu_driver_search_append_terms_string(char *s, size_t len);
 
 #if defined(HAVE_CG) || defined(HAVE_GLSL) || defined(HAVE_SLANG) || defined(HAVE_HLSL)
-void menu_driver_set_last_shader_preset_dir(const char *shader_path);
-void menu_driver_set_last_shader_pass_dir(const char *shader_pass_path);
+void menu_driver_set_last_shader_preset_path(const char *path);
+void menu_driver_set_last_shader_pass_path(const char *path);
 enum rarch_shader_type menu_driver_get_last_shader_preset_type(void);
 enum rarch_shader_type menu_driver_get_last_shader_pass_type(void);
-const char *menu_driver_get_last_shader_preset_dir(void);
-const char *menu_driver_get_last_shader_pass_dir(void);
+void menu_driver_get_last_shader_preset_path(
+      const char **directory, const char **file_name);
+void menu_driver_get_last_shader_pass_path(
+      const char **directory, const char **file_name);
 #endif
+
+const char *menu_driver_get_last_start_directory(void);
+const char *menu_driver_get_last_start_file_name(void);
+void menu_driver_set_last_start_content(const char *start_content_path);
+const char *menu_driver_get_pending_selection(void);
+void menu_driver_set_pending_selection(const char *pending_selection);
 
 menu_handle_t *menu_driver_get_ptr(void);
 

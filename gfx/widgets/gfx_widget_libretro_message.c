@@ -284,8 +284,8 @@ static void gfx_widget_libretro_message_iterate(void *user_data,
                 * from the current alpha value to 1.0) */
                unsigned fade_duration = (unsigned)(((1.0f - state->alpha) *
                      (float)LIBRETRO_MESSAGE_FADE_DURATION) + 0.5f);
-               fade_duration = (fade_duration > LIBRETRO_MESSAGE_FADE_DURATION) ?
-                     LIBRETRO_MESSAGE_FADE_DURATION : fade_duration;
+               if (fade_duration > LIBRETRO_MESSAGE_FADE_DURATION)
+                  fade_duration       = LIBRETRO_MESSAGE_FADE_DURATION;
 
                /* > If current and final alpha values are the
                 *   same, or fade duration is zero, skip
@@ -339,6 +339,7 @@ static void gfx_widget_libretro_message_frame(void *data, void *user_data)
    if (state->status != GFX_WIDGET_LIBRETRO_MESSAGE_IDLE)
    {
       video_frame_info_t *video_info         = (video_frame_info_t*)data;
+      gfx_display_t *p_disp                  = (gfx_display_t*)video_info->disp_userdata;
       dispgfx_widget_t *p_dispwidget         = (dispgfx_widget_t*)user_data;
 
       unsigned video_width                   = video_info->width;
@@ -401,6 +402,7 @@ static void gfx_widget_libretro_message_frame(void *data, void *user_data)
 
          /* Background */
          gfx_display_draw_quad(
+               p_disp,
                userdata,
                video_width,
                video_height,
@@ -414,6 +416,7 @@ static void gfx_widget_libretro_message_frame(void *data, void *user_data)
 
          /* Frame */
          gfx_display_draw_quad(
+               p_disp,
                userdata,
                video_width,
                video_height,
@@ -426,6 +429,7 @@ static void gfx_widget_libretro_message_frame(void *data, void *user_data)
                state->frame_color);
 
          gfx_display_draw_quad(
+               p_disp,
                userdata,
                video_width,
                video_height,

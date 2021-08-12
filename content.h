@@ -51,6 +51,15 @@ bool content_load_state(const char* path, bool load_to_backup_buffer, bool autol
 /* Save a state from memory to disk. */
 bool content_save_state(const char *path, bool save_to_disk, bool autosave);
 
+/* Gets the number of bytes required to serialize the state. */
+size_t content_get_serialized_size(void);
+
+/* Serializes the current state. buffer must be at least content_get_serialized_size bytes */
+bool content_serialize_state(void* buffer, size_t buffer_size);
+
+/* Deserializes the current state. */
+bool content_deserialize_state(const void* serialized_data, size_t serialized_size);
+
 /* Waits for any in-progress save state tasks to finish */
 void content_wait_for_save_state_task(void);
 
@@ -114,6 +123,10 @@ bool content_set_subsystem_by_name(const char* subsystem_name);
 
 /* Get the current subsystem "friendly name" */
 void content_get_subsystem_friendly_name(const char* subsystem_name, char* subsystem_friendly_name, size_t len);
+
+/* Sets overrides which modify frontend handling of
+ * specific content file types */
+bool content_file_override_set(const struct retro_system_content_info_override *overrides);
 
 RETRO_END_DECLS
 

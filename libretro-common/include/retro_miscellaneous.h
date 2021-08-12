@@ -75,7 +75,7 @@ static INLINE bool bits_any_set(uint32_t* ptr, uint32_t count)
 }
 
 #ifndef PATH_MAX_LENGTH
-#if defined(_XBOX1) || defined(_3DS) || defined(PSP) || defined(PS2) || defined(GEKKO)|| defined(WIIU) || defined(ORBIS)
+#if defined(_XBOX1) || defined(_3DS) || defined(PSP) || defined(PS2) || defined(GEKKO)|| defined(WIIU) || defined(ORBIS) || defined(__PSL1GHT__) || defined(__PS3__)
 #define PATH_MAX_LENGTH 512
 #else
 #define PATH_MAX_LENGTH 4096
@@ -134,6 +134,16 @@ static INLINE bool bits_any_set(uint32_t* ptr, uint32_t count)
 #define BIT256_GET_PTR(a, bit)   BIT256_GET(*a, bit)
 #define BIT256_CLEAR_ALL_PTR(a)  BIT256_CLEAR_ALL(*a)
 
+#define BIT512_SET(a, bit)       BIT256_SET(a, bit)
+#define BIT512_CLEAR(a, bit)     BIT256_CLEAR(a, bit)
+#define BIT512_GET(a, bit)       BIT256_GET(a, bit)
+#define BIT512_CLEAR_ALL(a)      BIT256_CLEAR_ALL(a)
+
+#define BIT512_SET_PTR(a, bit)   BIT512_SET(*a, bit)
+#define BIT512_CLEAR_PTR(a, bit) BIT512_CLEAR(*a, bit)
+#define BIT512_GET_PTR(a, bit)   BIT512_GET(*a, bit)
+#define BIT512_CLEAR_ALL_PTR(a)  BIT512_CLEAR_ALL(*a)
+
 #define BITS_COPY16_PTR(a,bits) \
 { \
    BIT128_CLEAR_ALL_PTR(a); \
@@ -159,6 +169,12 @@ typedef struct
 {
    uint32_t data[8];
 } retro_bits_t;
+
+/* This struct has 512 bits. */
+typedef struct
+{
+   uint32_t data[16];
+} retro_bits_512_t;
 
 #ifdef _WIN32
 #  ifdef _WIN64

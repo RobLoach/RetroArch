@@ -336,7 +336,6 @@ static bool d3d10_gfx_set_shader(void* data, enum rarch_shader_type type, const 
 {
 #if defined(HAVE_SLANG) && defined(HAVE_SPIRV_CROSS)
    unsigned         i;
-   config_file_t* conf     = NULL;
    d3d10_texture_t* source = NULL;
    d3d10_video_t*   d3d10  = (d3d10_video_t*)data;
 
@@ -351,16 +350,13 @@ static bool d3d10_gfx_set_shader(void* data, enum rarch_shader_type type, const 
 
    if (type != RARCH_SHADER_SLANG)
    {
-      RARCH_WARN("[D3D10] Only Slang shaders are supported. Falling back to stock.\n");
+      RARCH_WARN("[D3D10]: Only Slang shaders are supported. Falling back to stock.\n");
       return false;
    }
 
-   if (!(conf = video_shader_read_preset(path)))
-      return false;
-
    d3d10->shader_preset = (struct video_shader*)calloc(1, sizeof(*d3d10->shader_preset));
 
-   if (!video_shader_read_conf_preset(conf, d3d10->shader_preset))
+   if (!video_shader_load_preset_into_shader(path, d3d10->shader_preset))
       goto error;
 
    source = &d3d10->frame.texture[0];
@@ -508,9 +504,6 @@ static bool d3d10_gfx_set_shader(void* data, enum rarch_shader_type type, const 
       image_texture_free(&image);
    }
 
-   video_shader_resolve_current_parameters(conf, d3d10->shader_preset);
-   config_file_free(conf);
-
    d3d10->resize_render_targets = true;
    d3d10->init_history          = true;
 
@@ -615,7 +608,7 @@ static bool d3d10_init_swapchain(d3d10_video_t *d3d10,
    desc.BufferDesc.RefreshRate.Denominator = 1;
    desc.BufferUsage                        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 #ifdef HAVE_WINDOW
-   desc.OutputWindow                       = corewindow;
+   desc.OutputWindow                       = (HWND)corewindow;
 #endif
    desc.SampleDesc.Count                   = 1;
    desc.SampleDesc.Quality                 = 0;
@@ -658,6 +651,10 @@ static void *d3d10_gfx_init(const video_info_t* video,
 #ifdef HAVE_DINPUT
    if (string_is_equal(settings->arrays.input_driver, "dinput"))
       wndclass.lpfnWndProc = wnd_proc_d3d_dinput;
+#endif
+#ifdef HAVE_WINRAWINPUT
+   if (string_is_equal(settings->arrays.input_driver, "raw"))
+      wndclass.lpfnWndProc = wnd_proc_d3d_winraw;
 #endif
 #ifdef HAVE_WINDOW
    win32_window_init(&wndclass, true, NULL);
@@ -1535,25 +1532,12 @@ static bool d3d10_gfx_frame(
       D3D10SetBlendState(d3d10->device, d3d10->blend_enable, NULL, D3D10_DEFAULT_SAMPLE_MASK);
       D3D10SetVertexBuffer(d3d10->device, 0, d3d10->sprites.vbo, sizeof(d3d10_sprite_t), 0);
       font_driver_render_msg(d3d10, msg, NULL, NULL);
-#ifndef __WINRT__
-      {
-         const ui_window_t* window = ui_companion_driver_get_window_ptr();
-         if (window)
-         {
-            char title[128];
-
-            title[0] = '\0';
-
-            video_driver_get_window_title(title, sizeof(title));
-
-            if (title[0])
-               window->set_title(&main_window, title);
-         }
-      }
-#endif
    }
    d3d10->sprites.enabled = false;
 
+#ifndef __WINRT__
+   win32_update_title();
+#endif
    DXGIPresent(d3d10->swapChain, !!d3d10->vsync, 0);
 
    return true;

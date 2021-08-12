@@ -71,6 +71,7 @@ static XF86VidModeModeInfo desktop_mode;
 static bool xdg_screensaver_available       = true;
 static bool g_x11_has_focus                 = false;
 static bool g_x11_true_full                 = false;
+static XConfigureEvent g_x11_xce            = {0};
 static Atom XA_NET_WM_STATE;
 static Atom XA_NET_WM_STATE_FULLSCREEN;
 static Atom XA_NET_MOVERESIZE_WINDOW;
@@ -198,10 +199,26 @@ static void xdg_screensaver_inhibit(Window wnd)
 {
    int  ret;
    char cmd[64];
+   char title[128];
 
    cmd[0] = '\0';
+   title[0] = '\0';
 
    RARCH_LOG("[X11]: Suspending screensaver (X11, xdg-screensaver).\n");
+
+   if (g_x11_dpy && g_x11_win)
+   {
+      /* Make sure the window has a title, even if it's a bogus one, otherwise
+       * xdg-screensaver will fail and report to stderr, framing RA for its bug.
+       * A single space character is used so that the title bar stays visibly
+       * the same, as if there's no title at all. */
+      video_driver_get_window_title(title, sizeof(title));
+      if (strlen(title) == 0)
+         snprintf(title, sizeof(title), " ");
+      XChangeProperty(g_x11_dpy, g_x11_win, XA_WM_NAME, XA_STRING,
+            8, PropModeReplace, (const unsigned char*) title,
+            strlen(title));
+   }
 
    snprintf(cmd, sizeof(cmd), "xdg-screensaver suspend 0x%x", (int)wnd);
 
@@ -530,6 +547,11 @@ bool x11_alive(void *data)
                g_x11_has_focus = false;
             break;
 
+         case ConfigureNotify:
+            if (event.xconfigure.window == g_x11_win)
+               g_x11_xce = event.xconfigure;
+            break;
+
          case ButtonPress:
             switch (event.xbutton.button)
             {
@@ -629,11 +651,19 @@ void x11_get_video_size(void *data, unsigned *width, unsigned *height)
    }
    else
    {
-      XWindowAttributes target;
-      XGetWindowAttributes(g_x11_dpy, g_x11_win, &target);
+      if (g_x11_xce.width != 0 && g_x11_xce.height != 0)
+      {
+         *width  = g_x11_xce.width;
+         *height = g_x11_xce.height;
+      }
+      else
+      {
+      	 XWindowAttributes target;
+         XGetWindowAttributes(g_x11_dpy, g_x11_win, &target);
 
-      *width  = target.width;
-      *height = target.height;
+         *width  = target.width;
+         *height = target.height;
+      }
    }
 }
 
@@ -668,6 +698,8 @@ bool x11_connect(void)
 #ifdef HAVE_DBUS
    dbus_ensure_connection();
 #endif
+
+   memset(&g_x11_xce, 0, sizeof(XConfigureEvent));
 
    return true;
 }

@@ -19,10 +19,13 @@
 
 #include "ozone.h"
 
+#include "../../../gfx/gfx_display.h"
+
 #include "../../menu_driver.h"
 
 void ozone_draw_cursor(
       ozone_handle_t *ozone,
+      gfx_display_t *p_disp,
       void *userdata,
       unsigned video_width,
       unsigned video_height,
@@ -31,6 +34,7 @@ void ozone_draw_cursor(
       size_t y, float alpha);
 
 void ozone_draw_icon(
+      gfx_display_t *p_disp,
       void *userdata,
       unsigned video_width,
       unsigned video_height,
@@ -46,6 +50,7 @@ void ozone_restart_cursor_animation(ozone_handle_t *ozone);
 
 void ozone_draw_backdrop(
       void *userdata,
+      void *disp_data,
       unsigned video_width,
       unsigned video_height,
       float alpha);
@@ -53,12 +58,14 @@ void ozone_draw_backdrop(
 void ozone_draw_osk(
       ozone_handle_t *ozone,
       void *userdata,
+      void *disp_userdata,
       unsigned video_width,
       unsigned video_height,
       const char *label, const char *str);
 
 void ozone_draw_messagebox(
       ozone_handle_t *ozone,
+      gfx_display_t *p_disp,
       void *userdata,
       unsigned video_width,
       unsigned video_height,
@@ -67,6 +74,7 @@ void ozone_draw_messagebox(
 void ozone_draw_fullscreen_thumbnails(
       ozone_handle_t *ozone,
       void *userdata,
+      void *disp_userdata,
       unsigned video_width,
       unsigned video_height
       );

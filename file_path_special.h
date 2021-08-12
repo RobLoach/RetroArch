@@ -89,11 +89,11 @@ RETRO_BEGIN_DECLS
 #define FILE_PATH_CHEATS_ZIP "cheats.zip"
 #define FILE_PATH_ASSETS_ZIP "assets.zip"
 #define FILE_PATH_AUTOCONFIG_ZIP "autoconfig.zip"
-#define FILE_PATH_CONTENT_HISTORY "content_history.lpl"
 #define FILE_PATH_CONTENT_FAVORITES "content_favorites.lpl"
+#define FILE_PATH_CONTENT_HISTORY "content_history.lpl"
+#define FILE_PATH_CONTENT_IMAGE_HISTORY "content_image_history.lpl"
 #define FILE_PATH_CONTENT_MUSIC_HISTORY "content_music_history.lpl"
 #define FILE_PATH_CONTENT_VIDEO_HISTORY "content_video_history.lpl"
-#define FILE_PATH_CONTENT_IMAGE_HISTORY "content_image_history.lpl"
 #define FILE_PATH_CORE_OPTIONS_CONFIG "retroarch-core-options.cfg"
 #define FILE_PATH_MAIN_CONFIG "retroarch.cfg"
 #define FILE_PATH_SALAMANDER_CONFIG "retroarch-salamander.cfg"
@@ -106,10 +106,13 @@ RETRO_BEGIN_DECLS
 #define FILE_PATH_CORE_BACKUP_EXTENSION ".lcbk"
 #define FILE_PATH_CORE_BACKUP_EXTENSION_NO_DOT "lcbk"
 #define FILE_PATH_LOCK_EXTENSION ".lck"
+#define FILE_PATH_LOCK_EXTENSION_NO_DOT "lck"
 #define FILE_PATH_BACKUP_EXTENSION ".bak"
 #if defined(RARCH_MOBILE)
 #define FILE_PATH_DEFAULT_OVERLAY "gamepads/neo-retropad/neo-retropad.cfg"
 #endif
+#define FILE_PATH_CORE_INFO_CACHE "core_info.cache"
+#define FILE_PATH_CORE_INFO_CACHE_REFRESH "core_info.refresh"
 
 enum application_special_type
 {

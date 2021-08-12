@@ -25,7 +25,7 @@
 
 #include "../../configuration.h"
 
-#include "../../defines/psp_defines.h"
+#include <defines/psp_defines.h>
 
 #ifdef HAVE_MENU
 #include "../../menu/menu_driver.h"
@@ -89,10 +89,8 @@ static void *psp_joypad_init(void *data)
    unsigned players_count = DEFAULT_MAX_PADS;
 
 #if defined(VITA)
-   if (!sceCtrlIsMultiControllerSupported())
-      psp2_model = SCE_KERNEL_MODEL_VITA;
-   else if(sceCtrlIsMultiControllerSupported() > 0)
-      psp2_model = SCE_KERNEL_MODEL_VITATV;
+   psp2_model = sceCtrlIsMultiControllerSupported()? SCE_KERNEL_MODEL_VITATV : SCE_KERNEL_MODEL_VITA;
+
    if (psp2_model != SCE_KERNEL_MODEL_VITATV)
       players_count = 1;
    if (sceKernelGetModelForCDialog() != SCE_KERNEL_MODEL_VITATV)
@@ -119,7 +117,7 @@ static void *psp_joypad_init(void *data)
    return (void*)-1;
 }
 
-static int16_t psp_joypad_button(unsigned port, uint16_t joykey)
+static int32_t psp_joypad_button(unsigned port, uint16_t joykey)
 {
    if (port >= DEFAULT_MAX_PADS)
       return 0;
@@ -378,7 +376,8 @@ static bool psp_joypad_rumble(unsigned pad,
 #ifdef VITA
    if (psp2_model != SCE_KERNEL_MODEL_VITATV)
       return false;
-
+   if(pad >= DEFAULT_MAX_PADS)
+      return false;
    switch (effect)
    {
       case RETRO_RUMBLE_WEAK:

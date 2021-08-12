@@ -23,12 +23,20 @@ MSG_HASH(
    "retro_achievements"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_PAUSE_MENU,
+   "toggle_cheevos_hardcore"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_ACCOUNTS_TWITCH,
    "twitch"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_ACCOUNTS_YOUTUBE,
    "youtube"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_ACCOUNTS_FACEBOOK,
+   "facebook"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_ACHIEVEMENT_LIST,
@@ -190,6 +198,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_BLUETOOTH_ENABLE,
    "bluetooth_enable"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_TIMEZONE,
+   "timezone"
    )
 #endif
 MSG_HASH(
@@ -387,6 +399,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_CHEEVOS_START_ACTIVE,
    "cheevos_start_active"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CHEEVOS_CHALLENGE_INDICATORS,
+   "cheevos_challenge_indicators"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_CLOSE_CONTENT,
@@ -681,6 +697,14 @@ MSG_HASH(
    "deferred_dropdown_box_list_disk_index"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_DROPDOWN_BOX_LIST_INPUT_DEVICE_TYPE,
+   "deferred_dropdown_box_list_input_device_type"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_DROPDOWN_BOX_LIST_INPUT_DEVICE_INDEX,
+   "deferred_dropdown_box_list_input_device_index"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_DROPDOWN_BOX_LIST_INPUT_DESCRIPTION,
    "deferred_dropdown_box_list_input_description"
    )
@@ -743,6 +767,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_ACCOUNTS_YOUTUBE_LIST,
    "deferred_accounts_youtube_list"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_ACCOUNTS_FACEBOOK_LIST,
+   "deferred_accounts_facebook_list"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_ACCOUNTS_LIST,
@@ -849,6 +877,10 @@ MSG_HASH(
    "deferred_input_settings_list"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_INPUT_TURBO_FIRE_SETTINGS_LIST,
+   "deferred_input_turbo_fire_settings_list"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_INPUT_HAPTIC_FEEDBACK_SETTINGS_LIST,
    "deferred_input_haptic_feedback_settings_list"
    )
@@ -867,6 +899,18 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_ACCESSIBILITY_SETTINGS_LIST,
    "deferred_accessibility_settings_list"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_POWER_MANAGEMENT_SETTINGS_LIST,
+   "deferred_power_management_settings_list"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_CPU_PERFPOWER_LIST,
+   "deferred_cpu_perfpower_list"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_CPU_POLICY_ENTRY,
+   "deferred_cpu_policy_list"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_LAKKA_LIST,
@@ -1137,6 +1181,10 @@ MSG_HASH(
    "check_for_missing_firmware"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_CORE_INFO_CACHE_ENABLE,
+   "core_info_cache_enable"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_DUMMY_ON_CORE_SHUTDOWN,
    "dummy_on_core_shutdown"
    )
@@ -1239,6 +1287,38 @@ MSG_HASH(
    "game_specific_options"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_CORE_OPTION_OVERRIDE_LIST,
+   "core_option_override_list"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_CORE_OPTION_OVERRIDE_LIST,
+   "deferred_core_option_override_list"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_GAME_SPECIFIC_CORE_OPTIONS_CREATE,
+   "game_specific_core_options_create"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_GAME_SPECIFIC_CORE_OPTIONS_REMOVE,
+   "game_specific_core_options_remove"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_FOLDER_SPECIFIC_CORE_OPTIONS_CREATE,
+   "folder_specific_core_options_create"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_FOLDER_SPECIFIC_CORE_OPTIONS_REMOVE,
+   "folder_specific_core_options_remove"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CORE_OPTION_OVERRIDE_INFO,
+   "core_option_override_info"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CORE_OPTIONS_RESET,
+   "core_options_reset"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_GAME_SPECIFIC_OPTIONS_CREATE,
    "game_specific_options_create"
    )
@@ -1333,6 +1413,14 @@ MSG_HASH(
    "input_sensors_enable"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_INPUT_AUTO_MOUSE_GRAB,
+   "input_auto_mouse_grab"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_INPUT_AUTO_GAME_FOCUS,
+   "input_auto_game_focus"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_INPUT_BUTTON_AXIS_THRESHOLD,
    "input_axis_threshold"
    )
@@ -1350,6 +1438,10 @@ MSG_HASH(
    "input_mouse_scale"
    )
 #endif
+MSG_HASH(
+   MENU_ENUM_LABEL_INPUT_TOUCH_SCALE,
+   "input_touch_scale"
+   )
 MSG_HASH(
    MENU_ENUM_LABEL_INPUT_BIND_MODE,
    "input_bind_mode"
@@ -1407,6 +1499,22 @@ MSG_HASH(
    "input_libretro_device_p%u"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_INPUT_PLAYER_ANALOG_DPAD_MODE,
+   "input_player%u_analog_dpad_mode"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_INPUT_DEVICE_INDEX,
+   "input_device_p%u"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_INPUT_MOUSE_INDEX,
+   "input_player%u_mouse_index"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_INPUT_REMAP_PORT,
+   "input_remap_port_p%u"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_INPUT_MAX_USERS,
    "input_max_users"
    )
@@ -1431,12 +1539,12 @@ MSG_HASH(
    "overlay_hide_when_gamepad_connected"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_INPUT_OVERLAY_SHOW_PHYSICAL_INPUTS,
-   "overlay_show_physical_inputs"
+   MENU_ENUM_LABEL_INPUT_OVERLAY_SHOW_INPUTS,
+   "input_overlay_show_inputs"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_INPUT_OVERLAY_SHOW_PHYSICAL_INPUTS_PORT,
-   "overlay_show_physical_inputs_port"
+   MENU_ENUM_LABEL_INPUT_OVERLAY_SHOW_INPUTS_PORT,
+   "input_overlay_show_inputs_port"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_INPUT_OVERLAY_SHOW_MOUSE_CURSOR,
@@ -1449,10 +1557,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_INPUT_OVERLAY_AUTO_SCALE,
    "input_overlay_auto_scale"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_INPUT_PLAYER_ANALOG_DPAD_MODE,
-   "input_player%u_analog_dpad_mode"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_INPUT_POLL_TYPE_BEHAVIOR,
@@ -2103,6 +2207,18 @@ MSG_HASH(
    "pause_nonactive"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_MENU_SCREENSAVER_TIMEOUT,
+   "menu_screensaver_timeout"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_MENU_SCREENSAVER_ANIMATION,
+   "menu_screensaver_animation"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_MENU_SCREENSAVER_ANIMATION_SPEED,
+   "menu_screensaver_animation_speed"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_PERFCNT_ENABLE,
    "perfcnt_enable"
    )
@@ -2117,6 +2233,26 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_PLAYLIST_DIRECTORY,
    "playlist_directory"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CONTENT_FAVORITES_DIRECTORY,
+   "content_favorites_directory"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CONTENT_HISTORY_DIRECTORY,
+   "content_history_directory"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CONTENT_IMAGE_HISTORY_DIRECTORY,
+   "content_image_history_directory"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CONTENT_MUSIC_HISTORY_DIRECTORY,
+   "content_music_history_directory"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CONTENT_VIDEO_HISTORY_DIRECTORY,
+   "content_video_history_directory"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_RUNTIME_LOG_DIRECTORY,
@@ -2705,6 +2841,10 @@ MSG_HASH(
    "show_hidden_files"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_USE_LAST_START_DIRECTORY,
+   "use_last_start_directory"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_SHUTDOWN,
    "shutdown"
    )
@@ -3043,6 +3183,18 @@ MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_DINGUX_IPU_FILTER_TYPE,
    "video_dingux_ipu_filter_type"
    )
+#if defined(DINGUX_BETA)
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_DINGUX_REFRESH_RATE,
+   "video_dingux_refresh_rate"
+   )
+#endif
+#if defined(RS90)
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_DINGUX_RS90_SOFTFILTER_TYPE,
+   "video_dingux_rs90_softfilter_type"
+   )
+#endif
 #endif
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_BLACK_FRAME_INSERTION,
@@ -3175,6 +3327,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_SCALE_INTEGER,
    "video_scale_integer"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_SCALE_INTEGER_OVERSCALE,
+   "video_scale_integer_overscale"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_SETTINGS,
@@ -3377,6 +3533,10 @@ MSG_HASH(
    "video_fullscreen_y"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_FORCE_RESOLUTION,
+   "video_force_resolution"
+)
+MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_LAYOUT_ENABLE,
    "video_layout_enable"
    )
@@ -3511,10 +3671,6 @@ MSG_HASH(
 MSG_HASH(
    MSG_DISCONNECT_DEVICE_FROM_A_VALID_PORT,
    "disconnect_device_from_a_valid_port"
-   )
-MSG_HASH(
-   MSG_FAILED_TO_SET_DISK,
-   "Failed to set disk"
    )
 MSG_HASH(
    MSG_FAILED_TO_START_AUDIO_DRIVER,
@@ -3733,6 +3889,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_MENU_SCROLL_FAST,
    "menu_scroll_fast"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_MENU_SCROLL_DELAY,
+   "menu_scroll_delay"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_CORE_LOCK,
@@ -4039,6 +4199,10 @@ MSG_HASH(
    "menu_rgui_full_width_layout"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_MENU_RGUI_TRANSPARENCY,
+   "menu_rgui_transparency"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_MENU_RGUI_SHADOWS,
    "menu_rgui_shadows"
    )
@@ -4049,6 +4213,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_MENU_RGUI_PARTICLE_EFFECT_SPEED,
    "rgui_particle_effect_speed"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_MENU_RGUI_PARTICLE_EFFECT_SCREENSAVER,
+   "rgui_particle_effect_screensaver"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_MENU_RGUI_EXTENDED_ASCII,
@@ -4335,6 +4503,10 @@ MSG_HASH(
    "cheat_delete_match"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_CRT_SWITCH_HIRES_MENU,
+   "crt_switch_hires_menu"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_CRT_SWITCH_RESOLUTION_USE_CUSTOM_REFRESH_RATE,
    "crt_switch_resolution_use_custom_refresh_rate"
    )
@@ -4365,6 +4537,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_YOUTUBE_STREAM_KEY,
    "youtube_stream_key"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_FACEBOOK_STREAM_KEY,
+   "facebook_stream_key"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_STREAMING_MODE,
@@ -4453,6 +4629,10 @@ MSG_HASH(
    "playlist_show_sublabels"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_PLAYLIST_SHOW_ENTRY_IDX,
+   "playlist_show_entry_idx"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_PLAYLIST_FUZZY_ARCHIVE_MATCH,
    "playlist_fuzzy_archive_match"
    )
@@ -4501,6 +4681,10 @@ MSG_HASH(
    "notification_show_cheats_applied"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_NOTIFICATION_SHOW_PATCH_APPLIED,
+   "notification_show_patch_applied"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_NOTIFICATION_SHOW_REMAP_LOAD,
    "notification_show_remap_load"
    )
@@ -4527,6 +4711,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_NOTIFICATION_SHOW_SCREENSHOT_FLASH,
    "notification_show_screenshot_flash"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_NOTIFICATION_SHOW_REFRESH_RATE,
+   "notification_show_refresh_rate"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_SHADERS_ENABLE,
@@ -4587,6 +4775,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_POWER_MANAGEMENT_SETTINGS,
    "power_management_settings"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CPU_PERFPOWER,
+   "cpu_perfpower_list"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_AI_SERVICE_SETTINGS,
@@ -4805,6 +4997,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_INPUT_MENU_SETTINGS,
    "input_menu_settings"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_INPUT_TURBO_FIRE_SETTINGS,
+   "input_turbo_fire_settings"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_INPUT_HAPTIC_FEEDBACK_SETTINGS,

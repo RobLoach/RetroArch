@@ -32,6 +32,9 @@ RETRO_BEGIN_DECLS
 
 #define MENU_SUBLABEL_MAX_LENGTH 1024
 
+#define MENU_SEARCH_FILTER_MAX_TERMS  8
+#define MENU_SEARCH_FILTER_MAX_LENGTH 64
+
 enum menu_entries_ctl_state
 {
    MENU_ENTRIES_CTL_NONE = 0,
@@ -72,8 +75,6 @@ enum menu_entry_type
 };
 
 
-typedef struct menu_list menu_list_t;
-
 typedef struct menu_ctx_list
 {
    const char  *path;
@@ -89,6 +90,12 @@ typedef struct menu_ctx_list
    unsigned action;
    enum menu_list_type type;
 } menu_ctx_list_t;
+
+typedef struct menu_serch_terms
+{
+   size_t size;
+   char terms[MENU_SEARCH_FILTER_MAX_TERMS][MENU_SEARCH_FILTER_MAX_LENGTH];
+} menu_serch_terms_t;
 
 typedef struct menu_file_list_cbs
 {
@@ -108,12 +115,8 @@ typedef struct menu_file_list_cbs
    int (*action_start)(const char *path, const char *label, unsigned type,
          size_t idx, size_t entry_idx);
    int (*action_info)(unsigned type,  const char *label);
-   int (*action_content_list_switch)(void *data, void *userdata, const char
-         *path, const char *label, unsigned type);
    int (*action_left)(unsigned type, const char *label, bool wraparound);
    int (*action_right)(unsigned type, const char *label, bool wraparound);
-   int (*action_refresh)(file_list_t *list, file_list_t *menu_list);
-   int (*action_up)(unsigned type, const char *label);
    int (*action_label)(file_list_t *list,
          unsigned type, unsigned i,
          const char *label, const char *path,
@@ -122,12 +125,12 @@ typedef struct menu_file_list_cbs
          unsigned type, unsigned i,
          const char *label, const char *path,
          char *s, size_t len);
-   int (*action_down)(unsigned type, const char *label);
    void (*action_get_value)(file_list_t* list,
          unsigned *w, unsigned type, unsigned i,
          const char *label, char *s, size_t len,
          const char *path,
          char *path_buf, size_t path_buf_size);
+   menu_serch_terms_t search;
    enum msg_hash_enums enum_idx;
    char action_sublabel_cache[MENU_SUBLABEL_MAX_LENGTH];
    char action_title_cache   [512];
@@ -179,10 +182,6 @@ size_t menu_entries_get_stack_size(size_t idx);
 
 size_t menu_entries_get_size(void);
 
-void menu_entries_get_at_offset(const file_list_t *list, size_t idx,
-      const char **path, const char **label, unsigned *file_type,
-      size_t *entry_idx, const char **alt);
-
 void menu_entries_prepend(file_list_t *list,
       const char *path, const char *label,
       enum msg_hash_enums enum_idx,
@@ -195,8 +194,16 @@ bool menu_entries_append_enum(file_list_t *list,
 
 bool menu_entries_ctl(enum menu_entries_ctl_state state, void *data);
 
-void menu_entries_set_checked(file_list_t *list, size_t entry_idx,
-      bool checked);
+bool menu_entries_search_push(const char *search_term);
+bool menu_entries_search_pop(void);
+menu_serch_terms_t *menu_entries_search_get_terms(void);
+/* Convenience function: Appends list of current
+ * search terms to specified string */
+void menu_entries_search_append_terms_string(char *s, size_t len);
+/* Searches current menu list for specified 'needle'
+ * string. If string is found, returns true and sets
+ * 'idx' to the matching list entry index. */
+bool menu_entries_list_search(const char *needle, size_t *idx);
 
 /* Menu entry interface -
  *

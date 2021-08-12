@@ -73,9 +73,6 @@ void cmd_take_screenshot(void)
 static void frontend_emscripten_get_env(int *argc, char *argv[],
       void *args, void *params_data)
 {
-   (void)args;
-
-   unsigned i;
    char base_path[PATH_MAX] = {0};
    char user_path[PATH_MAX] = {0};
    const char *home         = getenv("HOME");
@@ -115,6 +112,10 @@ static void frontend_emscripten_get_env(int *argc, char *argv[],
 #endif
    fill_pathname_join(g_defaults.dirs[DEFAULT_DIR_SHADER], base_path,
          "bundle/shaders", sizeof(g_defaults.dirs[DEFAULT_DIR_SHADER]));
+   fill_pathname_join(g_defaults.dirs[DEFAULT_DIR_AUDIO_FILTER], base_path,
+         "bundle/filters/audio", sizeof(g_defaults.dirs[DEFAULT_DIR_AUDIO_FILTER]));
+   fill_pathname_join(g_defaults.dirs[DEFAULT_DIR_VIDEO_FILTER], base_path,
+         "bundle/filters/video", sizeof(g_defaults.dirs[DEFAULT_DIR_VIDEO_FILTER]));
 
    /* user data dirs */
    fill_pathname_join(g_defaults.dirs[DEFAULT_DIR_CHEATS], user_path,
@@ -185,8 +186,8 @@ frontend_ctx_driver_t frontend_ctx_emscripten = {
    NULL,                         /* get_architecture */
    NULL,                         /* get_powerstate */
    NULL,                         /* parse_drive_list */
-   NULL,                         /* get_mem_total */
-   NULL,                         /* get_mem_used */
+   NULL,                         /* get_total_mem */
+   NULL,                         /* get_free_mem  */
    NULL,                         /* install_sighandlers */
    NULL,                         /* get_signal_handler_state */
    NULL,                         /* set_signal_handler_state */
@@ -202,5 +203,6 @@ frontend_ctx_driver_t frontend_ctx_emscripten = {
    NULL,                         /* get_user_language */
    NULL,                         /* is_narrator_running */
    NULL,                         /* accessibility_speak */
-   "emscripten"
+   "emscripten",                 /* ident               */
+   NULL                          /* get_video_driver    */
 };

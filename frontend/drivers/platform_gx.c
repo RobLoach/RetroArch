@@ -34,7 +34,7 @@
 #include "../../memory/wii/mem2_manager.h"
 #endif
 
-#include "../../defines/gx_defines.h"
+#include <defines/gx_defines.h>
 
 #include <boolean.h>
 
@@ -156,7 +156,7 @@ static void gx_devthread(void *a)
 extern char gx_rom_path[PATH_MAX_LENGTH];
 #endif
 
-static void frontend_gx_get_environment_settings(
+static void frontend_gx_get_env(
       int *argc, char *argv[],
       void *args, void *params_data)
 {
@@ -192,6 +192,12 @@ static void frontend_gx_get_environment_settings(
     * as a result the cfg file is not found. */
    if (*argc > 2 && argv[1] != NULL && argv[2] != NULL)
    {
+      if (strncmp("usb1", argv[0], 4) == 0 || strncmp("usb2", argv[0], 4) == 0)
+      {
+         strncpy(g_defaults.dirs[DEFAULT_DIR_CORE],argv[0], strlen(argv[0]));
+         strncpy(g_defaults.dirs[DEFAULT_DIR_CORE]," usb", 4);
+         memmove(g_defaults.dirs[DEFAULT_DIR_CORE], g_defaults.dirs[DEFAULT_DIR_CORE]+1, strlen(g_defaults.dirs[DEFAULT_DIR_CORE]));
+      }
       if(gx_devices[GX_DEVICE_SD].mounted)
       {
          chdir("sd:/");
@@ -471,7 +477,7 @@ static int frontend_gx_get_rating(void)
 #endif
 }
 
-static enum frontend_architecture frontend_gx_get_architecture(void)
+static enum frontend_architecture frontend_gx_get_arch(void)
 {
    return FRONTEND_ARCH_PPC;
 }
@@ -517,7 +523,7 @@ static void frontend_gx_shutdown(bool unused)
 #endif
 }
 
-static uint64_t frontend_gx_get_mem_total(void)
+static uint64_t frontend_gx_get_total_mem(void)
 {
    uint64_t total = SYSMEM1_SIZE;
 #if defined(HW_RVL) && !defined(IS_SALAMANDER)
@@ -526,7 +532,7 @@ static uint64_t frontend_gx_get_mem_total(void)
    return total;
 }
 
-static uint64_t frontend_gx_get_mem_free(void)
+static uint64_t frontend_gx_get_free_mem(void)
 {
    uint64_t total = SYSMEM1_SIZE - (SYSMEM1_SIZE - SYS_GetArena1Size());
 #if defined(HW_RVL) && !defined(IS_SALAMANDER)
@@ -536,27 +542,27 @@ static uint64_t frontend_gx_get_mem_free(void)
 }
 
 frontend_ctx_driver_t frontend_ctx_gx = {
-   frontend_gx_get_environment_settings,
+   frontend_gx_get_env,             /* get_env */
    frontend_gx_init,
    frontend_gx_deinit,
    frontend_gx_exitspawn,
    frontend_gx_process_args,
    frontend_gx_exec,
 #if defined(HW_RVL) && !defined(IS_SALAMANDER)
-   frontend_gx_set_fork,
+   frontend_gx_set_fork,            /* set_fork */
 #else
-   NULL,
+   NULL,                            /* set_fork */
 #endif
-   frontend_gx_shutdown,
+   frontend_gx_shutdown,            /* shutdown */
    NULL,                            /* get_name */
    NULL,                            /* get_os */
-   frontend_gx_get_rating,
+   frontend_gx_get_rating,          /* get_rating */
    NULL,                            /* load_content */
-   frontend_gx_get_architecture,
+   frontend_gx_get_arch,            /* get_architecture */
    NULL,                            /* get_powerstate */
-   frontend_gx_parse_drive_list,
-   frontend_gx_get_mem_total,
-   frontend_gx_get_mem_free,
+   frontend_gx_parse_drive_list,    /* parse_drive_list */
+   frontend_gx_get_total_mem,       /* get_total_mem */
+   frontend_gx_get_free_mem,        /* get_free_mem */
    NULL,                            /* install_signal_handler */
    NULL,                            /* get_sighandler_state */
    NULL,                            /* set_sighandler_state */
@@ -568,9 +574,10 @@ frontend_ctx_driver_t frontend_ctx_gx = {
    NULL,                            /* watch_path_for_changes */
    NULL,                            /* check_for_path_changes */
    NULL,                            /* set_sustained_performance_mode */
-   NULL,                            /* get_cpu_model_name */
-   NULL,                            /* get_user_language */
-   NULL,                         /* is_narrator_running */
-   NULL,                         /* accessibility_speak */
-   "gx",
+   NULL,                            /* get_cpu_model_name  */
+   NULL,                            /* get_user_language   */
+   NULL,                            /* is_narrator_running */
+   NULL,                            /* accessibility_speak */
+   "gx",                            /* ident               */
+   NULL                             /* get_video_driver    */
 };

@@ -31,7 +31,7 @@
 
 #include <d3d8.h>
 
-#include "../../defines/d3d_defines.h"
+#include <defines/d3d_defines.h>
 #include "../common/d3d8_common.h"
 #include "../common/d3d_common.h"
 #include "../video_coord_array.h"
@@ -1152,6 +1152,10 @@ static bool d3d8_init_internal(d3d8_video_t *d3d,
 #ifdef HAVE_DINPUT
    if (string_is_equal(settings->arrays.input_driver, "dinput"))
       d3d->windowClass.lpfnWndProc = wnd_proc_d3d_dinput;
+#endif
+#ifdef HAVE_WINRAWINPUT
+   if (string_is_equal(settings->arrays.input_driver, "raw"))
+      d3d->windowClass.lpfnWndProc = wnd_proc_d3d_winraw;
 #endif
    win32_window_init(&d3d->windowClass, true, NULL);
 #endif

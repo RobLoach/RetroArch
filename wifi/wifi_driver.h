@@ -78,6 +78,7 @@ typedef struct wifi_driver
 } wifi_driver_t;
 
 extern wifi_driver_t wifi_connmanctl;
+extern wifi_driver_t wifi_nmcli;
 
 /**
  * config_get_wifi_driver_options:
@@ -100,7 +101,7 @@ bool driver_wifi_connection_info(wifi_network_info_t *network);
 
 void driver_wifi_scan(void);
 
-wifi_network_scan_t* driver_wifi_get_ssids();
+wifi_network_scan_t* driver_wifi_get_ssids(void);
 
 bool driver_wifi_ssid_is_online(unsigned i);
 

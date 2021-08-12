@@ -19,6 +19,12 @@ else
 CXX                   = $(TOOLCHAIN_DIR)/usr/bin/mipsel-gcw0-linux-uclibc-g++
 endif
 
+ifdef GCW0_STRIP
+STRIP                 = $(GCW0_STRIP)
+else
+STRIP                 = $(TOOLCHAIN_DIR)/usr/bin/mipsel-gcw0-linux-uclibc-strip
+endif
+
 GCW0_SDL_CONFIG      ?= $(TOOLCHAIN_DIR)/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/sdl-config
 GCW0_FREETYPE_CONFIG ?= $(TOOLCHAIN_DIR)/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/freetype-config
 GCW0_MK_SQUASH_FS    ?= $(TOOLCHAIN_DIR)/usr/bin/mksquashfs
@@ -114,12 +120,12 @@ DEF_FLAGS += -mplt -mno-shared
 DEF_FLAGS += -ffunction-sections -fdata-sections
 DEF_FLAGS += -I. -Ideps -Ideps/stb -DDINGUX=1 -MMD
 DEF_FLAGS += -Wall -Wno-unused-variable
-DEF_FLAGS += -std=gnu99 -D_GNU_SOURCE
+DEF_FLAGS += -std=gnu99 -D_GNU_SOURCE -flto
 LIBS := -ldl -lz -lrt -ludev -pthread
 CFLAGS :=
 CXXFLAGS := -fno-exceptions -fno-rtti -std=c++11 -D__STDC_CONSTANT_MACROS
 ASFLAGS :=
-LDFLAGS := -flto -Wl,--gc-sections
+LDFLAGS := -Wl,--gc-sections
 INCLUDE_DIRS = -I$(GCW0_INC_DIR)
 LIBRARY_DIRS = -L$(GCW0_LIB_DIR)
 DEFINES := -DRARCH_INTERNAL -D_FILE_OFFSET_BITS=64 -UHAVE_STATIC_DUMMY
@@ -149,6 +155,7 @@ endif
 include Makefile.common
 
 DEF_FLAGS += $(INCLUDE_DIRS)
+LDFLAGS += $(CFLAGS) $(CXXFLAGS) $(DEF_FLAGS)
 CFLAGS += $(DEF_FLAGS)
 CXXFLAGS += $(DEF_FLAGS)
 
@@ -212,6 +219,9 @@ opk: $(TARGET)
 	echo "$$DESKTOP_ENTRY" > default.gcw0.desktop
 	rm -f $(OPK_NAME)
 	cp media/ico_src/icon32.png retroarch.png
+ifeq ($(STRIP_BIN),1)
+	$(STRIP) --strip-unneeded retroarch
+endif
 	$(GCW0_MK_SQUASH_FS) retroarch default.gcw0.desktop retroarch.png $(OPK_NAME) -all-root -no-xattrs -noappend -no-exports
 	rm -f default.gcw0.desktop retroarch.png
 

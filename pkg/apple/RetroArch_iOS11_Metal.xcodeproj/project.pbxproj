@@ -214,7 +214,7 @@
 		92B9EBD324E0518700E6CFB2 /* float_to_s16.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = float_to_s16.h; sourceTree = "<group>"; };
 		92B9EBD424E0518700E6CFB2 /* audio_mix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = audio_mix.h; sourceTree = "<group>"; };
 		92B9EBD524E0518700E6CFB2 /* memmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = memmap.h; sourceTree = "<group>"; };
-		92B9EBD624E0518700E6CFB2 /* rhash.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = rhash.h; sourceTree = "<group>"; };
+		92B9EBD624E0518700E6CFB2 /* lrc_hash.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lrc_hash.h; sourceTree = "<group>"; };
 		92B9EBD824E0518700E6CFB2 /* tpool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tpool.h; sourceTree = "<group>"; };
 		92B9EBD924E0518700E6CFB2 /* rthreads.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = rthreads.h; sourceTree = "<group>"; };
 		92B9EBDA24E0518700E6CFB2 /* async_job.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = async_job.h; sourceTree = "<group>"; };
@@ -468,7 +468,7 @@
 				92B9EBAA24E0518700E6CFB2 /* retro_math.h */,
 				92B9EBC324E0518700E6CFB2 /* retro_miscellaneous.h */,
 				92B9EB8124E0518700E6CFB2 /* retro_timers.h */,
-				92B9EBD624E0518700E6CFB2 /* rhash.h */,
+				92B9EBD624E0518700E6CFB2 /* lrc_hash.h */,
 				92B9EBD724E0518700E6CFB2 /* rthreads */,
 				92B9EBAB24E0518700E6CFB2 /* streams */,
 				92B9EBE424E0518700E6CFB2 /* string */,
@@ -1104,12 +1104,12 @@
 				ORGANIZATIONNAME = RetroArch;
 				TargetAttributes = {
 					9204BE091D319EF300BD49DB = {
-						DevelopmentTeam = R72X3BF4KE;
+						DevelopmentTeam = UK699V5ZS8;
 						DevelopmentTeamName = RetroArch;
 					};
 					926C77D621FD1E6500103EDE = {
 						CreatedOnToolsVersion = 10.1;
-						DevelopmentTeam = R72X3BF4KE;
+						DevelopmentTeam = UK699V5ZS8;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -1276,9 +1276,9 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_RESOURCE_RULES_PATH = "$(SDKROOT)/ResourceRules.plist";
-				CURRENT_PROJECT_VERSION = 1.9.0;
+				CURRENT_PROJECT_VERSION = 1.9.8;
 				DEPS_DIR = "$(SRCBASE)/deps";
-				DEVELOPMENT_TEAM = R72X3BF4KE;
+				DEVELOPMENT_TEAM = UK699V5ZS8;
 				ENABLE_BITCODE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
@@ -1300,7 +1300,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_NO_PIE = YES;
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.9.0;
+				MARKETING_VERSION = 1.9.8;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
@@ -1317,7 +1317,6 @@
 					"-DHAVE_MINIUPNPC",
 					"-DHAVE_BUILTINMINIUPNPC",
 					"-DHAVE_UPDATE_ASSETS",
-					"-DHAVE_UPDATE_CORES",
 					"-DHAVE_ONLINE_UPDATER",
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
@@ -1332,7 +1331,7 @@
 					"-DIOS",
 					"-DHAVE_OPENGL",
 					"-DHAVE_OPENGLES",
-					"-DHAVE_OPENGLES2",
+					"-DHAVE_OPENGLES3",
 					"-DHAVE_CC_RESAMPLER",
 					"-DHAVE_GLSL",
 					"-DINLINE=inline",
@@ -1395,9 +1394,9 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_RESOURCE_RULES_PATH = "$(SDKROOT)/ResourceRules.plist";
-				CURRENT_PROJECT_VERSION = 1.9.0;
+				CURRENT_PROJECT_VERSION = 1.9.8;
 				DEPS_DIR = "$(SRCBASE)/deps";
-				DEVELOPMENT_TEAM = R72X3BF4KE;
+				DEVELOPMENT_TEAM = UK699V5ZS8;
 				ENABLE_BITCODE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
@@ -1419,7 +1418,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_NO_PIE = YES;
 				LIBRARY_SEARCH_PATHS = "";
-				MARKETING_VERSION = 1.9.0;
+				MARKETING_VERSION = 1.9.8;
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = (
 					"-DNS_BLOCK_ASSERTIONS=1",
@@ -1437,7 +1436,6 @@
 					"-DHAVE_MINIUPNPC",
 					"-DHAVE_BUILTINMINIUPNPC",
 					"-DHAVE_UPDATE_ASSETS",
-					"-DHAVE_UPDATE_CORES",
 					"-DHAVE_ONLINE_UPDATER",
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
@@ -1453,7 +1451,7 @@
 					"-DHAVE_DYNAMIC",
 					"-DHAVE_OPENGL",
 					"-DHAVE_OPENGLES",
-					"-DHAVE_OPENGLES2",
+					"-DHAVE_OPENGLES3",
 					"-DHAVE_CC_RESAMPLER",
 					"-DHAVE_GLSL",
 					"-DINLINE=inline",
@@ -1494,7 +1492,6 @@
 					"-DHAVE_MINIUPNPC",
 					"-DHAVE_BUILTINMINIUPNPC",
 					"-DHAVE_UPDATE_ASSETS",
-					"-DHAVE_UPDATE_CORES",
 					"-DHAVE_ONLINE_UPDATER",
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
@@ -1509,7 +1506,7 @@
 					"-DIOS",
 					"-DHAVE_OPENGL",
 					"-DHAVE_OPENGLES",
-					"-DHAVE_OPENGLES2",
+					"-DHAVE_OPENGLES3",
 					"-DHAVE_CC_RESAMPLER",
 					"-DHAVE_GLSL",
 					"-DINLINE=inline",
@@ -1530,6 +1527,7 @@
 					"-DHAVE_THREADS",
 					"-DHAVE_FILTERS_BUILTIN",
 					"-DHAVE_7ZIP",
+					"-D_7ZIP_ST",
 					"-DHAVE_MATERIALUI",
 					"-DHAVE_XMB",
 					"-DHAVE_OZONE",
@@ -1592,12 +1590,12 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.9.0;
+				CURRENT_PROJECT_VERSION = 1.9.8;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEPS_DIR = "$(SRCBASE)/deps";
-				DEVELOPMENT_TEAM = R72X3BF4KE;
+				DEVELOPMENT_TEAM = UK699V5ZS8;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -1623,7 +1621,7 @@
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 1.9.0;
+				MARKETING_VERSION = 1.9.8;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1641,7 +1639,6 @@
 					"-DHAVE_MINIUPNPC",
 					"-DHAVE_BUILTINMINIUPNPC",
 					"-DHAVE_UPDATE_ASSETS",
-					"-DHAVE_UPDATE_CORES",
 					"-DHAVE_ONLINE_UPDATER",
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
@@ -1656,7 +1653,7 @@
 					"-DIOS",
 					"-DHAVE_OPENGL",
 					"-DHAVE_OPENGLES",
-					"-DHAVE_OPENGLES2",
+					"-DHAVE_OPENGLES3",
 					"-DHAVE_CC_RESAMPLER",
 					"-DHAVE_GLSL",
 					"-DINLINE=inline",
@@ -1730,12 +1727,12 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.9.0;
+				CURRENT_PROJECT_VERSION = 1.9.8;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPS_DIR = "$(SRCBASE)/deps";
-				DEVELOPMENT_TEAM = R72X3BF4KE;
+				DEVELOPMENT_TEAM = UK699V5ZS8;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -1761,7 +1758,7 @@
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 1.9.0;
+				MARKETING_VERSION = 1.9.8;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = (
@@ -1780,7 +1777,6 @@
 					"-DHAVE_MINIUPNPC",
 					"-DHAVE_BUILTINMINIUPNPC",
 					"-DHAVE_UPDATE_ASSETS",
-					"-DHAVE_UPDATE_CORES",
 					"-DHAVE_ONLINE_UPDATER",
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
@@ -1795,7 +1791,7 @@
 					"-DIOS",
 					"-DHAVE_OPENGL",
 					"-DHAVE_OPENGLES",
-					"-DHAVE_OPENGLES2",
+					"-DHAVE_OPENGLES3",
 					"-DHAVE_CC_RESAMPLER",
 					"-DHAVE_GLSL",
 					"-DINLINE=inline",
@@ -1815,6 +1811,7 @@
 					"-DHAVE_THREADS",
 					"-DHAVE_FILTERS_BUILTIN",
 					"-DHAVE_7ZIP",
+					"-D_7ZIP_ST",
 					"-DHAVE_XMB",
 					"-DHAVE_OZONE",
 					"-DHAVE_SHADERPIPELINE",
@@ -1888,7 +1885,6 @@
 					"-DHAVE_MINIUPNPC",
 					"-DHAVE_BUILTINMINIUPNPC",
 					"-DHAVE_UPDATE_ASSETS",
-					"-DHAVE_UPDATE_CORES",
 					"-DHAVE_ONLINE_UPDATER",
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
@@ -1904,7 +1900,7 @@
 					"-DHAVE_DYNAMIC",
 					"-DHAVE_OPENGL",
 					"-DHAVE_OPENGLES",
-					"-DHAVE_OPENGLES2",
+					"-DHAVE_OPENGLES3",
 					"-DHAVE_CC_RESAMPLER",
 					"-DHAVE_GLSL",
 					"-DINLINE=inline",
@@ -1966,7 +1962,6 @@
 					"-DHAVE_MINIUPNPC",
 					"-DHAVE_BUILTINMINIUPNPC",
 					"-DHAVE_UPDATE_ASSETS",
-					"-DHAVE_UPDATE_CORES",
 					"-DHAVE_ONLINE_UPDATER",
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
@@ -1982,7 +1977,7 @@
 					"-DHAVE_DYNAMIC",
 					"-DHAVE_OPENGL",
 					"-DHAVE_OPENGLES",
-					"-DHAVE_OPENGLES2",
+					"-DHAVE_OPENGLES3",
 					"-DHAVE_CC_RESAMPLER",
 					"-DHAVE_GLSL",
 					"-DINLINE=inline",

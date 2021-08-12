@@ -238,7 +238,7 @@ runtime_log_t *runtime_log_init(
    char log_file_dir[PATH_MAX_LENGTH];
    char log_file_path[PATH_MAX_LENGTH];
    char tmp_buf[PATH_MAX_LENGTH];
-   core_info_ctx_find_t core_info;
+   core_info_t *core_info     = NULL;
    runtime_log_t *runtime_log = NULL;
 
    content_name[0]            = '\0';
@@ -266,12 +266,9 @@ runtime_log_t *runtime_log_init(
     * we are performing aggregate (not per core) logging,
     * since content name is sometimes dependent upon core
     * (e.g. see TyrQuake below) */
-   core_info.inf  = NULL;
-   core_info.path = core_path;
-
-   if (core_info_find(&core_info) &&
-       core_info.inf->core_name)
-      strlcpy(core_name, core_info.inf->core_name, sizeof(core_name));
+   if (core_info_find(core_path, &core_info) &&
+       core_info->core_name)
+      strlcpy(core_name, core_info->core_name, sizeof(core_name));
 
    if (string_is_empty(core_name))
       return NULL;
@@ -564,19 +561,14 @@ void runtime_log_get_runtime_usec(
 void runtime_log_get_runtime_str(runtime_log_t *runtime_log,
       char *s, size_t len)
 {
-   int n = 0;
-
    if (runtime_log)
-      n = snprintf(s, len, "%s %02u:%02u:%02u",
+      snprintf(s, len, "%s %02u:%02u:%02u",
             msg_hash_to_str(MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_RUNTIME),
             runtime_log->runtime.hours, runtime_log->runtime.minutes,
             runtime_log->runtime.seconds);
    else
-      n = snprintf(s, len, "%s 00:00:00",
+      snprintf(s, len, "%s 00:00:00",
             msg_hash_to_str(MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_RUNTIME));
-
-   if ((n < 0) || (n >= 64))
-      n = 0; /* Silence GCC warnings... */
 }
 
 /* Gets last played entry values */
@@ -659,7 +651,6 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
    char tmp[64];
    bool has_am_pm         = false;
    const char *format_str = "";
-   int n                  = 0;
 
    tmp[0] = '\0';
 
@@ -801,9 +792,10 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
       if (has_am_pm)
       {
          last_played_strftime(runtime_log, tmp, sizeof(tmp), format_str);
-         strlcpy(str, msg_hash_to_str(
-                  MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED), len);
-         strlcat(str, tmp, len);
+         snprintf(str, len, "%s%s",
+               msg_hash_to_str(
+                  MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
+               tmp);
          return;
       }
 
@@ -823,7 +815,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %04u-%02u-%02u %02u:%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.year,
@@ -845,7 +837,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %04u-%02u-%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.year,
@@ -865,7 +857,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %04u-%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.year,
@@ -884,7 +876,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %02u-%02u-%04u %02u:%02u:%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.month,
@@ -907,7 +899,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %02u-%02u-%04u %02u:%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.month,
@@ -929,7 +921,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %02u-%02u %02u:%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.month,
@@ -950,7 +942,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %02u-%02u-%04u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.month,
@@ -970,7 +962,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %02u-%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.month,
@@ -989,7 +981,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %02u-%02u-%04u %02u:%02u:%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.day,
@@ -1012,7 +1004,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %02u-%02u-%04u %02u:%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.day,
@@ -1034,7 +1026,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %02u-%02u %02u:%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.day,
@@ -1055,7 +1047,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %02u-%02u-%04u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.day,
@@ -1075,7 +1067,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %02u-%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.day, runtime_log->last_played.month);
@@ -1094,7 +1086,7 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
                   format_str = "%s %04u-%02u-%02u %02u:%02u:%02u";
                   break;
             }
-            n = snprintf(str, len, format_str,
+            snprintf(str, len, format_str,
                   msg_hash_to_str(
                      MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
                   runtime_log->last_played.year,
@@ -1107,15 +1099,11 @@ void runtime_log_get_last_played_str(runtime_log_t *runtime_log,
       }
    }
    else
-   {
-      n = strlcpy(str, msg_hash_to_str(MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED), len);
-      str[n  ]    = ' ';
-      str[n+1]    = '\0';
-      n = strlcat(str, msg_hash_to_str(MENU_ENUM_LABEL_VALUE_PLAYLIST_INLINE_CORE_DISPLAY_NEVER), len);
-   }
-
-   if ((n < 0) || (n >= 64))
-      n = 0; /* Silence GCC warnings... */
+      snprintf(str, len,
+            "%s %s",
+            msg_hash_to_str(MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED),
+            msg_hash_to_str(MENU_ENUM_LABEL_VALUE_PLAYLIST_INLINE_CORE_DISPLAY_NEVER)
+            );
 }
 
 /* Status */
@@ -1150,7 +1138,6 @@ bool runtime_log_has_last_played(runtime_log_t *runtime_log)
 /* Saves specified runtime log to disk */
 void runtime_log_save(runtime_log_t *runtime_log)
 {
-   int n;
    char value_string[64]; /* 64 characters should be
                              enough for a very long runtime... :) */
    RFILE *file            = NULL;
@@ -1193,14 +1180,12 @@ void runtime_log_save(runtime_log_t *runtime_log)
    rjsonwriter_add_newline(writer);
 
    /* > Runtime entry */
-   value_string[0] = '\0';
-   n               = snprintf(value_string,
-         sizeof(value_string), LOG_FILE_RUNTIME_FORMAT_STR,
+   snprintf(value_string,
+         sizeof(value_string),
+         LOG_FILE_RUNTIME_FORMAT_STR,
          runtime_log->runtime.hours, runtime_log->runtime.minutes,
          runtime_log->runtime.seconds);
-   if ((n < 0) || (n >= 64))
-      n = 0; /* Silence GCC warnings... */
-
+    
    rjsonwriter_add_spaces(writer, 2);
    rjsonwriter_add_string(writer, "runtime");
    rjsonwriter_add_colon(writer);
@@ -1211,14 +1196,12 @@ void runtime_log_save(runtime_log_t *runtime_log)
 
    /* > Last played entry */
    value_string[0] = '\0';
-   n               = snprintf(value_string, sizeof(value_string),
+   snprintf(value_string, sizeof(value_string),
          LOG_FILE_LAST_PLAYED_FORMAT_STR,
          runtime_log->last_played.year, runtime_log->last_played.month,
          runtime_log->last_played.day,
          runtime_log->last_played.hour, runtime_log->last_played.minute,
          runtime_log->last_played.second);
-   if ((n < 0) || (n >= 64))
-      n = 0; /* Silence GCC warnings... */
 
    rjsonwriter_add_spaces(writer, 2);
    rjsonwriter_add_string(writer, "last_played");
