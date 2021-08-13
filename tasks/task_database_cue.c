@@ -135,21 +135,22 @@ static int64_t get_token(intfstream_t *fd, char *token, uint64_t max_len)
 
 int detect_ps1_game(intfstream_t *fd, char *game_id, const char *filename)
 {
+   #define DISC_DATA_SIZE_PS1 60000
    int pos;
    char raw_game_id[50];
-   char disc_data[60000];
+   char disc_data[DISC_DATA_SIZE_PS1];
    char hyphen = '-';
 
    /* Load data into buffer and use pointers */
    if (intfstream_seek(fd, 0, SEEK_SET) < 0)
       return false;
   
-   if (intfstream_read(fd, disc_data, 60000) <= 0)
+   if (intfstream_read(fd, disc_data, DISC_DATA_SIZE_PS1) <= 0)
       return false;
 
-   disc_data[60000] = '\0';
+   disc_data[DISC_DATA_SIZE_PS1 - 1] = '\0';
 
-   for (pos = 0; pos < 60000; pos++)
+   for (pos = 0; pos < DISC_DATA_SIZE_PS1; pos++)
    {
       strncpy(raw_game_id, &disc_data[pos], 12);
 	  raw_game_id[12] = '\0';
@@ -202,19 +203,20 @@ int detect_ps1_game(intfstream_t *fd, char *game_id, const char *filename)
 
 int detect_psp_game(intfstream_t *fd, char *game_id, const char *filename)
 {
+   #define DISC_DATA_SIZE_PSP 40000
    int pos;
-   char disc_data[40000];
+   char disc_data[DISC_DATA_SIZE_PSP];
 
    /* Load data into buffer and use pointers */
    if (intfstream_seek(fd, 0, SEEK_SET) < 0)
       return false;
   
-   if (intfstream_read(fd, disc_data, 40000) <= 0)
+   if (intfstream_read(fd, disc_data, DISC_DATA_SIZE_PSP) <= 0)
       return false;
 
-   disc_data[40000] = '\0';
+   disc_data[DISC_DATA_SIZE_PSP - 1] = '\0';
 
-   for (pos = 0; pos < 40000; pos++)
+   for (pos = 0; pos < DISC_DATA_SIZE_PSP; pos++)
    {
       strncpy(game_id, &disc_data[pos], 10);
       game_id[10] = '\0';
