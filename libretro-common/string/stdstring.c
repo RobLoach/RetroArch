@@ -694,7 +694,7 @@ int find_disc_number(const char* str1, int index)
 /**
  * Given a title and filename, append the appropriate disc number to it.
  */
-void append_multi_disc_suffix (char * str1, const char *filename)
+void append_multi_disc_suffix(char * str1, const char *filename)
 {
    char * dest = str1;
    int result = 0;
