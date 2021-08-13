@@ -26,6 +26,7 @@
 
 #include <string/stdstring.h>
 #include <encodings/utf.h>
+#include <stdio.h>
 
 const uint8_t lr_char_props[256] = {
 	/*x0   x1   x2   x3   x4   x5   x6   x7   x8   x9   xA   xB   xC   xD   xE   xF */
@@ -538,7 +539,7 @@ unsigned string_hex_to_unsigned(const char *str)
 /**
  * Get the total number of occurrences of a character in the given string.
  */
-int *count_occurrences_single_character(char *str, char t)
+int count_occurrences_single_character(char *str, char t)
 {
    int ctr = 0;
    int i;
@@ -602,7 +603,7 @@ void remove_all_whitespace (char* str_trimmed, const char* str_untrimmed)
 /**
  * Retrieve the last occurance of the given character in a string.
  */
-int *index_last_occurance(char str[], char t)
+int index_last_occurance(char str[], char t)
 {
    const char * ret = strrchr(str, t);
    if (ret)
@@ -614,7 +615,7 @@ int *index_last_occurance(char str[], char t)
 /**
  * Find the position of a substring in a string.
  */
-int *find_index_substring_string(const char* str1, const char* str2)
+int find_index_substring_string(const char* str1, const char* str2)
 {
    int index;
 
@@ -634,7 +635,7 @@ int *find_index_substring_string(const char* str1, const char* str2)
 /**
  * Given a filename and position, find the associated disc number.
  */
-int *find_disc_number(const char* str1, int index)
+int find_disc_number(const char* str1, int index)
 {
    char disc;
    int disc_number = 0;

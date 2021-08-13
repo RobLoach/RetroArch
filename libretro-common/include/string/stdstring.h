@@ -247,13 +247,13 @@ extern const unsigned char lr_char_props[256];
 
 /* Scanner string function declarations */
 
-int *count_occurrences_single_character(char *str, char t);
+int count_occurrences_single_character(char *str, char t);
 void replace_whitespace_with_single_character(char *str, char t);
 void replace_multi_space_with_single_space(char *str);
 void remove_all_whitespace(char* str_trimmed, const char* str_untrimmed);
-int *index_last_occurance(char str[], char t);
-int *find_index_substring_string(const char* str1, const char* str2);
-int *find_disc_number(const char* str1, int index);
+int index_last_occurance(char str[], char t);
+int find_index_substring_string(const char* str1, const char* str2);
+int find_disc_number(const char* str1, int index);
 void append_multi_disc_suffix(char * str1, const char *filename);
 
 RETRO_END_DECLS

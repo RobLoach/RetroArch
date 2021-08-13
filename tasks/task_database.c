@@ -153,62 +153,61 @@ static int intfstream_get_serial(intfstream_t *fd, char *serial, const char *fil
    const char *system_name = NULL;
    if (detect_system(fd, &system_name, filename) >= 1)
    {
-
+      if (string_is_equal(system_name, "Sony - PlayStation Portable"))
+      {
+         if (detect_psp_game(fd, serial, filename) == 0)
+            return 0;
+         RARCH_LOG("[Scanner] Serial: %s\n", serial);
+         return 1;
+      }
+      else if (string_is_equal(system_name, "Sony - PlayStation"))
+      {
+         if (detect_ps1_game(fd, serial, filename) == 0)
+            return 0;
+         RARCH_LOG("[Scanner] Serial: %s\n", serial);
+         return 1;
+      }
+      else if (string_is_equal(system_name, "Nintendo - GameCube"))
+      {
+         if (detect_gc_game(fd, serial, filename) == 0)
+            return 0;
+         RARCH_LOG("[Scanner] Serial: %s\n", serial);
+         return 1;
+      }
+      else if (string_is_equal(system_name, "Sega - Mega-CD - Sega CD"))
+      {
+         if (detect_scd_game(fd, serial, filename) == 0)
+            return 0;
+         RARCH_LOG("[Scanner] Serial: %s\n", serial);
+         return 1;
+      }
+      else if (string_is_equal(system_name, "Sega - Saturn"))
+      {
+         if (detect_sat_game(fd, serial, filename) == 0)
+            return 0;
+         RARCH_LOG("[Scanner] Serial: %s\n", serial);
+         return 1;
+      }
+      else if (string_is_equal(system_name, "Sega - Dreamcast"))
+      {
+         if (detect_dc_game(fd, serial, filename) == 0)
+            return 0;
+         RARCH_LOG("[Scanner] Serial: %s\n", serial);
+         return 1;
+      }
+      else if (string_is_equal(system_name, "Nintendo - Wii"))
+      {
+         if (detect_wii_game(fd, serial, filename) == 0)
+            return 0;
+         RARCH_LOG("[Scanner] Serial: %s\n", serial);
+         return 1;
+      }
    }
    else
    {
       return 0;
    }
 
-   if (string_is_equal(system_name, "Sony - PlayStation Portable"))
-   {
-      if (detect_psp_game(fd, serial, filename) == 0)
-         return 0;
-      RARCH_LOG("[Scanner] Serial: %s\n", serial);
-      return 1;
-   }
-   else if (string_is_equal(system_name, "Sony - PlayStation"))
-   {
-      if (detect_ps1_game(fd, serial, filename) == 0)
-         return 0;
-      RARCH_LOG("[Scanner] Serial: %s\n", serial);
-      return 1;
-   }
-   else if (string_is_equal(system_name, "Nintendo - GameCube"))
-   {
-      if (detect_gc_game(fd, serial, filename) == 0)
-         return 0;
-      RARCH_LOG("[Scanner] Serial: %s\n", serial);
-      return 1;
-   }
-   else if (string_is_equal(system_name, "Sega - Mega-CD - Sega CD"))
-   {
-      if (detect_scd_game(fd, serial, filename) == 0)
-         return 0;
-      RARCH_LOG("[Scanner] Serial: %s\n", serial);
-      return 1;
-   }
-   else if (string_is_equal(system_name, "Sega - Saturn"))
-   {
-      if (detect_sat_game(fd, serial, filename) == 0)
-         return 0;
-      RARCH_LOG("[Scanner] Serial: %s\n", serial);
-      return 1;
-   }
-   else if (string_is_equal(system_name, "Sega - Dreamcast"))
-   {
-      if (detect_dc_game(fd, serial, filename) == 0)
-         return 0;
-      RARCH_LOG("[Scanner] Serial: %s\n", serial);
-      return 1;
-   }
-   else if (string_is_equal(system_name, "Nintendo - Wii"))
-   {
-      if (detect_wii_game(fd, serial, filename) == 0)
-         return 0;
-      RARCH_LOG("[Scanner] Serial: %s\n", serial);
-      return 1;
-   }
    return 0;
 }
 
