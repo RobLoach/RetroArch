@@ -36,6 +36,9 @@
 
 #include "../input_driver.h"
 
+#include "../../configuration.h"
+#include "../../config.def.h"
+
 #include "../../tasks/tasks_internal.h"
 
 #include "../../verbosity.h"
@@ -81,8 +84,9 @@ struct udev_joypad
    uint8_t axes_bind[ABS_MAX];
    uint16_t strength[2];
    uint16_t configured_strength[2];
+   unsigned rumble_gain;
 
-   char ident[255];
+   char ident[NAME_MAX_LENGTH];
    bool has_set_ff[2];
    /* Deal with analog triggers that report -32767 to 32767 */
    bool neg_trigger[NUM_AXES];
@@ -146,6 +150,37 @@ error:
    close(fd);
    return -1;
 }
+
+#ifndef HAVE_LAKKA_SWITCH
+static bool udev_set_rumble_gain(unsigned i, unsigned gain)
+{
+   struct input_event ie;
+   struct udev_joypad *pad = (struct udev_joypad*)&udev_pads[i];
+
+   /* Does not support > 100 gains */
+   if ((pad->fd < 0) ||
+       (gain > 100))
+      return false;
+
+   if (pad->rumble_gain == gain)
+      return true;
+
+   memset(&ie, 0, sizeof(ie));
+   ie.type = EV_FF;
+   ie.code = FF_GAIN;
+   ie.value = 0xFFFF * (gain/100.0);
+
+   if (write(pad->fd, &ie, sizeof(ie)) < (ssize_t)sizeof(ie))
+   {
+      RARCH_ERR("[udev]: Failed to set rumble gain on pad #%u.\n", i);
+      return false;
+   }
+
+   pad->rumble_gain = gain;
+
+   return true;
+}
+#endif
 
 static int udev_add_pad(struct udev_device *dev, unsigned p, int fd, const char *path)
 {
@@ -265,6 +300,17 @@ static int udev_add_pad(struct udev_device *dev, unsigned p, int fd, const char 
                "[udev]: Pad #%u (%s) supports %d force feedback effects.\n",
                p, path, pad->num_effects);
    }
+
+#ifndef HAVE_LAKKA_SWITCH
+   /* Set rumble gain here, if supported */
+   if (test_bit(FF_RUMBLE, ffbit))
+   {
+      settings_t *settings = config_get_ptr();
+      unsigned rumble_gain = settings ? settings->uints.input_rumble_gain
+                                      : DEFAULT_RUMBLE_GAIN;
+      udev_set_rumble_gain(p, rumble_gain);
+   }
+#endif
 
    return ret;
 }
@@ -748,6 +794,11 @@ input_device_driver_t udev_joypad = {
    udev_joypad_axis,
    udev_joypad_poll,
    udev_set_rumble,
+#ifndef HAVE_LAKKA_SWITCH
+   udev_set_rumble_gain,
+#else
+   NULL,
+#endif
    udev_joypad_name,
    "udev",
 };

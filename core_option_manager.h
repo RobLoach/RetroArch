@@ -23,8 +23,10 @@
 #include <retro_common_api.h>
 #include <lists/string_list.h>
 #include <lists/nested_list.h>
+#include <file/config_file.h>
+#include <libretro.h>
 
-#include "retroarch.h"
+#include <retro_miscellaneous.h>
 
 RETRO_BEGIN_DECLS
 
@@ -174,16 +176,22 @@ core_option_manager_t *core_option_manager_new_vars(
  * @src_conf_path : Filesystem path from which to load
  *                  initial config settings.
  * @options_v2    : Pointer to retro_core_options_v2 struct
+ * @categorized   : Flag specifying whether core option
+ *                  category information should be read
+ *                  from @options_v2
  *
  * Creates and initializes a core manager handle. Parses
  * information from a retro_core_options_v2 struct.
+ * If @categorized is false, all option category
+ * assignments will be ignored.
  *
  * Returns: handle to new core manager handle if successful,
  * otherwise NULL.
  **/
 core_option_manager_t *core_option_manager_new(
       const char *conf_path, const char *src_conf_path,
-      const struct retro_core_options_v2 *options_v2);
+      const struct retro_core_options_v2 *options_v2,
+      bool categorized);
 
 /**
  * core_option_manager_free:
@@ -271,6 +279,27 @@ bool core_option_manager_get_category_visible(core_option_manager_t *opt,
  **/
 bool core_option_manager_get_idx(core_option_manager_t *opt,
       const char *key, size_t *idx);
+
+/**
+ * core_option_manager_get_val_idx:
+ *
+ * @opt     : options manager handle
+ * @idx     : core option index
+ * @val     : string representation of the
+ *            core option value
+ * @val_idx : index of core option value
+ *            corresponding to @val
+ *
+ * Fetches the index of the core option value
+ * identified by the specified core option @idx
+ * and @val string.
+ *
+ * Returns: true if option value matching the
+ * specified option index and value string
+ * was found, otherwise false.
+ **/
+bool core_option_manager_get_val_idx(core_option_manager_t *opt,
+      size_t idx, const char *val, size_t *val_idx);
 
 /**
  * core_option_manager_get_desc:
@@ -367,41 +396,69 @@ bool core_option_manager_get_visible(core_option_manager_t *opt,
 /**
  * core_option_manager_set_val:
  *
- * @opt     : options manager handle
- * @idx     : core option index
- * @val_idx : index of the value to set
+ * @opt          : options manager handle
+ * @idx          : core option index
+ * @val_idx      : index of the value to set
+ * @refresh_menu : flag specifying whether menu
+ *                 should be refreshed if changes
+ *                 to option visibility are detected
  *
  * Sets the core option at index @idx to the
  * option value corresponding to @val_idx.
+ * After setting the option value, a request
+ * will be made for the core to update the
+ * in-menu visibility of all options; if
+ * visibility changes are detected and
+ * @refresh_menu is true, the menu will be
+ * redrawn.
  **/
 void core_option_manager_set_val(core_option_manager_t *opt,
-      size_t idx, size_t val_idx);
+      size_t idx, size_t val_idx, bool refresh_menu);
 
 /**
  * core_option_manager_adjust_val:
  *
- * @opt        : options manager handle
- * @idx        : core option index
- * @adjustment : offset to apply from current
- *               value index
+ * @opt          : options manager handle
+ * @idx          : core option index
+ * @adjustment   : offset to apply from current
+ *                 value index
+ * @refresh_menu : flag specifying whether menu
+ *                 should be refreshed if changes
+ *                 to option visibility are detected
  *
- * Modifies the value of the core option at index
- * @idx by incrementing the current option value index
- * by @adjustment.
+ * Modifies the value of the core option at
+ * index @idx by incrementing the current option
+ * value index by @adjustment.
+ * After setting the option value, a request
+ * will be made for the core to update the
+ * in-menu visibility of all options; if
+ * visibility changes are detected and
+ * @refresh_menu is true, the menu will be
+ * redrawn.
  **/
 void core_option_manager_adjust_val(core_option_manager_t* opt,
-      size_t idx, int adjustment);
+      size_t idx, int adjustment, bool refresh_menu);
 
 /**
  * core_option_manager_set_default:
  *
- * @opt : options manager handle
- * @idx : core option index
+ * @opt          : options manager handle
+ * @idx          : core option index
+ * @refresh_menu : flag specifying whether menu
+ *                 should be refreshed if changes
+ *                 to option visibility are detected
  *
- * Resets the core option at index @idx to its
- * default value.
+ * Resets the core option at index @idx to
+ * its default value.
+ * After setting the option value, a request
+ * will be made for the core to update the
+ * in-menu visibility of all options; if
+ * visibility changes are detected and
+ * @refresh_menu is true, the menu will be
+ * redrawn.
  **/
-void core_option_manager_set_default(core_option_manager_t *opt, size_t idx);
+void core_option_manager_set_default(core_option_manager_t *opt,
+      size_t idx, bool refresh_menu);
 
 /**
  * core_option_manager_set_visible:

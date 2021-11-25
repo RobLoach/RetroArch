@@ -91,6 +91,16 @@ MSG_HASH( /* FIXME Is a specific image format used? Is it determined automatical
    MENU_ENUM_SUBLABEL_DUMP_DISC,
    "Dump the physical media disc to internal storage. It will be saved as an image file."
    )
+#ifdef HAVE_LAKKA
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_EJECT_DISC,
+   "Eject Disc"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_EJECT_DISC,
+   "Ejects the disc from physical CD/DVD drive."
+   )
+#endif
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_PLAYLISTS_TAB,
    "Playlists"
@@ -454,20 +464,20 @@ MSG_HASH(
    "Firmware"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_MISSING,
-   "Missing"
+   MENU_ENUM_LABEL_VALUE_MISSING_REQUIRED,
+   "Missing, Required:"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_PRESENT,
-   "Present"
+   MENU_ENUM_LABEL_VALUE_MISSING_OPTIONAL,
+   "Missing, Optional:"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_OPTIONAL,
-   "Optional"
+   MENU_ENUM_LABEL_VALUE_PRESENT_REQUIRED,
+   "Present, Required:"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_REQUIRED,
-   "Required"
+   MENU_ENUM_LABEL_VALUE_PRESENT_OPTIONAL,
+   "Present, Optional:"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_LOCK,
@@ -1305,6 +1315,14 @@ MSG_HASH(
    "Change video scaling settings."
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_SETTINGS,
+   "HDR"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_SETTINGS,
+   "Change video HDR settings."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_SYNCHRONIZATION_SETTINGS,
    "Synchronization"
    )
@@ -1373,7 +1391,7 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_FILTER_NEAREST,
    "Nearest Neighbor"
    )
-#if defined(RS90)
+#if defined(RS90) || defined(MIYOO)
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_TYPE,
    "Image Interpolation"
@@ -1503,6 +1521,26 @@ MSG_HASH(
    "GPU Index"
    )
 MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_GPU_INDEX,
+   "Select which graphics card to use."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OFFSET_X,
+   "Screen Horizontal Offset"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OFFSET_X,
+   "Forces a certain offset horizontally to the video. The offset is applied globally."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OFFSET_Y,
+   "Screen Vertical Offset"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OFFSET_Y,
+   "Forces a certain offset vertically to the video. The offset is applied globally."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_REFRESH_RATE,
    "Vertical Refresh Rate"
    )
@@ -1604,7 +1642,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SCALE,
-   "Set the window size relative to the core viewport size. Alternatively, a window width and height can be set below for a fixed window size."
+   "Set the window size to the specified multiple of the core viewport size."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OPACITY,
@@ -1620,7 +1658,15 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SAVE_POSITION,
-   "Remember window size and position, enabling this has precedence over Windowed Scale."
+   "Show all content in a fixed size window of dimensions specified by 'Window Width' and 'Window Height', and save current window size and position upon closing RetroArch. When disabled, window size will be set dynamically based on 'Windowed Scale'."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
+   "Use Custom Window Size"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
+   "Show all content in a fixed size window of dimensions specified by 'Window Width' and 'Window Height'. When disabled, window size will be set dynamically based on 'Windowed Scale'."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_WIDTH,
@@ -1637,6 +1683,22 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_WINDOW_HEIGHT,
    "Set the custom height for the display window."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_WIDTH_MAX,
+   "Maximum Window Width"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_AUTO_WIDTH_MAX,
+   "Set the maximum width of the display window when automatically resizing based on 'Windowed Scale'."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
+   "Maximum Window Height"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
+   "Set the maximum height of the display window when automatically resizing based on 'Windowed Scale'."
    )
 
 /* Settings > Video > Scaling */
@@ -1667,7 +1729,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_ASPECT_RATIO,
-   "Floating point value for video aspect ratio (width / height), used if the Aspect Ratio is set to 'Custom Aspect Ratio'."
+   "Floating point value for video aspect ratio (width / height), used if 'Aspect Ratio' is set to 'Config'."
    )
 #if defined(DINGUX)
 MSG_HASH(
@@ -1720,6 +1782,49 @@ MSG_HASH(
    "Cut off a few pixels around the edges of the image customarily left blank by developers which sometimes also contain garbage pixels."
    )
 
+/* Settings > Video > HDR */
+
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_ENABLE,
+   "Enable HDR"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_ENABLE,
+   "Enable HDR if the display supports it."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_MAX_NITS,
+   "Peak Luminance"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_MAX_NITS,
+   "Set the peak luminance (in cd/m2) your display can reproduce. See RTings for your display's peak luminance."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_PAPER_WHITE_NITS,
+   "Paper White Luminance"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_PAPER_WHITE_NITS,
+   "Set the luminance at which paper white should be i.e. readable text or luminance at the top of the SDR (Standard Dynamic Range) range. Useful for adjusting to different lighting conditions in your environment."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_CONTRAST,
+   "Contrast"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_CONTRAST,
+   "Gamma/contrast control for HDR. Takes the colors and increases the overall range between the brightest parts and the darkest parts of the image. The higher HDR Contrast is, the larger this difference becomes, while the lower the contrast is, the more washed out the image becomes. Helps users tune the image to their liking and what they feel looks best on their display."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT,
+   "Expand Gamut"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_EXPAND_GAMUT,
+   "Once the color space is converted to linear space, decide whether we should use an expanded colour gamut to get to HDR10."
+   )
+
 /* Settings > Video > Synchronization */
 
 MSG_HASH(
@@ -1753,6 +1858,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_FRAME_DELAY,
    "Reduces latency at the cost of a higher risk of video stuttering. Adds a delay after VSync (in ms)."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_DELAY_AUTO,
+   "Automatic Frame Delay"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_FRAME_DELAY_AUTO,
+   "Decrease effective 'Frame Delay' temporarily to prevent future frame drops. Starting point is half frame time when 'Frame Delay' is 0."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_HARD_SYNC,
@@ -1824,6 +1937,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_SOUNDS,
    "Menu Sounds"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_MENU_SOUNDS,
+   "Change menu sound settings."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_AUDIO_MUTE,
@@ -2279,16 +2396,14 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_ENABLE_DEVICE_VIBRATION,
    "Enable Device Vibration (For Supported Cores)"
    )
-#if defined(DINGUX) && defined(HAVE_LIBSHAKE)
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INPUT_DINGUX_RUMBLE_GAIN,
-   "Vibration Strength (Restart Required)"
+   MENU_ENUM_LABEL_VALUE_INPUT_RUMBLE_GAIN,
+   "Vibration Strength"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_INPUT_DINGUX_RUMBLE_GAIN,
+   MENU_ENUM_SUBLABEL_INPUT_RUMBLE_GAIN,
    "Specify the magnitude of haptic feedback effects."
    )
-#endif
 
 /* Settings > Input > Menu Controls */
 
@@ -2334,6 +2449,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_INPUT_MENU_ENUM_TOGGLE_GAMEPAD_COMBO,
    "Controller button combination to toggle menu."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_QUIT_GAMEPAD_COMBO,
+   "Quit Controller Combo"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_QUIT_GAMEPAD_COMBO,
+   "Controller button combination to quit RetroArch."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_BLOCK_DELAY,
@@ -2947,6 +3070,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CHECK_FOR_MISSING_FIRMWARE,
    "Check if all the required firmware is present before attempting to load content."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CORE_OPTION_CATEGORY_ENABLE,
+   "Core Option Categories"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_CORE_OPTION_CATEGORY_ENABLE,
+   "Allow cores to present options in category-based submenus. NOTE: Core must be reloaded for changes to take effect."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_INFO_CACHE_ENABLE,
@@ -3897,6 +4028,14 @@ MSG_HASH(
    "Display an on-screen message when setting the refresh rate."
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_NETPLAY_EXTRA,
+   "Extra Netplay Notifications"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_NETPLAY_EXTRA,
+   "Display non-essential netplay on-screen messages."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_FONT_PATH,
    "Notification Font"
    )
@@ -4206,6 +4345,16 @@ MSG_HASH(
    MENU_ENUM_SUBLABEL_MENU_SHOW_DUMP_DISC,
    "Show the 'Dump Disc' option in the Main Menu."
    )
+#ifdef HAVE_LAKKA
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MENU_SHOW_EJECT_DISC,
+   "Show 'Eject Disc'"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_MENU_SHOW_EJECT_DISC,
+   "Show the 'Eject Disc' option in the Main Menu."
+   )
+#endif
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_SHOW_ONLINE_UPDATER,
    "Show 'Online Updater'"
@@ -4528,6 +4677,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_OPTIONS,
    "Show the 'Options' option."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CORE_OPTIONS_FLUSH,
+   "Show 'Flush Options to Disk'"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_CORE_OPTIONS_FLUSH,
+   "Show the 'Flush Options to Disk' entry in the 'Options > Manage Core Options' menu."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CONTROLS,
@@ -5086,6 +5243,10 @@ MSG_HASH(
    "The port of the host IP address. Can be either a TCP or UDP port."
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_NETPLAY_MAX_CONNECTIONS,
+   "Max Simultaneous Connections"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_NETPLAY_PASSWORD,
    "Server Password"
    )
@@ -5461,6 +5622,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_CLEAN_PLAYLIST,
    "Validate core associations and remove invalid and duplicate entries."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_REFRESH_PLAYLIST,
+   "Refresh Playlist"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_REFRESH_PLAYLIST,
+   "Add new content and remove invalid entries by repeating the 'Manual Scan' operation last used to create or edit the playlist."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_DELETE_PLAYLIST,
@@ -6055,6 +6224,14 @@ MSG_HASH(
    "When enabled, any existing playlist will be deleted before scanning content. When disabled, existing playlist entries are preserved and only content currently missing from the playlist will be added."
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_VALIDATE_ENTRIES,
+   "Validate Existing Entries"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_VALIDATE_ENTRIES,
+   "When enabled, entries in any existing playlist will be verified before scanning new content. Entries referring to missing content and/or files with invalid extensions will be removed."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_START,
    "Start Scan"
    )
@@ -6064,6 +6241,10 @@ MSG_HASH(
    )
 
 /* Explore tab */
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_EXPLORE_INITIALISING_LIST,
+   "Initializing list..."
+   )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_EXPLORE_CATEGORY_RELEASE_YEAR,
    "Release Year"
@@ -6453,6 +6634,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CORE_OPTIONS_RESET,
    "Set all core options to default values."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CORE_OPTIONS_FLUSH,
+   "Flush Options to Disk"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_CORE_OPTIONS_FLUSH,
+   "Force current settings to be written to active options file. Ensures options are preserved in the event that a core bug causes improper shutdown of the frontend."
    )
 
 /* - Legacy (unused) */
@@ -9077,6 +9266,14 @@ MSG_HASH(
    "Dracula"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_SOLARIZED_DARK,
+   "Solarized Dark"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_SOLARIZED_LIGHT,
+   "Solarized Light"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_LEFT_THUMBNAILS_OZONE,
    "Second Thumbnail"
    )
@@ -9993,6 +10190,10 @@ MSG_HASH(
    "Port"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_PORT_DEVICE_NAME,
+   "Port %d device name: %s (#%d)"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CHEAT_SETTINGS,
    "Cheat Settings"
    )
@@ -10789,6 +10990,30 @@ MSG_HASH(
    "Playlist cleaned: "
    )
 MSG_HASH(
+   MSG_PLAYLIST_MANAGER_REFRESH_MISSING_CONFIG,
+   "Refresh failed - playlist contains no valid scan record: "
+   )
+MSG_HASH(
+   MSG_PLAYLIST_MANAGER_REFRESH_INVALID_CONTENT_DIR,
+   "Refresh failed - invalid/missing content directory: "
+   )
+MSG_HASH(
+   MSG_PLAYLIST_MANAGER_REFRESH_INVALID_SYSTEM_NAME,
+   "Refresh failed - invalid/missing system name: "
+   )
+MSG_HASH(
+   MSG_PLAYLIST_MANAGER_REFRESH_INVALID_CORE,
+   "Refresh failed - invalid core: "
+   )
+MSG_HASH(
+   MSG_PLAYLIST_MANAGER_REFRESH_INVALID_DAT_FILE,
+   "Refresh failed - invalid/missing arcade DAT file: "
+   )
+MSG_HASH(
+   MSG_PLAYLIST_MANAGER_REFRESH_DAT_FILE_TOO_LARGE,
+   "Refresh failed - arcade DAT file too large (insufficient memory): "
+   )
+MSG_HASH(
    MSG_ADDED_TO_FAVORITES,
    "Added to favorites"
    )
@@ -10913,6 +11138,14 @@ MSG_HASH(
    "All core options reset to default."
    )
 MSG_HASH(
+   MSG_CORE_OPTIONS_FLUSHED,
+   "Core options saved to:"
+   )
+MSG_HASH(
+   MSG_CORE_OPTIONS_FLUSH_FAILED,
+   "Failed to save core options to:"
+   )
+MSG_HASH(
    MSG_COULD_NOT_FIND_ANY_NEXT_DRIVER,
    "Could not find any next driver"
    )
@@ -10970,11 +11203,11 @@ MSG_HASH(
    )
 MSG_HASH(
    MSG_DISK_CLOSED,
-   "Closed"
+   "Closed virtual disc tray."
    )
 MSG_HASH(
    MSG_DISK_EJECTED,
-   "Ejected"
+   "Ejected virtual disc tray."
    )
 MSG_HASH(
    MSG_DOWNLOADING,
@@ -11043,10 +11276,6 @@ MSG_HASH(
 MSG_HASH(
    MSG_FAILED_SAVING_CONFIG_TO,
    "Failed saving config to"
-   )
-MSG_HASH(
-   MSG_FAILED_TO,
-   "Failed to"
    )
 MSG_HASH(
    MSG_FAILED_TO_ACCEPT_INCOMING_SPECTATOR,
@@ -11139,6 +11368,10 @@ MSG_HASH(
 MSG_HASH(
    MSG_FAILED_TO_SAVE_SRAM,
    "Failed to save SRAM"
+   )
+MSG_HASH(
+   MSG_FAILED_TO_LOAD_SRAM,
+   "Failed to load SRAM"
    )
 MSG_HASH(
    MSG_FAILED_TO_SAVE_STATE_TO,
@@ -11397,10 +11630,6 @@ MSG_HASH(
    "Reading first data track..."
    )
 MSG_HASH(
-   MSG_RECEIVED,
-   "received"
-   )
-MSG_HASH(
    MSG_RECORDING_TERMINATED_DUE_TO_RESIZE,
    "Recording terminated due to resize."
    )
@@ -11618,7 +11847,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MSG_UNRECOGNIZED_COMMAND,
-   "Unrecognized command"
+   "Unrecognized command \"%s\" received.\n"
    )
 MSG_HASH(
    MSG_USING_CORE_NAME_FOR_NEW_CONFIG,
@@ -11653,24 +11882,20 @@ MSG_HASH(
    "Viewport size calculation failed! Will continue using raw data. This will probably not work right..."
    )
 MSG_HASH(
-   MSG_VIRTUAL_DISK_TRAY,
-   "virtual disc tray."
-   )
-MSG_HASH(
    MSG_VIRTUAL_DISK_TRAY_EJECT,
-   "eject"
+   "Failed to eject virtual disc tray."
    )
 MSG_HASH(
    MSG_VIRTUAL_DISK_TRAY_CLOSE,
-   "close"
+   "Failed to close virtual disc tray."
    )
 MSG_HASH(
-   MSG_FAILED,
-   "failed"
+   MSG_AUTOLOADING_SAVESTATE_FAILED,
+   "Auto-loading save state from \"%s\" failed."
    )
 MSG_HASH(
-   MSG_SUCCEEDED,
-   "succeeded"
+   MSG_AUTOLOADING_SAVESTATE_SUCCEEDED,
+   "Auto-loading save state from \"%s\" succeeded."
    )
 MSG_HASH(
    MSG_DEVICE_NOT_CONFIGURED,
@@ -11683,6 +11908,10 @@ MSG_HASH(
 MSG_HASH(
    MSG_BLUETOOTH_SCAN_COMPLETE,
    "Bluetooth scan complete."
+   )
+MSG_HASH(
+   MSG_BLUETOOTH_PAIRING_REMOVED,
+   "Pairing removed. Restart RetroArch to connect/pair again."
    )
 MSG_HASH(
    MSG_WIFI_SCAN_COMPLETE,
@@ -11873,6 +12102,22 @@ MSG_HASH(
    "Failed to set last used disc..."
    )
 MSG_HASH(
+   MSG_FAILED_TO_CONNECT_TO_CLIENT,
+   "Failed to connect to client"
+   )
+MSG_HASH(
+   MSG_FAILED_TO_CONNECT_TO_HOST,
+   "Failed to connect to host"
+   )
+MSG_HASH(
+   MSG_NETPLAY_HOST_FULL,
+   "Netplay host full"
+   )
+MSG_HASH(
+   MSG_FAILED_TO_RECEIVE_HEADER_FROM_HOST,
+   "Failed to receive header from host"
+   )
+MSG_HASH(
    MSG_CHEEVOS_HARDCORE_MODE_DISABLED,
    "A save state was loaded. Achievements Hardcore Mode disabled for the current session."
    )
@@ -11967,6 +12212,10 @@ MSG_HASH(
 MSG_HASH(
    MSG_MANUAL_CONTENT_SCAN_START,
    "Scanning content: "
+   )
+MSG_HASH(
+   MSG_MANUAL_CONTENT_SCAN_PLAYLIST_CLEANUP,
+   "Checking current entries: "
    )
 MSG_HASH(
    MSG_MANUAL_CONTENT_SCAN_IN_PROGRESS,
@@ -12095,10 +12344,6 @@ MSG_HASH(
    "Split Joy-Con"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INTERNAL_STORAGE_STATUS,
-   "Internal Storage Status"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_FACTOR,
    "Graphics Widgets Scale Override"
    )
@@ -12109,6 +12354,54 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SCREEN_RESOLUTION,
    "Screen Resolution"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_FORMAT_NO_DESC,
+   "%ux%u"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_FORMAT_DESC,
+   "%ux%u - %s"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_DEFAULT,
+   "Screen Resolution: Default"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_NO_DESC,
+   "Screen Resolution: %dx%d"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_DESC,
+   "Screen Resolution: %dx%d - %s"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_APPLYING_DEFAULT,
+   "Applying: Default"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_APPLYING_NO_DESC,
+   "Applying: %dx%d\nSTART to reset"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_APPLYING_DESC,
+   "Applying: %dx%d - %s\nSTART to reset"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_RESETTING_DEFAULT,
+   "Resetting to: Default"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_RESETTING_NO_DESC,
+   "Resetting to: %dx%d"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_RESETTING_DESC,
+   "Resetting to: %dx%d - %s"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_SCREEN_RESOLUTION,
+   "Select display mode."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SHUTDOWN,
@@ -12364,11 +12657,11 @@ MSG_HASH(
    )
 MSG_HASH(
    MSG_READ_WRITE,
-   "Read/Write"
+   "Internal Storage Status: Read/Write"
    )
 MSG_HASH(
    MSG_READ_ONLY,
-   "Read-Only"
+   "Internal Storage Status: Read-Only"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_BRIGHTNESS_CONTROL,
@@ -12554,6 +12847,34 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CTR_VIDEO_MODE_2D_800X240,
    "2D (High Resolution)"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_DEFAULT,
+   "Tap the Touch Screen to go\nto the Retroarch menu"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_ASSET_NOT_FOUND,
+   "bottom_menu.png not found\nin the assets/ctr folder"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_NO_STATE_DATA,
+   "No\nData"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_NO_STATE_THUMBNAIL,
+   "No\nScreenshot"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_RESUME,
+   "Resume Game"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_SAVE_STATE,
+   "Create\nRestore Point"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_LOAD_STATE,
+   "Load\nRestore Point"
    )
 #endif
 #ifdef HAVE_QT

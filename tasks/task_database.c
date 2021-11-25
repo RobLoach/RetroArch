@@ -924,8 +924,8 @@ static int task_database_iterate_crc_lookup(
       }
 
       snprintf(query, sizeof(query),
-            "{crc:or(b\"%08X\",b\"%08X\")}",
-            db_state->crc, db_state->archive_crc);
+            "{crc:or(b\"%08lX\",b\"%08lX\")}",
+            (unsigned long)db_state->crc, (unsigned long)db_state->archive_crc);
 
       database_info_list_iterate_new(db_state, query);
    }

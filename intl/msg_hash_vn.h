@@ -41,6 +41,10 @@ MSG_HASH(
    "Kích hoạt Netplay"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_EXPLORE_TAB,
+   "Mở rộng"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_ADD_TAB,
    "Tạo nội dung"
    )
@@ -87,6 +91,16 @@ MSG_HASH( /* FIXME Is a specific image format used? Is it determined automatical
    MENU_ENUM_SUBLABEL_DUMP_DISC,
    "Dump đĩa vật lý ra bộ nhớ trong. Điều này sẽ tiến hành lưu là dạng tệp ảnh."
    )
+#ifdef HAVE_LAKKA
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_EJECT_DISC,
+   "Đẩy đĩa ra"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_EJECT_DISC,
+   "Đẩy đĩa ra từ ổ CD/DVD vật lý."
+   )
+#endif
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_PLAYLISTS_TAB,
    "Playlists Danh mục"
@@ -98,6 +112,22 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_ADD_CONTENT_LIST,
    "Tạo nội dung"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_ADD_CONTENT_LIST,
+   "Tạo và cập nhật danh sách bằng cách quét nội dung."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SHOW_WIMP,
+   "Hiện thị Menu Desktop"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_SHOW_WIMP,
+   "Mở Desktop Menu cổ điển."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MENU_DISABLE_KIOSK_MODE,
+   "Vô hiệu hóa chế độ Kiosk (Yêu cầu khởi động lại)"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_ONLINE_UPDATER,
@@ -136,8 +166,20 @@ MSG_HASH(
    "Tệp cấu hình"
    )
 MSG_HASH(
+   MENU_ENUM_SUBLABEL_CONFIGURATIONS_LIST,
+   "Quản lý và tạo tệp cấu hình."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_HELP_LIST,
    "Trợ giúp"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_HELP_LIST,
+   "Tìm hiểu thêm về cách chương trình hoạt động."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_RESTART_RETROARCH,
+   "Khởi động lại RetroArch"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_RESTART_RETROARCH,
@@ -162,6 +204,14 @@ MSG_HASH(
    MENU_ENUM_SUBLABEL_DOWNLOAD_CORE,
    "Tải về và cài đặt nhân từ internet."
    )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SIDELOAD_CORE_LIST,
+   "Cài đặt hoặc khôi phục 1 Core"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_SIDELOAD_CORE_LIST,
+   "Cài đặt hoặc khôi phục 1 core từ thư mục 'Tải về'."
+   )
 
 /* Main Menu > Load Content */
 
@@ -185,20 +235,44 @@ MSG_HASH(
    "Ưa thích"
    )
 MSG_HASH(
+   MENU_ENUM_SUBLABEL_GOTO_FAVORITES,
+   "Nội dung được thêm vào mục 'Ưa thích' sẽ xuất hiện ở đây."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_GOTO_MUSIC,
    "Âm nhạc"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_GOTO_MUSIC,
+   "Nhạc đã được phát trước đó sẽ xuất hiện ở đây."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_GOTO_IMAGES,
    "Hình ảnh"
    )
 MSG_HASH(
+   MENU_ENUM_SUBLABEL_GOTO_IMAGES,
+   "Ảnh đã được xem trước đó sẽ xuất hiện ở đây."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_GOTO_VIDEO,
    "Video"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_GOTO_VIDEO,
+   "Phim đã được phát trước đó sẽ xuất hiện ở đây."
    )
 
 /* Main Menu > Online Updater */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_UPDATE_INSTALLED_CORES,
+   "Cập nhật các Core đã được cài đặt"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_UPDATE_INSTALLED_CORES,
+   "Cập nhất tất cả các Core lên phiên bản khả dụng mới nhất."
+   )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_DOWNLOAD_CORE_CONTENT,
    "Tải về nội dung"
@@ -286,19 +360,107 @@ MSG_HASH(
    "Tiện ích mở rộng được hỗ trợ"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CORE_INFO_REQUIRED_HW_API,
+   "API đồ họa được yêu cầu"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_INFO_FIRMWARE,
    "Phần vững"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CORE_DELETE,
+   "Xóa Core"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_CORE_DELETE,
+   "Xóa Core này khỏi bộ nhớ."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CORE_CREATE_BACKUP,
+   "Sao lưu Core"
    )
 
 /* Main Menu > Information > System Information */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_BUILD_DATE,
+   "Ngày tạo"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_GIT_VERSION,
+   "Phiên bản Git"
+   )
+MSG_HASH( /* FIXME Should be MENU_LABEL_VALUE */
+   MSG_COMPILER,
+   "Trình biên dịch"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_CPU_MODEL,
+   "Loại CPU"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_CPU_FEATURES,
+   "Tính năng CPU"
+   )
 MSG_HASH( /* FIXME Colon should be handled in menu_display.c like the rest */
    MENU_ENUM_LABEL_VALUE_CPU_ARCHITECTURE,
    "Kiến trúc CPU:"
    )
+MSG_HASH( /* FIXME Colon should be handled in menu_display.c like the rest */
+   MENU_ENUM_LABEL_VALUE_CPU_CORES,
+   "Số lõi CPU:"
+   )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CPU_CORES,
    "Số lượng lõi của CPU."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_NETWORK_REMOTE_SUPPORT,
+   "Hỗ trợ trình điểu khiển mạng"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_COCOA_SUPPORT,
+   "Hỗ trợ Cocoa"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_RPNG_SUPPORT,
+   "Hỗ trợ PNG (RPNG)"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_RJPEG_SUPPORT,
+   "Hỗ trợ JPEG (RJPEG)"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_RBMP_SUPPORT,
+   "Hỗ trợ BMP (RBMP)"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_RTGA_SUPPORT,
+   "Hỗ trợ TGA (RTGA)"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_SDL_SUPPORT,
+   "Hỗ trợ SDL 1.2"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_SDL2_SUPPORT,
+   "Hỗ trợ SDL 2"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_VULKAN_SUPPORT,
+   "Hỗ trợ Vulkan"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_OPENGL_SUPPORT,
+   "Hỗ trợ OpenGL"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_OPENGLES_SUPPORT,
+   "Hỗ trợ OpenGL ES"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_THREADING_SUPPORT,
+   "Hỗ trợ phân luồng"
    )
 
 /* Main Menu > Information > Database Manager */
@@ -310,6 +472,10 @@ MSG_HASH(
 
 /* Main Menu > Information > Database Manager > Information */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_RDB_ENTRY_DESCRIPTION,
+   "Miêu tả"
+   )
 
 /* Main Menu > Configuration File */
 
@@ -317,9 +483,29 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONFIGURATIONS,
    "Tải cấu hình"
    )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_RESET_TO_DEFAULT_CONFIG,
+   "Khôi phục mặc định"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_RESET_TO_DEFAULT_CONFIG,
+   "Khôi phục cài đặt hiện tại về giá trị mặc định."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SAVE_CURRENT_CONFIG,
+   "Lưu cấu hình hiện tại"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SAVE_NEW_CONFIG,
+   "Lưu cấu hình mới"
+   )
 
 /* Main Menu > Help */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_HELP_CONTROLS,
+   "Hướng dẫn điều khiển Menu cơ bản"
+   )
 
 /* Main Menu > Help > Basic Menu Controls */
 
@@ -379,16 +565,56 @@ MSG_HASH(
    "Input Driver"
    )
 MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_SETTINGS,
+   "Thay đổi cài đặt tay cầm, bàn phím và chuột."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_LATENCY_SETTINGS,
+   "Độ trễ"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_LATENCY_SETTINGS,
+   "Thay đổi độ trễ của hình ảnh, âm thanh và dữ liệu đầu vào."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_SETTINGS,
    "Core Danh mục"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_CORE_SETTINGS,
+   "Thay đổi cài đặt Core."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONFIGURATION_SETTINGS,
    "Cấu hình"
    )
 MSG_HASH(
+   MENU_ENUM_SUBLABEL_CONFIGURATION_SETTINGS,
+   "Thay đổi cài đặt mặc định cho các tệp cấu hình."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SAVING_SETTINGS,
+   "Lưu trữ"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_SAVING_SETTINGS,
+   "Thay đổi cài đặt lưu trữ."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_SETTINGS,
+   "Quản lý tập tin"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_MENU_FILE_BROWSER_SETTINGS,
+   "Thay đổi cài đặt quản lý tệp tin."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_RETRO_ACHIEVEMENTS_SETTINGS,
    "Kích hoạt"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_RETRO_ACHIEVEMENTS_SETTINGS,
+   "Thay đổi cài đặt thành tựu."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_PLAYLIST_SETTINGS,
@@ -449,6 +675,22 @@ MSG_HASH(
    "Điều chỉnh thiết lập cho video ra."
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN_MODE_SETTINGS,
+   "Chế độ toàn màn hình"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN_MODE_SETTINGS,
+   "Thay đổi cài đặt chế độ toàn màn hình."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOWED_MODE_SETTINGS,
+   "Chế độ cửa sổ"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOWED_MODE_SETTINGS,
+   "Thay đổi cài đặt chế độ cửa sổ."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_SYNCHRONIZATION_SETTINGS,
    "Âm thanh Sync"
    )
@@ -457,7 +699,7 @@ MSG_HASH(
    "Kích hoạt GPU Screenshot"
    )
 #if defined(DINGUX)
-#if defined(RS90)
+#if defined(RS90) || defined(MIYOO)
 #endif
 #endif
 MSG_HASH(
@@ -480,6 +722,10 @@ MSG_HASH(
    )
 #if defined(DINGUX) && defined(DINGUX_BETA)
 #endif
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_FORCE_SRGB_DISABLE,
+   "Buộc vô hiệu hóa sRBG FBO"
+   )
 
 /* Settings > Video > Fullscreen Mode */
 
@@ -507,6 +753,9 @@ MSG_HASH(
 
 #if defined(DINGUX)
 #endif
+
+/* Settings > Video > HDR */
+
 
 /* Settings > Video > Synchronization */
 
@@ -631,8 +880,6 @@ MSG_HASH(
 
 /* Settings > Input > Haptic Feedback/Vibration */
 
-#if defined(DINGUX) && defined(HAVE_LIBSHAKE)
-#endif
 
 /* Settings > Input > Menu Controls */
 
@@ -810,6 +1057,8 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SETTINGS_VIEWS_SETTINGS,
    "Thiết lập"
    )
+#ifdef HAVE_LAKKA
+#endif
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_ADD_CONTENT_ENTRY_DISPLAY_MAIN_TAB,
    "Trình đơn chính"
@@ -1145,6 +1394,10 @@ MSG_HASH(
 
 /* Quick Menu > Cheats > Cheat Details */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CHEAT_DESC,
+   "Miêu tả"
+   )
 
 /* Quick Menu > Disc Control */
 
@@ -1603,14 +1856,6 @@ MSG_HASH(
 MSG_HASH(
    MSG_VIEWPORT_SIZE_CALCULATION_FAILED,
    "Viewport size calculation failed! Will continue using raw data. This will probably not work right ..."
-   )
-MSG_HASH(
-   MSG_FAILED,
-   "Bị Lỗi"
-   )
-MSG_HASH(
-   MSG_SUCCEEDED,
-   "Đã thành công"
    )
 
 /* Lakka */

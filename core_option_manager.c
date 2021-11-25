@@ -20,7 +20,12 @@
 #include "cheevos/cheevos.h"
 #endif
 
+#ifdef HAVE_MENU
+#include "menu/menu_driver.h"
+#endif
+
 #include "core_option_manager.h"
+#include "msg_hash.h"
 
 #define CORE_OPTION_MANAGER_MAP_TAG "#"
 #define CORE_OPTION_MANAGER_MAP_DELIM ":"
@@ -721,12 +726,19 @@ static bool core_option_manager_parse_variable(
    if (!option->val_labels)
       goto error;
 
-   /* > Loop over values and 'extract' labels */
+   /* > Loop over values and:
+    *   - Set value hashes
+    *   - 'Extract' labels */
    for (i = 0; i < option->vals->size; i++)
    {
       const char *value       = option->vals->elems[i].data;
+      uint32_t *value_hash    = (uint32_t *)malloc(sizeof(uint32_t));
       const char *value_label = core_option_manager_parse_value_label(
             value, NULL);
+
+      /* Set value hash */
+      *value_hash = core_option_manager_hash_string(value);
+      option->vals->elems[i].userdata = (void*)value_hash;
 
       /* Redundant safely check... */
       value_label = string_is_empty(value_label) ?
@@ -749,9 +761,15 @@ static bool core_option_manager_parse_variable(
    /* Set current config value */
    if (entry && !string_is_empty(entry->value))
    {
+      uint32_t entry_value_hash = core_option_manager_hash_string(entry->value);
+
       for (i = 0; i < option->vals->size; i++)
       {
-         if (string_is_equal(option->vals->elems[i].data, entry->value))
+         const char *value   = option->vals->elems[i].data;
+         uint32_t value_hash = *((uint32_t*)option->vals->elems[i].userdata);
+
+         if ((value_hash == entry_value_hash) &&
+             string_is_equal(value, entry->value))
          {
             option->index = i;
             break;
@@ -994,11 +1012,16 @@ static bool core_option_manager_parse_option(
    for (i = 0; i < num_vals; i++)
    {
       const char *value       = values[i].value;
+      uint32_t *value_hash    = (uint32_t *)malloc(sizeof(uint32_t));
       const char *value_label = values[i].label;
 
       /* Append value string
        * > We know that 'value' is always valid */
       string_list_append(option->vals, value, attr);
+
+      /* > Set value hash */
+      *value_hash = core_option_manager_hash_string(value);
+      option->vals->elems[option->vals->size - 1].userdata = (void*)value_hash;
 
       /* Value label requires additional processing */
       value_label = core_option_manager_parse_value_label(
@@ -1030,9 +1053,15 @@ static bool core_option_manager_parse_option(
    /* Set current config value */
    if (entry && !string_is_empty(entry->value))
    {
+      uint32_t entry_value_hash = core_option_manager_hash_string(entry->value);
+
       for (i = 0; i < option->vals->size; i++)
       {
-         if (string_is_equal(option->vals->elems[i].data, entry->value))
+         const char *value   = option->vals->elems[i].data;
+         uint32_t value_hash = *((uint32_t*)option->vals->elems[i].userdata);
+
+         if ((value_hash == entry_value_hash) &&
+             string_is_equal(value, entry->value))
          {
             option->index = i;
             break;
@@ -1051,16 +1080,22 @@ static bool core_option_manager_parse_option(
  * @src_conf_path : Filesystem path from which to load
  *                  initial config settings.
  * @options_v2    : Pointer to retro_core_options_v2 struct
+ * @categorized   : Flag specifying whether core option
+ *                  category information should be read
+ *                  from @options_v2
  *
  * Creates and initializes a core manager handle. Parses
  * information from a retro_core_options_v2 struct.
+ * If @categorized is false, all option category
+ * assignments will be ignored.
  *
  * Returns: handle to new core manager handle if successful,
  * otherwise NULL.
  **/
 core_option_manager_t *core_option_manager_new(
       const char *conf_path, const char *src_conf_path,
-      const struct retro_core_options_v2 *options_v2)
+      const struct retro_core_options_v2 *options_v2,
+      bool categorized)
 {
    const struct retro_core_option_v2_category *option_cat   = NULL;
    const struct retro_core_option_v2_definition *option_def = NULL;
@@ -1107,9 +1142,9 @@ core_option_manager_t *core_option_manager_new(
    if (!string_is_empty(src_conf_path))
       config_src = config_file_new_from_path_to_string(src_conf_path);
 
-   /* Get number of categories
+   /* Get number of categories, if required
     * > Note: 'option_cat->info == NULL' is valid */
-   if (option_cats)
+   if (categorized && option_cats)
    {
       for (option_cat = option_cats;
            !string_is_empty(option_cat->key) &&
@@ -1470,6 +1505,57 @@ bool core_option_manager_get_idx(core_option_manager_t *opt,
 }
 
 /**
+ * core_option_manager_get_val_idx:
+ *
+ * @opt     : options manager handle
+ * @idx     : core option index
+ * @val     : string representation of the
+ *            core option value
+ * @val_idx : index of core option value
+ *            corresponding to @val
+ *
+ * Fetches the index of the core option value
+ * identified by the specified core option @idx
+ * and @val string.
+ *
+ * Returns: true if option value matching the
+ * specified option index and value string
+ * was found, otherwise false.
+ **/
+bool core_option_manager_get_val_idx(core_option_manager_t *opt,
+      size_t idx, const char *val, size_t *val_idx)
+{
+   struct core_option *option = NULL;
+   uint32_t val_hash;
+   size_t i;
+
+   if (!opt ||
+       (idx >= opt->size) ||
+       string_is_empty(val) ||
+       !val_idx)
+      return false;
+
+   val_hash = core_option_manager_hash_string(val);
+   option   = (struct core_option*)&opt->opts[idx];
+
+   for (i = 0; i < option->vals->size; i++)
+   {
+      const char *option_val   = option->vals->elems[i].data;
+      uint32_t option_val_hash = *((uint32_t*)option->vals->elems[i].userdata);
+
+      if ((val_hash == option_val_hash) &&
+          !string_is_empty(option_val) &&
+          string_is_equal(val, option_val))
+      {
+         *val_idx = i;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+/**
  * core_option_manager_get_desc:
  *
  * @opt         : options manager handle
@@ -1631,15 +1717,24 @@ bool core_option_manager_get_visible(core_option_manager_t *opt,
 /**
  * core_option_manager_set_val:
  *
- * @opt     : options manager handle
- * @idx     : core option index
- * @val_idx : index of the value to set
+ * @opt          : options manager handle
+ * @idx          : core option index
+ * @val_idx      : index of the value to set
+ * @refresh_menu : flag specifying whether menu
+ *                 should be refreshed if changes
+ *                 to option visibility are detected
  *
  * Sets the core option at index @idx to the
  * option value corresponding to @val_idx.
+ * After setting the option value, a request
+ * will be made for the core to update the
+ * in-menu visibility of all options; if
+ * visibility changes are detected and
+ * @refresh_menu is true, the menu will be
+ * redrawn.
  **/
 void core_option_manager_set_val(core_option_manager_t *opt,
-      size_t idx, size_t val_idx)
+      size_t idx, size_t val_idx, bool refresh_menu)
 {
    struct core_option *option = NULL;
 
@@ -1654,22 +1749,44 @@ void core_option_manager_set_val(core_option_manager_t *opt,
 #ifdef HAVE_CHEEVOS
    rcheevos_validate_config_settings();
 #endif
+
+#ifdef HAVE_MENU
+   /* Refresh menu (if required) if core option
+    * visibility has changed as a result of modifying
+    * the current option value */
+   if (retroarch_ctl(RARCH_CTL_CORE_OPTION_UPDATE_DISPLAY, NULL) &&
+       refresh_menu)
+   {
+      bool refresh = false;
+      menu_entries_ctl(MENU_ENTRIES_CTL_SET_REFRESH, &refresh);
+      menu_driver_ctl(RARCH_MENU_CTL_SET_PREVENT_POPULATE, NULL);
+   }
+#endif
 }
 
 /**
  * core_option_manager_adjust_val:
  *
- * @opt        : options manager handle
- * @idx        : core option index
- * @adjustment : offset to apply from current
- *               value index
+ * @opt          : options manager handle
+ * @idx          : core option index
+ * @adjustment   : offset to apply from current
+ *                 value index
+ * @refresh_menu : flag specifying whether menu
+ *                 should be refreshed if changes
+ *                 to option visibility are detected
  *
- * Modifies the value of the core option at index
- * @idx by incrementing the current option value index
- * by @adjustment.
+ * Modifies the value of the core option at
+ * index @idx by incrementing the current option
+ * value index by @adjustment.
+ * After setting the option value, a request
+ * will be made for the core to update the
+ * in-menu visibility of all options; if
+ * visibility changes are detected and
+ * @refresh_menu is true, the menu will be
+ * redrawn.
  **/
 void core_option_manager_adjust_val(core_option_manager_t* opt,
-      size_t idx, int adjustment)
+      size_t idx, int adjustment, bool refresh_menu)
 {
    struct core_option* option = NULL;
 
@@ -1684,18 +1801,41 @@ void core_option_manager_adjust_val(core_option_manager_t* opt,
 #ifdef HAVE_CHEEVOS
    rcheevos_validate_config_settings();
 #endif
+
+#ifdef HAVE_MENU
+   /* Refresh menu (if required) if core option
+    * visibility has changed as a result of modifying
+    * the current option value */
+   if (retroarch_ctl(RARCH_CTL_CORE_OPTION_UPDATE_DISPLAY, NULL) &&
+       refresh_menu)
+   {
+      bool refresh = false;
+      menu_entries_ctl(MENU_ENTRIES_CTL_SET_REFRESH, &refresh);
+      menu_driver_ctl(RARCH_MENU_CTL_SET_PREVENT_POPULATE, NULL);
+   }
+#endif
 }
 
 /**
  * core_option_manager_set_default:
  *
- * @opt : options manager handle
- * @idx : core option index
+ * @opt          : options manager handle
+ * @idx          : core option index
+ * @refresh_menu : flag specifying whether menu
+ *                 should be refreshed if changes
+ *                 to option visibility are detected
  *
- * Resets the core option at index @idx to its
- * default value.
+ * Resets the core option at index @idx to
+ * its default value.
+ * After setting the option value, a request
+ * will be made for the core to update the
+ * in-menu visibility of all options; if
+ * visibility changes are detected and
+ * @refresh_menu is true, the menu will be
+ * redrawn.
  **/
-void core_option_manager_set_default(core_option_manager_t *opt, size_t idx)
+void core_option_manager_set_default(core_option_manager_t *opt,
+      size_t idx, bool refresh_menu)
 {
    if (!opt ||
        (idx >= opt->size))
@@ -1706,6 +1846,19 @@ void core_option_manager_set_default(core_option_manager_t *opt, size_t idx)
 
 #ifdef HAVE_CHEEVOS
    rcheevos_validate_config_settings();
+#endif
+
+#ifdef HAVE_MENU
+   /* Refresh menu (if required) if core option
+    * visibility has changed as a result of modifying
+    * the current option value */
+   if (retroarch_ctl(RARCH_CTL_CORE_OPTION_UPDATE_DISPLAY, NULL) &&
+       refresh_menu)
+   {
+      bool refresh = false;
+      menu_entries_ctl(MENU_ENTRIES_CTL_SET_REFRESH, &refresh);
+      menu_driver_ctl(RARCH_MENU_CTL_SET_PREVENT_POPULATE, NULL);
+   }
 #endif
 }
 

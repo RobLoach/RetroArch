@@ -1,20 +1,171 @@
 # Future
+- ANDROID/PLAYSTORE: Implement MANAGE_EXTERNAL_STORAGE permission
+- ANDROID/PLAYSTORE: Bump up SDK level to 30 to comply with Play Store policies
+- CHEEVOS: Fix need-to-activate achievement logic for non-hardcore
+- CHEEVOS: Don't queue rewind re-init if already on main thread
+- CHEEVOS: Ignore unofficial achievements unless setting is enabled
+- NETPLAY: Networking - should not print country for a local lobby
+- OVERLAYS: Revert changes
+- VIDEO/ROTATION: Always return false if rotation can't occur. RETRO_ENVIRONMENT_SET_ROTATION should return false when rotation has been forcefully disabled in frontend, that way the core can decide if aspect ratio should be rotated or not for vertical games. Useful for FBNeo for instance.
+- WIIU: Make wiiu_gfx_load_texture code safer
+
+# 1.9.13
+- CHEEVOS/MSVC2010: Add Cheevos support
+- CRT/SWITCHRES: Fixes some issue where scaling is incorrect in some video modes for CRT output.
+- FRAMEDELAY: Add 'Automatic Frame Delay' option
+- INPUT: Add 'All users control the menu' setting - any gamepad can control the menu when this is enabled. Only limitation right now is that only player 1 can toggle the menu, but any set Menu Toggle Controller Combo will work fine for all users, so this should be acceptable for now
+- INPUT/UDEV: Fix Dolphin bar and safeguard against not adding devices with no mouse or touch buttons detected
+- NETPLAY/CLI: -C/--connect commandline fix
+- NETPLAY: Other improvements
+- NETPLAY: Remove forced disconnection on unknown netplay command -
+will be backwards compatible with any version that removed this
+disconnect. instead of disconnecting, we just read the data and
+ignore, like most network implementations do
+- TASKS/CHEEVOS: Replace coroutines with tasks/thread
+- TASKS/DATABASE/EXPLORE: Initialise 'Explore' menu on a background thread - no more stall when hovering over the Explore tab
+
+# 1.9.12
+- 3DS: Ensure parallax barrier is disabled when '3DS Display Mode' is '2D'
+- COMMAND: Command interface should work again
+- INPUT/HID: Rewrote the HID deregistration algorithm; it should no longer cause issues when dealing with multiple pads of the same HID/VID combo
+- INPUT/HID: Fix initialization bug that caused wiimotes to fail to register without an accessory attached
+- INPUT/HID: Fix Wiimote regression
+- INPUT/HID/MAC: Get Sony Sixaxis (DualShock 3) working on MacOS
+- INPUT/UDEV: Add extra abs check for dolphinbar
+- INPUT/UDEV: Add relative left mouse button when pointer device is not abs
+- INPUT/WAYLAND: Fix keyboard input on Wayland - fixes 'Certain cores ignore user input'
+- NETPLAY: Improvements from Cthulhu
+- OPENDINGUX: Fix HAS_ANALOG/HAS_MENU_TOGGLE defines in sdl_dingux joypad driver
+- LIBRETRO: Enable SRAM for contentless cores
+- LIBRETRO: Add environment callback to get the rate retro_run is called - GET_THROTTLE_STATE and RETRO_THROTTLE_UNBLOCKED environment callback
+- LINUX: Update metadata manifest
+- MENU/OZONE: New themes - Solarized Light, Solarized Dark
+- WINDOWS/WIN9X: Fix non-ASCII text display in window title
+
+# 1.9.11
+- ANDROID: New launcher logo - will fill the corners on the homescreen
+- D3D9: Driver works again (RGUI only and software rendered cores work, no shader support yet)
+- HID/MAC: WiiU GameCube Adapter now works
+- HID/WIIU: WiiU and general HID subsystem unified/merged
+- INPUT: Refactor menu toggle combo button logic to allow quit combo button
+- INPUT/UDEV: Add mouse relative check and set appropriately to fix issue
+- LIBNX/SWITCH: Splitted Joycon button mapping
+- LIBRETRO: Add environment callback to enable cores to notify the frontend that a core otion value has changed
+- MIYOO: Add initial port
+- OPENDINGUX/RG350: Enable tinyalsa for the RG350
+- PS2: Add 'Change Resolution' option
+- PS2: Add option to change video windows offsets
+- STEAM/LINUX: Move to new 'soldier' runtime
+- WAYLAND: Remove xdg-shell-v6 protocol
+- WINDOWS: Fix non-ASCII text display in window title
+- WINDOWS 11: Shows Windows 11 version name now (Information -> System Information)
+- UWP: Further improvements to WinRT VFS layer
+
+# 1.9.10
+- 3DS: Add bottom screen idle state
+- 3DS: Add unique IDs for Gearboy/Gearcoleco/Gearsystem, correct CAP32 code
+- 3DS/SAVESTATES: Fix RAM states to file when core deinits
+- AUDIO/MIXER: Pad sample buffers to prevent potential heap-buffer-overflows when resampling (fixes crash when using 30 kHz menu audio files)
+- AUDIO/LINUX/SNAP: Add JACK support
+- CHEEVOS: Don't write achievement credentials to overrides
+- CHEEVOS: Disable slowmotion when enabling hardcore mode
+- D3D9: Fixed MVP matrix issue for RGUI texture (main game frame still won't show up though)
+- D3D11/D3D12/HDR: Fixed contrast to be more correct - now scales from 0-10 linearly and behaves more the way you'd expect it to - changed name to ditch legacy settings users may have
+- D3D11/HDR: Fixed D3D11's blend, rasterizer and topology states not being set to the sames when using HDR and leaving the menu - caused issues with PCSX2's Shadow of the Colossus
+- D3D11/D3D12/HDR: Added ability to skip inverse tonemapper to the shader via the constant buffer using 'inverse_tonemap' - set to 0.0f to skip
+- D3D11/D3D12/HDR: Fixed potential bug when swapping between hdr and sdr and the bit depth not being set correctly
+- D3D11/D3D12/HDR: Added numerous helper functions to help create the correct values to colour the UI - normally the white UI elements should be rendered at paper white not max brightness for various reasons
+- BUGFIX/ANDROID: Fix crash that could happen on Android with Sameboy core - would crash on rumble function
+- GFX/WIDGETS: New regular widget message appearance
+- INPUT/MOUSE: Add distinct mouse zero index label for drivers that do not support multimouse
+- INPUT/RUMBLE: Add generic rumble gain to input settings
+- INPUT/UDEV/X11: Add workaround to fix keyboard input when using X11 + Udev
+- LIBNX/SWITCH: Add Video Filters support
+- LOCALIZATION: Fetch translations from Crowdin
+- OPENDINGUX/BETA: Disable OpenAL
+- PLAYLISTS: Add 'Refresh Playlist' option
+- STEAM: Initial release on Steam
+- UWP/VFS/XBOX: Improvements and bugfixes to UWP VFS driver
+- VIDEO/REFRESH RATE: Automatic PAL/NTSC refresh rate switch where available - as long as the platform display server allows changing refresh rates and the display has the desired refresh rate
+- VIDEO FILTERS: Add 'Picoscale_256x-320x240' video filter
+- WIIU/HID: Fix analog inputs on HID devices
+
+# 1.9.9
+- 3DS: Add bottom touchscreen menu
+- 3DS/SAVESTATES: Save and load save states to and from RAM
+- AUDIO/MIXER: Ensure than menu sounds are re-enabled when calling CMD_EVENT_AUDIO_REINIT
+- AUDIO/RESAMPLER/MIXER: Fix menu sounds (audio mixing) when using the 'sinc' resampler with quality lower than 'normal'
+- AUDIO/CONVERSION/ARM NEON: Add intrinsic NEON versions for float_to_s16/s16_to_float - should lead to optimized codepaths for AArch64/ARMv7 architectures without being dependent on ASM codepaths.
+- AUDIO/RESAMPLER/ARM NEON: Add intrinsic NEON version for lanczos sinc function - should lead to optimized codepaths for AArch64/ARMv7 architectures without being dependent on ASM codepaths.
+- CHEEVOS: Upgrade to rcheevos 10.2
+- CHEATS: Add enhanced search functionality to the 'Cheats' menu
+- CHEATS/RUNAHEAD: Fix cheats when using second instance runahead
+- CONFIG: Add option to (force-)write current core options to disk (Quick Menu)
+- CORE INFO CACHE: Remove core path from core info cache. Should make core info caches portable now (for example: you can move RetroArch to a separate dir and they would still work).
+- D3D11: Use Shader Model 5.0 for frontend shaders if D3D11 Feature level is at least 11.0 or higher. Should fix some new shaders that require SM 5.0 (like AMD FSR)
+- D3D11: Add HDR support (disabled for UWP for now)
+- D3D12: Add HDR support (disabled for UWP for now)
+- EMSCRIPTEN: Fixed web player bug with filesystem and runtime
+- INPUT/OVERLAY: Fix overlay input when analog to digital mapping is enabled
+- INPUT/UDEV: Look for "ID_INPUT_KEY", not "ID_INPUT_KEYBOARD"
+- INPUT/WINRAW: Fix crash when overlay is enabled
+- MAC/METAL: Add Discord RPC support
+- MENU: Allow 'Custom Aspect Ratio (X Position)/(Y Position)/(Width)/(Height)' to be entered manually via keyboard
+- MENU: Allow 'Vertical Refresh Rate' to be entered manually via keyboard
+- MENU/SHADERS: Highlight currently selected value in Shader Parameter drop-down lists
+- STABILITY: Safer way of avoiding the race condition in
+audio_driver_sample/audio_driver_sample_batch - we can check
+audio-suspended to see if we're doing a fs/windowed toggle - enhances stability when fullscreen toggling/tearing down context
+- STABILITY: When audio driver write callback function fails, don't
+turn audio off completely - look if audio_driver_output_samples_conv_buf
+is non-NULL first before we attempt to write audio - enhances stability when fullscreen toggling/tearing down context
+- STABILITY: Input robustness for cores that use internal threading
+(full teardown/setup), no audio should be processed at this point in
+time
+- VIDEO: Screen resolution list sanitizing
+- VULKAN: Fix some Vulkan validation layer errors
+- UWP: Updated icons courtesy of Danp142
+- UWP/XBOX: Disable CPU model check on Xbox as it doesn't work and can even crash
+- UWP/VFS/XBOX: Code cleanup and simplification of UWP VFS driver
+
+
+# 1.9.8
+- AUDIO/WINDOWS/WASAPI: Stop deactivating audio on fast forward
 - CHEEVOS: Hide challenge indicators when resetting
+- CHEEVOS: Support for more than 64 memory regions
+- CHEEVOS: Automatically retry 'http error code -1'
 - CONTENT INFORMATION: Show content info label+path rows always
 - CORE OPTIONS: Core option categories implemented
+- CORE OPTIONS: Add option to disable core option categories
+- D3D10/11/12: Fix gfx_display_draw_texture - fixes OSK (On-Screen Keyboard) issues
 - DATABASE: Fix heap-buffer-overflow when fetching CRC values
 - DATABASE/EXPLORE: Fix CRC32 reading in explore menu
 - DATABASE/LIBRETRODB: Fix writing of numerical values
 - DATABASE/LIBRETRODB: Fix libretro-db loading on big endian platforms
 - DUMMY CORE: Skip state_manager_event_{deinit/init} when core type is dummy, should skip warning spam 'Implementation uses threaded audio. Cannot use rewind..' when using rewind
 - INPUT/UDEV: Limit udev device scan to subsystem 'input'
+- INPUT/SDL2/WINDOWS: Fix keyboard event keycodes
 - INPUT/WAYLAND: Fixes a bug where the first player's mouse, pointer, and lightgun are echoed to the other ports. Now, those other ports correctly report zero. In the future support for multiple mouselike devices will need to be added, which is a bigger project
 - INPUT/WAYLAND: The driver now respects keyboard_mapping_blocked
 - INPUT/WAYLAND: When possible, deprecated lightgun defines are replaced with the new ones. The coordinates are still using the old relative callbacks
+- INPUT/WINRAW: Trigger joypad driver reinit on DEVICECHANGE - avoids fullscreen toggle
+- INPUT/WINRAW: Alt sticky fix
+- INPUT/WINRAW: Prevent Alt getting stuck when Alt-Tabbing
+- INPUT/WINRAW: Add pointer status
+- INPUT/WINRAW: Add missing analog keybinds
 - LIBNX/SWITCH: Fix poll missing for controller 2-8
 - LIBNX/SWITCH: Fix layout not applied correctly and hangs when splitting joycons
 - LIBRETRO: Core options category API implemented
+- LIBRETRO: Fix RETRO_ENVIRONMENT_SET_FASTFORWARDING_OVERRIDE callback when runahead is enabled
+- LIBRETRO: Add environment callback for enabling core option menu visibility updates without toggling Quick Menu
+- LOGGING: Starting logging and verbose mode before first config load
 - LINUX: In some Linux Desktop Environments, like Budgie, task bar feature is unable to pin applications. With StartupWMClass= present in .desktop file, it is possible to pin the application
+- LOCALIZATION: Fetch translations from Crowdin
+- MENU: Relocate 'Manage Playlists' to top
+- MENU: Fullscreen resolution width/height settings no longer require 'advanced settings'
+- MENU/REFRESH RATE: Fix double notifications with refresh rate settings
+- MENU/OZONE: Ensure the existence of values used in selection calculation
+- MENU/OZONE/VULKAN: Casting to unsigned caused an integer overflow and after float promotion would lead to 'x' being a garbage value, leading to problems when this value was passed to vkCmdSetViewport. This stops Vulkan validation layers from complaining about it
 - METAL: Fixed font driver memory leaks
 - MOUSE: Change default mouse index to port index
 - MOUSE: Friendly names for mice where available
@@ -23,14 +174,19 @@
 - PS2: Implement alpha for the video driver
 - PS2: Aspect ratio handling
 - RETROFW: Initial port
-- WASAPI: Stop deactivating audio on fast forward
-- WINRAW: Trigger joypad driver reinit on DEVICECHANGE - avoids fullscreen toggle
-- WINRAW: Alt sticky fix
-- WINRAW: Prevent Alt getting stuck when Alt-Tabbing
-- WINRAW: Add pointer status
+- UWP/XBOX: Enable Explore tab by default - seems to work fine
+- UWP/XBOX: Fix startup issues with latest Xbox Dashboard updates - ANGLE cores still show up wrong
+- UWP/XBOX: fix issue where files where opened as OPENALWAYS instead of OPENEXISTING this fixes beetle cores
+- UWP/XBOX: fix issue where filesizes where not returned properly, this fixes loading arcade dat files
+- UWP/TRANSLATION: Enabled translation services for both UWP MSVC2017 and 2019. No TTS speech yet.
+- VIDEO: Fix refresh rate 59Hz rounding
+- WINDOWS: Remember original refresh rate
+- WINDOWS/VULKAN: Refresh rate fixes + cleanups
 - WIIU: Fix L3/R3 buttons
 - WIIU: Compress RPX libretro cores
 - WIIU: Add ICInvalidateRange (necessary for JITs)
+- WIIU: Slight filesystem optimisation
+- WIIU: Add option for running without core info (emscripten-style)
 
 # 1.9.7
 - 3DS: Add unique ID's

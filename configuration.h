@@ -25,6 +25,10 @@
 #include <retro_common_api.h>
 #include <retro_miscellaneous.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "gfx/video_defines.h"
 #include "input/input_defines.h"
 #include "led/led_defines.h"
@@ -32,6 +36,8 @@
 #ifdef HAVE_LAKKA
 #include "lakka.h"
 #endif
+
+#include "msg_hash.h"
 
 #define configuration_set_float(settings, var, newvar) \
 { \
@@ -63,6 +69,8 @@
    strlcpy(var, newvar, sizeof(var)); \
 }
 
+#define INPUT_CONFIG_BIND_MAP_GET(i) ((const struct input_bind_map*)&input_config_bind_map[(i)])
+
 enum crt_switch_type
 {
    CRT_SWITCH_NONE = 0,
@@ -81,6 +89,25 @@ enum override_type
 };
 
 RETRO_BEGIN_DECLS
+
+/* Input config. */
+struct input_bind_map
+{
+   const char *base;
+
+   enum msg_hash_enums desc;
+
+   /* Meta binds get input as prefix, not input_playerN".
+    * 0 = libretro related.
+    * 1 = Common hotkey.
+    * 2 = Uncommon/obscure hotkey.
+    */
+   uint8_t meta;
+
+   uint8_t retro_key;
+
+   bool valid;
+};
 
 typedef struct settings
 {
@@ -113,6 +140,10 @@ typedef struct settings
 #endif
 #ifdef HAVE_D3D12
       int d3d12_gpu_index;
+#endif
+#ifdef HAVE_WINDOW_OFFSET
+      int video_window_offset_x;
+      int video_window_offset_y;
 #endif
       int content_favorites_size;
    } ints;
@@ -160,13 +191,16 @@ typedef struct settings
 #endif
       unsigned input_touch_scale;
       unsigned input_hotkey_block_delay;
+      unsigned input_quit_gamepad_combo;
       unsigned input_menu_toggle_gamepad_combo;
       unsigned input_keyboard_gamepad_mapping_type;
       unsigned input_poll_type_behavior;
-      unsigned input_dingux_rumble_gain;
+      unsigned input_rumble_gain;
       unsigned input_auto_game_focus;
+      unsigned input_max_users;
 
       unsigned netplay_port;
+      unsigned netplay_max_connections;
       unsigned netplay_input_latency_frames_min;
       unsigned netplay_input_latency_frames_range;
       unsigned netplay_share_digital;
@@ -282,6 +316,8 @@ typedef struct settings
       unsigned window_position_y;
       unsigned window_position_width;
       unsigned window_position_height;
+      unsigned window_auto_width_max;
+      unsigned window_auto_height_max;
 
       unsigned video_record_threads;
 
@@ -315,6 +351,9 @@ typedef struct settings
       float video_msg_color_g;
       float video_msg_color_b;
       float video_msg_bgcolor_opacity;
+      float video_hdr_max_nits;
+      float video_hdr_paper_white_nits;
+      float video_hdr_display_contrast;
 
       float menu_scale_factor;
       float menu_widget_scale_factor;
@@ -350,6 +389,7 @@ typedef struct settings
       float slowmotion_ratio;
       float fastforward_ratio;
       float input_analog_deadzone;
+      float input_axis_threshold;
       float input_analog_sensitivity;
    } floats;
 
@@ -369,6 +409,7 @@ typedef struct settings
       char cheevos_password[256];
       char cheevos_token[32];
       char cheevos_leaderboards_enable[32];
+      char cheevos_custom_host[64];
       char video_context_driver[32];
       char audio_driver[32];
       char audio_resampler[32];
@@ -494,6 +535,7 @@ typedef struct settings
       bool video_smooth;
       bool video_ctx_scaling;
       bool video_force_aspect;
+      bool video_frame_delay_auto;
       bool video_crop_overscan;
       bool video_aspect_ratio_auto;
       bool video_dingux_ipu_keep_aspect;
@@ -522,7 +564,8 @@ typedef struct settings
 #ifdef HAVE_VIDEO_LAYOUT
       bool video_layout_enable;
 #endif
-      bool video_force_resolution;
+      bool video_hdr_enable;
+      bool video_hdr_expand_gamut;
 
       /* Accessibility */
       bool accessibility_enable;
@@ -553,6 +596,7 @@ typedef struct settings
       bool input_overlay_auto_scale;
       bool input_descriptor_label_show;
       bool input_descriptor_hide_unbound;
+      bool input_all_users_control_menu;
       bool input_menu_swap_ok_cancel_buttons;
       bool input_backtouch_enable;
       bool input_backtouch_toggle;
@@ -583,6 +627,7 @@ typedef struct settings
       bool notification_show_screenshot;
 #endif
       bool notification_show_refresh_rate;
+      bool notification_show_netplay_extra;
       bool menu_widget_scale_auto;
       bool menu_show_start_screen;
       bool menu_pause_libretro;
@@ -609,6 +654,9 @@ typedef struct settings
       bool menu_show_load_content;
       bool menu_show_load_disc;
       bool menu_show_dump_disc;
+#ifdef HAVE_LAKKA
+      bool menu_show_eject_disc;
+#endif
       bool menu_show_information;
       bool menu_show_configurations;
       bool menu_show_help;
@@ -690,6 +738,7 @@ typedef struct settings
       bool quick_menu_show_set_core_association;
       bool quick_menu_show_reset_core_association;
       bool quick_menu_show_options;
+      bool quick_menu_show_core_options_flush;
       bool quick_menu_show_controls;
       bool quick_menu_show_cheats;
       bool quick_menu_show_shaders;
@@ -794,6 +843,7 @@ typedef struct settings
       bool network_remote_enable_user[MAX_USERS];
       bool load_dummy_on_core_shutdown;
       bool check_firmware_before_loading;
+      bool core_option_category_enable;
       bool core_info_cache_enable;
 #ifndef HAVE_DYNAMIC
       bool always_reload_core_on_run_content;
@@ -825,6 +875,7 @@ typedef struct settings
 
       bool video_window_show_decorations;
       bool video_window_save_positions;
+      bool video_window_custom_size_enable;
 
       bool sustained_performance_mode;
       bool playlist_use_old_format;
@@ -1036,12 +1087,37 @@ void config_load_file_salamander(void);
 void config_save_file_salamander(void);
 #endif
 
+void rarch_config_init(void);
+
+void rarch_config_deinit(void);
+
 settings_t *config_get_ptr(void);
 
 #ifdef HAVE_LAKKA
 const char *config_get_all_timezones(void);
 void config_set_timezone(char *timezone);
 #endif
+
+bool input_config_bind_map_get_valid(unsigned bind_index);
+
+void input_config_parse_joy_button(
+      char *s,
+      void *data, const char *prefix,
+      const char *btn, void *bind_data);
+
+void input_config_parse_joy_axis(
+      char *s,
+      void *conf_data, const char *prefix,
+      const char *axis, void *bind_data);
+
+void input_config_parse_mouse_button(
+      char *s,
+      void *conf_data, const char *prefix,
+      const char *btn, void *bind_data);
+
+const char *input_config_get_prefix(unsigned user, bool meta);
+
+extern const struct input_bind_map input_config_bind_map[RARCH_BIND_LIST_END_NULL];
 
 RETRO_END_DECLS
 

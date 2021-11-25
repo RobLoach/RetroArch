@@ -91,6 +91,8 @@ MSG_HASH( /* FIXME Is a specific image format used? Is it determined automatical
    MENU_ENUM_SUBLABEL_DUMP_DISC,
    "将物理光盘转储到内置存储。它将被保存为光盘镜像文件。"
    )
+#ifdef HAVE_LAKKA
+#endif
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_PLAYLISTS_TAB,
    "列表"
@@ -454,20 +456,20 @@ MSG_HASH(
    "固件"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_MISSING,
-   "缺失"
+   MENU_ENUM_LABEL_VALUE_MISSING_REQUIRED,
+   "缺失且必需的："
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_PRESENT,
-   "具备"
+   MENU_ENUM_LABEL_VALUE_MISSING_OPTIONAL,
+   "缺失但非必需的："
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_OPTIONAL,
-   "可选"
+   MENU_ENUM_LABEL_VALUE_PRESENT_REQUIRED,
+   "存在且必需的："
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_REQUIRED,
-   "必需"
+   MENU_ENUM_LABEL_VALUE_PRESENT_OPTIONAL,
+   "存在但非必须的："
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_LOCK,
@@ -1285,6 +1287,10 @@ MSG_HASH(
    "更改视频缩放设置。"
    )
 MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_SETTINGS,
+   "更改视频 HDR 设置。"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_SYNCHRONIZATION_SETTINGS,
    "同步"
    )
@@ -1353,7 +1359,23 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_FILTER_NEAREST,
    "最近邻"
    )
-#if defined(RS90)
+#if defined(RS90) || defined(MIYOO)
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_TYPE,
+   "图像插值"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_DINGUX_RS90_SOFTFILTER_TYPE,
+   "当“整数缩放”被禁用时，指定图像内插法。“最近的邻里”对性能影响最小。"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_POINT,
+   "最近的邻里点"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_BRESENHAM_HORZ,
+   "半线性"
+   )
 #endif
 #endif
 MSG_HASH(
@@ -1467,6 +1489,26 @@ MSG_HASH(
    "GPU 编号"
    )
 MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_GPU_INDEX,
+   "选择要使用的显卡。"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OFFSET_X,
+   "屏幕水平偏移"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OFFSET_X,
+   "强制视频水平偏移一定距离。偏移将应用于全局范围。"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OFFSET_Y,
+   "屏幕垂直偏移"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OFFSET_Y,
+   "强制视频垂直偏移一定距离。偏移将应用于全局范围。"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_REFRESH_RATE,
    "垂直刷新率"
    )
@@ -1560,7 +1602,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SCALE,
-   "根据核心视角大小来设置窗口大小。或者，您可以在下方设置窗口的宽度和高度获取固定窗口大小。"
+   "将窗口大小设为核心视图大小的指定倍数。"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OPACITY,
@@ -1575,8 +1617,8 @@ MSG_HASH(
    "记住窗口位置和大小"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SAVE_POSITION,
-   "记住窗口尺寸和位置，此选项的优先级高于「窗口缩放」选项。"
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
+   "使用自定义窗口大小"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_WIDTH,
@@ -1594,6 +1636,14 @@ MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_WINDOW_HEIGHT,
    "设置显示窗口的自定义高度。"
    )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_WIDTH_MAX,
+   "最大窗口宽度"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
+   "最大窗口高度"
+   )
 
 /* Settings > Video > Scaling */
 
@@ -1606,16 +1656,20 @@ MSG_HASH(
    "只以整数倍缩放。基础尺寸取决于系统报告的尺寸和宽高比。如果未开启「保持宽高比」选项，宽/高可能会独立缩放到不同的倍数。"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER_OVERSCALE,
+   "过量整数倍放大"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_SCALE_INTEGER_OVERSCALE,
+   "强制放大到下一个更大的整数倍，而不是四舍五入。"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_INDEX,
    "宽高比"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO,
    "自定义宽高比"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_VIDEO_ASPECT_RATIO,
-   "视频宽高比的浮点数值 (宽度/高度)，如果宽高比设置为「自定义宽高比」，则使用此数值。"
    )
 #if defined(DINGUX)
 MSG_HASH(
@@ -1666,6 +1720,25 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_CROP_OVERSCAN,
    "在图像边缘切掉一些像素，这通常是游戏开发者有意留下的白边或黑边，甚至也有可能包含垃圾像素。"
+   )
+
+/* Settings > Video > HDR */
+
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_ENABLE,
+   "启用 HDR"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_ENABLE,
+   "如果显示器支持，则启用 HDR。"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_MAX_NITS,
+   "最高亮度"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_CONTRAST,
+   "Contrast - 对比度"
    )
 
 /* Settings > Video > Synchronization */
@@ -2215,16 +2288,14 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_ENABLE_DEVICE_VIBRATION,
    "启用设备振动 (对支持的核心)"
    )
-#if defined(DINGUX) && defined(HAVE_LIBSHAKE)
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INPUT_DINGUX_RUMBLE_GAIN,
-   "振动强度 (需要重启)"
+   MENU_ENUM_LABEL_VALUE_INPUT_RUMBLE_GAIN,
+   "震動強度"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_INPUT_DINGUX_RUMBLE_GAIN,
+   MENU_ENUM_SUBLABEL_INPUT_RUMBLE_GAIN,
    "指定触觉反馈效果的强弱。"
    )
-#endif
 
 /* Settings > Input > Menu Controls */
 
@@ -2270,6 +2341,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_INPUT_MENU_ENUM_TOGGLE_GAMEPAD_COMBO,
    "切换菜单的手柄组合键。"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_QUIT_GAMEPAD_COMBO,
+   "退出控制組合設定"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_QUIT_GAMEPAD_COMBO,
+   "退出RetroArch的控制器組合鍵"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_BLOCK_DELAY,
@@ -2883,6 +2962,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CHECK_FOR_MISSING_FIRMWARE,
    "在加载游戏之前，先检查必要固件的完整性。"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CORE_OPTION_CATEGORY_ENABLE,
+   "模擬核心選項類別"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_INFO_CACHE_ENABLE,
@@ -4142,6 +4225,8 @@ MSG_HASH(
    MENU_ENUM_SUBLABEL_MENU_SHOW_DUMP_DISC,
    "在主菜单中显示「转储光盘」选项。"
    )
+#ifdef HAVE_LAKKA
+#endif
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_SHOW_ONLINE_UPDATER,
    "显示「在线更新」"
@@ -7057,6 +7142,14 @@ MSG_HASH(
    "未登录"
 )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_NETWORK_ERROR,
+   "网络错误"
+)
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_UNKNOWN_GAME,
+   "未知游戏"
+)
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CANNOT_ACTIVATE_ACHIEVEMENTS_WITH_THIS_CORE,
    "无法使用此核心激活成就"
 )
@@ -8409,6 +8502,14 @@ MSG_HASH(
    "德古拉"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_SOLARIZED_DARK,
+   "Solarized 过曝深色"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_SOLARIZED_LIGHT,
+   "过度曝光"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_LEFT_THUMBNAILS_OZONE,
    "第二缩略图"
    )
@@ -9305,6 +9406,10 @@ MSG_HASH(
    "端口"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_PORT_DEVICE_NAME,
+   "端口 %d 设备名： %s (#%d)"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CHEAT_SETTINGS,
    "金手指设置"
    )
@@ -9865,6 +9970,14 @@ MSG_HASH(
    "收到来自「%s (%s)」的连接"
    )
 MSG_HASH(
+   MSG_PUBLIC_ADDRESS,
+   "Netplay 端口映射成功"
+   )
+MSG_HASH(
+   MSG_UPNP_FAILED,
+   "Netplay UPNP 端口映射失败"
+   )
+MSG_HASH(
    MSG_NO_ARGUMENTS_SUPPLIED_AND_NO_MENU_BUILTIN,
    "未提供参数也没有内建菜单，正在显示帮助..."
    )
@@ -10261,14 +10374,6 @@ MSG_HASH(
    "从有效端口断开设备。"
    )
 MSG_HASH(
-   MSG_DISK_CLOSED,
-   "已关闭"
-   )
-MSG_HASH(
-   MSG_DISK_EJECTED,
-   "已弹出"
-   )
-MSG_HASH(
    MSG_DOWNLOADING,
    "正在下载"
    )
@@ -10335,10 +10440,6 @@ MSG_HASH(
 MSG_HASH(
    MSG_FAILED_SAVING_CONFIG_TO,
    "无法将配置文件保存到"
-   )
-MSG_HASH(
-   MSG_FAILED_TO,
-   "失败："
    )
 MSG_HASH(
    MSG_FAILED_TO_ACCEPT_INCOMING_SPECTATOR,
@@ -10431,6 +10532,10 @@ MSG_HASH(
 MSG_HASH(
    MSG_FAILED_TO_SAVE_SRAM,
    "保存游戏存档失败"
+   )
+MSG_HASH(
+   MSG_FAILED_TO_LOAD_SRAM,
+   "加载 SRAM 失败"
    )
 MSG_HASH(
    MSG_FAILED_TO_SAVE_STATE_TO,
@@ -10689,10 +10794,6 @@ MSG_HASH(
    "读取第一条数据轨..."
    )
 MSG_HASH(
-   MSG_RECEIVED,
-   "接收完毕"
-   )
-MSG_HASH(
    MSG_RECORDING_TERMINATED_DUE_TO_RESIZE,
    "录制因改变大小而停止。"
    )
@@ -10910,7 +11011,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MSG_UNRECOGNIZED_COMMAND,
-   "无法识别的指令"
+   "收到无法识别的命令 \"%s\"。\n"
    )
 MSG_HASH(
    MSG_USING_CORE_NAME_FOR_NEW_CONFIG,
@@ -10945,24 +11046,20 @@ MSG_HASH(
    "可视区域尺寸计算失败！将继续使用原始数据，这很可能不会正常工作。"
    )
 MSG_HASH(
-   MSG_VIRTUAL_DISK_TRAY,
-   "虚拟光驱托盘。"
-   )
-MSG_HASH(
    MSG_VIRTUAL_DISK_TRAY_EJECT,
-   "弹出"
+   "弹出虚拟光驱失败。"
    )
 MSG_HASH(
    MSG_VIRTUAL_DISK_TRAY_CLOSE,
-   "关闭"
+   "收回虚拟光驱托盘失败。"
    )
 MSG_HASH(
-   MSG_FAILED,
-   "已失败"
+   MSG_AUTOLOADING_SAVESTATE_FAILED,
+   "从 \"%s\" 自动加载状态存档失败。"
    )
 MSG_HASH(
-   MSG_SUCCEEDED,
-   "已成功"
+   MSG_AUTOLOADING_SAVESTATE_SUCCEEDED,
+   "从 “%s” 自动加载状态存档成功。"
    )
 MSG_HASH(
    MSG_DEVICE_NOT_CONFIGURED,
@@ -11165,6 +11262,10 @@ MSG_HASH(
    "无法放置上次使用的光盘..."
    )
 MSG_HASH(
+   MSG_FAILED_TO_RECEIVE_HEADER_FROM_HOST,
+   "接收主机端报文失败"
+   )
+MSG_HASH(
    MSG_CHEEVOS_HARDCORE_MODE_DISABLED,
    "已加载状态存储。成就硬核模式在当前游戏中已经禁用。"
    )
@@ -11356,6 +11457,10 @@ MSG_HASH(
    MSG_UNSUPPORTED_VIDEO_MODE,
    "不支持的视频模式"
    )
+MSG_HASH(
+   MSG_CORE_INFO_CACHE_UNSUPPORTED,
+   "无法写入核心信息所在目录 - 核心信息缓存将被禁用"
+   )
 
 /* Lakka */
 
@@ -11383,10 +11488,6 @@ MSG_HASH(
    "分开 Joy-Con 手柄"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INTERNAL_STORAGE_STATUS,
-   "内部存储状态"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_FACTOR,
    "图形部件缩放倍数"
    )
@@ -11397,6 +11498,22 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SCREEN_RESOLUTION,
    "屏幕分辨率"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_DEFAULT,
+   "屏幕分辨率：默认"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_APPLYING_DEFAULT,
+   "应用：默认"
+   )
+MSG_HASH(
+   MSG_SCREEN_RESOLUTION_RESETTING_DEFAULT,
+   "重置为：默认"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_SCREEN_RESOLUTION,
+   "选择显示模式。"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SHUTDOWN,
@@ -11648,11 +11765,11 @@ MSG_HASH(
    )
 MSG_HASH(
    MSG_READ_WRITE,
-   "读写"
+   "内部存储状态: 读/写"
    )
 MSG_HASH(
    MSG_READ_ONLY,
-   "只读"
+   "内部存储状态：只读"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_BRIGHTNESS_CONTROL,
@@ -11822,6 +11939,34 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CTR_VIDEO_MODE_2D_800X240,
    "2D (高分辨率)"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_DEFAULT,
+   "点击触摸屏幕去\n到主菜单"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_ASSET_NOT_FOUND,
+   "在 assets/ctr 文件夹中未找到\nbottom_menu.png"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_NO_STATE_DATA,
+   "没有\n数据"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_NO_STATE_THUMBNAIL,
+   "没有\n截图"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_RESUME,
+   "继续游戏"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_SAVE_STATE,
+   "创建\n还原点"
+   )
+MSG_HASH(
+   MSG_3DS_BOTTOM_MENU_LOAD_STATE,
+   "加载\n还原点"
    )
 #endif
 #ifdef HAVE_QT

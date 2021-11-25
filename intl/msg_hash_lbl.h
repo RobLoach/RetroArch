@@ -63,6 +63,10 @@ MSG_HASH(
    "explore_item"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_EXPLORE_INITIALISING_LIST,
+   "explore_initialising_list"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_ADD_TAB,
    "add_tab"
    )
@@ -1073,6 +1077,10 @@ MSG_HASH(
    "deferred_video_scaling_settings_list"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_VIDEO_HDR_SETTINGS_LIST,
+   "deferred_video_hdr_settings_list"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_VIDEO_SYNCHRONIZATION_SETTINGS_LIST,
    "deferred_video_synchronization_settings_list"
    )
@@ -1179,6 +1187,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_CHECK_FOR_MISSING_FIRMWARE,
    "check_for_missing_firmware"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CORE_OPTION_CATEGORY_ENABLE,
+   "core_option_category_enable"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_CORE_INFO_CACHE_ENABLE,
@@ -1317,6 +1329,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_CORE_OPTIONS_RESET,
    "core_options_reset"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_CORE_OPTIONS_FLUSH,
+   "core_options_flush"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_GAME_SPECIFIC_OPTIONS_CREATE,
@@ -1523,6 +1539,10 @@ MSG_HASH(
    "input_menu_toggle_gamepad_combo"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_INPUT_QUIT_GAMEPAD_COMBO,
+   "input_quit_gamepad_combo"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_INPUT_OVERLAY,
    "input_overlay"
    )
@@ -1710,6 +1730,12 @@ MSG_HASH(
    MENU_ENUM_LABEL_DUMP_DISC,
    "dump_disc"
    )
+#ifdef HAVE_LAKKA
+MSG_HASH(
+   MENU_ENUM_LABEL_EJECT_DISC,
+   "eject_disc"
+   )
+#endif
 MSG_HASH(
    MENU_ENUM_LABEL_LOAD_CONTENT_SPECIAL,
    "load_special"
@@ -1953,6 +1979,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_NETPLAY_TCP_UDP_PORT,
    "netplay_tcp_udp_port"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_NETPLAY_MAX_CONNECTIONS,
+   "netplay_max_connections"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_NETPLAY_LAN_SCAN_SETTINGS,
@@ -2303,6 +2333,10 @@ MSG_HASH(
    "playlist_manager_clean_playlist"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_PLAYLIST_MANAGER_REFRESH_PLAYLIST,
+   "playlist_manager_refresh_playlist"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_PLAYLIST_SETTINGS_BEGIN,
    "playlist_settings_begin"
    )
@@ -2358,6 +2392,12 @@ MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_LOAD_DISC_LIST,
    "deferred_load_disc_list"
    )
+#ifdef HAVE_LAKKA
+MSG_HASH(
+   MENU_ENUM_LABEL_DEFERRED_EJECT_DISC,
+   "deferred_eject_disc"
+   )
+#endif
 MSG_HASH(
    MENU_ENUM_LABEL_DEFERRED_CURSOR_MANAGER_LIST_RDB_ENTRY_DEVELOPER,
    "deferred_cursor_manager_list_rdb_entry_developer"
@@ -3189,7 +3229,7 @@ MSG_HASH(
    "video_dingux_refresh_rate"
    )
 #endif
-#if defined(RS90)
+#if defined(RS90) || defined(MIYOO)
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_DINGUX_RS90_SOFTFILTER_TYPE,
    "video_dingux_rs90_softfilter_type"
@@ -3253,6 +3293,10 @@ MSG_HASH(
    "video_frame_delay"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_FRAME_DELAY_AUTO,
+   "video_frame_delay_auto"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_SHADER_DELAY,
    "video_shader_delay"
    )
@@ -3295,6 +3339,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_MONITOR_INDEX,
    "video_monitor_index"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_WINDOW_OFFSET_X,
+   "video_window_offset_x"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_WINDOW_OFFSET_Y,
+   "video_window_offset_y"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_POST_FILTER_RECORD,
@@ -3347,6 +3399,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_SCALING_SETTINGS,
    "video_scaling_settings"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_HDR_SETTINGS,
+   "video_hdr_settings"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_SYNCHRONIZATION_SETTINGS,
@@ -3523,6 +3579,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_WINDOW_HEIGHT,
    "video_window_height"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_WINDOW_AUTO_WIDTH_MAX,
+   "video_window_auto_width_max"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
+   "video_window_auto_height_max"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_FULLSCREEN_X,
@@ -3978,6 +4042,12 @@ MSG_HASH(
    MENU_ENUM_LABEL_MENU_SHOW_DUMP_DISC,
    "menu_show_dump_disc"
    )
+#ifdef HAVE_LAKKA
+MSG_HASH(
+   MENU_ENUM_LABEL_MENU_SHOW_EJECT_DISC,
+   "menu_show_eject_disc"
+   )
+#endif
 MSG_HASH(
    MENU_ENUM_LABEL_MENU_SHOW_INFORMATION,
    "menu_show_information"
@@ -4057,6 +4127,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_QUICK_MENU_SHOW_OPTIONS,
    "quick_menu_show_options"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_QUICK_MENU_SHOW_CORE_OPTIONS_FLUSH,
+   "quick_menu_show_core_options_flush"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_QUICK_MENU_SHOW_CONTROLS,
@@ -4169,6 +4243,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_WINDOW_SAVE_POSITION,
    "video_window_save_position"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
+   "video_window_custom_size_enable"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_MENU_RGUI_BORDER_FILLER_ENABLE,
@@ -4717,6 +4795,10 @@ MSG_HASH(
    "notification_show_refresh_rate"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_NOTIFICATION_SHOW_NETPLAY_EXTRA,
+   "notification_show_netplay_extra"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VIDEO_SHADERS_ENABLE,
    "video_shader_enable"
    )
@@ -4975,6 +5057,10 @@ MSG_HASH(
    "manual_content_scan_overwrite"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_MANUAL_CONTENT_SCAN_VALIDATE_ENTRIES,
+   "manual_content_scan_validate_entries"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_MANUAL_CONTENT_SCAN_START,
    "manual_content_scan_start"
    )
@@ -5006,12 +5092,10 @@ MSG_HASH(
    MENU_ENUM_LABEL_INPUT_HAPTIC_FEEDBACK_SETTINGS,
    "input_haptic_feedback_settings"
    )
-#if defined(DINGUX) && defined(HAVE_LIBSHAKE)
 MSG_HASH(
-   MENU_ENUM_LABEL_INPUT_DINGUX_RUMBLE_GAIN,
-   "input_dingux_rumble_gain"
+   MENU_ENUM_LABEL_INPUT_RUMBLE_GAIN,
+   "input_rumble_gain"
    )
-#endif
 MSG_HASH(
    MENU_ENUM_LABEL_INPUT_TURBO_MODE,
    "input_turbo_mode"

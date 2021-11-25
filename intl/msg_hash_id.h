@@ -10,7 +10,7 @@
 
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MAIN_MENU,
-   "Menu utama"
+   "Menu Utama"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SETTINGS_TAB,
@@ -61,7 +61,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CORE_LIST,
-   "Pilih core yang akan dipakai."
+   "Pilih 'core' yang akan dipakai."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_LOAD_CONTENT_LIST,
@@ -77,7 +77,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_LOAD_DISC,
-   "Muat media cakram fisik. Pilih dahulu core (Muat Core) yang akan digunakan ke cakram."
+   "Muat media cakram fisik. Pilih dahulu 'inti' (Muat Core) yang akan digunakan ke cakram."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_DUMP_DISC,
@@ -87,6 +87,8 @@ MSG_HASH( /* FIXME Is a specific image format used? Is it determined automatical
    MENU_ENUM_SUBLABEL_DUMP_DISC,
    "Transfer data dari media cakram fisik ke penyimpanan internal. Data akan disimpan sebagai berkas image."
    )
+#ifdef HAVE_LAKKA
+#endif
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_PLAYLISTS_TAB,
    "Daftar Putar"
@@ -277,7 +279,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_UPDATE_INSTALLED_CORES,
-   "Perbarui core terpasang"
+   "Perbarui 'inti' terpasang"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_UPDATE_INSTALLED_CORES,
@@ -285,11 +287,11 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SWITCH_INSTALLED_CORES_PFD,
-   "Ganti dengan versi core yang tersedia di Play Store"
+   "Ganti dengan versi 'inti' yang tersedia di Play Store"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_SWITCH_INSTALLED_CORES_PFD,
-   "Ganti semua core terpasang secara manual atau core bawaan dengan core dari Play Store jika tersedia."
+   "Ganti semua 'inti' terpasang secara manual atau 'inti' bawaan dengan 'inti' dari Play Store jika tersedia."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_THUMBNAILS_UPDATER_LIST,
@@ -442,20 +444,20 @@ MSG_HASH(
    "Syarat Minimal Grafis API"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_MISSING,
-   "Tidak ada"
+   MENU_ENUM_LABEL_VALUE_MISSING_REQUIRED,
+   "Tidak ditemukan, yang diperlukan:"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_PRESENT,
-   "Ada"
+   MENU_ENUM_LABEL_VALUE_MISSING_OPTIONAL,
+   "Tidak ditemukan, opsional:"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_OPTIONAL,
-   "Opsional"
+   MENU_ENUM_LABEL_VALUE_PRESENT_REQUIRED,
+   "Ada, yang diperlukan:"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_REQUIRED,
-   "Wajib"
+   MENU_ENUM_LABEL_VALUE_PRESENT_OPTIONAL,
+   "Ada, opsional:"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_LOCK,
@@ -463,7 +465,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CORE_LOCK,
-   "Mencegah modifikasi core yang terpasang dan pembaruan versi core yang tidak diinginkan. Konten game tertentu (seperti ROM Arcade) membutuhkan versi core tertentu agar tetap dapat berjalan."
+   "Mencegah modifikasi 'inti' yang terpasang dan pembaruan versi 'inti' yang tidak diinginkan. Konten game tertentu (seperti ROM Arcade) membutuhkan versi 'inti' tertentu agar tetap dapat berjalan."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_DELETE,
@@ -471,15 +473,15 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CORE_DELETE,
-   "Hapus core dari penyimpanan."
+   "Hapus 'inti' dari penyimpanan."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_CREATE_BACKUP,
-   "Cadangkan Core"
+   "Cadangkan Inti"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CORE_CREATE_BACKUP,
-   "Buat cadangan core yang terpasang saat ini."
+   "Buat cadangan 'inti' yang terpasang saat ini."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_RESTORE_BACKUP_LIST,
@@ -487,7 +489,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CORE_RESTORE_BACKUP_LIST,
-   "Pasang versi core sebelumnya dari daftar core terarsip."
+   "Pasang versi 'inti' sebelumnya dari daftar 'inti' terarsip."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_DELETE_BACKUP_LIST,
@@ -976,7 +978,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CORE_SETTINGS,
-   "Ubah setelan core."
+   "Ubah setelan 'inti'."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONFIGURATION_SETTINGS,
@@ -1182,7 +1184,11 @@ MSG_HASH(
 
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CRT_SWITCHRES_SETTINGS,
-   "Keluaran asli, sinyal resolusi rendah untuk digunakan dengan tampilan CRT."
+   "Keluaran asli, sinyal beresolusi rendah untuk layar CRT."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_OUTPUT_SETTINGS,
+   "Luaran"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_OUTPUT_SETTINGS,
@@ -1198,11 +1204,11 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_WINDOWED_MODE_SETTINGS,
-   "Mode Berjendela"
+   "Modus Jendela"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_WINDOWED_MODE_SETTINGS,
-   "Ubah pengaturan mode berjendela."
+   "Ubah pengaturan modus jendela."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_SCALING_SETTINGS,
@@ -1211,6 +1217,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_SCALING_SETTINGS,
    "Ubah pengaturan penskalaan video."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_SETTINGS,
+   "HDR - Kontras yang luas antara warna terang dan gelap"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_SETTINGS,
+   "Ubah pengaturan HDR video."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_SYNCHRONIZATION_SETTINGS,
@@ -1273,20 +1287,36 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_FILTER_NEAREST,
    "Tetangga Terdekat"
    )
-#if defined(RS90)
+#if defined(RS90) || defined(MIYOO)
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_TYPE,
+   "Interpolasi Gambar"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_DINGUX_RS90_SOFTFILTER_TYPE,
+   "Pilih metode interpolasi gambar saat 'Penskalaan Integer' dimatikan. Pilihan 'Penskalaan Terdekat' berpengaruh terhadap kinerja perangkat."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_POINT,
+   "Penskalaan Terdekat"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_BRESENHAM_HORZ,
+   "Semi-Linier"
+   )
 #endif
 #endif
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_DELAY,
-   "Penundaan Auto-Shader"
+   "Penundaan Shader Otomatis"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_SHADER_DELAY,
-   "Menunda pemuatan shaded otomatis (dalam ms). Dapat bekerja di sekitar gangguan grafis saat menggunakan perangkat lunak 'tangkapan layar'."
+   "Tentukan nilai tunda pemuatan shader otomatis (satuan milidetik). Dapat mengatasi masalah glitch pada grafis ketika memakai aplikasi penangkap layar."
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_FILTER,
-   "Menerapkan filter video bertenaga CPU. Mungkin datang dengan biaya kinerja tinggi. Beberapa filter video mungkin hanya berfungsi untuk core yang menggunakan warna 32-bit atau 16-bit."
+   "Terapkan pilihan filter video berbasis pemrosesan CPU. Fitur ini sangat mempengaruhi kinerja perangkat. Beberapa filter hanya cocok pada beberapa 'inti' yang memakai warna 16/32 bit."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_FILTER_REMOVE,
@@ -1294,18 +1324,18 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_FILTER_REMOVE,
-   "Bongkar filter video aktif yang didukung CPU."
+   "Matikan semua video filter berbasis pemrosesan CPU."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_NOTCH_WRITE_OVER,
-   "Aktifkan layar penuh di atas takik di perangkat Android"
+   "Aktifkan layar penuh secara menyeluruh pada perangkat Android yang memiliki lekukan notch"
 )
 
 /* Settings > Video > CRT SwitchRes */
 
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CRT_SWITCH_RESOLUTION,
-   "Hanya untuk tampilan CRT. Mencoba menggunakan resolusi inti/game dan laju penyegaran yang tepat."
+   "Fitur ini berlaku hanya pada layar CRT saja. Berguna untuk mencocokkan resolusi inti/game dan laju penyegaran yang tepat."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CRT_SWITCH_RESOLUTION_SUPER,
@@ -1313,15 +1343,15 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CRT_SWITCH_RESOLUTION_SUPER,
-   "Beralih di antara resolusi super asli dan ultrawide."
+   "Ganti ke resolusi asli atau ke resolusi super ultra lebar."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CRT_SWITCH_X_AXIS_CENTERING,
-   "Pusat Sumbu X"
+   "Pemusatan Sumbu-X"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CRT_SWITCH_X_AXIS_CENTERING,
-   "Cycle melalui opsi ini jika gambar tidak berpusat dengan benar pada layar."
+   "Atur opsi ini jika gambar tidak dapat ditampilkan memusat semestinya."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CRT_SWITCH_PORCH_ADJUST,
@@ -1333,7 +1363,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CRT_SWITCH_HIRES_MENU,
-   "Gunakan menu resolusi tinggi"
+   "Gunakan menu beresolusi tinggi"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CRT_SWITCH_HIRES_MENU,
@@ -1373,6 +1403,26 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_SCREEN_ORIENTATION,
    "Memaksa orientasi layar tertentu dari sistem operasi."
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_GPU_INDEX,
+   "Pilih kartu grafis yang digunakan."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OFFSET_X,
+   "Pengaturan Layar Horisontal"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OFFSET_X,
+   "Paksa pengaturan video tertentu secara horisontal. Berlaku di semua pengaturan."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OFFSET_Y,
+   "Pengaturan Layar Vertikal"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OFFSET_Y,
+   "Paksa pengaturan video tertentu secara vertikal. Berlaku di semua pengaturan."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_REFRESH_RATE,
@@ -1468,7 +1518,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SCALE,
-   "Atur ukuran jendela relatif terhadap ukuran viewport core. Atau, lebar dan tinggi jendela dapat diatur di bawah ini untuk ukuran jendela tetap."
+   "Atur ukuran jendela layar sesuai pengali yang diinginkan."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OPACITY,
@@ -1484,7 +1534,15 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SAVE_POSITION,
-   "Ingat ukuran dan posisi jendela, mengaktifkan ini lebih diutamakan daripada Skala Berjendela."
+   "Aktifkan jika ingin ukuran jendela layar yang sudah ditentukan sebelumnya tidak berubah saat RetroArch ditutup."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
+   "Gunakan Ukuran Jendela Layar Sesuai Keinginan Sendiri"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
+   "Semua konten ditampilkan dengan ukuran yang sudah disesuaikan dengan keinginan sendiri, baik lebar maupun tinggi jendela layar."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_WIDTH,
@@ -1502,6 +1560,22 @@ MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_WINDOW_HEIGHT,
    "Atur ketinggian khusus untuk jendela tampilan."
    )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_WIDTH_MAX,
+   "Lebar Maksimal Jendela Layar"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_AUTO_WIDTH_MAX,
+   "Atur tampilan lebar maksimal jendela layar berdasarkan skala yang ditentukan sebelumnya."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
+   "Lebar Minimal Jendela Layar"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
+   "Atur tampilan tinggi maksimal jendela layar berdasarkan skala yang ditentukan sebelumnya."
+   )
 
 /* Settings > Video > Scaling */
 
@@ -1514,6 +1588,14 @@ MSG_HASH(
    "Skalakan video hanya dalam langkah bilangan bulat. Ukuran dasar bergantung pada geometri yang dilaporkan sistem dan rasio aspek. Jika 'Force Aspect Ratio' tidak disetel, X/Y akan diskalakan bilangan bulat secara independen."
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER_OVERSCALE,
+   "Skala Pembulatan Ke Atas"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_SCALE_INTEGER_OVERSCALE,
+   "Atur paksa skala pembulatan ke atas, bukan ke bawah."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_INDEX,
    "Rasio Aspek"
    )
@@ -1523,7 +1605,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_ASPECT_RATIO,
-   "Nilai floating point untuk rasio aspek video (lebar / tinggi), digunakan jika Rasio Aspek diatur ke 'Rasio Aspek Kustom'."
+   "Nilai rasio layar (lebar/tinggi), digunakan jika 'Rasio Layar' dipasang ke 'Konfig'."
    )
 #if defined(DINGUX)
 MSG_HASH(
@@ -1576,6 +1658,49 @@ MSG_HASH(
    "Potong beberapa piksel di sekitar tepi gambar yang biasanya dibiarkan kosong oleh pengembang yang terkadang juga berisi piksel sampah."
    )
 
+/* Settings > Video > HDR */
+
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_ENABLE,
+   "Aktifkan HDR"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_ENABLE,
+   "Aktifkan jika monitor atau TV mendukung HDR."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_MAX_NITS,
+   "Maksimal Pancaran Cahaya Layar"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_MAX_NITS,
+   "Atur maksimal pancaran cahaya layar (dalam satuan cd/m2) yang dapat dihasilkan dari monitor/TV. Kunjungi situs RTings sebagai acuan."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_PAPER_WHITE_NITS,
+   "Pancaran Cahaya Layar Layaknya Kertas Bacaan"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_PAPER_WHITE_NITS,
+   "Atur pancaran cahaya layar seperti membaca buku atau koran. Berguna jika ingin menyesuaikan layar dengan keadaan ruangan."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_CONTRAST,
+   "Kontras"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_CONTRAST,
+   "Sinar gamma/pengaturan kontras untuk HDR. Kontras antara gambar terang dan gelap dapat diatur. Semakin tinggi Kontras HDR, semakin baik tampilan terang dan gelap; semakin rendah kontras, semakin lusuh gambarnya. Pengguna bisa mengatur gambar sesuai yang diinginkan dan menyesuaikan dengan tampilan layarnya."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT,
+   "Perluas Warna"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_EXPAND_GAMUT,
+   "Jika warna diubah menjadi linier, makan akan diperluas lagi agar bisa mencapai HDR10."
+   )
+
 /* Settings > Video > Synchronization */
 
 MSG_HASH(
@@ -1593,6 +1718,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_FRAME_DELAY,
    "Mengurangi latensi dengan mengorbankan risiko video gagap yang lebih tinggi. Menambahkan penundaan setelah VSync (dalam ms)."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_DELAY_AUTO,
+   "Frame Delay Otomatis"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_FRAME_DELAY_AUTO,
+   "Turunkan sementara 'Frame Delay' untuk mencegah frame tersendat. Dimulai dari setengah frame jika 'Frame Delay' adalah 0."
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_HARD_SYNC,
@@ -1644,6 +1777,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_SOUNDS,
    "Suara Menu"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_MENU_SOUNDS,
+   "Ubah pengaturan suara menu."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_AUDIO_MUTE,
@@ -1775,6 +1912,18 @@ MSG_HASH(
    "Sinkronkan audio. Direkomendasikan."
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AUDIO_MAX_TIMING_SKEW,
+   "Waktu Miring Maksimal"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AUDIO_MAX_TIMING_SKEW,
+   "Perubahan maksimal pada tingkat masukan suara. Bisa mengakibatkan nada suara tidak akurat (misal memainkan core PAL pada layar NTSC)."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AUDIO_RATE_CONTROL_DELTA,
+   "Kontrol Kecepatan Audio Dinamis"
+   )
+MSG_HASH(
    MENU_ENUM_SUBLABEL_AUDIO_RATE_CONTROL_DELTA,
    "Memperhalus sinkornisasi waktu agar selaras antara suara dan video. Patut diperhatikan jika fitur ini dimatikan, maka sinkornisasi akan sulit dilakukan."
    )
@@ -1809,20 +1958,52 @@ MSG_HASH(
    "Putar"
    )
 MSG_HASH(
+   MENU_ENUM_SUBLABEL_MIXER_ACTION_PLAY,
+   "Fitur ini akan memutar stream audio. Setelah pemutaran berakhir, stream audio akan dihapus dari memori."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MIXER_ACTION_PLAY_LOOPED,
    "Putar (Berulang)"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_MIXER_ACTION_PLAY_LOOPED,
+   "Fitur ini akan memutar stream audio. Setelah pemutaran berakhir, stream audio akan diputar ulang dari awal."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MIXER_ACTION_PLAY_SEQUENTIAL,
+   "Putar (Berurutan)"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_MIXER_ACTION_PLAY_SEQUENTIAL,
+   "Fitur ini akan memutar stream audio. Setelah pemutaran berakhir, pemutaran akan berlanjut ke stream audio selanjutnya dan akan berulang. Cara kerja sama dengan cara pemutaran lagu satu album."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MIXER_ACTION_STOP,
    "Hentikan"
    )
 MSG_HASH(
+   MENU_ENUM_SUBLABEL_MIXER_ACTION_STOP,
+   "Akan menghentikan pemutaran stream audio, namun tidak menghapus stream tersebut dari memori. Pilih menu putar untuk memutarnya kembali."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MIXER_ACTION_REMOVE,
    "Hapus"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_MIXER_ACTION_REMOVE,
+   "Fitur ini akan menghentikan pemutaran stream audio. Setelah pemutaran berakhir, stream audio akan dihapus dari memori."
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_MIXER_ACTION_VOLUME,
+   "Atur volume stream audio."
    )
 
 /* Settings > Audio > Menu Sounds */
 
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AUDIO_ENABLE_MENU,
+   "Putar stream audio secara bersamaan, meski dalam tampilan menu."
+   )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_SOUND_OK,
    "Nyalakan efek suara 'OK'"
@@ -1831,19 +2012,107 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_SOUND_CANCEL,
    "Nyalakan efek suara 'Batal'"
    )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MENU_SOUND_NOTICE,
+   "Nyalakan efek suara 'Notifikasi'"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MENU_SOUND_BGM,
+   "Nyalakan efek 'Suara Latar'"
+   )
 
 /* Settings > Input */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_MAX_USERS,
+   "Jumlah Maksimal Pemain"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_MAX_USERS,
+   "Jumlah maksimal pemain yang diperbolehkan di RetroArch."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_POLL_TYPE_BEHAVIOR,
+   "Perilaku Polling"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_POLL_TYPE_BEHAVIOR,
+   "Bagaimana polling input dilakukan di RetroArch. Jika diatur ke 'Lebih Awal' atau \"Telat\" dapat mengurangi latensi."
+   )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_REMAP_BINDS_ENABLE,
    "Atur ulang letak kontroler untuk Inti ini"
    )
 MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_REMAP_BINDS_ENABLE,
+   "Timpa setelan bind input dengan bind yang telah disetel ulang pada 'inti' saat ini."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_AUTODETECT_ENABLE,
-   "Konfik otomatis"
+   "Konfigurasi otomatis"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_AUTODETECT_ENABLE,
+   "Setel kontroler secara otomatis untuk kontroler yang berfitur Plug-and-Play."
    )
 #if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_NOWINKEY_ENABLE,
+   "Matikan tombol Hotkey Windows (Membutuhkan Restart)"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_NOWINKEY_ENABLE,
+   "Kombinasi tombil Win-key hanya tersedia di aplikasi."
+   )
 #endif
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_SENSORS_ENABLE,
+   "Aktifkan Input Sensor Auxiliary"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_SENSORS_ENABLE,
+   "Gunakan input akselerometer, giroskop, dan sensor cahaya, jika ada. Fitur ini akan mempengaruhi kinerja perangkat dan akan menguras daya baterai pada platform tertentu."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_AUTO_MOUSE_GRAB,
+   "Grab Mouse Otomatis"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_AUTO_MOUSE_GRAB,
+   "Aktifkan mouse grab pada saat aplikasi aktif."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS,
+   "Otomatis Aktif Mode 'Fokus Pada Game\""
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_AUTO_GAME_FOCUS,
+   "Mode 'Fokus Pada Game' selalu aktif saat memulai atau melanjutkan konten."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS_OFF,
+   "MATI"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS_ON,
+   "NYALA"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS_DETECT,
+   "Detek"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_BUTTON_AXIS_THRESHOLD,
+   "Ambang Batas Input Tombol Axis"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_BUTTON_AXIS_THRESHOLD,
+   "Seberapa jauh tombol axis harus dimiringkan agar terbaca pada saat menekan tombol."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_SENSITIVITY,
+   "Kepekaan Kontroler Analog"
+   )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_INPUT_BIND_TIMEOUT,
    "Atur berapa detik yang dibutuhkan untuk melakukan binding selanjutnya."
@@ -1939,16 +2208,14 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_ENABLE_DEVICE_VIBRATION,
    "Aktifkan Getaran Perangkat (Untuk Core yang Didukung)"
    )
-#if defined(DINGUX) && defined(HAVE_LIBSHAKE)
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INPUT_DINGUX_RUMBLE_GAIN,
-   "Kekuatan Getaran (Diperlukan Restart)"
+   MENU_ENUM_LABEL_VALUE_INPUT_RUMBLE_GAIN,
+   "Kekuatan Getaran"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_INPUT_DINGUX_RUMBLE_GAIN,
+   MENU_ENUM_SUBLABEL_INPUT_RUMBLE_GAIN,
    "Tentukan besarnya efek umpan balik haptic."
    )
-#endif
 
 /* Settings > Input > Menu Controls */
 
@@ -1972,16 +2239,76 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_ALL_USERS_CONTROL_MENU,
    "Menu Kontrol Semua Pengguna"
    )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_ALL_USERS_CONTROL_MENU,
+   "Semua pengguna boleh mengendalikan manu. Jika dimatikan, hanya Pengguna 1 yang bisa kendalikan menu."
+   )
 
 /* Settings > Input > Hotkeys */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QUIT_PRESS_TWICE,
+   "Konfirmasi Keluar"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_QUIT_PRESS_TWICE,
+   "Untuk keluar dari RetroArch, kombinasi tombol Keluar harus ditekan dua kali."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_MENU_ENUM_TOGGLE_GAMEPAD_COMBO,
+   "Menu Pengganti Kombinasi Kontroler"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_MENU_ENUM_TOGGLE_GAMEPAD_COMBO,
+   "Kombinasi tombol kontroller untuk mengganti menu."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_QUIT_GAMEPAD_COMBO,
+   "Keluar Dari Kombinasi Kontroler"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_INPUT_QUIT_GAMEPAD_COMBO,
+   "Kombinasi tombol kontroler untuk keluar dari RetroArch."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_BLOCK_DELAY,
+   "Tombol Kombinasi Mengaktifkan 'Delay' (Frame)"
+   )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_META_QUIT_KEY,
    "Tutup RetroArch"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_META_RESET,
+   "Reset Permainan"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_META_SHADER_NEXT,
+   "Shader Berikutnya"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_META_SHADER_PREV,
+   "Shader Sebelumnya"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_META_CHEAT_INDEX_PLUS,
+   "Daftar Kode Curang"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_META_CHEAT_INDEX_MINUS,
+   "Daftar Kode Curang Sebelumnya"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_META_SCREENSHOT,
    "Ambil Tangkapan Layar"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_META_SEND_DEBUG_INFO,
+   "Kirim Info Debug"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_META_ENABLE_HOTKEY,
+   "Aktifkan Kombinasi Tombol"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_META_AI_SERVICE,
@@ -1990,6 +2317,10 @@ MSG_HASH(
 
 /* Settings > Input > Port # Controls */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_START,
+   "Tombol Mulai"
+   )
 
 /* Settings > Latency */
 
@@ -1998,9 +2329,21 @@ MSG_HASH(
 
 #ifndef HAVE_DYNAMIC
 #endif
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CORE_MANAGER_LIST,
+   "Atur Core"
+   )
 
 /* Settings > Configuration */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CONFIG_SAVE_ON_EXIT,
+   "Simpan Konfigurasi dan Keluar"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_CONFIG_SAVE_ON_EXIT,
+   "Saat keluar, semua perubahan konfigurasi akan disimpan."
+   )
 
 /* Settings > Saving */
 
@@ -2050,6 +2393,8 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SETTINGS_VIEWS_SETTINGS,
    "Pengaturan"
    )
+#ifdef HAVE_LAKKA
+#endif
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_ADD_CONTENT_ENTRY_DISPLAY_MAIN_TAB,
    "Menu utama"
@@ -2160,6 +2505,10 @@ MSG_HASH(
 /* Playlist > Playlist Item */
 
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_DELETE_ENTRY,
+   "Hapus"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INFORMATION,
    "Informasi"
    )
@@ -2169,9 +2518,17 @@ MSG_HASH(
 
 /* Playlist Item > Information */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CONTENT_INFO_LABEL,
+   "Nama"
+   )
 
 /* Quick Menu */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_TAKE_SCREENSHOT,
+   "Ambil Tangkapan Layar"
+   )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_LIST,
    "Pencapaian"
@@ -2205,12 +2562,20 @@ MSG_HASH(
 
 /* Quick Menu > Cheats > Cheat Details */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CHEAT_DESC,
+   "Deskripsi"
+   )
 
 /* Quick Menu > Disc Control */
 
 
 /* Quick Menu > Shaders */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_REMOVE,
+   "Hapus"
+   )
 
 /* Quick Menu > Shaders > Save */
 
@@ -2243,6 +2608,10 @@ MSG_HASH(
 
 /* RGUI: Settings Options */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_LOCK_INTEGER,
+   "Skala Bilangan Bulat"
+   )
 
 /* XMB: Settings > User Interface > Appearance */
 
@@ -2274,6 +2643,10 @@ MSG_HASH(
    "Muat Core"
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_NAME,
+   "Nama"
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_QT_TAB_PLAYLISTS,
    "Daftar Putar"
    )
@@ -2284,6 +2657,18 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_QT_INFORMATION,
    "Informasi"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_STOP,
+   "Hentikan"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_NAME,
+   "Nama:"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_REMOVE,
+   "Hapus"
    )
 
 /* Unsorted */
@@ -2296,6 +2681,10 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_USER,
    "Pengguna"
    )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_BROWSE_START,
+   "Mulai"
+   )
 
 /* Unused (Only Exist in Translation Files) */
 
@@ -2303,12 +2692,32 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_HELP,
    "Bantuan"
    )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CHEEVOS_DESCRIPTION,
+   "Deskripsi"
+   )
 
 /* Unused (Needs Confirmation) */
 
 MSG_HASH( /* FIXME Seems related to MENU_ENUM_LABEL_VALUE_CORE_ASSETS_DIRECTORY, possible duplicate */
    MENU_ENUM_LABEL_VALUE_CORE_ASSETS_DIR,
    "Unduhan"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_BASIC_MENU_ENUM_CONTROLS_QUIT,
+   "Berhenti"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_BASIC_MENU_ENUM_CONTROLS_SCROLL_UP,
+   "Gulir ke atas"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_BASIC_MENU_ENUM_CONTROLS_TOGGLE_KEYBOARD,
+   "Alihkan Papan Ketik"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_BASIC_MENU_ENUM_CONTROLS_TOGGLE_MENU,
+   "Beralih Menu"
    )
 
 /* Discord Status */
