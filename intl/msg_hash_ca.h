@@ -344,10 +344,6 @@ MSG_HASH(
 
 /* Settings */
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_PLAYLIST_SETTINGS,
-   "Llistes de reproducció"
-   )
 
 /* Settings > Drivers */
 
@@ -418,10 +414,6 @@ MSG_HASH(
 
 /* Settings > Input > Hotkeys */
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INPUT_META_QUIT_KEY,
-   "Tancar RetroArch"
-   )
 
 /* Settings > Input > Port # Controls */
 
@@ -477,20 +469,8 @@ MSG_HASH(
 
 /* Settings > User Interface > Menu Item Visibility */
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_QUICK_MENU_VIEWS_SETTINGS,
-   "Menú Ràpid"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_SETTINGS_VIEWS_SETTINGS,
-   "Opcions"
-   )
 #ifdef HAVE_LAKKA
 #endif
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_MENU_ADD_CONTENT_ENTRY_DISPLAY_MAIN_TAB,
-   "Menú Principal"
-   )
 
 /* Settings > User Interface > Menu Item Visibility > Quick Menu */
 
@@ -520,10 +500,6 @@ MSG_HASH(
 
 /* Settings > Playlists */
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_HISTORY_LIST_ENABLE,
-   "Historial"
-   )
 
 /* Settings > Playlists > Playlist Management */
 
@@ -551,14 +527,6 @@ MSG_HASH(
 
 /* Settings > Directory */
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_CORE_ASSETS_DIRECTORY,
-   "Descàrregues"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_PLAYLIST_DIRECTORY,
-   "Llistes de reproducció"
-   )
 
 /* Music */
 
@@ -584,10 +552,6 @@ MSG_HASH(
 
 /* Playlist > Playlist Item */
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INFORMATION,
-   "Informació"
-   )
 
 /* Playlist Item > Set Core Association */
 
@@ -682,51 +646,15 @@ MSG_HASH(
 
 /* Qt (Desktop Menu) */
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_TITLE,
-   "Opcions"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_QT_MENU_HELP,
-   "&Ajuda"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_QT_LOAD_CORE,
-   "Carregar Nucli"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_QT_TAB_PLAYLISTS,
-   "Llistes de reproducció"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_QT_INFORMATION,
-   "Informació"
-   )
 
 /* Unsorted */
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_LOAD_CONTENT_HISTORY,
-   "Historial"
-   )
 
 /* Unused (Only Exist in Translation Files) */
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_NETPLAY_ENABLE,
-   "Joc en línia"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_HELP,
-   "Ajuda"
-   )
 
 /* Unused (Needs Confirmation) */
 
-MSG_HASH( /* FIXME Seems related to MENU_ENUM_LABEL_VALUE_CORE_ASSETS_DIRECTORY, possible duplicate */
-   MENU_ENUM_LABEL_VALUE_CORE_ASSETS_DIR,
-   "Descàrregues"
-   )
 
 /* Discord Status */
 
@@ -739,10 +667,6 @@ MSG_HASH( /* FIXME Seems related to MENU_ENUM_LABEL_VALUE_CORE_ASSETS_DIRECTORY,
 
 /* Environment Specific Settings */
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INPUT_META_RESTART_KEY,
-   "Reiniciar RetroArch"
-   )
 
 #ifdef HAVE_LAKKA_SWITCH
 #endif

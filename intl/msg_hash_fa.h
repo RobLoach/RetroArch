@@ -1087,10 +1087,6 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_WIFI_SETTINGS,
    "وای فای"
    )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INPUT_META_RESTART_KEY,
-   "ریستارت رتروآرچ"
-   )
 
 #ifdef HAVE_LAKKA_SWITCH
 #endif
