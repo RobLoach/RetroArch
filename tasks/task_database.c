@@ -727,10 +727,15 @@ static int database_info_list_iterate_found_match(
       const char *archive_name
       )
 {
-   char db_crc[PATH_MAX_LENGTH];
-   char db_playlist_base_str[PATH_MAX_LENGTH];
-   char db_playlist_path[PATH_MAX_LENGTH];
-   char entry_path_str[PATH_MAX_LENGTH];
+   /* TODO/FIXME - heap allocations are done here to avoid
+    * running out of stack space on systems with a limited stack size.
+    * We should use less fullsize paths in the future so that we don't
+    * need to have all these big char arrays here */
+   size_t str_len                 = PATH_MAX_LENGTH * sizeof(char);
+   char* db_crc                   = (char*)malloc(str_len);
+   char* db_playlist_base_str     = (char*)malloc(str_len);
+   char* db_playlist_path         = (char*)malloc(str_len);
+   char* entry_path_str           = (char*)malloc(str_len);
    char *hash                     = NULL;
    playlist_t   *playlist         = NULL;
    const char         *db_path    =
