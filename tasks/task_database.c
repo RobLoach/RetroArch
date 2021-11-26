@@ -618,12 +618,12 @@ static int task_database_iterate_playlist(
       case FILE_TYPE_WBFS:
       case FILE_TYPE_ISO:
          db_state->serial[0] = '\0';
-         intfstream_file_get_serial(name, 0, SIZE_MAX, db_state->serial);
+         intfstream_file_get_serial(name, 0, SIZE_MAX, &db_state->serial);
          db->type            =  DATABASE_TYPE_SERIAL_LOOKUP;
          break;
       case FILE_TYPE_CHD:
          db_state->serial[0] = '\0';
-         if (task_database_chd_get_serial(name, db_state->serial))
+         if (task_database_chd_get_serial(name, &db_state->serial))
             db->type         = DATABASE_TYPE_SERIAL_LOOKUP;
          else
          {
@@ -751,28 +751,32 @@ static int database_info_list_iterate_found_match(
    entry_path_str[0]              = '\0';
 
    fill_short_pathname_representation_noext(db_playlist_base_str,
-         db_path, sizeof(db_playlist_base_str));
+         db_path, str_len);
 
-   strlcat(db_playlist_base_str, ".lpl", sizeof(db_playlist_base_str));
+   strlcat(db_playlist_base_str, ".lpl", str_len);
 
    if (!string_is_empty(_db->playlist_directory))
       fill_pathname_join(db_playlist_path, _db->playlist_directory,
-            db_playlist_base_str, sizeof(db_playlist_path));
+            db_playlist_base_str, str_len);
 
    playlist_config_set_path(&_db->playlist_config, db_playlist_path);
    playlist = playlist_init(&_db->playlist_config);
 
    if (!string_is_empty(db_state->serial))
-      snprintf(db_crc, PATH_MAX_LENGTH * sizeof(char),
-         "%s|serial", db_state->serial);
-   snprintf(db_crc, str_len, "%08lX|crc", (unsigned long)db_info_entry->crc32);
+   {
+      snprintf(db_crc, str_len, "%s|serial", db_state->serial);
+   }
+   else
+   {   
+      snprintf(db_crc, str_len, "%08lX|crc", (unsigned long)db_info_entry->crc32);
+   }
 
    if (entry_path)
-      strlcpy(entry_path_str, entry_path, sizeof(entry_path_str));
+      strlcpy(entry_path_str, entry_path, str_len);
 
    if (!string_is_empty(archive_name))
       fill_pathname_join_delim(entry_path_str,
-            entry_path_str, archive_name, '#', sizeof(entry_path_str));
+            entry_path_str, archive_name, '#', str_len);
 
    if (core_info_database_match_archive_member(
          db_state->list->elems[db_state->list_index].data) &&
