@@ -2593,48 +2593,12 @@ bool runloop_environment_cb(unsigned cmd, void *data)
             float refresh_rate                    = (*info)->timing.fps;
             unsigned crt_switch_resolution        = settings->uints.crt_switch_resolution;
             bool video_fullscreen                 = settings->bools.video_fullscreen;
-            bool video_has_resolution_list        = video_display_server_has_resolution_list();
             bool video_switch_refresh_rate        = false;
             bool no_video_reinit                  = true;
 
             /* Refresh rate switch for regular displays */
-            if (video_has_resolution_list)
-            {
-               float refresh_mod                  = 0.0f;
-               float video_refresh_rate           = settings->floats.video_refresh_rate;
-               unsigned video_swap_interval       = settings->uints.video_swap_interval;
-               unsigned video_bfi                 = settings->uints.video_black_frame_insertion;
-               bool video_windowed_full           = settings->bools.video_windowed_fullscreen;
-               bool vrr_runloop_enable            = settings->bools.vrr_runloop_enable;
-
-               /* Roundings to PAL & NTSC standards */
-               refresh_rate = (refresh_rate > 54 && refresh_rate < 60) ? 59.94f : refresh_rate;
-               refresh_rate = (refresh_rate > 49 && refresh_rate < 55) ? 50.00f : refresh_rate;
-
-               /* Black frame insertion + swap interval multiplier */
-               refresh_mod  = video_bfi + 1.0f;
-               refresh_rate = (refresh_rate * refresh_mod * video_swap_interval);
-
-               /* Fallback when target refresh rate is not exposed */
-               if (!video_display_server_has_refresh_rate(refresh_rate))
-                  refresh_rate = (60.0f * refresh_mod * video_swap_interval);
-
-               /* Store original refresh rate on automatic change, and
-                * restore it in deinit_core and main_quit, because not all
-                * cores announce refresh rate via SET_SYSTEM_AV_INFO */
-               if (!video_st->video_refresh_rate_original)
-                  video_st->video_refresh_rate_original = video_refresh_rate;
-
-               /* Try to switch display rate when:
-                * - Not already at correct rate
-                * - In exclusive fullscreen
-                * - 'CRT SwitchRes' OFF & 'Sync to Exact Content Framerate' OFF
-                */
-               video_switch_refresh_rate = (
-                     refresh_rate != video_refresh_rate &&
-                     !crt_switch_resolution && !vrr_runloop_enable &&
-                     video_fullscreen && !video_windowed_full);
-            }
+            if (video_display_server_has_resolution_list())
+               video_switch_refresh_rate_maybe(&refresh_rate, &video_switch_refresh_rate);
 
             no_video_reinit                       = (
                      crt_switch_resolution == 0
@@ -2645,11 +2609,8 @@ bool runloop_environment_cb(unsigned cmd, void *data)
 
             /* First set new refresh rate and display rate, then after REINIT do
              * another display rate change to make sure the change stays */
-            if (video_switch_refresh_rate)
-            {
+            if (video_switch_refresh_rate && video_display_server_set_refresh_rate(refresh_rate))
                video_monitor_set_refresh_rate(refresh_rate);
-               video_display_server_set_refresh_rate(refresh_rate);
-            }
 
             /* When not doing video reinit, we also must not do input and menu
              * reinit, otherwise the input driver crashes and the menu gets
@@ -7554,11 +7515,16 @@ int runloop_iterate(void)
       if (settings->bools.video_frame_delay_auto)
       {
          float refresh_rate           = settings->floats.video_refresh_rate;
+         unsigned video_swap_interval = settings->uints.video_swap_interval;
+         unsigned video_bfi           = settings->uints.video_black_frame_insertion;
          unsigned frame_time_interval = 8;
          bool frame_time_update       =
                /* Skip some starting frames for stabilization */
-               video_st->frame_count > 10 &&
+               video_st->frame_count > frame_time_interval &&
                video_st->frame_count % frame_time_interval == 0;
+
+         /* Black frame insertion + swap interval multiplier */
+         refresh_rate = (refresh_rate / (video_bfi + 1.0f) / video_swap_interval);
 
          /* Set target moderately as half frame time with 0 delay */
          if (video_frame_delay == 0)
@@ -7572,55 +7538,16 @@ int runloop_iterate(void)
 
          if (video_frame_delay_effective > 0 && frame_time_update)
          {
-            unsigned i                    = 0;
-            unsigned frame_time           = 0;
-            unsigned frame_time_frames    = frame_time_interval - 1;
-            unsigned frame_time_target    = 1000000.0f / refresh_rate;
-            unsigned frame_time_limit_min = frame_time_target * 1.25;
-            unsigned frame_time_limit_med = frame_time_target * 1.50;
-            unsigned frame_time_limit_max = frame_time_target * 1.90;
-            unsigned frame_time_limit_cap = frame_time_target * 2.25;
-            unsigned frame_time_limit_ign = frame_time_target * 2.50;
-            unsigned frame_time_index     =
-                  (video_st->frame_time_count &
-                  (MEASURE_FRAME_TIME_SAMPLES_COUNT - 1));
+            video_frame_delay_auto_t vfda = {0};
+            vfda.frame_time_interval      = frame_time_interval;
+            vfda.refresh_rate             = refresh_rate;
 
-            /* Calculate average frame time to balance spikes */
-            for (i = 1; i < frame_time_frames + 1; i++)
+            video_frame_delay_auto(video_st, &vfda);
+            if (vfda.decrease > 0)
             {
-               retro_time_t frame_time_i = 0;
-
-               if (i > (unsigned)frame_time_index)
-                  continue;
-
-               frame_time_i = video_st->frame_time_samples[frame_time_index - i];
-
-               /* Ignore values when core is doing internal frame skipping */
-               if (frame_time_i > frame_time_limit_ign)
-                  frame_time_i = 0;
-               /* Limit maximum to prevent false positives */
-               else if (frame_time_i > frame_time_limit_cap)
-                  frame_time_i = frame_time_limit_cap;
-
-               frame_time += frame_time_i;
-            }
-            frame_time /= frame_time_frames;
-
-            if (frame_time > frame_time_limit_min)
-            {
-               unsigned delay_decrease = 1;
-
-               /* Increase decrease the more frame time is off target */
-               if (frame_time > frame_time_limit_med && video_frame_delay_effective > delay_decrease)
-               {
-                  delay_decrease++;
-                  if (frame_time > frame_time_limit_max && video_frame_delay_effective > delay_decrease)
-                     delay_decrease++;
-               }
-
-               video_frame_delay_effective -= delay_decrease;
+               video_frame_delay_effective -= vfda.decrease;
                RARCH_LOG("[Video]: Frame delay decrease by %d to %d due to frame time: %d > %d.\n",
-                     delay_decrease, video_frame_delay_effective, frame_time, frame_time_target);
+                     vfda.decrease, video_frame_delay_effective, vfda.time, vfda.target);
             }
          }
       }

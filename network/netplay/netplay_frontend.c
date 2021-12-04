@@ -71,6 +71,10 @@
 #include "../discord.h"
 #endif
 
+#ifdef HAVE_CHEEVOS
+#include "../cheevos/cheevos.h"
+#endif
+
 #include "netplay.h"
 #include "netplay_private.h"
 
@@ -1127,7 +1131,7 @@ static void netplay_handshake_ready(netplay_t *netplay,
       netplay_log_connection(&connection->addr,
             slot, connection->nick, msg, sizeof(msg));
 
-      RARCH_LOG("%s %u\n", msg_hash_to_str(MSG_CONNECTION_SLOT), slot);
+      RARCH_LOG("[Netplay] %s %u\n", msg_hash_to_str(MSG_CONNECTION_SLOT), slot);
 
       /* Send them the savestate */
       if (!(netplay->quirks &
@@ -1142,7 +1146,7 @@ static void netplay_handshake_ready(netplay_t *netplay,
             connection->nick);
    }
 
-   RARCH_LOG("%s\n", msg);
+   RARCH_LOG("[Netplay] %s\n", msg);
    /* Useful notification to the client in figuring out if a connection was successfully made before an error,
       but not as useful to the server.
       Let it be optional if server. */
@@ -1750,7 +1754,7 @@ static bool netplay_handshake_pre_sync(netplay_t *netplay,
       strlcpy(netplay->nick, new_nick, NETPLAY_NICK_LEN);
       snprintf(msg, sizeof(msg),
             msg_hash_to_str(MSG_NETPLAY_CHANGED_NICK), netplay->nick);
-      RARCH_LOG("%s\n", msg);
+      RARCH_LOG("[Netplay] %s\n", msg);
       runloop_msg_queue_push(msg, 1, 180, false, NULL, MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
    }
 
@@ -1816,6 +1820,10 @@ static bool netplay_handshake_pre_sync(netplay_t *netplay,
       settings_t *settings = config_get_ptr();
       if (!settings->bools.netplay_start_as_spectator)
          return netplay_cmd_mode(netplay, NETPLAY_CONNECTION_PLAYING);
+#ifdef HAVE_CHEEVOS
+      else /* staying in SPECTATING mode, disable achievements */
+         rcheevos_validate_netplay(0);
+#endif
    }
 
    return true;
@@ -3620,7 +3628,7 @@ void netplay_hangup(netplay_t *netplay,
 #endif
       netplay->is_connected = false;
    }
-   RARCH_LOG("%s\n", dmsg);
+   RARCH_LOG("[Netplay] %s\n", dmsg);
    /* This notification is really only important to the server if the client was playing.
     * Let it be optional if server and the client wasn't playing. */
    if (!netplay->is_server || was_playing || extra_notifications)
@@ -4064,7 +4072,13 @@ static void announce_play_spectate(netplay_t *netplay,
             dmsg = msg;
          }
          else
+         {
             dmsg = msg_hash_to_str(MSG_NETPLAY_YOU_HAVE_LEFT_THE_GAME);
+
+#ifdef HAVE_CHEEVOS
+            rcheevos_validate_netplay(0);
+#endif
+         }
          break;
 
       case NETPLAY_CONNECTION_PLAYING:
@@ -4101,6 +4115,10 @@ static void announce_play_spectate(netplay_t *netplay,
                      msg_hash_to_str(
                         MSG_NETPLAY_YOU_HAVE_JOINED_AS_PLAYER_N),
                      one_device + 1);
+
+#ifdef HAVE_CHEEVOS
+            rcheevos_validate_netplay(one_device + 1);
+#endif
          }
          else
          {
@@ -4111,11 +4129,17 @@ static void announce_play_spectate(netplay_t *netplay,
             for (device = 0; device < MAX_INPUT_DEVICES; device++)
             {
                if (devices & (1<<device))
+               {
                   pdevice_str += snprintf(pdevice_str,
                         sizeof(device_str) - (size_t)
                         (pdevice_str - device_str),
                         "%u, ",
 			(unsigned) (device+1));
+
+#ifdef HAVE_CHEEVOS
+                  rcheevos_validate_netplay(device + 1);
+#endif
+              }
             }
 
             if (pdevice_str > device_str)
@@ -4145,7 +4169,7 @@ static void announce_play_spectate(netplay_t *netplay,
          return;
    }
 
-   RARCH_LOG("%s\n", dmsg);
+   RARCH_LOG("[Netplay] %s\n", dmsg);
    runloop_msg_queue_push(dmsg, 1, 180, false, NULL,
          MESSAGE_QUEUE_ICON_DEFAULT,
          MESSAGE_QUEUE_CATEGORY_INFO);
@@ -4983,9 +5007,15 @@ static bool netplay_get_cmd(netplay_t *netplay,
                   dmsg = msg_hash_to_str(MSG_NETPLAY_CANNOT_PLAY);
             }
 
-            RARCH_LOG("%s\n", dmsg);
+            RARCH_LOG("[Netplay] %s\n", dmsg);
             runloop_msg_queue_push(dmsg, 1, 180, false, NULL,
                   MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
+
+#ifdef HAVE_CHEEVOS
+            /* unable to switch to PLAY mode, disable achievements while spectating */
+            if (netplay->self_mode == NETPLAY_CONNECTION_SPECTATING)
+                rcheevos_validate_netplay(0);
+#endif
          }
          break;
 
@@ -5251,17 +5281,18 @@ static bool netplay_get_cmd(netplay_t *netplay,
 
             RECV(nick, sizeof(nick))
                return false;
-
             nick[sizeof(nick)-1] = '\0';
 
-            /* We outright ignore pausing from spectators and slaves */
-            if (connection->mode != NETPLAY_CONNECTION_PLAYING)
-               break;
-
-            connection->paused = true;
-            netplay->remote_paused = true;
             if (netplay->is_server)
             {
+               settings_t *settings = config_get_ptr();
+               if (!settings->bools.netplay_allow_pausing)
+                  break;
+
+               /* We outright ignore pausing from spectators and slaves */
+               if (connection->mode != NETPLAY_CONNECTION_PLAYING)
+                  break;
+
                /* Inform peers */
                snprintf(msg, sizeof(msg),
                      msg_hash_to_str(MSG_NETPLAY_PEER_PAUSED),
@@ -5276,6 +5307,10 @@ static bool netplay_get_cmd(netplay_t *netplay,
             else
                snprintf(msg, sizeof(msg),
                      msg_hash_to_str(MSG_NETPLAY_PEER_PAUSED), nick);
+
+            connection->paused = true;
+            netplay->remote_paused = true;
+
             RARCH_LOG("%s\n", msg);
             runloop_msg_queue_push(msg, 1, 180, false, NULL, MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
             break;
@@ -6003,17 +6038,9 @@ netplay_t *netplay_new(void *direct_host, const char *server, uint16_t port,
          ? nick : RARCH_DEFAULT_NICK,
          sizeof(netplay->nick));
 
-   if (!init_socket(netplay, direct_host, server, port))
-   {
-      free(netplay);
-      return NULL;
-   }
-
-   if (!netplay_init_buffers(netplay))
-   {
-      free(netplay);
-      return NULL;
-   }
+   if (!init_socket(netplay, direct_host, server, port) ||
+         !netplay_init_buffers(netplay))
+      goto failure;
 
    if (netplay->is_server)
    {
@@ -6046,24 +6073,18 @@ netplay_t *netplay_new(void *direct_host, const char *server, uint16_t port,
    if (netplay->is_server)
    {
       if (!socket_nonblock(netplay->listen_fd))
-         goto error;
+         goto failure;
    }
    else
    {
       if (!socket_nonblock(netplay->connections[0].fd))
-         goto error;
+         goto failure;
    }
 
    return netplay;
 
-error:
-   if (netplay->listen_fd >= 0)
-      socket_close(netplay->listen_fd);
-
-   if (netplay->connections && netplay->connections[0].fd >= 0)
-      socket_close(netplay->connections[0].fd);
-
-   free(netplay);
+failure:
+   netplay_free(netplay);
    return NULL;
 }
 
@@ -7179,16 +7200,12 @@ static void netplay_announce(void)
    task_push_http_post_transfer(url, buf, true, NULL,
          netplay_announce_cb, NULL);
 
-   if (username)
-      free(username);
-   if (corename)
-      free(corename);
-   if (gamename)
-      free(gamename);
-   if (coreversion)
-      free(coreversion);
-   if (frontend_ident)
-      free(frontend_ident);
+   free(username);
+   free(corename);
+   free(gamename);
+   free(subsystemname);
+   free(coreversion);
+   free(frontend_ident);
 }
 
 int16_t input_state_net(unsigned port, unsigned device,

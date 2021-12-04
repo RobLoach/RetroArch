@@ -92,6 +92,14 @@ MSG_HASH( /* FIXME Is a specific image format used? Is it determined automatical
    "Napravi kopiju fizičkog diska na internoj memoriji. Biće sačuvan kao odrazna datoteka."
    )
 #ifdef HAVE_LAKKA
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_EJECT_DISC,
+   "Izvadi disk"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_EJECT_DISC,
+   "Izvadi disk iz fizičkog CD/DVD drajva."
+   )
 #endif
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_PLAYLISTS_TAB,
@@ -1406,6 +1414,14 @@ MSG_HASH(
    "Prođi kroz ove opcije ako slika nije pravilno centrirana na displeju."
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CRT_SWITCH_PORCH_ADJUST,
+   "Podesi trem"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_CRT_SWITCH_PORCH_ADJUST,
+   "Prodji kroz ove opcije da podesiš trem da bi promenio veličinu slike."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CRT_SWITCH_HIRES_MENU,
    "Koristi visoko-rezolucioni meni"
    )
@@ -1521,35 +1537,275 @@ MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN,
    "Pokreni u režimu celog ekrana"
    )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN,
+   "Pokreni u režimu punog ekrana. Može se promeniti nakon pokretanja. Može biti overrajdovano opcijom iz komandne linije."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOWED_FULLSCREEN,
+   "Režim punog prozora"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOWED_FULLSCREEN,
+   "Ako je ukjlučen režim punog ekrana, koristi pun prozor da bi se sprečilo menjanje režima displeja."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN_X,
+   "Širina punog ekrana"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN_X,
+   "Ručno postavi širinu ekrana u režimu punog ekrana (bez punog prozora). Ako nije podešeno koristiće se desktop rezolucija."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN_Y,
+   "Visina punog ekrana"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN_Y,
+   "Ručno postavi visinu ekrana u režimu punog ekrana (bez punog prozora). Ako nije podešeno koristiće se desktop rezolucija."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_FORCE_RESOLUTION,
+   "Forsiraj rezoluciju na UWP"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_FORCE_RESOLUTION,
+   "Forsiraj rezoluciju na veličinu punog ekrana, ako je 0, biće korišćena fiksna vrednost 3840 x 2160."
+   )
 
 /* Settings > Video > Windowed Mode */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_SCALE,
+   "Razmera prozora"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SCALE,
+   "Postavi razmeru prozora na određeni umnožak veličine prozora prikaza jezgra."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OPACITY,
+   "Neprozirnost prozora"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_SHOW_DECORATIONS,
+   "Prikazuj dekoracije prozora"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_SAVE_POSITION,
+   "Upamti poziciju i veličinu prozora"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SAVE_POSITION,
+   "Prikazuj sav sadržaj u prozoru fiksne veličine dimenzija podešenim opcijama 'Širina prozora' i 'Visina prozora' i sačuvaj trenutnu veličinu prozora i poziciju pri zatvaranju RetroArcha. Ako je isključeno, veličina prozara će biti dinamički određena na osnovu opcije 'Razmera prozora'."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
+   "Koristi specifičnu veličinu prozora"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
+   "Prikazuj sav sadržaj u prozoru fiksne veličine dimenzija podešenim opcijama 'Širina prozora' i 'Visina prozora'. Ako je isključeno, veličina prozora će biti dinamički određena na osnovu opcije 'Razmera prozora'."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_WIDTH,
+   "Širina prozora"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_WIDTH,
+   "Podesi širinu prozora."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_HEIGHT,
+   "Visina prozora"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_HEIGHT,
+   "Podesi visinu prozora."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_WIDTH_MAX,
+   "Maksimalna širina prozora"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_AUTO_WIDTH_MAX,
+   "Podesi maksimalnu širinu prozora kada se automatski menja veličina na osnovu opcije 'Razmera prozora'."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
+   "Maksimalna visina prozora"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
+   "Podesi maksimalnu visinu prozora kada se automatski menja veličina na osnovu opcije 'Razmera prozora'."
+   )
 
 /* Settings > Video > Scaling */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER,
+   "Celobrojno skaliranje"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_SCALE_INTEGER,
+   "Samo skaliraj prozor u celobrojnim koracima. Osnovna veličina zavisi od geometrije koju prijavljuje sistem i odnosa ekrana. Ako opcija 'Forsiraj odnos ekrana' nije uključena, X/Y će biti nezavisno celobrojno skalirano."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER_OVERSCALE,
+   "Prekoračenje celobrojnog skaliranja"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_SCALE_INTEGER_OVERSCALE,
+   "Pri celobrojnom skaliranju, zaokružuj na veći broj umesto na manji."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_INDEX,
+   "Odnos ekrana"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO,
+   "Specifičan odnos ekrana"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_ASPECT_RATIO,
+   "Decimalna vrednost za odnos širine i visine slike, koristi se ako je opcija 'Odnos ekrana' postavljena na 'Konfiguracija'."
+   )
 #if defined(DINGUX)
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_KEEP_ASPECT,
+   "Zadrži odnos ekrana"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_DINGUX_IPU_KEEP_ASPECT,
+   "Održavaj 1:1 odnos piksela kada se skalira sadržaj preko unutrašnjeg IPU-a. Ako je isključeno, slika će biti razvučena da bu popunila ceo displej."
+   )
 #endif
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_X,
+   "Postavi odnos ekrana (X pozicija)"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_X,
+   "Postavi ofset za prozor prikaza kada se definiše pozicija prozora prikaza na X osi.\nOvo se ignoriše ako je 'Celobrojno skaliranje' uključeno."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_Y,
+   "Postavi odnos ekrana (Y pozicija)"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_Y,
+   "Postavi ofset za prozor prikaza kada se definiše pozicija prozora prikaza na Y osi.\nOvo se ignoriše ako je 'Celobrojno skaliranje' uključeno."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_WIDTH,
+   "Postavi odnos ekrana (širina)"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_WIDTH,
+   "Postavi širinu prozora prikaza ako je opcija odnos ekrana postavljena na 'Specifičan odnos ekrana'."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_HEIGHT,
+   "Postavi odnos ekrana (visina)"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_HEIGHT,
+   "Postavi visinu prozora prikaza ako je opcija odnos ekrana postavljena na 'Specifičan odnos ekrana'."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_CROP_OVERSCAN,
+   "Iseci oversken (neophodan restart)"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_CROP_OVERSCAN,
+   "Iseci nekoliko piksela oko ivice slike koji se obično ostavljaju praznim i ponekad sadrže nesmislene piksele."
+   )
 
 /* Settings > Video > HDR */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_HDR_ENABLE,
+   "Uključi HDR"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_HDR_ENABLE,
+   "Uključi HDR ako ga podržava displej."
+   )
 
 /* Settings > Video > Synchronization */
 
 
 /* Settings > Audio */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AUDIO_OUTPUT_SETTINGS,
+   "Izlaz"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AUDIO_OUTPUT_SETTINGS,
+   "Izmeni podešavanja zvuka."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AUDIO_SYNCHRONIZATION_SETTINGS,
+   "Sinhronizacija"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AUDIO_WASAPI_SH_BUFFER_LENGTH,
+   "Dužina WASAPI deljenog bafera"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AUDIO_WASAPI_SH_BUFFER_LENGTH,
+   "Srednja dužina bafera (u frejmovima) kada se koristi WASAPI drajver u deljenom režimu."
+   )
 
 /* Settings > Audio > Output */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AUDIO_ENABLE,
+   "Zvuk"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AUDIO_ENABLE,
+   "Uključi audio."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AUDIO_DEVICE,
+   "Uređaj"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AUDIO_DEVICE,
+   "Overrajduj podrazumevani audio uređaj koji će koristiti audio drajver. Ovo je nezavisno od drajvera."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AUDIO_LATENCY,
+   "Kašnjenje zvuka (ms)"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AUDIO_LATENCY,
+   "Traženo kašnjenje zvuka u milisekundama. Neće biti uzeto u obzir ako audio drajver ne može postići traženo kašnjenje."
+   )
 
 /* Settings > Audio > Resampler */
 
 
 /* Settings > Audio > Synchronization */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AUDIO_SYNC,
+   "Sinhronizacija"
+   )
 
 /* Settings > Audio > MIDI */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MIDI_INPUT,
+   "Ulaz"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MIDI_OUTPUT,
+   "Izlaz"
+   )
 
 /* Settings > Audio > Mixer Settings > Mixer Stream */
 
@@ -1570,6 +1826,14 @@ MSG_HASH(
 
 /* Settings > Input > Hotkeys */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_META_QUIT_KEY,
+   "Napusti RetroArch"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_META_AI_SERVICE,
+   "VI servis"
+   )
 
 /* Settings > Input > Port # Controls */
 
@@ -1625,8 +1889,20 @@ MSG_HASH(
 
 /* Settings > User Interface > Menu Item Visibility */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QUICK_MENU_VIEWS_SETTINGS,
+   "Brzi meni"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_SETTINGS_VIEWS_SETTINGS,
+   "Podešavanja"
+   )
 #ifdef HAVE_LAKKA
 #endif
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MENU_ADD_CONTENT_ENTRY_DISPLAY_MAIN_TAB,
+   "Glavni meni"
+   )
 
 /* Settings > User Interface > Menu Item Visibility > Quick Menu */
 
@@ -1647,6 +1923,10 @@ MSG_HASH(
 
 /* Settings > Achievements */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CHEEVOS_ENABLE,
+   "Dostignuća"
+   )
 
 /* Settings > Network */
 
@@ -1656,6 +1936,14 @@ MSG_HASH(
 
 /* Settings > Playlists */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_HISTORY_LIST_ENABLE,
+   "Istorija"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_CORE,
+   "Jezgro:"
+   )
 
 /* Settings > Playlists > Playlist Management */
 
@@ -1683,6 +1971,18 @@ MSG_HASH(
 
 /* Settings > Directory */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CORE_ASSETS_DIRECTORY,
+   "Preuzeto"
+   )
+MSG_HASH( /* FIXME Not RGUI specific */
+   MENU_ENUM_LABEL_VALUE_RGUI_BROWSER_DIRECTORY,
+   "Pregledač datoteka"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_PLAYLIST_DIRECTORY,
+   "Liste"
+   )
 
 /* Music */
 
@@ -1703,20 +2003,40 @@ MSG_HASH(
 
 /* Import Content > Manual Scan */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_SYSTEM_NAME,
+   "Naziv sistema"
+   )
 
 /* Explore tab */
 
 /* Playlist > Playlist Item */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INFORMATION,
+   "Informacije"
+   )
 
 /* Playlist Item > Set Core Association */
 
 
 /* Playlist Item > Information */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CONTENT_INFO_LABEL,
+   "Naziv"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CONTENT_INFO_CORE_NAME,
+   "Jezgro"
+   )
 
 /* Quick Menu */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_LIST,
+   "Dostignuća"
+   )
 
 /* Quick Menu > Options */
 
@@ -1746,6 +2066,10 @@ MSG_HASH(
 
 /* Quick Menu > Cheats > Cheat Details */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CHEAT_DESC,
+   "Opis"
+   )
 
 /* Quick Menu > Disc Control */
 
@@ -1784,6 +2108,10 @@ MSG_HASH(
 
 /* RGUI: Settings Options */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_RGUI_THUMB_SCALE_BILINEAR,
+   "Bilinearno"
+   )
 
 /* XMB: Settings > User Interface > Appearance */
 
@@ -1802,15 +2130,103 @@ MSG_HASH(
 
 /* Qt (Desktop Menu) */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_INFO,
+   "Informacije"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_TITLE,
+   "Podešavanja"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_MENU_HELP,
+   "&Pomoć"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_LOAD_CORE,
+   "Učitaj jezgro"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_NAME,
+   "Naziv"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_TAB_PLAYLISTS,
+   "Liste"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_TAB_FILE_BROWSER,
+   "Pregledač datoteka"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_CORE,
+   "Jezgro"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_INFORMATION,
+   "Informacije"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_NAME,
+   "Naziv:"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_CORE,
+   "Jezgro:"
+   )
 
 /* Unsorted */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_LOAD_CONTENT_HISTORY,
+   "Istorija"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_USER,
+   "Korisnik"
+   )
 
 /* Unused (Only Exist in Translation Files) */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_NETPLAY_ENABLE,
+   "Igra preko mreže"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_HELP,
+   "Pomoć"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CHEEVOS_DESCRIPTION,
+   "Opis"
+   )
 
 /* Unused (Needs Confirmation) */
 
+MSG_HASH( /* FIXME Seems related to MENU_ENUM_LABEL_VALUE_CORE_ASSETS_DIRECTORY, possible duplicate */
+   MENU_ENUM_LABEL_VALUE_CORE_ASSETS_DIR,
+   "Preuzeto"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_BASIC_MENU_ENUM_CONTROLS_INFO,
+   "Informacije"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_BASIC_MENU_ENUM_CONTROLS_QUIT,
+   "Zatvori"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_BASIC_MENU_ENUM_CONTROLS_SCROLL_UP,
+   "Skroluj na gore"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_BASIC_MENU_ENUM_CONTROLS_TOGGLE_KEYBOARD,
+   "Prikaži tastaturu"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_BASIC_MENU_ENUM_CONTROLS_TOGGLE_MENU,
+   "Prikaži meni"
+   )
 
 /* Discord Status */
 
@@ -1823,6 +2239,10 @@ MSG_HASH(
 
 /* Environment Specific Settings */
 
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_META_RESTART_KEY,
+   "Restartuj RetroArch"
+   )
 
 #ifdef HAVE_LAKKA_SWITCH
 #endif

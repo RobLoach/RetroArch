@@ -1900,7 +1900,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_SOUNDS,
-   "Звуки меню"
+   "Системные звуки"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_MENU_SOUNDS,
@@ -5458,7 +5458,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_PLAYLIST_COMPRESSION,
-   "Сжимать плейлисты при записи в память. Уменьшает размер файлов и время загрузки за счёт (небольшого) увеличения нагрузки на процессор. Работает для плейлистов в старом и новом форматах."
+   "Сжимать плейлисты при записи в память. Уменьшает размер файлов и время загрузки за счёт незначительного повышения нагрузки на процессор. Работает для плейлистов в старом и новом форматах."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_PLAYLIST_SHOW_INLINE_CORE_NAME,
@@ -12014,6 +12014,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_MENU_SHOW_SHUTDOWN,
    "Показывать опцию 'Выключение'."
+   )
+MSG_HASH(
+   MSG_ROOM_PASSWORDED,
+   "Закрыто паролем"
    )
 MSG_HASH(
    MSG_INTERNET,
