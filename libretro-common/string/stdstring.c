@@ -26,7 +26,6 @@
 
 #include <string/stdstring.h>
 #include <encodings/utf.h>
-#include <stdio.h>
 
 const uint8_t lr_char_props[256] = {
 	/*x0   x1   x2   x3   x4   x5   x6   x7   x8   x9   xA   xB   xC   xD   xE   xF */
@@ -295,7 +294,7 @@ void word_wrap_wideglyph(char *dst, size_t dst_size, const char *src, int line_w
    unsigned counter_normalized       = 0;
    int line_width_normalized         = line_width * 100;
    int additional_counter_normalized = wideglyph_width - 100;
- 
+
    /* Early return if src string length is less
     * than line width */
    if (src_end - src < line_width)
@@ -539,7 +538,7 @@ unsigned string_hex_to_unsigned(const char *str)
 /**
  * Get the total number of occurrences of a character in the given string.
  */
-int count_occurrences_single_character(char *str, char t)
+int string_count_occurrences_single_character(char *str, char t)
 {
    int ctr = 0;
    int i;
@@ -555,7 +554,7 @@ int count_occurrences_single_character(char *str, char t)
 /**
  * Replaces all spaces with the given character.
  */
-void replace_whitespace_with_single_character(char *str, char t)
+void string_replace_whitespace_with_single_character(char *str, char t)
 {
 
    while (*str) {
@@ -568,7 +567,7 @@ void replace_whitespace_with_single_character(char *str, char t)
 /**
  * Replaces multiple spaces with a single space in a string.
  */
-void replace_multi_space_with_single_space(char *str)
+void string_replace_multi_space_with_single_space(char *str)
 {
    char *dest = str;
 
@@ -586,7 +585,7 @@ void replace_multi_space_with_single_space(char *str)
 /**
  * Remove all spaces from the given string.
  */
-void remove_all_whitespace (char* str_trimmed, const char* str_untrimmed)
+void string_remove_all_whitespace(char* str_trimmed, const char* str_untrimmed)
 {
    while (*str_untrimmed != '\0')
    {
@@ -603,7 +602,7 @@ void remove_all_whitespace (char* str_trimmed, const char* str_untrimmed)
 /**
  * Retrieve the last occurance of the given character in a string.
  */
-int index_last_occurance(char str[], char t)
+int string_index_last_occurance(char str[], char t)
 {
    const char * ret = strrchr(str, t);
    if (ret)
@@ -615,7 +614,7 @@ int index_last_occurance(char str[], char t)
 /**
  * Find the position of a substring in a string.
  */
-int find_index_substring_string(const char* str1, const char* str2)
+int string_find_index_substring_string(const char* str1, const char* str2)
 {
    int index;
 
@@ -630,88 +629,4 @@ int find_index_substring_string(const char* str1, const char* str2)
    }
 
    return -1;
-}
-
-/**
- * Given a filename and position, find the associated disc number.
- */
-int find_disc_number(const char* str1, int index)
-{
-   char disc;
-   int disc_number = 0;
-
-   disc = str1[index + 6];
-
-   switch(disc)
-   {
-      case 'a':
-      case 'A':
-         disc_number = 1;
-         break;
-      case 'b':
-      case 'B':
-         disc_number = 2;
-         break;
-      case 'c':
-      case 'C':
-         disc_number = 3;
-         break;
-      case 'd':
-      case 'D':
-         disc_number = 4;
-         break;
-      case 'e':
-      case 'E':
-         disc_number = 5;
-         break;
-      case 'f':
-      case 'F':
-         disc_number = 6;
-         break;
-      case 'g':
-      case 'G':
-         disc_number = 7;
-         break;
-      case 'h':
-      case 'H':
-         disc_number = 8;
-         break;
-      case 'i':
-      case 'I':
-         disc_number = 9;
-         break;
-      default:
-         disc_number = disc - '0';
-         break;
-   }
-
-   if (disc_number >= 1)
-      return disc_number;
-
-   return 0;
-}
-
-/**
- * Given a title and filename, append the appropriate disc number to it.
- */
-void append_multi_disc_suffix(char * str1, const char *filename)
-{
-   char * dest = str1;
-   int result = 0;
-   int disc_number = 0;
-
-   /** check multi-disc and insert suffix **/
-   result = find_index_substring_string(filename, "(Disc ");
-   if (result < 0)
-      result = find_index_substring_string(filename, "(disc ");
-   if (result < 0)
-      result = find_index_substring_string(filename, "(Disk ");
-   if (result < 0)
-      result = find_index_substring_string(filename, "(disk ");
-   if (result >= 0)
-   {
-      disc_number = find_disc_number(filename, result);
-      if (disc_number > 0)
-         sprintf(dest+strlen(dest), "-%i", disc_number - 1);
-   }
 }

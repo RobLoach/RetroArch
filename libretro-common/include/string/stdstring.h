@@ -48,7 +48,7 @@ RETRO_BEGIN_DECLS
 #define TOUPPER(c)   ((c) & ~(lr_char_props[(unsigned char)(c)] & 0x20))
 
 /* C standard says \f \v are space, but this one disagrees */
-#define ISSPACE(c)   (lr_char_props[(unsigned char)(c)] & 0x80) 
+#define ISSPACE(c)   (lr_char_props[(unsigned char)(c)] & 0x80)
 
 #define ISDIGIT(c)   (lr_char_props[(unsigned char)(c)] & 0x40)
 #define ISALPHA(c)   (lr_char_props[(unsigned char)(c)] & 0x20)
@@ -264,16 +264,23 @@ void string_set(char **string, const char *src);
 
 extern const unsigned char lr_char_props[256];
 
-/* Scanner string function declarations */
+/* Get the total number of occurrences of a character in the given string. */
+int string_count_occurrences_single_character(char *str, char t);
 
-int count_occurrences_single_character(char *str, char t);
-void replace_whitespace_with_single_character(char *str, char t);
-void replace_multi_space_with_single_space(char *str);
-void remove_all_whitespace(char* str_trimmed, const char* str_untrimmed);
-int index_last_occurance(char str[], char t);
-int find_index_substring_string(const char* str1, const char* str2);
-int find_disc_number(const char* str1, int index);
-void append_multi_disc_suffix(char * str1, const char *filename);
+/* Replaces all spaces with the given character. */
+void string_replace_whitespace_with_single_character(char *str, char t);
+
+/* Replaces multiple spaces with a single space in a string. */
+void string_replace_multi_space_with_single_space(char *str);
+
+/* Remove all spaces from the given string. */
+void string_remove_all_whitespace(char* str_trimmed, const char* str_untrimmed);
+
+/* Retrieve the last occurance of the given character in a string. */
+int string_index_last_occurance(char str[], char t);
+
+/* Find the position of a substring in a string. */
+int string_find_index_substring_string(const char* str1, const char* str2);
 
 RETRO_END_DECLS
 

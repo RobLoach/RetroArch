@@ -136,7 +136,7 @@ static int task_database_iterate_start(retro_task_t *task,
       task_set_title(task, strdup(msg));
       if (db->list->size != 0)
          task_set_progress(task,
-               roundf((float)db->list_ptr / 
+               roundf((float)db->list_ptr /
                   ((float)db->list->size / 100.0f)));
 #else
       fprintf(stderr, "msg: %s\n", msg);
@@ -618,12 +618,12 @@ static int task_database_iterate_playlist(
       case FILE_TYPE_WBFS:
       case FILE_TYPE_ISO:
          db_state->serial[0] = '\0';
-         intfstream_file_get_serial(name, 0, SIZE_MAX, &db_state->serial);
+         intfstream_file_get_serial(name, 0, SIZE_MAX, db_state->serial);
          db->type            =  DATABASE_TYPE_SERIAL_LOOKUP;
          break;
       case FILE_TYPE_CHD:
          db_state->serial[0] = '\0';
-         if (task_database_chd_get_serial(name, &db_state->serial))
+         if (task_database_chd_get_serial(name, db_state->serial))
             db->type         = DATABASE_TYPE_SERIAL_LOOKUP;
          else
          {
@@ -767,7 +767,7 @@ static int database_info_list_iterate_found_match(
       snprintf(db_crc, str_len, "%s|serial", db_state->serial);
    }
    else
-   {   
+   {
       snprintf(db_crc, str_len, "%08lX|crc", (unsigned long)db_info_entry->crc32);
    }
 
@@ -849,7 +849,7 @@ static int database_info_list_iterate_found_match(
       again */
    if (db_state->list_index != 0)
    {
-      struct string_list_elem entry = 
+      struct string_list_elem entry =
          db_state->list->elems[db_state->list_index];
       memmove(&db_state->list->elems[1],
               &db_state->list->elems[0],
@@ -893,7 +893,7 @@ static int task_database_iterate_crc_lookup(
       return database_info_list_iterate_end_no_match(db, db_state, name,
             path_contains_compressed_file);
 
-   /* Archive did not contain a CRC for this entry, 
+   /* Archive did not contain a CRC for this entry,
     * or the file is empty. */
    if (!db_state->crc)
    {
@@ -1007,7 +1007,7 @@ static int task_database_iterate_playlist_lutro(
       fill_short_pathname_representation_noext(game_title,
             path, sizeof(game_title));
 
-      /* the push function reads our entry as const, 
+      /* the push function reads our entry as const,
        * so these casts are safe */
       entry.path                  = (char*)path;
       entry.label                 = game_title;
@@ -1256,7 +1256,7 @@ static void task_database_handler(retro_task_t *task)
       case DATABASE_STATUS_ITERATE:
          {
             bool path_contains_compressed_file = false;
-            const char *name                   = 
+            const char *name                   =
                database_info_get_current_element_name(dbinfo);
             if (!name)
                goto task_finished;
