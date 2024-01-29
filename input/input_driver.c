@@ -688,7 +688,7 @@ bool input_driver_button_combo(
    return false;
 }
 
-static int16_t input_state_wrap(
+static int32_t input_state_wrap(
       input_driver_t *current_input,
       void *data,
       const input_device_driver_t *joypad,
@@ -701,7 +701,7 @@ static int16_t input_state_wrap(
       unsigned idx,
       unsigned id)
 {
-   int16_t ret                   = 0;
+   int32_t ret                   = 0;
 
    if (!binds)
       return 0;
@@ -760,6 +760,12 @@ static int16_t input_state_wrap(
          }
       }
    }
+   else if (device == RETRO_DEVICE_KEYBOARD)
+   {
+      /* Always ignore null key. */
+      if (id == RETROK_UNKNOWN)
+         return ret;
+   }
 
    if (current_input && current_input->input_state)
       ret |= current_input->input_state(
@@ -773,6 +779,37 @@ static int16_t input_state_wrap(
             device,
             idx,
             id);
+
+   if (device == RETRO_DEVICE_JOYPAD)
+   {
+      /* Drivers can overflow when sending too many keys at once.. */
+      if (id == RETRO_DEVICE_ID_JOYPAD_MASK && ret)
+      {
+         /* Deal with menu toggle combo buttons that won't stay inside +32767. */
+         if (ret == -0x8000) /* R3 */
+            ret = 0x8000;
+         else if (ret == -0x4000) /* LR+R3 */
+            ret = 0x8000 + 0x4000;
+         else if (ret < 0)
+            ret = 0;
+         return ret;
+      }
+
+      /* No binds, no input. This is for ignoring RETROK_UNKNOWN
+       * if the driver allows setting the key down somehow.
+       * Otherwise all hotkeys and inputs with null bind get triggered. */
+      if (     id != RETRO_DEVICE_ID_JOYPAD_MASK && ret
+            && binds[_port][id].key     == RETROK_UNKNOWN
+            && binds[_port][id].mbutton == NO_BTN
+            && (  (  binds[_port][id].joykey  == NO_BTN
+                  && binds[_port][id].joyaxis == AXIS_NONE)
+               || (  joypad_info->auto_binds[id].joykey  == NO_BTN
+                  && joypad_info->auto_binds[id].joyaxis == AXIS_NONE)
+               )
+         )
+         return 0;
+   }
+
    return ret;
 }
 
@@ -1191,7 +1228,7 @@ static int16_t input_state_device(
       settings_t *settings,
       input_mapper_t *handle,
       unsigned input_analog_dpad_mode,
-      int16_t ret,
+      int32_t ret,
       unsigned port, unsigned device,
       unsigned idx, unsigned id,
       bool button_mask)
@@ -1572,8 +1609,8 @@ static int16_t input_state_internal(
     * 'virtual' port index */
    while ((mapped_port = *(input_remap_port_map++)) < MAX_USERS)
    {
-      int16_t ret                     = 0;
-      int16_t port_result             = 0;
+      int32_t ret                     = 0;
+      int32_t port_result             = 0;
       unsigned input_analog_dpad_mode = settings->uints.input_analog_dpad_mode[mapped_port];
 
       joypad_info.joy_idx             = settings->uints.input_joypad_index[mapped_port];
@@ -4811,7 +4848,7 @@ static void input_keys_pressed(
    }
 
    {
-      int16_t ret                 = 0;
+      int32_t ret                 = 0;
       bool libretro_input_pressed = false;
 
       /* Check libretro input if emulated device type is active,
@@ -5566,7 +5603,7 @@ void input_driver_poll(void)
                if (joypad)
                {
                   unsigned k, j;
-                  int16_t ret = input_state_wrap(
+                  int32_t ret = input_state_wrap(
                         input_st->current_driver,
                         input_st->current_data,
                         input_st->primary_joypad,
@@ -6341,7 +6378,7 @@ void input_driver_collect_system_input(input_driver_state_t *input_st,
 
          for (i = 0; i < ARRAY_SIZE(ids); i++)
          {
-            if (current_input->input_state(
+            if (ids[i][0] && current_input->input_state(
                      input_st->current_data,
                      joypad,
                      sec_joypad,
