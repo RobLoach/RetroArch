@@ -1539,15 +1539,15 @@ ifeq ($(HAVE_GL_CONTEXT), 1)
       OBJ += gfx/drivers_context/vc_egl_ctx.o
    endif
 
-   ifeq ($(EMULATORJS), 1)
-      OBJ += gfx/drivers_context/emulatorjs_ctx.o
-   endif
-   
    ifeq ($(HAVE_EMSCRIPTEN), 1)
       ifeq ($(HAVE_EGL), 1)
         OBJ += gfx/drivers_context/emscriptenegl_ctx.o
       endif
-      OBJ += gfx/drivers_context/emscriptenwebgl_ctx.o
+      ifeq ($(EMULATORJS), 1)
+         OBJ += gfx/drivers_context/emulatorjs_ctx.o
+      else
+         OBJ += gfx/drivers_context/emscriptenwebgl_ctx.o
+      endif
    endif
 
    ifeq ($(HAVE_MALI_FBDEV), 1)
