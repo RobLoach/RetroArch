@@ -203,12 +203,14 @@ void pipewire_core_deinit(pipewire_core_t *pw)
       pw_thread_loop_stop(pw->thread_loop);
 
    if (pw->registry)
+   {
+      spa_hook_remove(&pw->registry_listener);
       pw_proxy_destroy((struct pw_proxy*)pw->registry);
+   }
 
    if (pw->core)
    {
       spa_hook_remove(&pw->core_listener);
-      spa_zero(pw->core_listener);
       pw_core_disconnect(pw->core);
    }
 

@@ -269,7 +269,7 @@ static int intfstream_get_serial(intfstream_t *fd, char *s, size_t len, const ch
 }
 
 static bool intfstream_file_get_serial(const char *name,
-      uint64_t offset, size_t size, char *s, size_t len)
+      uint64_t offset, int64_t size, char *s, size_t len)
 {
    int rv;
    uint8_t *data     = NULL;
@@ -291,7 +291,7 @@ static bool intfstream_file_get_serial(const char *name,
    if (file_size < 0)
       goto error;
 
-   if (offset != 0 || size < (size_t) file_size)
+   if (offset != 0 || size < file_size)
    {
       if (intfstream_seek(fd, (int64_t)offset, SEEK_SET) == -1)
          goto error;
@@ -352,7 +352,7 @@ static int task_database_gdi_get_serial(const char *name, char *s, size_t len)
 {
    char track_path[PATH_MAX_LENGTH];
 
-   track_path[0]                    = '\0';
+   track_path[0] = '\0';
 
    if (gdi_find_track(name, true,
                track_path, sizeof(track_path)) < 0)
@@ -364,7 +364,7 @@ static int task_database_gdi_get_serial(const char *name, char *s, size_t len)
       return 0;
    }
 
-   return intfstream_file_get_serial(track_path, 0, SIZE_MAX, s, len);
+   return intfstream_file_get_serial(track_path, 0, INT64_MAX, s, len);
 }
 
 static int task_database_chd_get_serial(const char *name, char *serial, size_t len)
@@ -385,7 +385,7 @@ static int task_database_chd_get_serial(const char *name, char *serial, size_t l
 }
 
 static bool intfstream_file_get_crc(const char *name,
-      uint64_t offset, size_t len, uint32_t *crc)
+      uint64_t offset, int64_t len, uint32_t *crc)
 {
    bool rv;
    intfstream_t *fd  = intfstream_open_file(name,
@@ -407,7 +407,7 @@ static bool intfstream_file_get_crc(const char *name,
    if (file_size < 0)
       goto error;
 
-   if (offset != 0 || len < (uint64_t) file_size)
+   if (offset != 0 || len < file_size)
    {
       if (intfstream_seek(fd, (int64_t)offset, SEEK_SET) == -1)
          goto error;
@@ -480,7 +480,7 @@ static int task_database_gdi_get_crc(const char *name, uint32_t *crc)
       return 0;
    }
 
-   return intfstream_file_get_crc(track_path, 0, SIZE_MAX, crc);
+   return intfstream_file_get_crc(track_path, 0, INT64_MAX, crc);
 }
 
 static bool task_database_chd_get_crc(const char *name, uint32_t *crc)
@@ -624,7 +624,7 @@ static int task_database_iterate_playlist(
          db->type = DATABASE_TYPE_CRC_LOOKUP;
          /* first check crc of archive itself */
          return intfstream_file_get_crc(name,
-               0, SIZE_MAX, &db_state->archive_crc);
+               0, INT64_MAX, &db_state->archive_crc);
 #else
          break;
 #endif
@@ -656,7 +656,7 @@ static int task_database_iterate_playlist(
       case FILE_TYPE_WIA:
       case FILE_TYPE_ISO:
          db_state->serial[0] = '\0';
-         intfstream_file_get_serial(name, 0, SIZE_MAX, db_state->serial, sizeof(db_state->serial));
+         intfstream_file_get_serial(name, 0, INT64_MAX, db_state->serial, sizeof(db_state->serial));
          db->type            =  DATABASE_TYPE_SERIAL_LOOKUP;
          break;
       case FILE_TYPE_CHD:
@@ -675,7 +675,7 @@ static int task_database_iterate_playlist(
       default:
          db_state->serial[0] = '\0';
          db->type            = DATABASE_TYPE_CRC_LOOKUP;
-         return intfstream_file_get_crc(name, 0, SIZE_MAX, &db_state->crc);
+         return intfstream_file_get_crc(name, 0, INT64_MAX, &db_state->crc);
    }
 
    return 1;
@@ -703,19 +703,19 @@ static int database_info_list_iterate_end_no_match(
       if (archive_list && archive_list->size > 0)
       {
          unsigned i;
-         size_t path_len  = strlen(path);
+         size_t _len  = strlen(path);
 
          for (i = 0; i < archive_list->size; i++)
          {
-            if (path_len + strlen(archive_list->elems[i].data)
+            if (_len + strlen(archive_list->elems[i].data)
                      + 1 < PATH_MAX_LENGTH)
             {
                char new_path[PATH_MAX_LENGTH];
                strlcpy(new_path, path, sizeof(new_path));
-               new_path[path_len] = '#';
-               strlcpy(new_path + path_len + 1,
+               new_path[_len] = '#';
+               strlcpy(new_path + _len + 1,
                      archive_list->elems[i].data,
-                     sizeof(new_path) - path_len);
+                     sizeof(new_path) - _len);
                string_list_append(db->list, new_path,
                      archive_list->elems[i].attr);
             }
@@ -1081,19 +1081,12 @@ static bool task_database_check_serial_and_crc(
       database_state_handle_t *db_state)
 {
 #ifdef RARCH_INTERNAL
-   settings_t *settings                    = config_get_ptr();
-#endif
-   const char         *db_path    =
-      database_info_get_current_name(db_state);
-
-#ifdef RARCH_INTERNAL
-   if (!settings->bools.scan_serial_and_crc)
+   if (!config_get_ptr()->bools.scan_serial_and_crc)
        return false;
 #endif
-
    /* the PSP shares serials for disc/download content */
    return string_starts_with(
-         path_basename_nocompression(db_path),
+         path_basename_nocompression(database_info_get_current_name(db_state)),
          "Sony - PlayStation Portable");
 }
 
@@ -1143,7 +1136,7 @@ static int task_database_iterate_serial_lookup(
             if (task_database_check_serial_and_crc(db_state))
             {
                if (db_state->crc == 0)
-                  intfstream_file_get_crc(name, 0, SIZE_MAX, &db_state->crc);
+                  intfstream_file_get_crc(name, 0, INT64_MAX, &db_state->crc);
                if (db_state->crc == db_info_entry->crc32)
                   return database_info_list_iterate_found_match(_db,
                         db_state, db, NULL);

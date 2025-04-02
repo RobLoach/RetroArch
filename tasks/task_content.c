@@ -867,7 +867,7 @@ static void content_file_get_path(
             char info_path[PATH_MAX_LENGTH];
             /* Build 'complete' archive file path */
             size_t _len       = strlcpy(info_path,
-                  content_path, sizeof(info_path));
+                  content_path, sizeof(info_path) - 2);
             info_path[_len  ] = '#';
             info_path[_len+1] = '\0';
             _len             += 1;
@@ -1663,7 +1663,8 @@ static void task_push_to_history_list(
             label = runloop_st->name.label;
 
          if (
-              settings && settings->bools.history_list_enable
+                  settings
+               && settings->bools.history_list_enable
                && playlist_hist)
          {
             char subsystem_name[PATH_MAX_LENGTH];
@@ -2014,7 +2015,6 @@ bool task_push_load_content_from_playlist_from_menu(
       void *user_data)
 {
    content_information_ctx_t content_ctx;
-
    content_state_t                 *p_content = content_state_get_ptr();
    bool ret                                   = true;
    settings_t *settings                       = config_get_ptr();
@@ -2109,8 +2109,10 @@ bool task_push_load_content_from_playlist_from_menu(
 #endif
 
    /* Specified core is not loaded
-    * > Load it */
+    * > Load it
+    * > Forget manually loaded core */
    path_set(RARCH_PATH_CORE, core_path);
+   path_clear(RARCH_PATH_CORE_LAST);
 #ifdef HAVE_DYNAMIC
    command_event(CMD_EVENT_LOAD_CORE, NULL);
 #else
@@ -2128,12 +2130,6 @@ bool task_push_load_content_from_playlist_from_menu(
    if (!(ret = command_event_cmd_exec(p_content,
          fullpath, &content_ctx, false)))
       goto end;
-
-#ifdef HAVE_COCOATOUCH
-   /* This seems to be needed for iOS for some reason
-    * to show the quick menu after the menu is shown */
-   menu_driver_ctl(RARCH_MENU_CTL_SET_PENDING_QUICK_MENU, NULL);
-#endif
 
 #ifndef HAVE_DYNAMIC
    /* No dynamic core loading support: if we reach
@@ -2281,7 +2277,12 @@ bool task_push_load_new_core(
       retro_task_callback_t cb,
       void *user_data)
 {
+   /* Set core path */
    path_set(RARCH_PATH_CORE, core_path);
+
+   /* Remember core path for reloading */
+   if (!string_is_equal(core_path, path_get(RARCH_PATH_CORE_LAST)))
+      path_set(RARCH_PATH_CORE_LAST, core_path);
 
    /* Load core */
    command_event(CMD_EVENT_LOAD_CORE, NULL);
@@ -2523,7 +2524,6 @@ static bool task_load_content_internal(
       bool loading_from_companion_ui)
 {
    content_information_ctx_t content_ctx;
-
    content_state_t *p_content              = content_state_get_ptr();
    bool ret                                = false;
    runloop_state_t *runloop_st             = runloop_state_get_ptr();
@@ -3027,7 +3027,6 @@ bool content_init(void)
    content_information_ctx_t content_ctx;
    enum msg_hash_enums error_enum     = MSG_UNKNOWN;
    content_state_t *p_content         = content_state_get_ptr();
-
    bool ret                           = true;
    char *error_string                 = NULL;
    runloop_state_t *runloop_st        = runloop_state_get_ptr();

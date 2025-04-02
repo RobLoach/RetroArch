@@ -49,11 +49,24 @@ const camera_driver_t *camera_drivers[] = {
 #ifdef HAVE_V4L2
    &camera_v4l2,
 #endif
+<<<<<<< HEAD
 #if defined(EMSCRIPTEN) && !defined(EMULATORJS)
+=======
+#ifdef HAVE_PIPEWIRE_STABLE
+   &camera_pipewire,
+#endif
+#ifdef EMSCRIPTEN
+>>>>>>> upstream/master
    &camera_rwebcam,
 #endif
 #ifdef ANDROID
    &camera_android,
+#endif
+#ifdef HAVE_AVF
+   &camera_avfoundation,
+#endif
+#ifdef HAVE_FFMPEG
+   &camera_ffmpeg,
 #endif
    &camera_null,
    NULL,
