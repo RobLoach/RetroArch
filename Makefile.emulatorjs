@@ -67,6 +67,8 @@ GL_DEBUG ?= 0 # help diagnose GLSL problems (can cause errors in normal operatio
 GENERATE_SOURCEMAP ?= 0
 FS_DEBUG = 0
 
+HAVE_AUDIOWORKLET ?= 0
+
 # 4194304 ----- 4 MiB (Stack: recommended)
 # 8388608 ----- 8 MiB
 # 16777216 ---- 16 MiB
@@ -118,6 +120,28 @@ endif
 ifeq ($(HAVE_RWEBAUDIO), 1)
     LDFLAGS += --js-library emscripten/library_rwebaudio.js
     DEFINES += -DHAVE_RWEBAUDIO
+endif
+
+ifeq ($(HAVE_AUDIOWORKLET), 1)
+   LDFLAGS += -s AUDIO_WORKLET=1
+   DEFINES += -DHAVE_AUDIOWORKLET
+   LDFLAGS += -s WASM_WORKERS=2
+   ifeq ($(HAVE_THREADS), 0)
+      $(error ERROR: AUDIOWORKLET requires HAVE_THREADS)
+   endif
+   ifeq ($(PROXY_TO_PTHREAD), 1)
+   else ifeq ($(ASYNC), 1)
+   else
+      DEFINES += -DEMSCRIPTEN_AUDIO_EXTERNAL_BLOCK
+      ifeq ($(MIN_ASYNC), 1)
+         DEFINES += -DEMSCRIPTEN_AUDIO_ASYNC_BLOCK
+      else
+         DEFINES += -DEMSCRIPTEN_AUDIO_FAKE_BLOCK
+      endif
+      ifneq ($(ALLOW_AUDIO_BUSYWAIT), 1)
+         DEFINES += -DEMSCRIPTEN_AUDIO_EXTERNAL_WRITE_BLOCK
+      endif
+   endif
 endif
 
 ifeq ($(HAVE_AL), 1)
@@ -188,9 +212,18 @@ RARCH_OBJ := $(addprefix $(OBJDIR)/,$(OBJ))
 
 all: $(TARGET)
 
+ifeq ($(HAVE_AUDIOWORKLET), 1)
 $(TARGET): $(RARCH_OBJ) $(libretro)
-	@$(if $(Q), $(shell echo echo LD $@),)
+	@$(if $(Q), $(shell echo echo "LD $@ \<obj\> $(libretro) $(LIBS) $(LDFLAGS)"),)
 	$(Q)$(LD) -o $@ $(RARCH_OBJ) $(libretro) $(LIBS) $(LDFLAGS)
+	$(Q)tr -d '\n' < "$(TARGET_BASE).aw.js" | sed -e "s/[\/&]/\\\\&/g" -e "s/'/\\\\\\\\&/g" > _audioworklet.js
+	$(Q)sed -i.bak -e "s/\"$(TARGET_BASE)\.aw\.js\"/URL.createObjectURL(new Blob(['$$(cat _audioworklet.js)'],{type:'text\/javascript'}))/" -- "$@"
+	$(Q)rm -f "$(TARGET_BASE).aw.js" _audioworklet.js "$@".bak
+else
+$(TARGET): $(RARCH_OBJ) $(libretro)
+	@$(if $(Q), $(shell echo echo "LD $@ \<obj\> $(libretro) $(LIBS) $(LDFLAGS)"),)
+	$(Q)$(LD) -o $@ $(RARCH_OBJ) $(libretro) $(LIBS) $(LDFLAGS)
+endif
 
 $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@)
