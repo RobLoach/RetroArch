@@ -876,8 +876,8 @@ AUDIO
 #include "../audio/drivers/gx_audio.c"
 #elif defined(__wiiu__)
 #include "../audio/drivers/wiiu_audio.c"
-#elif defined(EMSCRIPTEN)
-//#include "../audio/drivers/rwebaudio.c"
+#elif defined(HAVE_RWEBAUDIO)
+#include "../audio/drivers/rwebaudio.c"
 #elif defined(PSP) || defined(VITA) || defined(ORBIS)
 #include "../audio/drivers/psp_audio.c"
 #elif defined(PS2)

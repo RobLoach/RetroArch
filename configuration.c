@@ -145,6 +145,7 @@ enum audio_driver_enum
    AUDIO_WII,
    AUDIO_WIIU,
    AUDIO_RWEBAUDIO,
+   AUDIO_AUDIOWORKLET,
    AUDIO_PSP,
    AUDIO_PS2,
    AUDIO_CTR,
@@ -550,7 +551,9 @@ static const enum audio_driver_enum AUDIO_DEFAULT_DRIVER = AUDIO_DSOUND;
 static const enum audio_driver_enum AUDIO_DEFAULT_DRIVER = AUDIO_AL;
 #elif defined(HAVE_SL)
 static const enum audio_driver_enum AUDIO_DEFAULT_DRIVER = AUDIO_SL;
-#elif defined(EMSCRIPTEN)
+#elif defined(HAVE_AUDIOWORKLET)
+static const enum audio_driver_enum AUDIO_DEFAULT_DRIVER = AUDIO_AUDIOWORKLET;
+#elif defined(HAVE_RWEBAUDIO)
 static const enum audio_driver_enum AUDIO_DEFAULT_DRIVER = AUDIO_RWEBAUDIO;
 #elif defined(HAVE_SDL)
 static const enum audio_driver_enum AUDIO_DEFAULT_DRIVER = AUDIO_SDL;
@@ -979,6 +982,8 @@ const char *config_get_default_audio(void)
 #endif
       case AUDIO_RWEBAUDIO:
          return "rwebaudio";
+      case AUDIO_AUDIOWORKLET:
+         return "audioworklet";
       case AUDIO_JACK:
          return "jack";
       case AUDIO_NULL:
@@ -6180,7 +6185,11 @@ bool input_remapping_save_file(const char *path)
       if (skip_port)
          continue;
 
-      snprintf(formatted_number, sizeof(formatted_number), "%u", i + 1);
+      _len = snprintf(formatted_number, sizeof(formatted_number), "%u", i + 1);
+      if (_len >= sizeof(formatted_number)) {
+         RARCH_ERR("[Config]: unexpectedly high number of users");
+         break;
+      }
       _len       = strlcpy(prefix, "input_player",   sizeof(prefix));
       strlcpy(prefix + _len, formatted_number, sizeof(prefix) - _len);
       _len       = strlcpy(s1, prefix, sizeof(s1));
