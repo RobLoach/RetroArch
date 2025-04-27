@@ -154,6 +154,51 @@ void PlatformEmscriptenCommandRaiseFlag()
    emscripten_platform_data->command_flag = true;
 }
 
+
+void platform_emscripten_update_canvas_dimensions(int width, int height, double *dpr)
+{
+   printf("[INFO] Setting real canvas size: %d x %d\n", width, height);
+   emscripten_set_canvas_element_size("#canvas", width, height);
+   if (!emscripten_platform_data)
+      return;
+   PLATFORM_SETVAL(u32, &emscripten_platform_data->canvas_width,        width);
+   PLATFORM_SETVAL(u32, &emscripten_platform_data->canvas_height,       height);
+   PLATFORM_SETVAL(f64, &emscripten_platform_data->device_pixel_ratio, *dpr);
+}
+
+void platform_emscripten_update_window_hidden(bool hidden)
+{
+   if (!emscripten_platform_data)
+      return;
+   emscripten_platform_data->window_hidden = hidden;
+}
+
+void platform_emscripten_update_power_state(bool supported, int discharge_time, float level, bool charging)
+{
+   if (!emscripten_platform_data)
+      return;
+   emscripten_platform_data->power_state_supported      = supported;
+   emscripten_platform_data->power_state_charging       = charging;
+   PLATFORM_SETVAL(u32, &emscripten_platform_data->power_state_discharge_time, discharge_time);
+   PLATFORM_SETVAL(f32, &emscripten_platform_data->power_state_level,          level);
+}
+
+void platform_emscripten_update_memory_usage(uint32_t used1, uint32_t used2, uint32_t limit1, uint32_t limit2)
+{
+   if (!emscripten_platform_data)
+      return;
+   PLATFORM_SETVAL(u64, &emscripten_platform_data->memory_used,  used1 | ((uint64_t)used2 << 32));
+   PLATFORM_SETVAL(u64, &emscripten_platform_data->memory_limit, limit1 | ((uint64_t)limit2 << 32));
+}
+
+void platform_emscripten_command_raise_flag()
+{
+   if (!emscripten_platform_data)
+      return;
+   emscripten_platform_data->command_flag = true;
+}
+
+
 /* platform specific c helpers */
 
 void PlatformEmscriptenCommandReply(const char *msg, size_t len)
