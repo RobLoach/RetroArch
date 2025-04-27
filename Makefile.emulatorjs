@@ -53,6 +53,7 @@ HAVE_RWEBAUDIO             = 0
 
 DEBUG                     ?= 0
 ASYNC                     ?= 0
+MIN_ASYNC = 0
 PTHREAD                   ?= 0
 LTO                       ?= 0
 PRECISE_F32                = 1
@@ -171,6 +172,12 @@ ifeq ($(ASYNC), 1)
     ifeq ($(DEBUG), 1)
         LDFLAGS += -s ASYNCIFY_DEBUG=1
     endif
+else ifeq ($(MIN_ASYNC), 1)
+   DEFINES += -DEMSCRIPTEN_ASYNCIFY -DEMSCRIPTEN_MIN_ASYNCIFY
+   LDFLAGS += -s ASYNCIFY=1 -s ASYNCIFY_STACK_SIZE=8192 -s ASYNCIFY_IGNORE_INDIRECT=1 -s ASYNCIFY_ADD='dynCall_*,emscripten_mainloop' -s ASYNCIFY_REMOVE='threaded_worker'
+   ifeq ($(DEBUG), 1)
+      LDFLAGS += -s ASYNCIFY_ADVISE #-s ASYNCIFY_DEBUG=1
+   endif
 endif
 
 include Makefile.common

@@ -80,6 +80,7 @@ typedef struct
    uint64_t memory_used;
    uint64_t memory_limit;
    double device_pixel_ratio;
+   int raf_interval;
    int canvas_width;
    int canvas_height;
    int power_state_discharge_time;
@@ -120,6 +121,11 @@ void update_canvas_dimensions(int width, int height, double *dpr)
    PLATFORM_SETVAL(u32, &emscripten_platform_data->canvas_width,        width);
    PLATFORM_SETVAL(u32, &emscripten_platform_data->canvas_height,       height);
    PLATFORM_SETVAL(f64, &emscripten_platform_data->device_pixel_ratio, *dpr);
+}
+
+bool platform_emscripten_should_drop_iter(void)
+{
+   return (emscripten_platform_data->window_hidden && emscripten_platform_data->raf_interval);
 }
 
 void update_window_hidden(bool hidden)
@@ -210,6 +216,33 @@ void PlatformEmscriptenCommandReply(const char *msg, size_t len)
 }
 
 size_t PlatformEmscriptenCommandRead(char **into, size_t max_len)
+{
+   if (!emscripten_platform_data || !emscripten_platform_data->command_flag)
+      return 0;
+   return MAIN_THREAD_EM_ASM_INT({
+      var next_command = RPE.command_queue.shift();
+      var length = lengthBytesUTF8(next_command);
+      if (length > $2) {
+         console.error("[CMD] Command too long, skipping", next_command);
+         return 0;
+      }
+      stringToUTF8(next_command, $1, $2);
+      if (RPE.command_queue.length == 0) {
+         setValue($0, 0, 'i8');
+      }
+      return length;
+    }, &emscripten_platform_data->command_flag, into, max_len);
+}
+
+void platform_emscripten_command_reply(const char *msg, size_t len)
+{
+   MAIN_THREAD_EM_ASM({
+      var message = UTF8ToString($0, $1);
+      RPE.command_reply_queue.push(message);
+   }, msg, len);
+}
+
+size_t platform_emscripten_command_read(char **into, size_t max_len)
 {
    if (!emscripten_platform_data || !emscripten_platform_data->command_flag)
       return 0;
