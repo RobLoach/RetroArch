@@ -63,6 +63,16 @@ static void gfx_ctx_emscripten_check_window(void *data, bool *quit,
    *quit   = false;
 }
 
+static void gfx_ctx_emscripten_swap_buffers(void *data)
+{
+#ifdef HAVE_EGL
+   /* Doesn't really do anything in WebGL, but it might
+    * if we use WebGL workers in the future */
+   emscripten_ctx_data_t *emscripten = (emscripten_ctx_data_t*)data;
+   egl_swap_buffers(&emscripten->egl);
+#endif
+}
+
 static void gfx_ctx_emscripten_get_video_size(void *data,
       unsigned *width, unsigned *height)
 {
@@ -197,9 +207,15 @@ static void gfx_ctx_emscripten_input_driver(void *data,
       const char *name,
       input_driver_t **input, void **input_data)
 {
+#ifdef EMULATORJS
+   void *emulatorjs = input_driver_init_wrap(&input_emulatorjs, name);
+   *input          = emulatorjs ? &input_emulatorjs : NULL;
+   *input_data     = emulatorjs;
+#else
    void *rwebinput = input_driver_init_wrap(&input_rwebinput, name);
    *input          = rwebinput ? &input_rwebinput : NULL;
    *input_data     = rwebinput;
+#endif
 }
 
 static bool gfx_ctx_emscripten_has_focus(void *data) {
@@ -264,7 +280,7 @@ const gfx_ctx_driver_t gfx_ctx_emscripten = {
    gfx_ctx_emscripten_has_focus,
    gfx_ctx_emscripten_suppress_screensaver,
    true, /* has_windowed */
-   NULL, /* swap_buffers: no-op */
+   gfx_ctx_emscripten_swap_buffers, /* swap_buffers: no-op */
    gfx_ctx_emscripten_input_driver,
 #ifdef HAVE_EGL
    egl_get_proc_address,

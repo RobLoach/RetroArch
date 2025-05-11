@@ -127,7 +127,7 @@ static void *gfx_ctx_emscripten_webgl_init(void *video_driver)
    if (!emscripten)
       return NULL;
 
-   emscripten->ctx = emscripten_webgl_create_context("#canvas", &attrs);
+   emscripten->ctx = emscripten_webgl_create_context("!canvas", &attrs);
    if (!emscripten->ctx)
    {
       RARCH_ERR("[EMSCRIPTEN/WebGL]: Failed to initialize webgl\n");
@@ -169,9 +169,15 @@ static void gfx_ctx_emscripten_webgl_input_driver(void *data,
       const char *name,
       input_driver_t **input, void **input_data)
 {
+#ifdef EMULATORJS
+   void *emulatorjs = input_driver_init_wrap(&input_emulatorjs, name);
+   *input          = emulatorjs ? &input_emulatorjs : NULL;
+   *input_data     = emulatorjs;
+#else
    void *rwebinput = input_driver_init_wrap(&input_rwebinput, name);
    *input          = rwebinput ? &input_rwebinput : NULL;
    *input_data     = rwebinput;
+#endif
 }
 
 static bool gfx_ctx_emscripten_webgl_has_focus(void *data)
