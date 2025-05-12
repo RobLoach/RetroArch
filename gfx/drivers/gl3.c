@@ -1602,6 +1602,9 @@ static void gl3_set_viewport(gl3_t *gl,
       gl->vp.height      = vp_height;
    }
 
+   if (device_aspect < 1.0f)
+      gl->vp.y *= 2;
+
    glViewport(gl->vp.x, gl->vp.y, gl->vp.width, gl->vp.height);
    gl3_set_projection(gl, &gl3_default_ortho, allow_rotate);
 

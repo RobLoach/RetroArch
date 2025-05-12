@@ -1307,6 +1307,8 @@ static void gl2_set_viewport(gl2_t *gl,
       gl->vp.width  = vp_width;
       gl->vp.height = vp_height;
    }
+   if (device_aspect < 1.0f)
+      gl->vp.y *= 2;
 
    glViewport(gl->vp.x, gl->vp.y, gl->vp.width, gl->vp.height);
    gl2_set_projection(gl, &default_ortho, allow_rotate);
