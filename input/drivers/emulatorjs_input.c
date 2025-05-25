@@ -19,23 +19,23 @@
 #include <string.h>
 
 #include <boolean.h>
-#include <retro_assert.h>
 #include <retro_miscellaneous.h>
 #include <encodings/crc32.h>
 #include <encodings/utf.h>
 
-#ifdef WEB_SCALING
 #include <emscripten/emscripten.h>
-#endif
-
 #include <emscripten/html5.h>
+#include "../../frontend/drivers/platform_emscripten.h"
 
+#include "../input_driver.h"
+#include "../input_types.h"
 #include "../input_keymaps.h"
 
 #include "../../tasks/tasks_internal.h"
 #include "../../configuration.h"
 #include "../../retroarch.h"
 #include "../../verbosity.h"
+#include "../../command.h"
 
 /* https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/button */
 #define RWEBINPUT_MOUSE_BTNL 0
@@ -43,6 +43,8 @@
 #define RWEBINPUT_MOUSE_BTNR 2
 #define RWEBINPUT_MOUSE_BTN4 3
 #define RWEBINPUT_MOUSE_BTN5 4
+
+#define MAX_TOUCH 32
 
 typedef struct rwebinput_key_to_code_map_entry
 {
@@ -63,14 +65,12 @@ typedef struct rwebinput_keyboard_event_queue
    size_t max_size;
 } rwebinput_keyboard_event_queue_t;
 
-typedef struct rwebinput_touch
+typedef struct rwebinput_pointer_states
 {
-   long last_canvasX;
-   long last_canvasY;
-   long last_touchdown_location;
-   bool clicked_yet;
-   bool clicked_twice;
-} rwebinput_touch_t;
+   int x;
+   int y;
+   int id;
+} rwebinput_pointer_state_t;
 
 typedef struct rwebinput_mouse_states
 {
@@ -78,25 +78,37 @@ typedef struct rwebinput_mouse_states
    double pending_scroll_y;
    double scroll_x;
    double scroll_y;
-   signed x;
-   signed y;
-   signed pending_delta_x;
-   signed pending_delta_y;
-   signed delta_x;
-   signed delta_y;
+   int x;
+   int y;
+   int pending_delta_x;
+   int pending_delta_y;
+   int delta_x;
+   int delta_y;
    uint8_t buttons;
 } rwebinput_mouse_state_t;
 
+typedef struct rwebinput_motion_states
+{
+   float x;
+   float y;
+   float z;
+   bool enabled;
+} rwebinput_motion_state_t;
+
 typedef struct rwebinput_input
 {
-   rwebinput_touch_t touch;
-   rwebinput_mouse_state_t mouse;             /* double alignment */
-   rwebinput_keyboard_event_queue_t keyboard; /* ptr alignment */
+   rwebinput_mouse_state_t mouse;                /* double alignment */
+   rwebinput_keyboard_event_queue_t keyboard;    /* ptr alignment */
+   rwebinput_pointer_state_t pointer[MAX_TOUCH]; /* int alignment */
+   rwebinput_motion_state_t accelerometer;       /* float alignment */
+   rwebinput_motion_state_t gyroscope;           /* float alignment */
+   unsigned pointer_count;
    bool keys[RETROK_LAST];
+   bool pointerlock_active;
 } rwebinput_input_t;
 
 /* KeyboardEvent.keyCode has been deprecated for a while and doesn't have
- * separate left/right modifer codes, so we have to map string labels from
+ * separate left/right modifier codes, so we have to map string labels from
  * KeyboardEvent.code to retro keys */
 static const rwebinput_key_to_code_map_entry_t rwebinput_key_to_code_map[] =
 {
@@ -219,22 +231,14 @@ static void rwebinput_generate_lut(void)
    int i;
    struct rarch_key_map *key_map;
 
-   retro_assert(ARRAY_SIZE(rarch_key_map_rwebinput) ==
-      ARRAY_SIZE(rwebinput_key_to_code_map) + 1);
-
    for (i = 0; i < ARRAY_SIZE(rwebinput_key_to_code_map); i++)
    {
-      int j;
       uint32_t crc;
       const rwebinput_key_to_code_map_entry_t *key_to_code =
          &rwebinput_key_to_code_map[i];
       key_map = &rarch_key_map_rwebinput[i];
       crc = encoding_crc32(0, (const uint8_t *)key_to_code->key,
          strlen(key_to_code->key));
-
-      /* sanity check: make sure there's no collisions */
-      for (j = 0; j < i; j++)
-         retro_assert(rarch_key_map_rwebinput[j].sym != crc);
 
       key_map->rk  = key_to_code->rk;
       key_map->sym = crc;
@@ -246,14 +250,17 @@ static void rwebinput_generate_lut(void)
    key_map->rk  = RETROK_UNKNOWN;
    key_map->sym = 0;
 }
-static int keyboard_enabled = 0;
-void ejs_set_keyboard_enabled(int enabled) {
-   keyboard_enabled = enabled;
+
+bool keyboard_enabled = false;
+void ejs_set_keyboard_enabled(int enabled)
+{
+   keyboard_enabled = enabled == 1;
 }
+
 static EM_BOOL rwebinput_keyboard_cb(int event_type,
    const EmscriptenKeyboardEvent *key_event, void *user_data)
 {
-   if (keyboard_enabled != 1) return EM_FALSE;
+   if (!keyboard_enabled) return EM_FALSE;
    rwebinput_input_t *rwebinput = (rwebinput_input_t*)user_data;
 
    if (event_type == EMSCRIPTEN_EVENT_KEYPRESS)
@@ -274,6 +281,7 @@ static EM_BOOL rwebinput_keyboard_cb(int event_type,
 
    return EM_TRUE;
 }
+
 static EM_BOOL rwebinput_mouse_cb(int event_type,
    const EmscriptenMouseEvent *mouse_event, void *user_data)
 {
@@ -281,25 +289,45 @@ static EM_BOOL rwebinput_mouse_cb(int event_type,
 
    uint8_t mask                      = 1 << mouse_event->button;
 
-#ifdef WEB_SCALING
-   double dpr = emscripten_get_device_pixel_ratio();
-   rwebinput->mouse.x                = (long)(mouse_event->targetX * dpr);
-   rwebinput->mouse.y                = (long)(mouse_event->targetY * dpr);
-   rwebinput->mouse.pending_delta_x += (long)(mouse_event->movementX * dpr);
-   rwebinput->mouse.pending_delta_y += (long)(mouse_event->movementY * dpr);
-#else
-   rwebinput->mouse.x                = mouse_event->targetX;
-   rwebinput->mouse.y                = mouse_event->targetY;
+   // note: movementX/movementY are pre-scaled in chromium (but not firefox)
+   // see https://github.com/w3c/pointerlock/issues/42
+
    rwebinput->mouse.pending_delta_x += mouse_event->movementX;
    rwebinput->mouse.pending_delta_y += mouse_event->movementY;
-#endif
+
+   if (rwebinput->pointerlock_active)
+   {
+      unsigned video_width, video_height;
+      video_driver_get_size(&video_width, &video_height);
+
+      rwebinput->mouse.x += mouse_event->movementX;
+      rwebinput->mouse.y += mouse_event->movementY;
+
+      /* Clamp X */
+      if (rwebinput->mouse.x < 0)
+         rwebinput->mouse.x = 0;
+      if (rwebinput->mouse.x >= video_width)
+         rwebinput->mouse.x = (int)(video_width - 1);
+
+      /* Clamp Y */
+      if (rwebinput->mouse.y < 0)
+         rwebinput->mouse.y = 0;
+      if (rwebinput->mouse.y >= video_height)
+         rwebinput->mouse.y = (int)(video_height - 1);
+   }
+   else
+   {
+      double dpr = platform_emscripten_get_dpr();
+      rwebinput->mouse.x = (int)(mouse_event->targetX * dpr);
+      rwebinput->mouse.y = (int)(mouse_event->targetY * dpr);
+   }
 
    if (event_type ==  EMSCRIPTEN_EVENT_MOUSEDOWN)
       rwebinput->mouse.buttons |= mask;
    else if (event_type == EMSCRIPTEN_EVENT_MOUSEUP)
       rwebinput->mouse.buttons &= ~mask;
 
-   return EM_FALSE;
+   return EM_TRUE;
 }
 
 static EM_BOOL rwebinput_wheel_cb(int event_type,
@@ -307,23 +335,11 @@ static EM_BOOL rwebinput_wheel_cb(int event_type,
 {
    rwebinput_input_t       *rwebinput = (rwebinput_input_t*)user_data;
 
-#ifdef WEB_SCALING
-   double dpr = emscripten_get_device_pixel_ratio();
+   double dpr = platform_emscripten_get_dpr();
    rwebinput->mouse.pending_scroll_x += wheel_event->deltaX * dpr;
    rwebinput->mouse.pending_scroll_y += wheel_event->deltaY * dpr;
-#else
-   rwebinput->mouse.pending_scroll_x += wheel_event->deltaX;
-   rwebinput->mouse.pending_scroll_y += wheel_event->deltaY;
-#endif
 
    return EM_TRUE;
-}
-
-static bool calculate_diff(long last_touchdown_location, EmscriptenTouchPoint touch) {
-   long press_diff = 25;
-   long diff = last_touchdown_location - (touch.targetX + touch.targetY);
-   //printf("Touch of diff: %li\n", diff);
-   return abs(diff) < press_diff;
 }
 
 bool ejs_is_paused(void);
@@ -331,80 +347,102 @@ bool ejs_is_paused(void);
 static EM_BOOL rwebinput_touch_cb(int event_type,
    const EmscriptenTouchEvent *touch_event, void *user_data)
 {
-   EM_BOOL rv = ejs_is_paused() ? EM_FALSE : EM_TRUE;
-   rwebinput_input_t       *rwebinput = (rwebinput_input_t*)user_data;
-   rwebinput_touch_t       *touch_handler = &rwebinput->touch;
+   rwebinput_input_t *rwebinput = (rwebinput_input_t*)user_data;
 
-   EmscriptenTouchPoint touch;
-   bool touch_changed = false;
-   for (int i=0; i<touch_event->numTouches; i++) {
-      if (touch_event->touches[i].isChanged) {
-         touch = touch_event->touches[i];
-         touch_changed = true;
-      }
-   }
-   if (!touch_changed) return rv;
-   //printf("Touch changed. %li %i %i\n", touch.identifier, touch.targetX, touch.targetY);
+   unsigned touches_max      = MIN(touch_event->numTouches, MAX_TOUCH);
+   unsigned touches_released = 0;
 
-   switch (event_type) {
-      case EMSCRIPTEN_EVENT_TOUCHSTART: {
-         touch_handler->last_canvasX = touch.targetX;
-         touch_handler->last_canvasY = touch.targetY;
+   switch (event_type)
+   {
+      case EMSCRIPTEN_EVENT_TOUCHSTART:
+      case EMSCRIPTEN_EVENT_TOUCHMOVE:
+         for (unsigned touch = 0; touch < touches_max; touch++)
+         {
+            if (!(touch_event->touches[touch].isChanged) && rwebinput->pointer[touch].id == touch_event->touches[touch].identifier)
+               continue;
 
-         if (touch_handler->clicked_yet) {
-            long is_pressed = calculate_diff(touch_handler->last_touchdown_location, touch);
-            if (is_pressed && !touch_handler->clicked_twice) {
-               //printf("Click start!.\n");
-               touch_handler->clicked_twice = true;
-               rwebinput->mouse.buttons |= 1 << 0;
-               break;
+            double dpr = platform_emscripten_get_dpr();
+            rwebinput->pointer[touch].x  = (int)(touch_event->touches[touch].targetX * dpr);
+            rwebinput->pointer[touch].y  = (int)(touch_event->touches[touch].targetY * dpr);
+            rwebinput->pointer[touch].id = touch_event->touches[touch].identifier;
+         }
+         break;
+      case EMSCRIPTEN_EVENT_TOUCHEND:
+      case EMSCRIPTEN_EVENT_TOUCHCANCEL:
+         // note: touches_max/numTouches is out of date here - it uses the old value from before the release
+         // note 2: I'm unsure if multiple touches can trigger the same touchend anyway...
+         if (touches_max > 1)
+         {
+            for (unsigned touch_up = 0; touch_up < touches_max; touch_up++)
+            {
+               if (touch_event->touches[touch_up].isChanged)
+               {
+                  memmove(rwebinput->pointer + touch_up - touches_released,
+                          rwebinput->pointer + touch_up - touches_released + 1,
+                          (touches_max - touch_up - 1) * sizeof(rwebinput_pointer_state_t));
+                  touches_released++;
+               }
             }
          }
-         //printf("Touch start.\n");
-         touch_handler->clicked_yet = true;
-         touch_handler->clicked_twice = false;
-         touch_handler->last_touchdown_location = (touch.targetX + touch.targetY);
-         break;
-      }
-      case EMSCRIPTEN_EVENT_TOUCHMOVE: {
-         long diffX = (touch.targetX - touch_handler->last_canvasX) / 2;
-         long diffY = (touch.targetY - touch_handler->last_canvasY) / 2;
-         touch_handler->last_canvasX = touch.targetX;
-         touch_handler->last_canvasY = touch.targetY;
-         //printf("Touch move. %li %li\n", diffX, diffY);
+         else
+            touches_released = 1;
 
-#ifdef WEB_SCALING
-         double dpr = emscripten_get_device_pixel_ratio();
-         rwebinput->mouse.x                = (long)(touch.targetX * dpr);
-         rwebinput->mouse.y                = (long)(touch.targetY * dpr);
-         rwebinput->mouse.pending_delta_x += (long)(diffX * dpr);
-         rwebinput->mouse.pending_delta_y += (long)(diffY * dpr);
-#else
-         rwebinput->mouse.x                = touch.targetX;
-         rwebinput->mouse.y                = touch.targetY;
-         rwebinput->mouse.pending_delta_x += diffX;
-         rwebinput->mouse.pending_delta_y += diffY;
-#endif
+         if (touches_max > touches_released)
+            touches_max -= touches_released;
+         else
+            touches_max = 0;
          break;
+   }
+
+   rwebinput->pointer_count = touches_max;
+
+   return ejs_is_paused() ? EM_FALSE : EM_TRUE;
+}
+
+static EM_BOOL rwebinput_pointerlockchange_cb(int event_type,
+   const EmscriptenPointerlockChangeEvent *pointerlock_change_event, void *user_data)
+{
+   rwebinput_input_t *rwebinput = (rwebinput_input_t*)user_data;
+
+   rwebinput->pointerlock_active = pointerlock_change_event->isActive;
+
+   if (!pointerlock_change_event->isActive)
+   {
+      input_driver_state_t *input_st = input_state_get_ptr();
+
+      if (input_st->game_focus_state.enabled)
+      {
+         enum input_game_focus_cmd_type game_focus_cmd = GAME_FOCUS_CMD_OFF;
+         command_event(CMD_EVENT_GAME_FOCUS_TOGGLE, &game_focus_cmd);
       }
-      case EMSCRIPTEN_EVENT_TOUCHCANCEL:
-      case EMSCRIPTEN_EVENT_TOUCHEND: {
-         if (touch_handler->clicked_yet && touch_handler->clicked_twice) {
-            //printf("Click end!.\n");
-            rwebinput->mouse.buttons &= ~(1 << 0);
-            touch_handler->clicked_yet = false;
-            touch_handler->clicked_twice = false;
-            break;
-         }
-         long is_pressed = calculate_diff(touch_handler->last_touchdown_location, touch);
-         if (!is_pressed) {
-            touch_handler->clicked_yet = false;
-            touch_handler->clicked_twice = false;
-         }
-         break;
+
+      if (input_st->flags & INP_FLAG_GRAB_MOUSE_STATE)
+      {
+         command_event(CMD_EVENT_GRAB_MOUSE_TOGGLE, NULL);
       }
    }
-   return rv;
+
+   return EM_TRUE;
+}
+
+static EM_BOOL rwebinput_devicemotion_cb(int event_type,
+   const EmscriptenDeviceMotionEvent *device_motion_event, void *user_data)
+{
+   rwebinput_input_t *rwebinput = (rwebinput_input_t*)user_data;
+
+   /* TODO: what units does mGBA want? does something need to be changed on the core side? */
+   /* given in m/s^2 (inverted) */
+   rwebinput->accelerometer.x = device_motion_event->accelerationIncludingGravityX / -9.8;
+   rwebinput->accelerometer.y = device_motion_event->accelerationIncludingGravityY / -9.8;
+   rwebinput->accelerometer.z = device_motion_event->accelerationIncludingGravityZ / -9.8;
+   /* XYZ == BetaGammaAlpha according to W3C? in my testing it is AlphaBetaGamma... */
+   /* libretro wants radians/s but it is too fast in mGBA, see above comment */
+   /* given in degrees/s */
+   rwebinput->gyroscope.x = device_motion_event->rotationRateAlpha / 180;
+   rwebinput->gyroscope.y = device_motion_event->rotationRateBeta  / 180;
+   rwebinput->gyroscope.z = device_motion_event->rotationRateGamma / 180;
+
+   return EM_TRUE;
 }
 
 static void *rwebinput_input_init(const char *joypad_driver)
@@ -418,8 +456,9 @@ static void *rwebinput_input_init(const char *joypad_driver)
 
    rwebinput_generate_lut();
 
-   r = emscripten_set_keydown_callback(
-         EMSCRIPTEN_EVENT_TARGET_DOCUMENT, rwebinput, false,
+   input_keymaps_init_keyboard_lut(rarch_key_map_rwebinput);
+
+   r = emscripten_set_keydown_callback("!parent", rwebinput, false,
          rwebinput_keyboard_cb);
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
@@ -427,8 +466,7 @@ static void *rwebinput_input_init(const char *joypad_driver)
          "[EMSCRIPTEN/INPUT] failed to create keydown callback: %d\n", r);
    }
 
-   r = emscripten_set_keyup_callback(
-         EMSCRIPTEN_EVENT_TARGET_DOCUMENT, rwebinput, false,
+   r = emscripten_set_keyup_callback("!parent", rwebinput, false,
          rwebinput_keyboard_cb);
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
@@ -436,8 +474,7 @@ static void *rwebinput_input_init(const char *joypad_driver)
          "[EMSCRIPTEN/INPUT] failed to create keyup callback: %d\n", r);
    }
 
-   r = emscripten_set_keypress_callback(
-         EMSCRIPTEN_EVENT_TARGET_DOCUMENT, rwebinput, false,
+   r = emscripten_set_keypress_callback("!parent", rwebinput, false,
          rwebinput_keyboard_cb);
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
@@ -445,66 +482,82 @@ static void *rwebinput_input_init(const char *joypad_driver)
          "[EMSCRIPTEN/INPUT] failed to create keypress callback: %d\n", r);
    }
 
-   r = emscripten_set_mousedown_callback("!canvas", rwebinput, false, rwebinput_mouse_cb);
+   r = emscripten_set_mousedown_callback("!canvas", rwebinput, false,
+         rwebinput_mouse_cb);
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
       RARCH_ERR(
          "[EMSCRIPTEN/INPUT] failed to create mousedown callback: %d\n", r);
    }
 
-   r = emscripten_set_mouseup_callback("!canvas", rwebinput, false, rwebinput_mouse_cb);
+   r = emscripten_set_mouseup_callback("!canvas", rwebinput, false,
+         rwebinput_mouse_cb);
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
       RARCH_ERR(
          "[EMSCRIPTEN/INPUT] failed to create mouseup callback: %d\n", r);
    }
 
-   r = emscripten_set_mousemove_callback("!canvas", rwebinput, false, rwebinput_mouse_cb);
+   r = emscripten_set_mousemove_callback("!canvas", rwebinput, false,
+         rwebinput_mouse_cb);
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
       RARCH_ERR(
          "[EMSCRIPTEN/INPUT] failed to create mousemove callback: %d\n", r);
    }
 
-   r = emscripten_set_wheel_callback("!canvas", rwebinput, false, rwebinput_wheel_cb);
+   r = emscripten_set_wheel_callback("!canvas", rwebinput, false,
+         rwebinput_wheel_cb);
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
       RARCH_ERR(
          "[EMSCRIPTEN/INPUT] failed to create wheel callback: %d\n", r);
    }
 
-   r = emscripten_set_touchstart_callback("!canvas", rwebinput, false, rwebinput_touch_cb);
+   r = emscripten_set_touchstart_callback("!canvas", rwebinput, false,
+         rwebinput_touch_cb);
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
       RARCH_ERR(
-         "[EMSCRIPTEN/INPUT] failed to create wheel callback: %d\n", r);
+         "[EMSCRIPTEN/INPUT] failed to create touchstart callback: %d\n", r);
    }
 
-   r = emscripten_set_touchend_callback("!canvas", rwebinput, false, rwebinput_touch_cb);
+   r = emscripten_set_touchend_callback("!canvas", rwebinput, false,
+         rwebinput_touch_cb);
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
       RARCH_ERR(
-         "[EMSCRIPTEN/INPUT] failed to create wheel callback: %d\n", r);
+         "[EMSCRIPTEN/INPUT] failed to create touchend callback: %d\n", r);
    }
 
-   r = emscripten_set_touchmove_callback("!canvas", rwebinput, false, rwebinput_touch_cb);
+   r = emscripten_set_touchmove_callback("!canvas", rwebinput, false,
+         rwebinput_touch_cb);
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
       RARCH_ERR(
-         "[EMSCRIPTEN/INPUT] failed to create wheel callback: %d\n", r);
+         "[EMSCRIPTEN/INPUT] failed to create touchmove callback: %d\n", r);
    }
 
-   r = emscripten_set_touchcancel_callback("!canvas", rwebinput, false, rwebinput_touch_cb);
+   r = emscripten_set_touchcancel_callback("!canvas", rwebinput, false,
+         rwebinput_touch_cb);
    if (r != EMSCRIPTEN_RESULT_SUCCESS)
    {
       RARCH_ERR(
-         "[EMSCRIPTEN/INPUT] failed to create wheel callback: %d\n", r);
+         "[EMSCRIPTEN/INPUT] failed to create touchcancel callback: %d\n", r);
    }
 
-   input_keymaps_init_keyboard_lut(rarch_key_map_rwebinput);
+   r = emscripten_set_pointerlockchange_callback(
+         EMSCRIPTEN_EVENT_TARGET_DOCUMENT, rwebinput, false,
+         rwebinput_pointerlockchange_cb);
+   if (r != EMSCRIPTEN_RESULT_SUCCESS)
+   {
+      RARCH_ERR(
+         "[EMSCRIPTEN/INPUT] failed to create pointerlockchange callback: %d\n", r);
+   }
 
    return rwebinput;
 }
+
 static bool rwebinput_key_pressed(rwebinput_input_t *rwebinput, int key)
 {
    if (key >= RETROK_LAST)
@@ -512,6 +565,7 @@ static bool rwebinput_key_pressed(rwebinput_input_t *rwebinput, int key)
 
    return rwebinput->keys[key];
 }
+
 static int16_t rwebinput_mouse_state(
       rwebinput_mouse_state_t *mouse,
       unsigned id, bool screen)
@@ -533,13 +587,13 @@ static int16_t rwebinput_mouse_state(
       case RETRO_DEVICE_ID_MOUSE_BUTTON_5:
          return !!(mouse->buttons & (1 << RWEBINPUT_MOUSE_BTN5));
       case RETRO_DEVICE_ID_MOUSE_WHEELUP:
-         return mouse->scroll_y < 0.0;
+         return mouse->scroll_y < 0.0f;
       case RETRO_DEVICE_ID_MOUSE_WHEELDOWN:
-         return mouse->scroll_y > 0.0;
+         return mouse->scroll_y > 0.0f;
       case RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP:
-         return mouse->scroll_x < 0.0;
+         return mouse->scroll_x < 0.0f;
       case RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN:
-         return mouse->scroll_x > 0.0;
+         return mouse->scroll_x > 0.0f;
    }
 
    return 0;
@@ -551,17 +605,9 @@ static int16_t rwebinput_is_pressed(
       unsigned port, unsigned id,
       bool keyboard_mapping_blocked)
 {
-   const struct retro_keybind *bind = &binds[id];
-   int key                          = bind->key;
-
-   if ((key < RETROK_LAST) && rwebinput_key_pressed(rwebinput, key))
-      if ((id == RARCH_GAME_FOCUS_TOGGLE) || !keyboard_mapping_blocked)
-         return 1;
-   if (port == 0 && !!rwebinput_mouse_state(&rwebinput->mouse,
-            bind->mbutton, false))
-      return 1;
    return 0;
 }
+
 struct rwebinput_code_to_key
 {
    const int id;
@@ -571,7 +617,7 @@ struct rwebinput_code_to_key
    int down_4;
 };
 
-static struct rwebinput_code_to_key stuff[] =
+static struct rwebinput_code_to_key keymap[] =
 {
    { 0, 0, 0, 0, 0 }, //b
    { 1, 0, 0, 0, 0 }, //y
@@ -604,41 +650,40 @@ static struct rwebinput_code_to_key stuff[] =
 
 void simulate_input(int user, int key, int down)
 {
-    int i;
-    for (i=0; i<ARRAY_SIZE(stuff); i++) {
-        if (stuff[i].id == key) {
+    if (keyboard_enabled) return;
+    for (int i=0; i<ARRAY_SIZE(keymap); i++) {
+        if (keymap[i].id == key) {
             if (user == 0) {
-                stuff[i].down_1 = down;
+                keymap[i].down_1 = down;
             } else if (user == 1) {
-                stuff[i].down_2 = down;
+                keymap[i].down_2 = down;
             } else if (user == 2) {
-                stuff[i].down_3 = down;
+                keymap[i].down_3 = down;
             } else if (user == 3) {
-                stuff[i].down_4 = down;
+                keymap[i].down_4 = down;
             }
             break;
         }
     }
 }
 
-int is_pressed_hehe(int user, int id) {
-    if (id >=24) return 0;
-    for (int i=0; i<ARRAY_SIZE(stuff); i++) {
-        if (stuff[i].id == id) {
+int ejs_is_pressed(int user, int id) {
+    if (keyboard_enabled || id >=24) return 0;
+    for (int i=0; i<ARRAY_SIZE(keymap); i++) {
+        if (keymap[i].id == id) {
             if (user == 0) {
-                return stuff[i].down_1;
+                return keymap[i].down_1;
             } else if (user == 1) {
-                return stuff[i].down_2;
+                return keymap[i].down_2;
             } else if (user == 2) {
-                return stuff[i].down_3;
+                return keymap[i].down_3;
             } else if (user == 3) {
-                return stuff[i].down_4;
+                return keymap[i].down_4;
             }
         }
     }
     return 0;
 }
-
 
 static int16_t rwebinput_input_state(
       void *data,
@@ -663,9 +708,9 @@ static int16_t rwebinput_input_state(
             int16_t ret = 0;
             for (i = 0; i < RARCH_FIRST_CUSTOM_BIND; i++)
             {
-               if (binds[port][i].valid || is_pressed_hehe(port, i))
+               if (binds[port][i].valid || ejs_is_pressed(port, i))
                {
-                  if (is_pressed_hehe(port, i) || rwebinput_is_pressed(
+                  if (ejs_is_pressed(port, i) || rwebinput_is_pressed(
                            rwebinput, binds[port], port, i,
                            keyboard_mapping_blocked))
                      ret |= (1 << i);
@@ -677,9 +722,9 @@ static int16_t rwebinput_input_state(
 
          if (id < RARCH_BIND_LIST_END)
          {
-            if (binds[port][id].valid || is_pressed_hehe(port, id))
+            if (binds[port][id].valid)
             {
-               if (is_pressed_hehe(port, id) || rwebinput_is_pressed(rwebinput,
+               if (ejs_is_pressed(port, id) || rwebinput_is_pressed(rwebinput,
                         binds[port],
                         port, id,
                         keyboard_mapping_blocked))
@@ -687,9 +732,9 @@ static int16_t rwebinput_input_state(
             }
          }
          break;
-      case RETRO_DEVICE_ANALOG: {
-            int rv = 0;
-
+      case RETRO_DEVICE_ANALOG:
+         if (binds[port])
+         {
             int id_minus_key      = 0;
             int id_plus_key       = 0;
             unsigned id_minus     = 0;
@@ -705,26 +750,27 @@ static int16_t rwebinput_input_state(
             id_minus_key          = binds[port][id_minus].key;
             id_plus_key           = binds[port][id_plus].key;
 
-            if (id_plus_valid && id_plus_key < RETROK_LAST)
+            if (keyboard_enabled && id_plus_valid && id_plus_key && id_plus_key < RETROK_LAST)
             {
                if (rwebinput_is_pressed(rwebinput,
                         binds[port], idx, id_plus,
                         keyboard_mapping_blocked))
                   ret = 0x7fff;
             }
-            if (id_minus_valid && id_minus_key < RETROK_LAST)
+            if (keyboard_enabled && id_minus_valid && id_minus_key && id_minus_key < RETROK_LAST)
             {
                if (rwebinput_is_pressed(rwebinput,
                         binds[port], idx, id_minus,
                         keyboard_mapping_blocked))
                   ret += -0x7fff;
             }
-
-
-            rv = is_pressed_hehe(port, id_plus);
+            
+            int16_t rv = 0;
+            
+            rv = ejs_is_pressed(port, id_plus);
             if (rv)
                ret = rv;
-            rv = is_pressed_hehe(port, id_minus);
+            rv = ejs_is_pressed(port, id_minus);
             if (rv)
                ret -= rv;
 
@@ -732,50 +778,51 @@ static int16_t rwebinput_input_state(
          }
          break;
       case RETRO_DEVICE_KEYBOARD:
-         return ((id < RETROK_LAST) && rwebinput->keys[id]);
+         return (id && id < RETROK_LAST) && rwebinput->keys[id];
       case RETRO_DEVICE_MOUSE:
       case RARCH_DEVICE_MOUSE_SCREEN:
-         return rwebinput_mouse_state(&rwebinput->mouse, id,
-               device == RARCH_DEVICE_MOUSE_SCREEN);
+         return rwebinput_mouse_state(&rwebinput->mouse, id, device == RARCH_DEVICE_MOUSE_SCREEN);
       case RETRO_DEVICE_POINTER:
       case RARCH_DEVICE_POINTER_SCREEN:
-      case RETRO_DEVICE_LIGHTGUN:
-         if (idx == 0)
          {
-            struct video_viewport vp;
+            struct video_viewport vp    = {0};
             rwebinput_mouse_state_t
                *mouse                   = &rwebinput->mouse;
-            const int edge_detect       = 32700;
-            bool screen                 = device ==
-               RARCH_DEVICE_POINTER_SCREEN;
-            bool inside                 = false;
+            bool pointer_down           = false;
+            unsigned pointer_count      = rwebinput->pointer_count;
+            int x                       = 0;
+            int y                       = 0;
             int16_t res_x               = 0;
             int16_t res_y               = 0;
             int16_t res_screen_x        = 0;
             int16_t res_screen_y        = 0;
 
-            vp.x                        = 0;
-            vp.y                        = 0;
-            vp.width                    = 0;
-            vp.height                   = 0;
-            vp.full_width               = 0;
-            vp.full_height              = 0;
+            if (pointer_count && idx < pointer_count)
+            {
+               x = rwebinput->pointer[idx].x;
+               y = rwebinput->pointer[idx].y;
+               pointer_down = true;
+            }
+            else if (idx == 0)
+            {
+               x = mouse->x;
+               y = mouse->y;
+               pointer_down = !!(mouse->buttons & (1 << RWEBINPUT_MOUSE_BTNL));
+               pointer_count = 1;
+            }
+            else
+               return 0;
 
-            if (!(video_driver_translate_coord_viewport_wrap(
-                        &vp, mouse->x, mouse->y,
+            if (!(video_driver_translate_coord_viewport_confined_wrap(
+                        &vp, x, y,
                         &res_x, &res_y, &res_screen_x, &res_screen_y)))
                return 0;
 
-            if (screen)
+            if (device == RARCH_DEVICE_POINTER_SCREEN)
             {
                res_x = res_screen_x;
                res_y = res_screen_y;
             }
-
-            inside =    (res_x >= -edge_detect)
-               && (res_y >= -edge_detect)
-               && (res_x <= edge_detect)
-               && (res_y <= edge_detect);
 
             switch (id)
             {
@@ -786,9 +833,11 @@ static int16_t rwebinput_input_state(
                case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
                   return res_y;
                case RETRO_DEVICE_ID_POINTER_PRESSED:
-                  return !!(mouse->buttons & (1 << RWEBINPUT_MOUSE_BTNL));
-               case RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN:
-                  return !inside;
+                  return (pointer_down && !input_driver_pointer_is_offscreen(res_x, res_y));
+               case RETRO_DEVICE_ID_POINTER_COUNT:
+                  return pointer_count;
+               case RETRO_DEVICE_ID_POINTER_IS_OFFSCREEN:
+                  return input_driver_pointer_is_offscreen(res_x, res_y);
                default:
                   break;
             }
@@ -799,15 +848,97 @@ static int16_t rwebinput_input_state(
    return 0;
 }
 
+static void rwebinput_remove_event_listeners(void *data)
+{
+   /* *currently* not automatically proxied in the case of PROXY_TO_PTHREAD */
+   emscripten_html5_remove_all_event_listeners();
+}
+
 static void rwebinput_input_free(void *data)
 {
    rwebinput_input_t *rwebinput = (rwebinput_input_t*)data;
 
-   emscripten_html5_remove_all_event_listeners();
-
+   platform_emscripten_run_on_browser_thread_sync(rwebinput_remove_event_listeners, NULL);
    free(rwebinput->keyboard.events);
-
    free(data);
+}
+
+static bool rwebinput_set_sensor_state(void *data, unsigned port,
+      enum retro_sensor_action action, unsigned rate)
+{
+   rwebinput_input_t *rwebinput = (rwebinput_input_t*)data;
+   EMSCRIPTEN_RESULT r;
+   bool old_state = rwebinput->accelerometer.enabled || rwebinput->gyroscope.enabled;
+   bool new_state;
+
+   switch (action)
+   {
+      case RETRO_SENSOR_ACCELEROMETER_ENABLE:
+         rwebinput->accelerometer.enabled = true;
+         break;
+      case RETRO_SENSOR_ACCELEROMETER_DISABLE:
+         rwebinput->accelerometer.enabled = false;
+         break;
+      case RETRO_SENSOR_GYROSCOPE_ENABLE:
+         rwebinput->gyroscope.enabled = true;
+         break;
+      case RETRO_SENSOR_GYROSCOPE_DISABLE:
+         rwebinput->gyroscope.enabled = false;
+         break;
+      case RETRO_SENSOR_ILLUMINANCE_ENABLE:
+      case RETRO_SENSOR_ILLUMINANCE_DISABLE:
+         return false; /* not supported (browsers removed support for now) */
+      default:
+         return false;
+   }
+
+   new_state = rwebinput->accelerometer.enabled || rwebinput->gyroscope.enabled;
+
+   if (!old_state && new_state)
+   {
+      r = emscripten_set_devicemotion_callback(rwebinput, false, rwebinput_devicemotion_cb);
+      if (r != EMSCRIPTEN_RESULT_SUCCESS)
+      {
+         RARCH_ERR(
+            "[EMSCRIPTEN/INPUT] failed to create devicemotion callback: %d\n", r);
+         return false;
+      }
+   }
+   else if (old_state && !new_state)
+   {
+      r = emscripten_set_devicemotion_callback(rwebinput, false, NULL);
+      if (r != EMSCRIPTEN_RESULT_SUCCESS)
+      {
+         RARCH_ERR(
+            "[EMSCRIPTEN/INPUT] failed to remove devicemotion callback: %d\n", r);
+         return false;
+      }
+   }
+
+   return true;
+}
+
+static float rwebinput_get_sensor_input(void *data, unsigned port, unsigned id)
+{
+   rwebinput_input_t *rwebinput = (rwebinput_input_t*)data;
+
+   switch (id)
+   {
+      case RETRO_SENSOR_ACCELEROMETER_X:
+         return rwebinput->accelerometer.x;
+      case RETRO_SENSOR_ACCELEROMETER_Y:
+         return rwebinput->accelerometer.y;
+      case RETRO_SENSOR_ACCELEROMETER_Z:
+         return rwebinput->accelerometer.z;
+      case RETRO_SENSOR_GYROSCOPE_X:
+         return rwebinput->gyroscope.x;
+      case RETRO_SENSOR_GYROSCOPE_Y:
+         return rwebinput->gyroscope.y;
+      case RETRO_SENSOR_GYROSCOPE_Z:
+         return rwebinput->gyroscope.z;
+   }
+
+   return 0.0f;
 }
 
 static void rwebinput_process_keyboard_events(
@@ -816,14 +947,43 @@ static void rwebinput_process_keyboard_events(
 {
    uint32_t keycode;
    unsigned translated_keycode;
+   uint32_t character                       = 0;
+   uint16_t mod                             = 0;
    const EmscriptenKeyboardEvent *key_event = &event->event;
    bool keydown                             =
       event->type == EMSCRIPTEN_EVENT_KEYDOWN;
+
+   /* a printable key: populate character field */
+   if (utf8len(key_event->key) == 1)
+   {
+      const char *key_ptr = &key_event->key[0];
+      character           = utf8_walk(&key_ptr);
+   }
+
+   if (key_event->ctrlKey)
+      mod |= RETROKMOD_CTRL;
+   if (key_event->altKey)
+      mod |= RETROKMOD_ALT;
+   if (key_event->shiftKey)
+      mod |= RETROKMOD_SHIFT;
+   if (key_event->metaKey)
+      mod |= RETROKMOD_META;
 
    keycode = encoding_crc32(0, (const uint8_t *)key_event->code,
       strnlen(key_event->code, sizeof(key_event->code)));
    translated_keycode = input_keymaps_translate_keysym_to_rk(keycode);
 
+   if (     translated_keycode == RETROK_BACKSPACE)
+      character = '\b';
+   else if (translated_keycode == RETROK_RETURN ||
+            translated_keycode == RETROK_KP_ENTER)
+      character = '\n';
+   else if (translated_keycode == RETROK_TAB)
+      character = '\t';
+
+   if (translated_keycode != RETROK_UNKNOWN)
+      input_keyboard_event(keydown, translated_keycode, character, mod,
+         RETRO_DEVICE_KEYBOARD);
 
    if (     translated_keycode  < RETROK_LAST
          && translated_keycode != RETROK_UNKNOWN)
@@ -852,17 +1012,22 @@ static void rwebinput_input_poll(void *data)
    rwebinput->mouse.pending_scroll_y = 0;
 }
 
+static void rwebinput_grab_mouse(void *data, bool state)
+{
+   if (state)
+      emscripten_request_pointerlock("!canvas", EM_TRUE);
+   else
+      emscripten_exit_pointerlock();
+}
+
 static uint64_t rwebinput_get_capabilities(void *data)
 {
-   uint64_t caps = 0;
-
-   caps |= (1 << RETRO_DEVICE_JOYPAD);
-   caps |= (1 << RETRO_DEVICE_ANALOG);
-   caps |= (1 << RETRO_DEVICE_KEYBOARD);
-   caps |= (1 << RETRO_DEVICE_MOUSE);
-   caps |= (1 << RETRO_DEVICE_POINTER);
-
-   return caps;
+   return
+           (1 << RETRO_DEVICE_JOYPAD)
+         | (1 << RETRO_DEVICE_ANALOG)
+         | (1 << RETRO_DEVICE_KEYBOARD)
+         | (1 << RETRO_DEVICE_MOUSE)
+         | (1 << RETRO_DEVICE_POINTER);
 }
 
 input_driver_t input_emulatorjs = {
@@ -870,10 +1035,11 @@ input_driver_t input_emulatorjs = {
    rwebinput_input_poll,
    rwebinput_input_state,
    rwebinput_input_free,
-   NULL,
-   NULL,
+   rwebinput_set_sensor_state,
+   rwebinput_get_sensor_input,
    rwebinput_get_capabilities,
    "emulatorjs",
+   rwebinput_grab_mouse,
    NULL,
    NULL
 };

@@ -5600,6 +5600,9 @@ static void input_keys_pressed(
       rarch_joypad_info_t *joypad_info,
       bool input_hotkey_device_merge)
 {
+#ifdef EMULATORJS
+   return;
+#endif
    unsigned i;
    input_driver_state_t *input_st = &input_driver_st;
    bool block_hotkey[RARCH_BIND_LIST_END];
@@ -7216,6 +7219,7 @@ void input_driver_collect_system_input(input_driver_state_t *input_st,
       }
 #endif /* HAVE_MENU */
 
+
       input_keys_pressed(port,
 #ifdef HAVE_MENU
             menu_is_alive,
@@ -7291,11 +7295,7 @@ void input_driver_collect_system_input(input_driver_state_t *input_st,
 
          for (i = 0; i < ARRAY_SIZE(ids); i++)
          {
-#ifndef EMULATORJS
-            if (current_input->input_state(
-#else
             if (ids[i][0] && current_input->input_state(
-#endif
                      input_st->current_data,
                      joypad,
                      sec_joypad,
@@ -7591,6 +7591,7 @@ void input_keyboard_event(bool down, unsigned code,
       if (code == RETROK_UNKNOWN)
          return;
 
+#ifndef EMULATORJS
       /* Check if keyboard events should be blocked when
        * pressing hotkeys and RetroPad binds, but
        * - not with Game Focus
@@ -7658,6 +7659,7 @@ void input_keyboard_event(bool down, unsigned code,
          if (block_key_event)
             return;
       }
+#endif
 
       if (*key_event)
       {

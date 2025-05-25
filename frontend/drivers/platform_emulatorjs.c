@@ -760,6 +760,7 @@ int main(int argc, char *argv[])
    
    EM_ASM({
       specialHTMLTargets["!canvas"] = Module.canvas;
+      specialHTMLTargets["!parent"] = Module.parent;
    });
    
    int ret = 0;
