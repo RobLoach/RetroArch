@@ -565,7 +565,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CORE_LOCK,
-   "Evita la modificació del nucli instal·lat actualment. Es podria utilitzar per a evitar actualitzacions no desitjades quan el contingut requereix una versió específica del nucli (p. ex., conjunts de ROM d'arcade)."
+   "Evita la modificació del nucli instal·lat actualment. Es podria utilitzar per a evitar actualitzacions no desitjades quan el contingut requereix una versió específica del nucli (p. ex., conjunts de ROM d'arcade) o les modificacions que faci el nucli."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_SET_STANDALONE_EXEMPT,
@@ -1566,7 +1566,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_INPUT_DRIVER,
-   "Controlador d'entrada a utilitzar. Alguns controladors de vídeo en forcen un diferent."
+   "Controlador d'entrada a utilitzar. Alguns controladors de vídeo en forcen un diferent. (Es requereix reiniciar)"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_HELP_INPUT_DRIVER_UDEV,
@@ -1971,66 +1971,6 @@ MSG_HASH(
    "Insereix fotogrames en negre entre fotogrames per a millorar la claredat del moviment. Useu només l'opció designada per a la freqüència d'actualització actual de la pantalla. No ho feu servir per a freqüències d'actualització que no siguin múltiples de 60 Hz, com ara 144 Hz, 165 Hz, etc. No ho combineu amb intervals d'intercanvi > 1, subfotogrames, retard dels fotogrames ni amb la sincronització a la velocitat de fotogrames del contingut exacta. Es pot deixar activada l'opció de VRR ([...]"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_120,
-   "1 - Per a una freqüència d'actualització de 120 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_180,
-   "2 - Per a una freqüència d'actualització de 180 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_240,
-   "3 - Per a una freqüència d'actualització de 240 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_300,
-   "4 - Per a una freqüència d'actualització de 300 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_360,
-   "5 - Per a una freqüència d'actualització de 360 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_420,
-   "6 - Per a una freqüència d'actualització de 420 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_480,
-   "7 - Per a una freqüència d'actualització de 480 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_540,
-   "8 - Per a una freqüència d'actualització de 540 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_600,
-   "9 - Per a una freqüència d'actualització de 600 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_660,
-   "10 - Per a una freqüència d'actualització de 660 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_720,
-   "11 - Per a una freqüència d'actualització de 720 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_780,
-   "12 - Per a una freqüència d'actualització de 780 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_840,
-   "13 - Per a una freqüència d'actualització de 840 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_900,
-   "14 - Per a una freqüència d'actualització de 900 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_960,
-   "15 - Per a una freqüència d'actualització de 960 Hz"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_BFI_DARK_FRAMES,
    "Inserció de fotogrames en negre (BFI) - Fotogrames foscos"
    )
@@ -2053,66 +1993,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_HELP_VIDEO_SHADER_SUBFRAMES,
    "Insereix fotogrames d'ombreig extra entre fotogrames per a qualsevol efecte d'ombreig que estigui designat per a executar-se més ràpid que la freqüència del contingut. Useu només l'opció designada per a la freqüència d'actualització actual de la pantalla. No ho feu servir per a freqüències d'actualització que no siguin múltiples de 60 Hz, com ara 144 Hz, 165 Hz, etc. No ho combineu amb intervals d'intercanvi > 1, BFI, retard dels fotogrames ni amb la sincronització a la velocitat d[...]"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_120,
-   "2 - Per a una freqüència d'actualització de 120 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_180,
-   "3 - Per a una freqüència d'actualització de 180 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_240,
-   "4 - Per a una freqüència d'actualització de 240 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_300,
-   "5 - Per a una freqüència d'actualització de 300 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_360,
-   "6 - Per a una freqüència d'actualització de 360 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_420,
-   "7 - Per a una freqüència d'actualització de 420 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_480,
-   "8 - Per a una freqüència d'actualització de 480 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_540,
-   "9 - Per a una freqüència d'actualització de 540 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_600,
-   "10 - Per a una freqüència d'actualització de 600 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_660,
-   "11 - Per a una freqüència d'actualització de 660 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_720,
-   "12 - Per a una freqüència d'actualització de 720 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_780,
-   "13 - Per a una freqüència d'actualització de 780 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_840,
-   "14 - Per a una freqüència d'actualització de 840 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_900,
-   "15 - Per a una freqüència d'actualització de 900 Hz"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_960,
-   "16 - Per a una freqüència d'actualització de 960 Hz"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_GPU_SCREENSHOT,
@@ -3690,7 +3570,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_INPUT_DISABLE_INFO_BUTTON,
-   "Si s’activa s’ignoraran les pulsacions del botó d’informació."
+   "Evita que aparegui el menú d'informació."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_SEARCH_BUTTON,
@@ -3698,7 +3578,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_INPUT_DISABLE_SEARCH_BUTTON,
-   "Si s’activa s’ignoraran les pulsacions del botó de cerca."
+   "Evita que aparegui el menú de cerca."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_LEFT_ANALOG_IN_MENU,
@@ -3706,7 +3586,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_INPUT_DISABLE_LEFT_ANALOG_IN_MENU,
-   "Impedeix que el joystick esquerra pugui navegar pels menús."
+   "Evita que el joystick analògic esquerre pugui moure el menú."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_RIGHT_ANALOG_IN_MENU,
@@ -3714,7 +3594,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_INPUT_DISABLE_RIGHT_ANALOG_IN_MENU,
-   "Impedeix que el joystick dret pugui navegar pels menús."
+   "Evita que el joystick analògic dret pugui moure el menú. El joystick analògic dret canvia les miniatures de les llistes de reproducció."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_INPUT_SWAP_OK_CANCEL,
@@ -4229,15 +4109,6 @@ MSG_HASH(
    "Canvia entre els missatges de xat estàtics o esvaïts."
    )
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INPUT_META_SEND_DEBUG_INFO,
-   "Envia informació de depuració"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_INPUT_META_SEND_DEBUG_INFO,
-   "Envia informació de diagnòstic sobre el vostre dispositiu i la configuració de RetroArch als nostres servidors per a ser analitzada."
-   )
-
 /* Settings > Input > Port # Controls */
 
 MSG_HASH(
@@ -4475,6 +4346,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_DPAD_RIGHT,
    "Creueta dreta de la pistola"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_TURBO,
+   "Disparador de turbo"
    )
 
 /* Settings > Latency */
@@ -5041,6 +4916,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_USE_LAST_START_DIRECTORY,
    "Obre l'explorador de fitxers a l'última localització que s'ha fet servir quan es carrega contingut des de la carpeta inicial. Nota: La localització torna al seu valor predeterminat en reiniciar RetroArch."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CORE_SUGGEST_ALWAYS,
+   "Suggereix nuclis sempre"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_CORE_SUGGEST_ALWAYS,
+   "Suggereix tots els nuclis disponibles quan es carrega un nucli."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_USE_BUILTIN_PLAYER,
@@ -6438,7 +6321,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CONTENT_SHOW_SETTINGS,
-   "Mostra el menú 'Configuració'. (Es requereix reiniciar per Ozone/XMB)"
+   "Mostra el menú «Configuració»."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_SETTINGS_PASSWORD,
@@ -6454,7 +6337,15 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CONTENT_SHOW_FAVORITES,
-   "Mostra el menú 'Preferits'. (Es requereix reiniciar per Ozone/XMB)"
+   "Mostra el menú «Preferits»."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_FAVORITES_FIRST,
+   "Mostra primer els preferits"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_CONTENT_SHOW_FAVORITES_FIRST,
+   "Mostra el menú «Preferits» abans que «Historial»."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_IMAGES,
@@ -6462,7 +6353,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CONTENT_SHOW_IMAGES,
-   "Mostra el menú 'Imatges'. (Es requereix reiniciar per Ozone/XMB)"
+   "Mostra el menú «Imatges»."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_MUSIC,
@@ -6470,7 +6361,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CONTENT_SHOW_MUSIC,
-   "Mostra el menú 'Música' (Es requereix reiniciar a Ozone/XMB)"
+   "Mostra el menú «Música»."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_VIDEO,
@@ -6478,7 +6369,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CONTENT_SHOW_VIDEO,
-   "Mostra el menú 'Vídeos'. (Es requereix reiniciar per Ozone/XMB)"
+   "Mostra el menú «Vídeos»."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_NETPLAY,
@@ -6486,7 +6377,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CONTENT_SHOW_NETPLAY,
-   "Mostra el menú 'Joc en xarxa'. (Es requereix reiniciar per Ozone/XMB)"
+   "Mostra el menú «Joc en xarxa»."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_HISTORY,
@@ -6494,23 +6385,15 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CONTENT_SHOW_HISTORY,
-   "Mostra l'historial d'elements recents (Es requereix reiniciar per Ozone/XMB)"
+   "Mostra el menú amb l'historial d'ítems recents."
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_ADD,
-   "Mostra «Importa contingut»"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_ADD,
-   "Mostra el menú 'Importar contingut'. (Es requereix reiniciar per Ozone/XMB)"
-   )
-MSG_HASH( /* FIXME can now be replaced with MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_ADD */
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_ADD_ENTRY,
    "Mostra «Importa contingut»"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CONTENT_SHOW_ADD_ENTRY,
-   "Mostra una entrada d’«Importa contingut» al menú principal o al submenú de llistes de reproducció."
+   "Mostra l'entrada «Importa contingut» dins del menú principal o les llistes de reproducció."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_ADD_CONTENT_ENTRY_DISPLAY_MAIN_TAB,
@@ -6534,7 +6417,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CONTENT_SHOW_PLAYLIST_TABS,
-   "Mostra les seccions de les llistes de reproducció. No afecta RGUI. Cal activar la barra de navegació a GLUI (És necessari reiniciar a Ozone/XMB)"
+   "Mostra les seccions de les llistes de reproducció. No afecta RGUI. Cal activar la barra de navegació a GLUI."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_EXPLORE,
@@ -6542,7 +6425,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CONTENT_SHOW_EXPLORE,
-   "Mostra l'opció de l'explorador de continguts (És necessari reiniciar a Ozone/XMB)"
+   "Mostra l'opció d'explorador de continguts."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_CONTENTLESS_CORES,
@@ -6550,7 +6433,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CONTENT_SHOW_CONTENTLESS_CORES,
-   "Especifica el tipus de nucli (si hi ha cap) per mostrar al menú «Nuclis sense continguts». En establir-ho com a «Personalitzat», la visibilitat individual dels nuclis es pot canviar mitjançant el menú «Gestiona els nuclis» (cal reiniciar en Ozone/XMB)."
+   "Especifica el tipus de nucli (si n'hi ha cap) per mostrar al menú «Nuclis sense continguts». En establir-ho com a «Personalitzat», la visibilitat individual dels nuclis es pot canviar mitjançant el menú «Gestiona els nuclis»."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SHOW_CONTENTLESS_CORES_ALL,
@@ -9137,12 +9020,20 @@ MSG_HASH(
    "Desa un estat a la posició actualment seleccionada."
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_HELP_SAVE_STATE,
+   "Desa un estat a la ranura seleccionada. Nota: Els estats desats no es poden compartir i no funcionaran amb altres versions del nucli."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_LOAD_STATE,
    "Carrega estat"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_LOAD_STATE,
    "Carrega un estat desat des de la posició actual."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_HELP_LOAD_STATE,
+   "Carrega un estat desat des de la ranura seleccionada. Nota: No funcionarà si l'estat es va desar amb una versió anterior del nucli."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_UNDO_LOAD_STATE,
@@ -12753,10 +12644,6 @@ MSG_HASH(
 /* Unused (Only Exist in Translation Files) */
 
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_AUTO,
-   "Relació d’aspecte automàtica"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_NETPLAY_ROOM_NICKNAME_LAN,
    "Sobrenom (LAN): %s"
    )
@@ -12767,10 +12654,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SYSTEM_BGM_ENABLE,
    "Sistema BGM"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_CUSTOM_RATIO,
-   "Relació personalitzada"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_RECORD_ENABLE,
@@ -12791,14 +12674,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CHEAT_MATCH_IDX,
    "Selecciona la coincidència que vols veure."
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_FORCE_ASPECT,
-   "Força la relació d’aspecte"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_SELECT_FROM_PLAYLIST,
-   "Selecciona des d'una llista de reproducció"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CHEAT_VIEW_MATCHES,
@@ -12875,14 +12750,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_HELP_WHAT_IS_A_CORE,
    "Què és un nucli?"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_HELP_SEND_DEBUG_INFO,
-   "Envia informació de depuració"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_HELP_SEND_DEBUG_INFO,
-   "Envia informació de diagnòstic sobre el vostre dispositiu i la configuració de RetroArch als nostres servidors per a ser analitzada."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MANAGEMENT,
@@ -13164,30 +13031,6 @@ MSG_HASH( /* FIXME Should be MSG_ */
 MSG_HASH(
    MSG_CHEAT_DELETE_ALL_INSTRUCTIONS,
    "Premeu dreta cinc vegades per esborrar tots els trucs."
-   )
-MSG_HASH(
-   MSG_FAILED_TO_SAVE_DEBUG_INFO,
-   "No s’ha pogut desar la informació de depuració."
-   )
-MSG_HASH(
-   MSG_FAILED_TO_SEND_DEBUG_INFO,
-   "No s’ha pogut enviar la informació de depuració al servidor."
-   )
-MSG_HASH(
-   MSG_SENDING_DEBUG_INFO,
-   "S’està enviant la informació de depuració..."
-   )
-MSG_HASH(
-   MSG_SENT_DEBUG_INFO,
-   "S’ha enviat la informació de depuració al servidor correctament. El vostre número d’ID és %u."
-   )
-MSG_HASH(
-   MSG_PRESS_TWO_MORE_TIMES_TO_SEND_DEBUG_INFO,
-   "Premeu dues vegades més per enviar informació de diagnòstic a l’equip del RetroArch."
-   )
-MSG_HASH(
-   MSG_PRESS_ONE_MORE_TIME_TO_SEND_DEBUG_INFO,
-   "Premeu una vegada més per enviar informació de diagnòstic a l’equip del RetroArch."
    )
 MSG_HASH(
    MSG_AUDIO_MIXER_VOLUME,
@@ -14247,6 +14090,10 @@ MSG_HASH(
    "Retrocedint."
    )
 MSG_HASH(
+   MSG_REWIND_BUFFER_CAPACITY_INSUFFICIENT,
+   "Capacitat de memòria intermèdia insuficient."
+   )
+MSG_HASH(
    MSG_REWIND_UNSUPPORTED,
    "No està disponible el rebobinat perquè aquest nucli no té suport d'estat desats serialitzats."
    )
@@ -14829,6 +14676,10 @@ MSG_HASH(
 MSG_HASH(
    MSG_CHEEVOS_UNSUPPORTED_COUNT,
    "%d no compatible"
+)
+MSG_HASH(
+   MSG_CHEEVOS_UNSUPPORTED_WARNING,
+   "S'han trobat assoliments que no són compatibles. Proveu amb un nucli diferent o actualitzeu el RetroArch."
 )
 MSG_HASH(
    MSG_CHEEVOS_RICH_PRESENCE_SPECTATING,

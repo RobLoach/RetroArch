@@ -560,10 +560,6 @@ MSG_HASH(
    "インストール済みコアをロック"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_CORE_LOCK,
-   "現在インストールされているコアの変更を防止します。コンテンツが特定のコアバージョン (例: アーケード ROM セット) を必要とする場合に、望ましくない更新を回避するために使用されることがあります。"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_SET_STANDALONE_EXEMPT,
    "[コンテンツレスコア] メニューから除外"
    )
@@ -1569,10 +1565,6 @@ MSG_HASH(
    "入力"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_INPUT_DRIVER,
-   "使用する入力のドライバです。一部のビデオドライバは異なる入力ドライバを強制します。"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_HELP_INPUT_DRIVER_UDEV,
    "udev ドライバは、キーボード対応のために evdev イベントを読み込みます。キーボードのコールバック、マウス、タッチパッドにも対応します。\nほとんどのディストロで、デフォルトでは root のみです (モード 600)。これらのルールを root 以外からアクセスできるようにする udev ルールを設定できます。"
    )
@@ -1967,66 +1959,6 @@ MSG_HASH(
    "フレーム間に黒フレームを挿入し、動きをより鮮明にします。現在のディスプレイのリフレッシュレート用に準備されたオプションのみを使用してください。144Hz、165Hz など、60Hz の倍数ではないリフレッシュレートでは使用できません。1 以上のスワップ間隔、フレーム遅延または正確なフレームレートに同期と組み合わせないでください。"
    )
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_120,
-   "1 - 120Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_180,
-   "2 - 180Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_240,
-   "3 - 240Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_300,
-   "4 - 300Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_360,
-   "5 - 360Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_420,
-   "6 - 420Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_480,
-   "7 - 480Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_540,
-   "8 - 540Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_600,
-   "9 - 600Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_660,
-   "10 - 660Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_720,
-   "11 - 720Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_780,
-   "12 - 780Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_840,
-   "13 - 840Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_900,
-   "14 - 900Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION_VALUE_960,
-   "15 - 960Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_BFI_DARK_FRAMES,
    "黒フレーム挿入 - 暗フレーム"
    )
@@ -2045,66 +1977,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_HELP_VIDEO_SHADER_SUBFRAMES,
    "コンテンツフレームレートよりも高速に動作するように設計されたシェーダー効果用に、フレーム間に追加のシェーダーフレームを挿入します。現在のディスプレイ Hz に対応するオプションのみを使用してください。144Hz、165Hz など、60Hz の倍数ではないリフレッシュレートでは使用できません。"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_120,
-   "2 - 120Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_180,
-   "3 - 180Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_240,
-   "4 - 240Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_300,
-   "5 - 300Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_360,
-   "6 - 360Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_420,
-   "7 - 420Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_480,
-   "8 - 480Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_540,
-   "9 - 540Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_600,
-   "10 - 600Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_660,
-   "11 - 660Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_720,
-   "12 - 720Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_780,
-   "13 - 780Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_840,
-   "14 - 840Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_900,
-   "15 - 900Hz ディスプレイ用リフレッシュレート"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES_VALUE_960,
-   "16 - 960Hz ディスプレイ用リフレッシュレート"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_GPU_SCREENSHOT,
@@ -3521,16 +3393,8 @@ MSG_HASH(
    "情報ボタンを無効にする"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_INPUT_DISABLE_INFO_BUTTON,
-   "有効にすると、情報ボタンの押下が無視されます。"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_SEARCH_BUTTON,
    "検索ボタンを無効にする"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_INPUT_DISABLE_SEARCH_BUTTON,
-   "有効にすると、検索ボタンの押下が無視されます。"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_INPUT_SWAP_OK_CANCEL,
@@ -4017,15 +3881,6 @@ MSG_HASH(
    "ネットプレイチャットメッセージのフェードと固定を切り替えます。"
    )
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INPUT_META_SEND_DEBUG_INFO,
-   "デバッグ情報の送信"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_INPUT_META_SEND_DEBUG_INFO,
-   "お使いのデバイスと RetroArch の設定に関する診断情報を、分析のためにサーバーに送信します。"
-   )
-
 /* Settings > Input > Port # Controls */
 
 MSG_HASH(
@@ -4263,6 +4118,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_DPAD_RIGHT,
    "ライトガン 十字キー 右"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_TURBO,
+   "連射"
    )
 
 /* Settings > Latency */
@@ -6173,10 +6032,6 @@ MSG_HASH(
    "[設定] を表示"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_SETTINGS,
-   "[設定] メニューを表示します。 (Ozone/XMB で再起動が必要)"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_SETTINGS_PASSWORD,
    "[設定] を有効にするためのパスワードを設定"
    )
@@ -6189,64 +6044,28 @@ MSG_HASH(
    "[お気に入り] を表示"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_FAVORITES,
-   "[お気に入り] メニューを表示します。 (Ozone/XMB で再起動が必要)"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_IMAGES,
    "[画像] を表示"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_IMAGES,
-   "[画像] メニューを表示します。 (Ozone/XMB で再起動が必要)"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_MUSIC,
    "[音楽] を表示"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_MUSIC,
-   "[音楽] メニューを表示します。 (Ozone/XMB で再起動が必要)"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_VIDEO,
    "[動画] を表示"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_VIDEO,
-   "[動画] メニューを表示します。 (Ozone/XMB で再起動が必要)"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_NETPLAY,
    "[ネットプレイ] を表示"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_NETPLAY,
-   "[ネットプレイ] メニューを表示します。 (Ozone/XMB で再起動が必要)"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_HISTORY,
    "[履歴] を表示"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_HISTORY,
-   "[履歴] メニューを表示します。 (Ozone/XMB で再起動が必要)"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_ADD,
-   "[コンテンツをインポート] を表示"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_ADD,
-   "[コンテンツをインポート] メニューを表示します。 (Ozone/XMB で再起動が必要)"
-   )
-MSG_HASH( /* FIXME can now be replaced with MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_ADD */
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_ADD_ENTRY,
    "[コンテンツをインポート] を表示"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_ADD_ENTRY,
-   "メインメニューとプレイリストのサブメニューに [コンテンツをインポート] メニューを表示します。"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MENU_ADD_CONTENT_ENTRY_DISPLAY_MAIN_TAB,
@@ -6265,16 +6084,8 @@ MSG_HASH(
    "[エクスプローラー] を表示"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_EXPLORE,
-   "[エクスプローラー] メニューを表示します。 (Ozone/XMB で再起動が必要)"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_CONTENTLESS_CORES,
    "[コンテンツレスコア] を表示"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_CONTENT_SHOW_CONTENTLESS_CORES,
-   "[コンテンツレスコア] メニューに表示するコアの種類を指定します。「カスタム」に設定すると、[コアの管理] メニューから個々のコアの表示/非表示を切り替えることができます。 (Ozone/XMB で再起動が必要)"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SHOW_CONTENTLESS_CORES_ALL,
@@ -12437,10 +12248,6 @@ MSG_HASH(
 /* Unused (Only Exist in Translation Files) */
 
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_AUTO,
-   "自動アスペクト比"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_NETPLAY_ROOM_NICKNAME_LAN,
    "ニックネーム (LAN): %s"
    )
@@ -12451,10 +12258,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SYSTEM_BGM_ENABLE,
    "システム BGM"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_CUSTOM_RATIO,
-   "カスタム比"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_RECORD_ENABLE,
@@ -12475,14 +12278,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CHEAT_MATCH_IDX,
    "表示する一致を選択します。"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_FORCE_ASPECT,
-   "強制アスペクト比"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_SELECT_FROM_PLAYLIST,
-   "プレイリストから選択"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CHEAT_VIEW_MATCHES,
@@ -12559,14 +12354,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_HELP_WHAT_IS_A_CORE,
    "コアとは?"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_HELP_SEND_DEBUG_INFO,
-   "デバッグ情報の送信"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_HELP_SEND_DEBUG_INFO,
-   "お使いのデバイスと RetroArch の設定に関する診断情報を、分析のためにサーバーに送信します。"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MANAGEMENT,
@@ -12848,30 +12635,6 @@ MSG_HASH( /* FIXME Should be MSG_ */
 MSG_HASH(
    MSG_CHEAT_DELETE_ALL_INSTRUCTIONS,
    "すべてのチートを削除するには右を 5 回押してください。"
-   )
-MSG_HASH(
-   MSG_FAILED_TO_SAVE_DEBUG_INFO,
-   "デバッグ情報の保存に失敗しました。"
-   )
-MSG_HASH(
-   MSG_FAILED_TO_SEND_DEBUG_INFO,
-   "デバッグ情報をサーバーに送信できませんでした。"
-   )
-MSG_HASH(
-   MSG_SENDING_DEBUG_INFO,
-   "デバッグ情報を送信中..."
-   )
-MSG_HASH(
-   MSG_SENT_DEBUG_INFO,
-   "デバッグ情報をサーバーに正常に送信しました。ID 番号は %u です。"
-   )
-MSG_HASH(
-   MSG_PRESS_TWO_MORE_TIMES_TO_SEND_DEBUG_INFO,
-   "もう 2 回押すと、診断情報を RetroArch チームに送信します."
-   )
-MSG_HASH(
-   MSG_PRESS_ONE_MORE_TIME_TO_SEND_DEBUG_INFO,
-   "もう一度押すと、診断情報を RetroArch チームに送信します。"
    )
 MSG_HASH(
    MSG_AUDIO_MIXER_VOLUME,

@@ -2,7 +2,7 @@
  *  Copyright (C) 2010-2014 - Hans-Kristian Arntzen
  *  Copyright (C) 2011-2021 - Daniel De Matteis
  *  Copyright (C) 2012-2015 - Michael Lelli
- *  Copyright (C) 2014-2017 - Jean-Andr� Santoni
+ *  Copyright (C) 2014-2017 - Jean-Andr  Santoni
  *  Copyright (C) 2016-2019 - Brad Parker
  *
  *  RetroArch is free software: you can redistribute it and/or modify it under the terms
@@ -1979,8 +1979,8 @@ bool driver_ctl(enum driver_ctl_state state, void *data)
             video_monitor_set_refresh_rate(*hz);
 
             /* Sets audio monitor rate to new value. */
-            audio_st->source_ratio_original   =
-            audio_st->source_ratio_current    =
+            audio_st->src_ratio_orig   =
+            audio_st->src_ratio_curr   =
             (double)audio_output_sample_rate / audio_st->input;
 
             driver_adjust_system_rates(runloop_st, video_st, settings);
@@ -5494,10 +5494,6 @@ bool command_event(enum event_command cmd, void *data)
       case CMD_EVENT_NONE:
          return false;
 
-      /* Deprecated */
-      case CMD_EVENT_SEND_DEBUG_INFO:
-         break;
-
       /* Do nothing about the special negative value */
       case CMD_SPECIAL:
          break;
@@ -6008,11 +6004,17 @@ int rarch_main(int argc, char *argv[], void *data)
 
 #if defined(EMSCRIPTEN)
 
-#if defined(EMSCRIPTEN_AUDIO_EXTERNAL_BLOCK) && defined(HAVE_AUDIOWORKLET)
+#ifdef EMSCRIPTEN_AUDIO_EXTERNAL_BLOCK
+#ifdef HAVE_AUDIOWORKLET
 bool audioworklet_external_block(void);
 #endif
 #ifdef HAVE_RWEBAUDIO
-void RWebAudioRecalibrateTime(void);
+bool rwebaudio_external_block(void);
+#endif
+#endif
+
+#ifdef HAVE_RWEBAUDIO
+void rwebaudio_recalibrate_time(void);
 #endif
 
 #ifdef EMULATORJS
@@ -6062,13 +6064,19 @@ void emscripten_mainloop(void)
    if (platform_emscripten_should_drop_iter())
       return;
 
-#if defined(EMSCRIPTEN_AUDIO_FAKE_BLOCK) && defined(HAVE_AUDIOWORKLET)
+#ifdef HAVE_RWEBAUDIO
+   rwebaudio_recalibrate_time();
+#endif
+
+#ifdef EMSCRIPTEN_AUDIO_FAKE_BLOCK
+#ifdef HAVE_AUDIOWORKLET
    if (audioworklet_external_block())
       return;
 #endif
-
 #ifdef HAVE_RWEBAUDIO
-   RWebAudioRecalibrateTime();
+   if (rwebaudio_external_block())
+      return;
+#endif
 #endif
 
    emscripten_frame_count++;
@@ -6093,8 +6101,13 @@ void emscripten_mainloop(void)
 
    ret = runloop_iterate();
 
-#if defined(EMSCRIPTEN_AUDIO_ASYNC_BLOCK) && defined(HAVE_AUDIOWORKLET)
+#ifdef EMSCRIPTEN_AUDIO_ASYNC_BLOCK
+#ifdef HAVE_AUDIOWORKLET
    audioworklet_external_block();
+#endif
+#ifdef HAVE_RWEBAUDIO
+   rwebaudio_external_block();
+#endif
 #endif
 
    task_queue_check();
@@ -7153,8 +7166,11 @@ static bool retroarch_parse_input_and_config(
       BSV_MOVIE_ARG NETPLAY_ARG DYNAMIC_ARG FFMPEG_RECORD_ARG CONFIG_FILE_ARG;
 
 #if defined(WEBOS)
-   argv                            = &(argv[1]);
-   argc                            = argc - 1;
+   if (argv[1][0] == '{')
+   {
+      argv                            = &(argv[1]);
+      argc                            = argc - 1;
+   }
 #endif
 
 #ifndef HAVE_MENU

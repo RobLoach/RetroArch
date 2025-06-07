@@ -568,10 +568,6 @@ MSG_HASH(
    "قفل النواة المثبتة"
    )
 MSG_HASH(
-   MENU_ENUM_SUBLABEL_CORE_LOCK,
-   "منع تعديل النواة المثبتة حاليا. يمكن استخدامها لتجنب التحديثات غير المرغوب فيها عندما يتطلب المحتوى إصدار أساسي محدد (على سبيل المثال مجموعة رومات الآركيد)."
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CORE_SET_STANDALONE_EXEMPT,
    "استبعاد من قائمة 'نوى بلا محتوى'"
    )
@@ -1579,10 +1575,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_DRIVER,
    "نظام تشغيل أجهزة الادخال"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_INPUT_DRIVER,
-   "مشغل الإدخال للاستخدام. تبعاً لمشغل الفيديو، قد يفرض مشغل إدخال مختلف."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_HELP_INPUT_DRIVER_UDEV,
@@ -2933,15 +2925,6 @@ MSG_HASH(
    "تبديل جلسة الشبكة الحالية بين وضع 'تشغيل' و 'نظرة'."
    )
 
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_INPUT_META_SEND_DEBUG_INFO,
-   "إرسال معلومات التصحيح"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_INPUT_META_SEND_DEBUG_INFO,
-   "يرسل معلومات تشخيصية حول جهازك وتكوين RetroArch إلى خوادمنا للتحليل."
-   )
-
 /* Settings > Input > Port # Controls */
 
 MSG_HASH(
@@ -3067,6 +3050,10 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_RIGHT_Y_MINUS,
    "تناظري الأيمن Y-(أعلى)"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_INPUT_TURBO,
+   "وضع توربو"
    )
 
 /* Settings > Latency */
@@ -7761,10 +7748,6 @@ MSG_HASH(
 /* Unused (Only Exist in Translation Files) */
 
 MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_AUTO,
-   "نسبة الجوانب التلقائية"
-   )
-MSG_HASH(
    MENU_ENUM_LABEL_VALUE_NETPLAY_ROOM_NICKNAME_LAN,
    "الاسم المستعار (الشبكة): %s"
    )
@@ -7775,10 +7758,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_SYSTEM_BGM_ENABLE,
    "نظام BGM"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_CUSTOM_RATIO,
-   "نسبة مخصصة"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_RECORD_ENABLE,
@@ -7799,14 +7778,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_CHEAT_MATCH_IDX,
    "اختر المطابقة لعرضها."
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_VIDEO_FORCE_ASPECT,
-   "نسبة الجاذبية"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_SELECT_FROM_PLAYLIST,
-   "حدد من قائمة التشغيل"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_CHEAT_VIEW_MATCHES,
@@ -7875,14 +7846,6 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_HELP_LOADING_CONTENT,
    "تحميل المحتوى"
-   )
-MSG_HASH(
-   MENU_ENUM_LABEL_VALUE_HELP_SEND_DEBUG_INFO,
-   "إرسال معلومات التصحيح"
-   )
-MSG_HASH(
-   MENU_ENUM_SUBLABEL_HELP_SEND_DEBUG_INFO,
-   "يرسل معلومات تشخيصية حول جهازك وتكوين RetroArch إلى خوادمنا للتحليل."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_MANAGEMENT,
@@ -8096,30 +8059,6 @@ MSG_HASH( /* FIXME Should be MSG_ */
 MSG_HASH(
    MSG_CHEAT_DELETE_ALL_INSTRUCTIONS,
    "اضغط على اليمين خمس مرات لحذف جميع الغش."
-   )
-MSG_HASH(
-   MSG_FAILED_TO_SAVE_DEBUG_INFO,
-   "فشل في حفظ معلومات التصحيح."
-   )
-MSG_HASH(
-   MSG_FAILED_TO_SEND_DEBUG_INFO,
-   "فشل في إرسال معلومات التصحيح إلى الخادم."
-   )
-MSG_HASH(
-   MSG_SENDING_DEBUG_INFO,
-   "جارٍ إرسال معلومات التصحيح..."
-   )
-MSG_HASH(
-   MSG_SENT_DEBUG_INFO,
-   "تم إرسال معلومات التصحيح إلى الخادم بنجاح. رقم التعريف الخاص بك هو %u."
-   )
-MSG_HASH(
-   MSG_PRESS_TWO_MORE_TIMES_TO_SEND_DEBUG_INFO,
-   "اضغط مرتين أخريين لتقديم معلومات تشخيصية لفريق RetroArch."
-   )
-MSG_HASH(
-   MSG_PRESS_ONE_MORE_TIME_TO_SEND_DEBUG_INFO,
-   "اضغط مرة أخرى لتقديم معلومات تشخيصية لفريق RetroArch."
    )
 MSG_HASH(
    MSG_AUDIO_MIXER_VOLUME,
