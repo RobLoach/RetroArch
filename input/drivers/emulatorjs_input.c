@@ -252,9 +252,14 @@ static void rwebinput_generate_lut(void)
 }
 
 bool keyboard_enabled = false;
+bool alt_enabled = false;
 void ejs_set_keyboard_enabled(int enabled)
 {
-   keyboard_enabled = enabled == 1;
+   if (enabled == 0 || enabled == 1) {
+      keyboard_enabled = enabled == 1;
+   } else if (enabled == 2 || enabled == 3) {
+      alt_enabled = enabled == 3;
+   }
 }
 
 static EM_BOOL rwebinput_keyboard_cb(int event_type,
@@ -262,6 +267,12 @@ static EM_BOOL rwebinput_keyboard_cb(int event_type,
 {
    if (!keyboard_enabled) return EM_FALSE;
    rwebinput_input_t *rwebinput = (rwebinput_input_t*)user_data;
+
+  if (!alt_enabled && (strcmp(key_event->key, "Alt") == 0 ||
+      strcmp(key_event->code, "AltLeft") == 0 ||
+      strcmp(key_event->key, "Meta") == 0)) {
+    return EM_TRUE;
+  }
 
    if (event_type == EMSCRIPTEN_EVENT_KEYPRESS)
       return EM_TRUE;
