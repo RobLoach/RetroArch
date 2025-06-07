@@ -1154,6 +1154,14 @@ static void runloop_init_core_options_path(
 {
    runloop_state_t *runloop_st    = &runloop_state;
 
+#ifdef EMULATORJS
+   MAIN_THREAD_EM_ASM({
+       if (Module.callbacks && typeof Module.callbacks.setupCoreSettingFile === "function") {
+          Module.callbacks.setupCoreSettingFile("/home/web_user/retroarch/userdata/config/" + UTF8ToString($0) + "/" + UTF8ToString($0) + ".opt");
+       }
+   }, runloop_st->system.info.library_name);
+#endif
+
    /* Check whether game-specific options exist */
    if (   game_specific_options
        && validate_per_core_options(s, len, false,

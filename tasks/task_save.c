@@ -1844,8 +1844,10 @@ char* save_state_info(void)
 {
    memset(state_data, '\0', sizeof(state_data));
 
-   if (save_data)
+   if (save_data) {
       free(save_data);
+      save_data = NULL;
+   }
 
    size_t serial_size;
 
