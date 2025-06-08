@@ -61,7 +61,7 @@ largeHeap=("mupen64plus_next" "picodrive" "pcsx_rearmed" "genesis_plus_gx" "medn
 needsGles3=("ppsspp")
 needsThreads=("ppsspp")
 largeThreads=("ppsspp")
-noCHD=("mame2003" "mame2003_plus")
+noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed")
 
 for f in $(ls -v *_emscripten.bc); do
   name=`echo "$f" | sed "s/\(_libretro_emscripten\|\).bc$//"`
