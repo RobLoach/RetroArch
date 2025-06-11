@@ -251,12 +251,14 @@ static void rwebinput_generate_lut(void)
    key_map->sym = 0;
 }
 
+void zero_inputs();
 bool keyboard_enabled = false;
 bool alt_enabled = false;
 void ejs_set_keyboard_enabled(int enabled)
 {
    if (enabled == 0 || enabled == 1) {
       keyboard_enabled = enabled == 1;
+      zero_inputs();
    } else if (enabled == 2 || enabled == 3) {
       alt_enabled = enabled == 3;
    }
@@ -654,14 +656,10 @@ static struct rwebinput_code_to_key keymap[] =
    { 21, 0, 0, 0, 0 }, //R STICK LEFT
    { 22, 0, 0, 0, 0 }, //R STICK DOWN
    { 23, 0, 0, 0, 0 }, //R STICK UP
-   { 24, 0, 0, 0, 0 },
-   { 25, 0, 0, 0, 0 },
-   { 26, 0, 0, 0, 0 },
 };
 
 void simulate_input(int user, int key, int down)
 {
-    if (keyboard_enabled) return;
     for (int i=0; i<ARRAY_SIZE(keymap); i++) {
         if (keymap[i].id == key) {
             if (user == 0) {
@@ -678,8 +676,18 @@ void simulate_input(int user, int key, int down)
     }
 }
 
+void zero_inputs()
+{
+    for (int i=0; i<ARRAY_SIZE(keymap); i++) {
+        keymap[i].down_1 = 0;
+        keymap[i].down_2 = 0;
+        keymap[i].down_3 = 0;
+        keymap[i].down_4 = 0;
+    }
+}
+
 int ejs_is_pressed(int user, int id) {
-    if (keyboard_enabled || id >=24) return 0;
+    if (id >=24) return 0;
     for (int i=0; i<ARRAY_SIZE(keymap); i++) {
         if (keymap[i].id == id) {
             if (user == 0) {
