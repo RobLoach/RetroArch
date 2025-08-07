@@ -134,7 +134,7 @@ EXPORTED_FUNCTIONS = _main,_malloc,_free,_load_state, \
                      _toggle_slow_motion,_set_sm_ratio,_toggle_rewind,_set_rewind_granularity,_get_current_frame_count,_ejs_set_keyboard_enabled, \
                      _set_vsync,_set_video_rotation,_get_video_dimensions,EmscriptenSendCommand,EmscriptenReceiveCommandReply
 
-EXPORTS := Browser,callMain,cwrap,getValue,HEAPU8,FS,PATH,ERRNO_CODES,AL,abort,ENV,stringToNewUTF8,UTF8ToString,Browser,EmscriptenSendCommand,EmscriptenReceiveCommandReply
+EXPORTS := Browser,callMain,cwrap,getValue,HEAPU8,FS,PATH,ERRNO_CODES,AL,abort,ENV,stringToNewUTF8,UTF8ToString,Browser,EmscriptenSendCommand,EmscriptenReceiveCommandReply,EmulatorJSGetState
 
 LIBS   := -s USE_ZLIB=1
 CFLAGS := -s USE_ZLIB=1
@@ -178,7 +178,8 @@ LDFLAGS := -L. --no-heap-copy $(LIBS) -s STACK_SIZE=$(STACK_SIZE) -s INITIAL_MEM
            -s ENVIRONMENT=web,worker -s WASM_BIGINT=1 \
            --extern-pre-js emscripten/pre.js \
            --js-library emscripten/library_rwebcam.js \
-           --js-library emscripten/library_platform_emscripten.js
+           --js-library emscripten/library_platform_emscripten.js \
+           --js-library emscripten/emulatorjs.js
 
 ifneq (,$(findstring same_cdi,$(TARGET)))
    LDFLAGS += -s ASSERTIONS

@@ -1833,17 +1833,12 @@ void set_save_state_in_background(bool state)
 }
 
 #ifdef EMULATORJS
-char state_data[300];
-void* save_data;
 
 char* save_state_info(void)
 {
+   void* save_data = NULL;
+   char state_data[300]; // This should NEVER overflow. If it does we are doing something very wrong.
    memset(state_data, '\0', sizeof(state_data));
-
-   if (save_data) {
-      free(save_data);
-      save_data = NULL;
-   }
 
    size_t serial_size;
 
@@ -1864,7 +1859,7 @@ char* save_state_info(void)
       return state_data;
    }
    sprintf(state_data, "%zu|%zu|1", serial_size, (unsigned long)save_data);
-   return state_data;
+   return state_data; // This must be freed by the JavaScript side!
 }
 
 bool supports_states(void)
