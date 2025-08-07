@@ -132,7 +132,7 @@ static void audioworklet_processor_inited_cb(EMSCRIPTEN_WEBAUDIO_T context, bool
 
    if (!success)
    {
-      RARCH_ERR("[AudioWorklet] Failed to init AudioWorkletProcessor!\n");
+      RARCH_ERR("[AudioWorklet] Failed to init AudioWorkletProcessor.\n");
       audioworklet->init_error = true;
       audioworklet->init_done = true;
       return;
@@ -208,7 +208,7 @@ static void audioworklet_init_error(void *data)
 {
    audioworklet_data_t *audioworklet = (audioworklet_data_t*)data;
 
-   RARCH_ERR("[AudioWorklet] Failed to initialize driver!\n");
+   RARCH_ERR("[AudioWorklet] Failed to initialize driver.\n");
    free(audioworklet->worklet_stack);
    free(audioworklet->tmpbuf);
    free(audioworklet);
@@ -235,7 +235,7 @@ static void *audioworklet_init(const char *device, unsigned rate,
    {
       if (audioworklet_static_data->driver_running || audioworklet_static_data->initing)
       {
-         RARCH_ERR("[AudioWorklet] Tried to start already running driver!\n");
+         RARCH_ERR("[AudioWorklet] Tried to start already running driver.\n");
          return NULL;
       }
       RARCH_LOG("[AudioWorklet] Reusing old context.\n");
@@ -291,14 +291,14 @@ static void *audioworklet_init(const char *device, unsigned rate,
 
 static ssize_t audioworklet_write(void *data, const void *s, size_t ss)
 {
+   size_t avail;
+   size_t max_write;
+   size_t to_write_frames;
+   size_t to_write_bytes;
+   size_t _len = 0;
    audioworklet_data_t *audioworklet = (audioworklet_data_t*)data;
    const float *samples = (const float*)s;
    size_t num_frames = ss / 2 / sizeof(float);
-   size_t written = 0;
-   size_t to_write_frames;
-   size_t to_write_bytes;
-   size_t avail;
-   size_t max_write;
 
    /* too early! might happen with external blocking */
    if (!audioworklet->driver_running)
@@ -316,7 +316,7 @@ static ssize_t audioworklet_write(void *data, const void *s, size_t ss)
       if (!emscripten_lock_busyspin_wait_acquire(&audioworklet->buffer_lock, 2.5))
 #endif
       {
-         RARCH_WARN("[AudioWorklet] Main thread: could not acquire lock\n");
+         RARCH_WARN("[AudioWorklet] Main thread: could not acquire lock.\n");
          break;
       }
 
@@ -336,12 +336,12 @@ static ssize_t audioworklet_write(void *data, const void *s, size_t ss)
       if (to_write_frames)
       {
          to_write_bytes = to_write_frames * 2 * sizeof(float);
-         avail -= to_write_bytes;
+         avail      -= to_write_bytes;
          fifo_write(audioworklet->buffer, samples, to_write_bytes);
          emscripten_atomic_store_u32(&audioworklet->write_avail_bytes, (uint32_t)avail);
          num_frames -= to_write_frames;
-         samples += (to_write_frames * 2);
-         written += to_write_frames;
+         samples    += (to_write_frames * 2);
+         _len       += to_write_frames;
       }
 
       emscripten_lock_release(&audioworklet->buffer_lock);
@@ -373,7 +373,7 @@ static ssize_t audioworklet_write(void *data, const void *s, size_t ss)
       audioworklet_resume_ctx(audioworklet);
    }
 
-   return written;
+   return _len;
 }
 
 #ifdef EMSCRIPTEN_AUDIO_EXTERNAL_BLOCK
@@ -464,7 +464,7 @@ static void audioworklet_free(void *data)
    /* that's not good... this shouldn't happen? */
    if (!audioworklet->driver_running)
    {
-      RARCH_ERR("[AudioWorklet] Tried to free before done initing!\n");
+      RARCH_ERR("[AudioWorklet] Tried to free before done initing.\n");
       return;
    }
 
@@ -474,7 +474,7 @@ static void audioworklet_free(void *data)
    if (!emscripten_lock_busyspin_wait_acquire(&audioworklet->buffer_lock, 10))
 #endif
    {
-      RARCH_ERR("[AudioWorklet] Main thread: could not acquire lock to free buffer!\n");
+      RARCH_ERR("[AudioWorklet] Main thread: could not acquire lock to free buffer.\n");
       return;
    }
    audioworklet->driver_running = false;
