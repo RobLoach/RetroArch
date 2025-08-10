@@ -237,9 +237,7 @@ static bool al_get_buffer(al_t *al, ALuint *buffer)
       if (al_unqueue_buffers(al))
          break;
 
-#ifndef EMSCRIPTEN
       if (al->nonblock)
-#endif
          return false;
 
 #ifndef _WIN32
