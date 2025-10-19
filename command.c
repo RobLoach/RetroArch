@@ -15,6 +15,7 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "input/input_driver.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -66,6 +67,7 @@
 #include "verbosity.h"
 #include "version.h"
 #include "version_git.h"
+#include "tasks/task_content.h"
 
 #define CMD_BUF_SIZE 4096
 
@@ -294,42 +296,42 @@ static void stdin_command_free(command_t *handle)
 
 static void command_stdin_poll(command_t *handle)
 {
-   ptrdiff_t msg_len;
-   char        *last_newline = NULL;
    command_stdin_t *stdincmd = (command_stdin_t*)handle->userptr;
    ssize_t               ret = read_stdin(
          stdincmd->stdin_buf + stdincmd->stdin_buf_ptr,
          CMD_BUF_SIZE - stdincmd->stdin_buf_ptr - 1);
 
-   if (ret == 0)
-      return;
-
-   stdincmd->stdin_buf_ptr                      += ret;
-   stdincmd->stdin_buf[stdincmd->stdin_buf_ptr]  = '\0';
-
-   last_newline = strrchr(stdincmd->stdin_buf, '\n');
-
-   if (!last_newline)
+   if (ret != 0)
    {
-      /* We're receiving bogus data in pipe
-       * (no terminating newline), flush out the buffer. */
-      if (stdincmd->stdin_buf_ptr + 1 >= CMD_BUF_SIZE)
+      char *last_newline = NULL;
+      stdincmd->stdin_buf_ptr                      += ret;
+      stdincmd->stdin_buf[stdincmd->stdin_buf_ptr]  = '\0';
+
+      last_newline = strrchr(stdincmd->stdin_buf, '\n');
+
+      if (!last_newline)
       {
-         stdincmd->stdin_buf_ptr = 0;
-         stdincmd->stdin_buf[0]  = '\0';
+         /* We're receiving bogus data in pipe
+          * (no terminating newline), flush out the buffer. */
+         if (stdincmd->stdin_buf_ptr + 1 >= CMD_BUF_SIZE)
+         {
+            stdincmd->stdin_buf_ptr = 0;
+            stdincmd->stdin_buf[0]  = '\0';
+         }
       }
+      else
+      {
+         ptrdiff_t msg_len;
+         *last_newline++ = '\0';
+         msg_len         = last_newline - stdincmd->stdin_buf;
 
-      return;
+         command_parse_msg(handle, stdincmd->stdin_buf);
+
+         memmove(stdincmd->stdin_buf, last_newline,
+               stdincmd->stdin_buf_ptr - msg_len);
+         stdincmd->stdin_buf_ptr -= msg_len;
+      }
    }
-
-   *last_newline++ = '\0';
-   msg_len         = last_newline - stdincmd->stdin_buf;
-
-   command_parse_msg(handle, stdincmd->stdin_buf);
-
-   memmove(stdincmd->stdin_buf, last_newline,
-         stdincmd->stdin_buf_ptr - msg_len);
-   stdincmd->stdin_buf_ptr -= msg_len;
 }
 
 command_t* command_stdin_new(void)
@@ -386,9 +388,8 @@ static void command_emscripten_poll(command_t *handle)
 {
    command_emscripten_t *emscriptencmd = (command_emscripten_t*)handle->userptr;
    ptrdiff_t msg_len = platform_emscripten_command_read((char **)(&emscriptencmd->command_buf), CMD_BUF_SIZE);
-   if (msg_len == 0)
-      return;
-   command_parse_msg(handle, emscriptencmd->command_buf);
+   if (msg_len != 0)
+      command_parse_msg(handle, emscriptencmd->command_buf);
 }
 
 command_t* command_emscripten_new(void)
@@ -419,9 +420,9 @@ bool command_get_config_param(command_t *cmd, const char* arg)
 {
    size_t _len;
    char reply[8192];
-   #ifdef HAVE_BSV_MOVIE
+#ifdef HAVE_BSV_MOVIE
    char value_dynamic[256];
-   #endif
+#endif
    const char *value              = "unsupported";
    settings_t *settings           = config_get_ptr();
    bool       video_fullscreen    = settings->bools.video_fullscreen;
@@ -590,13 +591,8 @@ command_t* command_uds_new(void)
    strcpy(&addr.sun_path[1], "retroarch/cmd");
 
    if (   bind(fd, (struct sockaddr*)&addr, addrsz) < 0
-       || listen(fd, MAX_USER_CONNECTIONS) < 0)
-   {
-      socket_close(fd);
-      return NULL;
-   }
-
-   if (!socket_nonblock(fd))
+       || listen(fd, MAX_USER_CONNECTIONS) < 0
+       || !socket_nonblock(fd))
    {
       socket_close(fd);
       return NULL;
@@ -624,8 +620,7 @@ command_t* command_uds_new(void)
 #ifdef HAVE_NETWORK_CMD
 static bool command_verify(const char *cmd)
 {
-   unsigned i;
-
+   size_t i;
    if (command_get_arg(cmd, NULL, NULL))
       return true;
 
@@ -809,6 +804,42 @@ bool command_play_replay_slot(command_t *cmd, const char *arg)
 #endif
 }
 
+bool command_seek_replay(command_t *cmd, const char *arg)
+{
+#ifdef HAVE_BSV_MOVIE
+   char reply[32];
+   char *endptr;
+   size_t _len;
+   bool ret      = true;
+   int64_t frame = strtoll(arg, &endptr, 10);
+   input_driver_state_t *input_st = input_state_get_ptr();
+   if (!endptr)
+      ret = false;
+   if (!(input_st->bsv_movie_state.flags & (BSV_FLAG_MOVIE_PLAYBACK | BSV_FLAG_MOVIE_RECORDING)))
+      ret = false;
+#ifdef HAVE_CHEEVOS
+   ret = !rcheevos_hardcore_active();
+#endif
+   if (ret)
+      ret = movie_seek_to_frame(input_st, frame);
+   if (ret)
+   {
+      _len = strlcpy(reply, "OK ", sizeof(reply));
+      _len += snprintf(reply+_len, sizeof(reply)-_len,
+            "%lld", input_st->bsv_movie_state.seek_target_frame);
+   }
+   else
+      _len = strlcpy(reply, "NO", sizeof(reply));
+   reply[_len] = '\n';
+   reply[++_len] = '\0';
+   cmd->replier(cmd, reply, _len);
+   return ret;
+#else
+   cmd->replier(cmd, "NO\n", 4);
+   return false;
+#endif
+}
+
 bool command_save_savefiles(command_t *cmd, const char* arg)
 {
    char reply[4];
@@ -842,38 +873,37 @@ bool command_load_savefiles(command_t *cmd, const char* arg)
 #if defined(HAVE_CHEEVOS)
 bool command_read_ram(command_t *cmd, const char *arg)
 {
-   unsigned i;
-   char *reply                  = NULL;
-   const uint8_t  *data         = NULL;
-   char *reply_at               = NULL;
-   unsigned int nbytes          = 0;
-   unsigned int alloc_size      = 0;
-   unsigned int addr            = -1;
-   size_t _len                  = 0;
+   unsigned int nbytes        = 0;
+   unsigned int addr          = -1;
 
-   if (sscanf(arg, "%x %u", &addr, &nbytes) != 2)
-      return true;
-   /* We allocate more than needed, saving 20 bytes is not really relevant */
-   alloc_size              = 40 + nbytes * 3;
-   reply                   = (char*)malloc(alloc_size);
-   reply[0]                = '\0';
-   reply_at                = reply + snprintf(
-         reply, alloc_size - 1, "READ_CORE_RAM" " %x", addr);
+   if (sscanf(arg, "%x %u", &addr, &nbytes) == 2)
+   {
+      size_t _len             = 0;
+      char *reply_at          = NULL;
+      const uint8_t *data     = NULL;
+      /* We allocate more than needed, saving 20 bytes is not really relevant */
+      unsigned int alloc_size = 40 + nbytes * 3;
+      char *reply             = (char*)malloc(alloc_size);
+      reply[0]                = '\0';
+      reply_at                = reply + snprintf(
+            reply, alloc_size - 1, "READ_CORE_RAM" " %x", addr);
 
-   if ((data = rcheevos_patch_address(addr)))
-   {
-      for (i = 0; i < nbytes; i++)
-         snprintf(reply_at + 3 * i, 4, " %.2X", data[i]);
-      reply_at[3 * nbytes] = '\n';
-      _len                 = reply_at + 3 * nbytes + 1 - reply;
+      if ((data = rcheevos_patch_address(addr)))
+      {
+         size_t i;
+         for (i = 0; i < nbytes; i++)
+            snprintf(reply_at + 3 * i, 4, " %.2X", data[i]);
+         reply_at[3 * nbytes] = '\n';
+         _len = reply_at + 3 * nbytes + 1 - reply;
+      }
+      else
+      {
+         strlcpy(reply_at, " -1\n", sizeof(reply) - strlen(reply));
+         _len = reply_at + STRLEN_CONST(" -1\n") - reply;
+      }
+      cmd->replier(cmd, reply, _len);
+      free(reply);
    }
-   else
-   {
-      strlcpy(reply_at, " -1\n", sizeof(reply) - strlen(reply));
-      _len                  = reply_at + STRLEN_CONST(" -1\n") - reply;
-   }
-   cmd->replier(cmd, reply, _len);
-   free(reply);
    return true;
 }
 
@@ -907,6 +937,14 @@ bool command_version(command_t *cmd, const char* arg)
    reply[  _len] = '\n';
    reply[++_len] = '\0';
    cmd->replier(cmd, reply, _len);
+   return true;
+}
+
+bool command_load_core(command_t *cmd, const char* arg)
+{
+   content_ctx_info_t content_info = {0};
+   task_push_load_new_core(arg, NULL,
+         &content_info, CORE_TYPE_PLAIN, NULL, NULL);
    return true;
 }
 
@@ -1080,7 +1118,8 @@ bool command_write_memory(command_t *cmd, const char *arg)
    const rarch_system_info_t
       *sys_info                 = &runloop_st->system;
    char *reply_at               = reply + snprintf(reply, sizeof(reply) - 1, "WRITE_CORE_MEMORY %x", address);
-   uint8_t *data                = command_memory_get_pointer(sys_info, address, &max_bytes, 1, reply_at, sizeof(reply) - strlen(reply) - 1);
+   uint8_t *data                = command_memory_get_pointer(sys_info, address, &max_bytes, 1,
+         reply_at, sizeof(reply) - strlen(reply) - 1);
 
    if (data)
    {
@@ -1123,15 +1162,10 @@ void command_event_set_volume(
    configuration_set_float(settings, settings->floats.audio_volume, new_volume);
    _len             = strlcpy(msg, msg_hash_to_str(MSG_AUDIO_VOLUME),
          sizeof(msg));
-   msg[_len  ]      = ':';
-   msg[++_len]      = ' ';
-   msg[++_len]      = '\0';
+   _len            += strlcpy(msg + _len, ": ", sizeof(msg) - _len);
    _len            += snprintf(msg + _len, sizeof(msg) - _len, "%.1f",
          new_volume);
-   msg[_len  ]      = ' ';
-   msg[++_len]      = 'd';
-   msg[++_len]      = 'B';
-   msg[++_len]      = '\0';
+   _len            += strlcpy(msg + _len, " dB", sizeof(msg) - _len);
 
 #if defined(HAVE_GFX_WIDGETS)
    if (widgets_active)
@@ -1166,15 +1200,10 @@ void command_event_set_mixer_volume(
    configuration_set_float(settings, settings->floats.audio_mixer_volume, new_volume);
    _len             = strlcpy(msg, msg_hash_to_str(MSG_AUDIO_VOLUME),
          sizeof(msg));
-   msg[_len  ]      = ':';
-   msg[++_len]      = ' ';
-   msg[++_len]      = '\0';
+   _len            += strlcpy(msg + _len, ": ", sizeof(msg) - _len);
    _len            += snprintf(msg + _len, sizeof(msg) - _len, "%.1f",
          new_volume);
-   msg[_len  ]      = ' ';
-   msg[++_len]      = 'd';
-   msg[++_len]      = 'B';
-   msg[++_len]      = '\0';
+   _len            += strlcpy(msg + _len, " dB", sizeof(msg) - _len);
    runloop_msg_queue_push(msg, _len, 1, 180, true, NULL,
          MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
 
@@ -1191,7 +1220,7 @@ void command_event_init_controllers(rarch_system_info_t *sys_info,
 
    for (port = 0; port < num_core_ports; port++)
    {
-      unsigned i;
+      size_t i;
       retro_ctx_controller_info_t pad;
       unsigned device                                 = RETRO_DEVICE_NONE;
       const struct retro_controller_description *desc = NULL;
@@ -1314,8 +1343,8 @@ static size_t command_event_undo_load_state(char *s, size_t len)
 bool command_event_resize_windowed_scale(settings_t *settings,
       unsigned window_scale)
 {
-   unsigned              idx = 0;
-   bool     video_fullscreen = settings->bools.video_fullscreen;
+   unsigned idx = 0;
+   bool video_fullscreen = settings->bools.video_fullscreen;
 
    if (window_scale == 0)
       return false;
@@ -1702,20 +1731,20 @@ void command_event_set_savestate_auto_index(settings_t *settings)
 {
    unsigned max_idx          = 0;
    bool savestate_auto_index = settings->bools.savestate_auto_index;
-   if (!savestate_auto_index)
+   if (savestate_auto_index)
    {
+      command_scan_states(
+            settings->bools.show_hidden_files,
+            settings->uints.savestate_max_keep,
+            settings->ints.state_slot, &max_idx, NULL);
+      configuration_set_int(settings, settings->ints.state_slot, max_idx);
+      RARCH_LOG("[State] %s: #%d.\n",
+            msg_hash_to_str(MSG_FOUND_LAST_STATE_SLOT),
+            max_idx);
+   }
+   else
       /* Reset savestate index to 0 when loading content. */
       configuration_set_int(settings, settings->ints.state_slot, 0);
-      return;
-   }
-   command_scan_states(
-         settings->bools.show_hidden_files,
-         settings->uints.savestate_max_keep,
-         settings->ints.state_slot, &max_idx, NULL);
-   configuration_set_int(settings, settings->ints.state_slot, max_idx);
-   RARCH_LOG("[State] %s: #%d.\n",
-         msg_hash_to_str(MSG_FOUND_LAST_STATE_SLOT),
-         max_idx);
 }
 
 /**
@@ -1955,7 +1984,7 @@ bool command_event_save_core_config(
    {
       const char *_msg = msg_hash_to_str(MSG_CONFIG_DIRECTORY_NOT_SET);
       runloop_msg_queue_push(_msg, strlen(_msg), 1, 180, true, NULL,
-            MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
+            MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_ERROR);
       RARCH_ERR("[Config] %s\n", _msg);
       return false;
    }
@@ -2038,24 +2067,35 @@ void command_event_save_current_config(enum override_type type)
          {
             size_t _len;
             char msg[256];
+            uint8_t msg_cat = MESSAGE_QUEUE_CATEGORY_INFO;
 
             msg[0] = '\0';
 
             if (path_is_empty(RARCH_PATH_CONFIG))
             {
-               _len = strlcpy(msg, "Config directory not set, cannot save configuration.", sizeof(msg));
-               runloop_msg_queue_push(msg, _len, 1, 180, true, NULL,
-                     MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
+               msg_cat = MESSAGE_QUEUE_CATEGORY_ERROR;
+               _len    = strlcpy(msg, "Config directory not set, cannot save configuration.", sizeof(msg));
             }
             else
             {
                if (runloop_st->flags & RUNLOOP_FLAG_OVERRIDES_ACTIVE)
-                  _len = strlcpy(msg, msg_hash_to_str(MSG_OVERRIDES_ACTIVE_NOT_SAVING), sizeof(msg));
+               {
+                  msg_cat = MESSAGE_QUEUE_CATEGORY_ERROR;
+                  _len    = strlcpy(msg, msg_hash_to_str(MSG_OVERRIDES_ACTIVE_NOT_SAVING), sizeof(msg));
+               }
                else
-                  _len = command_event_save_config(path_get(RARCH_PATH_CONFIG), msg, sizeof(msg));
-               runloop_msg_queue_push(msg, _len, 1, 180, true, NULL,
-                     MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
+               {
+                  msg_cat = MESSAGE_QUEUE_CATEGORY_SUCCESS;
+                  _len    = command_event_save_config(path_get(RARCH_PATH_CONFIG), msg, sizeof(msg));
+               }
             }
+
+            /* command_event_save_config() does its own logging */
+            if (msg_cat == MESSAGE_QUEUE_CATEGORY_ERROR)
+               RARCH_ERR("[Overrides] %s\n", msg);
+
+            runloop_msg_queue_push(msg, _len, 1, 180, true, NULL,
+                  MESSAGE_QUEUE_ICON_DEFAULT, msg_cat);
          }
          break;
       case OVERRIDE_GAME:
@@ -2064,29 +2104,46 @@ void command_event_save_current_config(enum override_type type)
          {
             size_t _len;
             char msg[256];
-            int8_t ret = config_save_overrides(type, &runloop_st->system, false, NULL);
+            int8_t ret      = config_save_overrides(type, &runloop_st->system, false, NULL);
+            uint8_t msg_cat = MESSAGE_QUEUE_CATEGORY_INFO;
 
             switch (ret)
             {
                case 1:
-                  _len = strlcpy(msg,
+                  msg_cat = MESSAGE_QUEUE_CATEGORY_SUCCESS;
+                  _len    = strlcpy(msg,
                         msg_hash_to_str(MSG_OVERRIDES_SAVED_SUCCESSFULLY), sizeof(msg));
                   /* set overrides to active so the original config can be
                      restored after closing content */
                   runloop_st->flags |= RUNLOOP_FLAG_OVERRIDES_ACTIVE;
                   break;
                case -1:
-                  _len = strlcpy(msg, msg_hash_to_str(MSG_OVERRIDES_NOT_SAVED), sizeof(msg));
+                  msg_cat = MESSAGE_QUEUE_CATEGORY_WARNING;
+                  _len    = strlcpy(msg, msg_hash_to_str(MSG_OVERRIDES_NOT_SAVED), sizeof(msg));
                   break;
                default:
                case 0:
+                  msg_cat = MESSAGE_QUEUE_CATEGORY_ERROR;
                   _len = strlcpy(msg, msg_hash_to_str(MSG_OVERRIDES_ERROR_SAVING), sizeof(msg));
                   break;
             }
 
-            RARCH_LOG("[Overrides] %s\n", msg);
+            switch (msg_cat)
+            {
+               case MESSAGE_QUEUE_CATEGORY_ERROR:
+                  RARCH_ERR("[Overrides] %s\n", msg);
+                  break;
+               case MESSAGE_QUEUE_CATEGORY_WARNING:
+                  RARCH_WARN("[Overrides] %s\n", msg);
+                  break;
+               case MESSAGE_QUEUE_CATEGORY_SUCCESS:
+               default:
+                  RARCH_LOG("[Overrides] %s\n", msg);
+                  break;
+            }
+
             runloop_msg_queue_push(msg, _len, 1, 180, true, NULL,
-                  MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
+                  MESSAGE_QUEUE_ICON_DEFAULT, msg_cat);
 
 #ifdef HAVE_MENU
             {
@@ -2115,14 +2172,26 @@ void command_event_remove_current_config(enum override_type type)
          {
             size_t _len;
             char msg[256];
-            if (config_save_overrides(type, &runloop_st->system, true, NULL))
-               _len = strlcpy(msg, msg_hash_to_str(MSG_OVERRIDES_REMOVED_SUCCESSFULLY), sizeof(msg));
-            else
-               _len = strlcpy(msg, msg_hash_to_str(MSG_OVERRIDES_ERROR_REMOVING), sizeof(msg));
+            uint8_t msg_cat = MESSAGE_QUEUE_CATEGORY_INFO;
 
-            RARCH_LOG("[Overrides] %s\n", msg);
+            if (config_save_overrides(type, &runloop_st->system, true, NULL))
+            {
+               msg_cat = MESSAGE_QUEUE_CATEGORY_SUCCESS;
+               _len    = strlcpy(msg, msg_hash_to_str(MSG_OVERRIDES_REMOVED_SUCCESSFULLY), sizeof(msg));
+            }
+            else
+            {
+               msg_cat = MESSAGE_QUEUE_CATEGORY_ERROR;
+               _len    = strlcpy(msg, msg_hash_to_str(MSG_OVERRIDES_ERROR_REMOVING), sizeof(msg));
+            }
+
+            if (msg_cat == MESSAGE_QUEUE_CATEGORY_ERROR)
+               RARCH_ERR("[Overrides] %s\n", msg);
+            else
+               RARCH_LOG("[Overrides] %s\n", msg);
+
             runloop_msg_queue_push(msg, _len, 1, 180, true, NULL,
-                  MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_INFO);
+                  MESSAGE_QUEUE_ICON_DEFAULT, msg_cat);
 #ifdef HAVE_MENU
             {
                struct menu_state *menu_st      = menu_state_get_ptr();
@@ -2165,8 +2234,6 @@ bool command_event_main_state(unsigned cmd)
            then and now (not yet implemented); if the state is not part of
            the replay, do nothing and log a warning.
    */
-
-
    if (savestates_enabled)
    {
       switch (cmd)
