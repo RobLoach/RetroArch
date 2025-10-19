@@ -784,6 +784,9 @@ endif
 ifeq ($(EMULATORJS), 1)
    OBJ += input/drivers/emulatorjs_input.o \
           frontend/drivers/platform_emulatorjs.o
+   ifeq ($(HAVE_RWEBAUDIO), 1)
+      OBJ += audio/drivers/rwebaudio.o
+   endif
    ifeq ($(HAVE_AUDIOWORKLET), 1)
       OBJ += audio/drivers/audioworklet.o
    endif

@@ -57,15 +57,17 @@ fi
 lastGles=0
 
 largeStack=("mupen64plus_next")
-largeHeap=("mupen64plus_next" "picodrive" "pcsx_rearmed" "genesis_plus_gx" "mednafen_psx" "mednafen_psx_hw" "parallel_n64" "ppsspp")
+largeHeap=("mupen64plus_next" "picodrive" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "mednafen_psx" "mednafen_psx_hw" "parallel_n64" "ppsspp")
 needsGles3=("ppsspp")
 needsThreads=("ppsspp")
 largeThreads=("ppsspp")
 noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed")
+no7Zip=("bsnes")
 
 for f in $(ls -v *_emscripten.bc); do
   name=`echo "$f" | sed "s/\(_libretro_emscripten\|\).bc$//"`
   async=1
+  sevenZip=1
   wasm=1
   gles3=1
   stack_mem=4194304 # 4mb
@@ -99,6 +101,9 @@ for f in $(ls -v *_emscripten.bc); do
   if [[ $(containsElement $name "${largeThreads[@]}") = 1 ]]; then
     pthread=32
   fi
+  if [[ $(containsElement $name "${no7Zip[@]}") = 1 ]]; then
+    sevenZip=0
+  fi
   if [[ $(containsElement $name "${needsGles3[@]}") = 1 && $gles3 = 0 ]]; then
     echo "$name"' does not support gles2 (legacy)! Please build without --legacy! Exiting...'
     exit 1
@@ -115,6 +120,7 @@ for f in $(ls -v *_emscripten.bc); do
   echo STACK_SIZE: $stack_mem
   echo INITIAL_HEAP: $heap_mem
   echo HAVE_CHD: $chd
+  echo HAVE_7ZIP: $sevenZip
 
   if [[ "$CLEAN" = "YES" ]]; then
     if [ $lastGles != $gles3 ] ; then
@@ -124,8 +130,8 @@ for f in $(ls -v *_emscripten.bc); do
   lastGles=$gles3
 
   # Compile core
-  echo "BUILD COMMAND: make -C ../ -f Makefile.emulatorjs HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem TARGET=${name}_libretro.js -j"$(nproc)
-  make -C ../ -f Makefile.emulatorjs HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem TARGET=${name}_libretro.js -j$(nproc) || exit 1
+  echo "BUILD COMMAND: make -C ../ -f Makefile.emulatorjs HAVE_7ZIP=$sevenZip HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem TARGET=${name}_libretro.js -j"$(nproc)
+  make -C ../ -f Makefile.emulatorjs HAVE_7ZIP=$sevenZip HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem TARGET=${name}_libretro.js -j$(nproc) || exit 1
 
   # Move executable files
   out_dir="../../EmulatorJS/data/cores"
