@@ -61,7 +61,7 @@ largeHeap=("mupen64plus_next" "picodrive" "pcsx_rearmed" "genesis_plus_gx" "gene
 needsGles3=("ppsspp")
 needsThreads=("ppsspp")
 largeThreads=("ppsspp")
-noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed")
+noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide")
 no7Zip=("bsnes")
 
 for f in $(ls -v *_emscripten.bc); do
