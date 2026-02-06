@@ -6212,6 +6212,32 @@ void emscripten_mainloop(void)
 
 #ifdef EMULATORJS
 
+char* get_memory_data(char* key) {
+   int id = -1;
+
+   if (strcmp(key, "RETRO_MEMORY_SAVE_RAM") == 0) {
+      id = RETRO_MEMORY_SAVE_RAM;
+   } else if (strcmp(key, "RETRO_MEMORY_RTC") == 0) {
+      id = RETRO_MEMORY_RTC;
+   } else if (strcmp(key, "RETRO_MEMORY_SYSTEM_RAM") == 0) {
+      id = RETRO_MEMORY_SYSTEM_RAM;
+   } else if (strcmp(key, "RETRO_MEMORY_VIDEO_RAM") == 0) {
+      id = RETRO_MEMORY_VIDEO_RAM;
+   }
+   
+   if (id == -1) {
+      RARCH_LOG("Invalid memory type: %s\n", key);
+      return NULL;
+   }
+   char state_data[300];
+   memset(state_data, '\0', sizeof(state_data));
+   
+   void* data = retro_get_memory_data(id);
+   size_t size = retro_get_memory_size(id);
+   sprintf(state_data, "%zu|%zu", size, (unsigned long)data);
+   return state_data; // This must be freed by the JavaScript side!
+}
+
 bool ejs_is_paused(void) {
    return EJS_PAUSED;
 }

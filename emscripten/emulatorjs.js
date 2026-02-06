@@ -13,8 +13,19 @@ var LibraryEmulatorJS = {
         _free(info);
         _free(data);
         return new Uint8Array(data);
-        
-   }
+    },
+    $EmulatorJSGetMemoryData: function(key) {
+        let keyPtr = stringToNewUTF8(key);
+        const info = _get_memory_data(keyPtr);
+        _free(keyPtr);
+        if (!info) return;
+        const data_info = UTF8ToString(info).split("|");
+        _free(info);
+        const size = parseInt(data_info[0]);
+        const dataStart = parseInt(data_info[1]);
+        const data = HEAPU8.subarray(dataStart, dataStart + size);
+        return data;
+    },
 };
 
 addToLibrary(LibraryEmulatorJS);
