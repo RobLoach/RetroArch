@@ -20,21 +20,30 @@
 
 #include <compat/strl.h>
 
+#if defined(HAVE_SDL3)
+#include <SDL3/SDL.h>
+#else
 #include "SDL.h"
+#endif
 
 #include "../input_driver.h"
 
 #include "../../tasks/tasks_internal.h"
 #include "../../verbosity.h"
 
-#define SDL_SUPPORTS_RUMBLE  SDL_VERSION_ATLEAST(2, 0, 9)
-#define SDL_SUPPORTS_SENSORS SDL_VERSION_ATLEAST(2, 0, 14)
+/* SDL2-only version checks */
+#ifdef HAVE_SDL2
+#define SDL_SUPPORTS_RUMBLE     SDL_VERSION_ATLEAST(2, 0, 9)
+#define SDL_SUPPORTS_SENSORS    SDL_VERSION_ATLEAST(2, 0, 14)
 #define SDL_SUPPORTS_HIDAPI_WII SDL_VERSION_ATLEAST(2, 26, 0)
+#endif
 
 typedef struct _sdl_joypad
 {
    SDL_Joystick *joypad;
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   SDL_Gamepad  *gamepad; /* SDL3: renamed from SDL_GameController */
+#elif defined(HAVE_SDL2)
    SDL_GameController *controller;
    SDL_Haptic *haptic;
    int rumble_effect; /* -1 = not initialized, -2 = error/unsupported, -3 = use SDL_JoystickRumble instead of haptic */
@@ -42,7 +51,7 @@ typedef struct _sdl_joypad
    unsigned num_axes;
    unsigned num_buttons;
    unsigned num_hats;
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    unsigned num_balls;
 #endif
 } sdl_joypad_t;
@@ -58,7 +67,12 @@ static const char *sdl_joypad_name(unsigned pad)
    if (pad >= MAX_USERS)
       return NULL;
 
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   /* SDL3: renamed functions */
+   if (sdl_pads[pad].gamepad)
+      return SDL_GetGamepadNameForID(pad);
+   return SDL_GetJoystickNameForID(pad);
+#elif defined(HAVE_SDL2)
    if (sdl_pads[pad].controller)
       return SDL_GameControllerNameForIndex(pad);
    return SDL_JoystickNameForIndex(pad);
@@ -69,8 +83,11 @@ static const char *sdl_joypad_name(unsigned pad)
 
 static uint8_t sdl_pad_get_button(sdl_joypad_t *pad, unsigned button)
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
    /* TODO: see if a LUT like xinput_joypad.c's button_index_to_bitmap_code is needed. */
+   if (pad->gamepad)
+      return SDL_GetGamepadButton(pad->gamepad, (SDL_GamepadButton)button);
+#elif defined(HAVE_SDL2)
    if (pad->controller)
       return SDL_GameControllerGetButton(pad->controller, (SDL_GameControllerButton)button);
 #endif
@@ -79,7 +96,10 @@ static uint8_t sdl_pad_get_button(sdl_joypad_t *pad, unsigned button)
 
 static uint8_t sdl_pad_get_hat(sdl_joypad_t *pad, unsigned hat)
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   if (pad->gamepad)
+      return sdl_pad_get_button(pad, hat);
+#elif defined(HAVE_SDL2)
    if (pad->controller)
       return sdl_pad_get_button(pad, hat);
 #endif
@@ -88,8 +108,11 @@ static uint8_t sdl_pad_get_hat(sdl_joypad_t *pad, unsigned hat)
 
 static int16_t sdl_pad_get_axis(sdl_joypad_t *pad, unsigned axis)
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
    /* TODO: see if a rarch <-> sdl translation is needed. */
+   if (pad->gamepad)
+      return SDL_GetGamepadAxis(pad->gamepad, (SDL_GamepadAxis)axis);
+#elif defined(HAVE_SDL2)
    if (pad->controller)
       return SDL_GameControllerGetAxis(pad->controller, (SDL_GameControllerAxis)axis);
 #endif
@@ -103,7 +126,20 @@ static void sdl_pad_connect(unsigned id)
    int32_t product            = 0;
    int32_t vendor             = 0;
 
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   SDL_GUID guid;
+   uint16_t *guid_ptr         = NULL;
+
+   /* SDL3: SDL_IsGamepad / SDL_OpenGamepad / SDL_GetGamepadJoystick */
+   if (SDL_IsGamepad(id))
+   {
+      pad->gamepad = SDL_OpenGamepad(id);
+      pad->joypad  = SDL_GetGamepadJoystick(pad->gamepad);
+
+      success = pad->joypad != NULL && pad->gamepad != NULL;
+   }
+   else
+#elif defined(HAVE_SDL2)
    SDL_JoystickGUID guid;
    uint16_t *guid_ptr         = NULL;
 
@@ -133,7 +169,7 @@ static void sdl_pad_connect(unsigned id)
       return;
    }
 
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    guid       = SDL_JoystickGetGUID(pad->joypad);
    guid_ptr   = (uint16_t*)guid.data;
    vendor     = guid_ptr[2];
@@ -159,7 +195,28 @@ static void sdl_pad_connect(unsigned id)
          vendor,
          product);
 
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   if (pad->gamepad)
+   {
+      /* SDL3: SDL_Gamepad internally supports all axis/button IDs.
+       * SDL_GAMEPAD_AXIS_COUNT / SDL_GAMEPAD_BUTTON_COUNT replace
+       * SDL_CONTROLLER_AXIS_MAX / SDL_CONTROLLER_BUTTON_MAX.
+       */
+      pad->num_axes    = SDL_GAMEPAD_AXIS_COUNT;
+      pad->num_buttons = SDL_GAMEPAD_BUTTON_COUNT;
+      pad->num_hats    = 0;
+      pad->num_balls   = 0;
+   }
+   else
+   {
+      pad->num_axes    = SDL_JoystickNumAxes(pad->joypad);
+      pad->num_buttons = SDL_JoystickNumButtons(pad->joypad);
+      pad->num_hats    = SDL_JoystickNumHats(pad->joypad);
+      pad->num_balls   = SDL_JoystickNumBalls(pad->joypad);
+   }
+   /* SDL3: no SDL_Haptic API; rumble via SDL_RumbleJoystick directly */
+
+#elif defined(HAVE_SDL2)
    if (pad->controller)
    {
       /* SDL_GameController internally supports all axis/button IDs, even if
@@ -231,7 +288,15 @@ static void sdl_pad_connect(unsigned id)
 
 static void sdl_pad_disconnect(unsigned id)
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   /* SDL3: SDL_CloseGamepad replaces SDL_GameControllerClose; no SDL_Haptic */
+   if (sdl_pads[id].gamepad)
+   {
+      SDL_CloseGamepad(sdl_pads[id].gamepad);
+      input_autoconfigure_disconnect(id, sdl_joypad.ident);
+   }
+   else
+#elif defined(HAVE_SDL2)
    if (sdl_pads[id].haptic)
       SDL_HapticClose(sdl_pads[id].haptic);
 
@@ -264,7 +329,10 @@ static void *sdl_joypad_init(void *data)
 {
    size_t i;
    unsigned num_sticks;
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   /* SDL3: SDL_INIT_GAMEPAD replaces SDL_INIT_GAMECONTROLLER */
+   uint32_t subsystem           = SDL_INIT_GAMEPAD;
+#elif defined(HAVE_SDL2)
    uint32_t subsystem           = SDL_INIT_GAMECONTROLLER;
 #else
    uint32_t subsystem           = SDL_INIT_JOYSTICK;
@@ -274,16 +342,27 @@ static void *sdl_joypad_init(void *data)
    /* Initialise joystick/controller subsystem, if required */
    if (sdl_subsystem_flags == 0)
    {
+#ifdef HAVE_SDL3
+      /* SDL3: SDL_Init returns bool */
+      if (!SDL_Init(subsystem))
+         return NULL;
+#else
       if (SDL_Init(subsystem) < 0)
          return NULL;
+#endif
    }
    else if ((sdl_subsystem_flags & subsystem) == 0)
    {
+#ifdef HAVE_SDL3
+      if (!SDL_InitSubSystem(subsystem))
+         return NULL;
+#else
       if (SDL_InitSubSystem(subsystem) < 0)
          return NULL;
+#endif
    }
 
-#if HAVE_SDL2
+#ifdef HAVE_SDL2
    g_has_haptic = false;
 
    /* Initialise haptic subsystem, if required */
@@ -307,17 +386,23 @@ static void *sdl_joypad_init(void *data)
    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_WII, "1");
 #endif
 #endif
+   /* SDL3: no SDL_INIT_HAPTIC; rumble via SDL_RumbleJoystick directly */
 
    memset(sdl_pads, 0, sizeof(sdl_pads));
 
+#if defined(HAVE_SDL3)
+   /* SDL3: SDL_GetNumJoysticks replaces SDL_NumJoysticks */
+   num_sticks = SDL_GetNumJoysticks();
+#else
    num_sticks = SDL_NumJoysticks();
+#endif
    if (num_sticks > MAX_USERS)
       num_sticks = MAX_USERS;
 
    for (i = 0; i < num_sticks; i++)
       sdl_pad_connect(i);
 
-#ifndef HAVE_SDL2
+#if !defined(HAVE_SDL2) && !defined(HAVE_SDL3)
    /* quit if no joypad is detected. */
    num_sticks = 0;
    for (i = 0; i < MAX_USERS; i++)
@@ -330,7 +415,7 @@ static void *sdl_joypad_init(void *data)
 
    return (void*)-1;
 
-#ifndef HAVE_SDL2
+#if !defined(HAVE_SDL2) && !defined(HAVE_SDL3)
 error:
    sdl_joypad_destroy();
 
@@ -455,11 +540,30 @@ static int16_t sdl_joypad_state(
 
 static void sdl_joypad_poll(void)
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3) || defined(HAVE_SDL2)
    SDL_Event event;
 
    SDL_PumpEvents();
 
+#if defined(HAVE_SDL3)
+   /* SDL3: joystick/gamepad event type constants renamed */
+   while (SDL_PeepEvents(&event, 1,
+            SDL_GETEVENT, SDL_EVENT_JOYSTICK_ADDED, SDL_EVENT_JOYSTICK_REMOVED) > 0)
+   {
+      switch (event.type)
+      {
+         case SDL_EVENT_JOYSTICK_ADDED:
+            sdl_pad_connect(event.jdevice.which);
+            break;
+         case SDL_EVENT_JOYSTICK_REMOVED:
+            sdl_pad_disconnect(event.jdevice.which);
+            break;
+      }
+   }
+
+   /* SDL3: SDL_CONTROLLERDEVICEREMAPPED -> SDL_EVENT_GAMEPAD_REMAPPED */
+   SDL_FlushEvents(SDL_EVENT_JOYSTICK_AXIS_MOTION, SDL_EVENT_GAMEPAD_REMAPPED);
+#else
    while (SDL_PeepEvents(&event, 1,
             SDL_GETEVENT, SDL_JOYDEVICEADDED, SDL_JOYDEVICEREMOVED) > 0)
    {
@@ -475,12 +579,43 @@ static void sdl_joypad_poll(void)
    }
 
    SDL_FlushEvents(SDL_JOYAXISMOTION, SDL_CONTROLLERDEVICEREMAPPED);
+#endif
 #else
    SDL_JoystickUpdate();
 #endif
 }
 
-#ifdef HAVE_SDL2
+#ifdef HAVE_SDL3
+static bool sdl_joypad_set_rumble(unsigned pad, enum retro_rumble_effect effect, uint16_t strength)
+{
+   uint16_t lo = 0, hi = 0;
+   sdl_joypad_t *joypad = (sdl_joypad_t*)&sdl_pads[pad];
+
+   if (!joypad->joypad)
+      return false;
+
+   switch (effect)
+   {
+      case RETRO_RUMBLE_STRONG:
+         lo = strength;
+         break;
+      case RETRO_RUMBLE_WEAK:
+         hi = strength;
+         break;
+      default:
+         return false;
+   }
+
+   /* SDL3: SDL_JoystickRumble renamed to SDL_RumbleJoystick, returns bool */
+   if (!SDL_RumbleJoystick(joypad->joypad, lo, hi, 5000))
+   {
+      RARCH_WARN("[SDL] Failed to rumble joypad %u: %s.\n", pad, SDL_GetError());
+      return false;
+   }
+
+   return true;
+}
+#elif defined(HAVE_SDL2)
 static bool sdl_joypad_set_rumble(unsigned pad, enum retro_rumble_effect effect, uint16_t strength)
 {
    SDL_HapticEffect efx;
@@ -558,7 +693,24 @@ static bool sdl_joypad_set_sensor_state(unsigned pad, enum retro_sensor_action a
 
    switch (action)
    {
-#if SDL_SUPPORTS_SENSORS
+#if defined(HAVE_SDL3)
+      /* SDL3: SDL_Gamepad sensor functions */
+      case RETRO_SENSOR_GYROSCOPE_DISABLE:
+      case RETRO_SENSOR_GYROSCOPE_ENABLE:
+         if (SDL_GamepadHasSensor(joypad->gamepad, SDL_SENSOR_GYRO))
+            return SDL_SetGamepadSensorEnabled(joypad->gamepad, SDL_SENSOR_GYRO,
+                  action == RETRO_SENSOR_GYROSCOPE_ENABLE);
+         else
+            return false;
+
+      case RETRO_SENSOR_ACCELEROMETER_DISABLE:
+      case RETRO_SENSOR_ACCELEROMETER_ENABLE:
+         if (SDL_GamepadHasSensor(joypad->gamepad, SDL_SENSOR_ACCEL))
+            return SDL_SetGamepadSensorEnabled(joypad->gamepad, SDL_SENSOR_ACCEL,
+                  action == RETRO_SENSOR_ACCELEROMETER_ENABLE);
+         else
+            return false;
+#elif SDL_SUPPORTS_SENSORS
       case RETRO_SENSOR_GYROSCOPE_DISABLE:
       case RETRO_SENSOR_GYROSCOPE_ENABLE:
          if (SDL_GameControllerHasSensor(joypad->controller, SDL_SENSOR_GYRO))
@@ -584,7 +736,49 @@ static bool sdl_joypad_set_sensor_state(unsigned pad, enum retro_sensor_action a
 
 static bool sdl_joypad_get_sensor_input(unsigned pad, unsigned id, float *value)
 {
-#if SDL_SUPPORTS_SENSORS
+#if defined(HAVE_SDL3)
+   sdl_joypad_t *joypad = (sdl_joypad_t*)&sdl_pads[pad];
+   SDL_SensorType sensor_type;
+   float sensor_data[3];
+
+   if (!joypad->gamepad)
+      return false;
+
+   if ((id >= RETRO_SENSOR_ACCELEROMETER_X) && (id <= RETRO_SENSOR_ACCELEROMETER_Z))
+      sensor_type = SDL_SENSOR_ACCEL;
+   else if ((id >= RETRO_SENSOR_GYROSCOPE_X) && (id <= RETRO_SENSOR_GYROSCOPE_Z))
+      sensor_type = SDL_SENSOR_GYRO;
+   else
+      return false;
+
+   /* SDL3: SDL_GetGamepadSensorData replaces SDL_GameControllerGetSensorData */
+   if (!SDL_GetGamepadSensorData(joypad->gamepad, sensor_type, sensor_data, 3))
+      return false;
+
+   switch (id)
+   {
+      case RETRO_SENSOR_ACCELEROMETER_X:
+         *value = sensor_data[0] / SDL_STANDARD_GRAVITY;
+         break;
+      case RETRO_SENSOR_ACCELEROMETER_Y:
+         *value = sensor_data[2] / SDL_STANDARD_GRAVITY;
+         break;
+      case RETRO_SENSOR_ACCELEROMETER_Z:
+         *value = sensor_data[1] / SDL_STANDARD_GRAVITY;
+         break;
+      case RETRO_SENSOR_GYROSCOPE_X:
+         *value = sensor_data[0];
+         break;
+      case RETRO_SENSOR_GYROSCOPE_Y:
+         *value = -sensor_data[2];
+         break;
+      case RETRO_SENSOR_GYROSCOPE_Z:
+         *value = sensor_data[1];
+         break;
+   }
+
+   return true;
+#elif SDL_SUPPORTS_SENSORS
    sdl_joypad_t *joypad = (sdl_joypad_t*)&sdl_pads[pad];
    SDL_SensorType sensor_type;
    float sensor_data[3];
@@ -644,7 +838,7 @@ input_device_driver_t sdl_joypad = {
    NULL,
    sdl_joypad_axis,
    sdl_joypad_poll,
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3) || defined(HAVE_SDL2)
    sdl_joypad_set_rumble,
 #else
    NULL, /* set_rumble */
@@ -653,8 +847,10 @@ input_device_driver_t sdl_joypad = {
    sdl_joypad_set_sensor_state,
    sdl_joypad_get_sensor_input,
    sdl_joypad_name,
-#ifdef HAVE_SDL2
-   "sdl2",
+#if defined(HAVE_SDL3)
+   "sdl3"
+#elif defined(HAVE_SDL2)
+   "sdl2"
 #else
    "sdl"
 #endif

@@ -22,7 +22,15 @@
 #include <string/stdstring.h>
 #include <libretro.h>
 
+#if defined(HAVE_SDL3)
+#include <SDL3/SDL.h>
+#include "../../gfx/common/sdl3_common.h"
+#elif defined(HAVE_SDL2)
 #include "SDL.h"
+#include "../../gfx/common/sdl2_common.h"
+#else
+#include "SDL.h"
+#endif
 
 #include "../input_keymaps.h"
 
@@ -32,10 +40,6 @@
 
 #ifdef __linux__
 #include "../common/linux_common.h"
-#endif
-
-#ifdef HAVE_SDL2
-#include "../../gfx/common/sdl2_common.h"
 #endif
 
 #ifdef WEBOS
@@ -89,7 +93,11 @@ static void *sdl_input_init(const char *joypad_driver)
 static bool sdl_key_pressed(int key)
 {
    int num_keys;
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   /* SDL3: SDL_GetKeyboardState returns const bool*, SDL_GetScancodeFromKey gains modstate param */
+   const bool *keymap    = SDL_GetKeyboardState(&num_keys);
+   unsigned sym          = SDL_GetScancodeFromKey(rarch_keysym_lut[(enum retro_key)key], NULL);
+#elif defined(HAVE_SDL2)
    const uint8_t *keymap = SDL_GetKeyboardState(&num_keys);
    unsigned sym          = SDL_GetScancodeFromKey(rarch_keysym_lut[(enum retro_key)key]);
 #else
@@ -337,7 +345,7 @@ static int16_t sdl_input_state(
 
 static void sdl_input_free(void *data)
 {
-#ifndef HAVE_SDL2
+#if !defined(HAVE_SDL2) && !defined(HAVE_SDL3)
    SDL_Event event;
 #endif
    sdl_input_t *sdl = (sdl_input_t*)data;
@@ -346,7 +354,7 @@ static void sdl_input_free(void *data)
       return;
 
    /* Flush out all pending events. */
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    SDL_FlushEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
 #else
    while (SDL_PollEvent(&event));
@@ -419,7 +427,21 @@ static float sdl_get_sensor_input(void *data, unsigned port, unsigned id)
    return 0.0f;
 }
 
-#ifdef HAVE_SDL2
+#ifdef HAVE_SDL3
+static void sdl3_grab_mouse(void *data, bool state)
+{
+   sdl3_video_t *video_ptr = NULL;
+
+   if (string_is_not_equal(video_driver_get_ident(), "sdl3"))
+      return;
+
+   video_ptr = (sdl3_video_t*)video_driver_get_ptr();
+
+   if (video_ptr)
+      /* SDL3: SDL_SetWindowGrab split; use SDL_SetWindowMouseGrab */
+      SDL_SetWindowMouseGrab(video_ptr->window, state);
+}
+#elif defined(HAVE_SDL2)
 static void sdl2_grab_mouse(void *data, bool state)
 {
    sdl2_video_t *video_ptr = NULL;
@@ -445,7 +467,7 @@ static void sdl_poll_mouse(sdl_input_t *sdl)
    sdl->mouse_m  = (SDL_BUTTON(SDL_BUTTON_MIDDLE)    & btn) ? 1 : 0;
    sdl->mouse_b4 = (SDL_BUTTON(SDL_BUTTON_X1)        & btn) ? 1 : 0;
    sdl->mouse_b5 = (SDL_BUTTON(SDL_BUTTON_X2)        & btn) ? 1 : 0;
-#ifndef HAVE_SDL2
+#if !defined(HAVE_SDL2) && !defined(HAVE_SDL3)
    sdl->mouse_wu = (SDL_BUTTON(SDL_BUTTON_WHEELUP)   & btn) ? 1 : 0;
    sdl->mouse_wd = (SDL_BUTTON(SDL_BUTTON_WHEELDOWN) & btn) ? 1 : 0;
 #endif
@@ -460,7 +482,11 @@ static void sdl_input_poll(void *data)
 
    sdl_poll_mouse(sdl);
 
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   /* SDL3: event type constants renamed */
+   while (SDL_PeepEvents(&event, 1,
+            SDL_GETEVENT, SDL_EVENT_KEY_DOWN, SDL_EVENT_MOUSE_WHEEL) > 0)
+#elif defined(HAVE_SDL2)
    while (SDL_PeepEvents(&event, 1,
             SDL_GETEVENT, SDL_KEYDOWN, SDL_MOUSEWHEEL) > 0)
 #else
@@ -468,21 +494,38 @@ static void sdl_input_poll(void *data)
             SDL_GETEVENT, SDL_KEYEVENTMASK) > 0)
 #endif
    {
+#if defined(HAVE_SDL3)
+      if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP)
+#else
       if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
+#endif
       {
          uint16_t mod  = 0;
+#if defined(HAVE_SDL3)
+         /* SDL3: event.key.keysym removed; use event.key.key and event.key.mod */
+         unsigned code = input_keymaps_translate_keysym_to_rk(event.key.key);
+#else
          unsigned code = input_keymaps_translate_keysym_to_rk(
                event.key.keysym.sym);
+#endif
 #ifdef WEBOS
          input_driver_state_t *input_st = input_state_get_ptr();
          bool osk_active = input_st && (input_st->flags & INP_FLAG_KB_MAPPING_BLOCKED);
 
+#if defined(HAVE_SDL3)
+         switch ((int) event.key.scancode)
+#else
          switch ((int) event.key.keysym.scancode)
+#endif
          {
             case SDL_WEBOS_SCANCODE_BACK:
                /* Because webOS is sending DOWN/UP at the same time,
                   we save this flag for later */
+#if defined(HAVE_SDL3)
+               sdl_webos_special_keymap[sdl_webos_spkey_back] |= event.type == SDL_EVENT_KEY_DOWN;
+#else
                sdl_webos_special_keymap[sdl_webos_spkey_back] |= event.type == SDL_KEYDOWN;
+#endif
                code = RETROK_BACKSPACE;
                break;
             case SDL_WEBOS_SCANCODE_RED:
@@ -509,10 +552,14 @@ static void sdl_input_poll(void *data)
                   continue;
                break;
             case SDL_SCANCODE_RETURN:
-               // remap wheel click to confirm selection in virtual keyboard
+               /* remap wheel click to confirm selection in virtual keyboard */
                if (osk_active)
                {
+#if defined(HAVE_SDL3)
+                  if (event.type == SDL_EVENT_KEY_DOWN)
+#else
                   if (event.type == SDL_KEYDOWN)
+#endif
                      sdl_webos_special_keymap[sdl_webos_spkey_return] = 1;
                   continue;
                }
@@ -526,6 +573,29 @@ static void sdl_input_poll(void *data)
             SDL_webOSCursorVisibility(0);
 #endif
 
+#if defined(HAVE_SDL3)
+         /* SDL3: KMOD_* renamed to SDL_KMOD_* */
+         if (event.key.mod & SDL_KMOD_SHIFT)
+            mod |= RETROKMOD_SHIFT;
+
+         if (event.key.mod & SDL_KMOD_CTRL)
+            mod |= RETROKMOD_CTRL;
+
+         if (event.key.mod & SDL_KMOD_ALT)
+            mod |= RETROKMOD_ALT;
+
+         if (event.key.mod & SDL_KMOD_NUM)
+            mod |= RETROKMOD_NUMLOCK;
+
+         if (event.key.mod & SDL_KMOD_CAPS)
+            mod |= RETROKMOD_CAPSLOCK;
+
+         if (event.key.mod & SDL_KMOD_SCROLL)
+            mod |= RETROKMOD_SCROLLOCK;
+
+         input_keyboard_event(event.type == SDL_EVENT_KEY_DOWN, code, code, mod,
+               RETRO_DEVICE_KEYBOARD);
+#else
          if (event.key.keysym.mod & KMOD_SHIFT)
             mod |= RETROKMOD_SHIFT;
 
@@ -548,9 +618,14 @@ static void sdl_input_poll(void *data)
 
          input_keyboard_event(event.type == SDL_KEYDOWN, code, code, mod,
                RETRO_DEVICE_KEYBOARD);
+#endif
       }
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
+#if defined(HAVE_SDL3)
+      else if (event.type == SDL_EVENT_MOUSE_WHEEL)
+#else
       else if (event.type == SDL_MOUSEWHEEL)
+#endif
       {
          sdl->mouse_wu = event.wheel.y < 0;
          sdl->mouse_wd = event.wheel.y > 0;
@@ -581,7 +656,10 @@ input_driver_t input_sdl = {
    sdl_set_sensor_state,
    sdl_get_sensor_input,
    sdl_get_capabilities,
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   "sdl3",
+   sdl3_grab_mouse,
+#elif defined(HAVE_SDL2)
    "sdl2",
    sdl2_grab_mouse,
 #else

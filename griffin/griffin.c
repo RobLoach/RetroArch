@@ -486,6 +486,11 @@ VIDEO DRIVER
 #include "../gfx/common/sdl2_common.c"
 #endif
 
+#ifdef HAVE_SDL3
+#include "../gfx/drivers/sdl3_gfx.c"
+#include "../gfx/common/sdl3_common.c"
+#endif
+
 #if defined(DINGUX) && defined(HAVE_SDL_DINGUX)
 #if defined(RS90) || defined(MIYOO)
 #include "../gfx/drivers/sdl_rs90_gfx.c"
@@ -894,7 +899,7 @@ AUDIO
 #include "../audio/drivers/xaudio.c"
 #endif
 
-#if defined(HAVE_SDL2)
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
 #include "../audio/drivers/sdl_audio.c"
 #include "../input/drivers/sdl_input.c"
 #include "../input/drivers_joypad/sdl_joypad.c"

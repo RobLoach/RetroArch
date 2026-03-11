@@ -149,7 +149,7 @@ audio_driver_t *audio_drivers[] = {
 #ifdef HAVE_DSOUND
    &audio_dsound,
 #endif
-#if defined(HAVE_SDL) || defined(HAVE_SDL2)
+#if defined(HAVE_SDL) || defined(HAVE_SDL2) || defined(HAVE_SDL3)
    &audio_sdl,
 #endif
 #ifdef HAVE_PULSE
@@ -226,7 +226,7 @@ microphone_driver_t *microphone_drivers[] = {
 #ifdef HAVE_WASAPI
       &microphone_wasapi,
 #endif
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
       &microphone_sdl, /* Microphones are not supported in SDL 1 */
 #endif
 #ifdef HAVE_PIPEWIRE

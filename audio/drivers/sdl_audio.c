@@ -27,8 +27,12 @@
 #include <retro_math.h>
 #include <lists/string_list.h>
 
+#if defined(HAVE_SDL3)
+#include <SDL3/SDL.h>
+#else
 #include "SDL.h"
 #include "SDL_audio.h"
+#endif
 
 #include "../audio_driver.h"
 #include "../../verbosity.h"
@@ -40,7 +44,7 @@ static INLINE int sdl_audio_find_num_frames(int rate, int latency)
    return next_pow2(frames);
 }
 
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
 #ifdef HAVE_MICROPHONE
 #include "../microphone_driver.h"
 
@@ -55,7 +59,11 @@ typedef struct sdl_microphone_handle
     * The queue used to store incoming samples from the driver.
     */
    fifo_buffer_t *sample_buffer;
+#ifdef HAVE_SDL3
+   SDL_AudioStream *stream;     /* SDL3: stream-based audio */
+#else
    SDL_AudioDeviceID device_id;
+#endif
    SDL_AudioSpec device_spec;
 } sdl_microphone_handle_t;
 
@@ -71,13 +79,23 @@ static void *sdl_microphone_init(void)
    /* Initialise audio subsystem, if required */
    if (sdl_subsystem_flags == 0)
    {
+#ifdef HAVE_SDL3
+      if (!SDL_Init(SDL_INIT_AUDIO))
+         return NULL;
+#else
       if (SDL_Init(SDL_INIT_AUDIO) < 0)
          return NULL;
+#endif
    }
    else if ((sdl_subsystem_flags & SDL_INIT_AUDIO) == 0)
    {
+#ifdef HAVE_SDL3
+      if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
+         return NULL;
+#else
       if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
          return NULL;
+#endif
    }
    if (!(sdl = (sdl_microphone_t*)calloc(1, sizeof(*sdl))))
       return NULL;
@@ -91,8 +109,13 @@ static void sdl_microphone_close_mic(void *driver_context, void *mic_context)
    if (mic)
    {
       /* If the microphone was originally initialized successfully... */
+#ifdef HAVE_SDL3
+      if (mic->stream)
+         SDL_DestroyAudioStream(mic->stream);
+#else
       if (mic->device_id > 0)
          SDL_CloseAudioDevice(mic->device_id);
+#endif
 
       fifo_free(mic->sample_buffer);
 
@@ -101,7 +124,7 @@ static void sdl_microphone_close_mic(void *driver_context, void *mic_context)
       scond_free(mic->cond);
 #endif
 
-      RARCH_LOG("[SDL audio] Freed microphone with former device ID %u.\n", mic->device_id);
+      RARCH_LOG("[SDL audio] Freed microphone.\n");
       free(mic);
    }
 }
@@ -116,6 +139,28 @@ static void sdl_microphone_free(void *data)
    /* NOTE: The microphone frontend should've closed the mics by now */
 }
 
+#ifdef HAVE_SDL3
+/* SDL3: recording callback is push-based; SDL gives us data to consume */
+static void sdl_audio_record_cb_sdl3(void *userdata, SDL_AudioStream *stream,
+      int additional_amount, int total_amount)
+{
+   sdl_microphone_handle_t *mic = (sdl_microphone_handle_t*)userdata;
+   size_t avail                 = FIFO_WRITE_AVAIL(mic->sample_buffer);
+   int    to_read               = MIN(additional_amount, (int)avail);
+
+   if (to_read > 0)
+   {
+      /* Allocate a temporary buffer on the stack to receive SDL's data */
+      uint8_t *buf = (uint8_t*)alloca(to_read);
+      int      got = SDL_GetAudioStreamData(stream, buf, to_read);
+      if (got > 0)
+         fifo_write(mic->sample_buffer, buf, got);
+   }
+#ifdef HAVE_THREADS
+   scond_signal(mic->cond);
+#endif
+}
+#else
 static void sdl_audio_record_cb(void *data, Uint8 *stream, int len)
 {
    sdl_microphone_handle_t *mic = (sdl_microphone_handle_t*)data;
@@ -127,6 +172,7 @@ static void sdl_audio_record_cb(void *data, Uint8 *stream, int len)
    scond_signal(mic->cond);
 #endif
 }
+#endif
 
 static void *sdl_microphone_open_mic(void *driver_context, const char *device,
       unsigned rate, unsigned latency, unsigned *new_rate)
@@ -138,7 +184,11 @@ static void *sdl_microphone_open_mic(void *driver_context, const char *device,
    SDL_AudioSpec desired_spec   = {0};
 
 #if __APPLE__
-   if (!string_is_equal(audio_driver_get_ident(), "sdl2"))
+   if (!string_is_equal(audio_driver_get_ident(), "sdl2")
+#ifdef HAVE_SDL3
+         && !string_is_equal(audio_driver_get_ident(), "sdl3")
+#endif
+      )
    {
       const char *msg = msg_hash_to_str(MSG_SDL2_MIC_NEEDS_SDL2_AUDIO);
       runloop_msg_queue_push(msg, strlen(msg),
@@ -162,11 +212,24 @@ static void *sdl_microphone_open_mic(void *driver_context, const char *device,
    /* Only print SDL audio devices if verbose logging is enabled */
    if (verbosity_is_enabled())
    {
+#ifdef HAVE_SDL3
+      int num_available_microphones = 0;
+      SDL_AudioDeviceID *devices    = SDL_GetAudioRecordingDevices(&num_available_microphones);
+      RARCH_DBG("[SDL mic] %d audio capture devices found:\n", num_available_microphones);
+      if (devices)
+      {
+         int i;
+         for (i = 0; i < num_available_microphones; ++i)
+            RARCH_DBG("[SDL mic]    - %s\n", SDL_GetAudioDeviceName(devices[i]));
+         SDL_free(devices);
+      }
+#else
       int i;
       int num_available_microphones = SDL_GetNumAudioDevices(true);
       RARCH_DBG("[SDL mic] %d audio capture devices found:\n", num_available_microphones);
       for (i = 0; i < num_available_microphones; ++i)
          RARCH_DBG("[SDL mic]    - %s\n", SDL_GetAudioDeviceName(i, true));
+#endif
    }
 
    /* We have to buffer up some data ourselves, so we let SDL
@@ -176,16 +239,36 @@ static void *sdl_microphone_open_mic(void *driver_context, const char *device,
    frames                = sdl_audio_find_num_frames(rate, latency / 4);
 
    desired_spec.freq     = rate;
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   desired_spec.format   = SDL_AUDIO_F32;
+#elif defined(HAVE_SDL2)
    desired_spec.format   = AUDIO_F32SYS;
 #else
    desired_spec.format   = AUDIO_S16SYS;
 #endif
    desired_spec.channels = 1; /* Microphones only usually provide input in mono */
+#ifndef HAVE_SDL3
    desired_spec.samples  = frames;
    desired_spec.userdata = mic;
    desired_spec.callback = sdl_audio_record_cb;
+#endif
 
+#ifdef HAVE_SDL3
+   /* SDL3: stream-based recording; SDL_OpenAudioDeviceStream for recording */
+   mic->stream = SDL_OpenAudioDeviceStream(
+         SDL_AUDIO_DEVICE_DEFAULT_RECORDING,
+         &desired_spec,
+         sdl_audio_record_cb_sdl3,
+         mic);
+
+   if (!mic->stream)
+   {
+      RARCH_ERR("[SDL mic] Failed to open SDL3 audio input stream: %s.\n", SDL_GetError());
+      goto error;
+   }
+   mic->device_spec = desired_spec; /* SDL3 does not negotiate; use as-is */
+   RARCH_DBG("[SDL mic] Opened SDL3 audio input stream.\n");
+#else
    mic->device_id = SDL_OpenAudioDevice(
          NULL,
          true,
@@ -219,6 +302,7 @@ static void *sdl_microphone_open_mic(void *driver_context, const char *device,
              SDL_AUDIO_ISSIGNED(mic->device_spec.format) ? "signed" : "unsigned",
              SDL_AUDIO_ISFLOAT(mic->device_spec.format) ? "floating-point" : "integer",
              SDL_AUDIO_ISBIGENDIAN(mic->device_spec.format) ? "big" : "little");
+#endif
 
    if (new_rate)
       *new_rate = mic->device_spec.freq;
@@ -229,10 +313,20 @@ static void *sdl_microphone_open_mic(void *driver_context, const char *device,
 #endif
 
    RARCH_LOG("[SDL audio] Requested %u ms latency for input device, received %d ms.\n",
-             latency, (int)(mic->device_spec.samples * 4 * 1000 / mic->device_spec.freq));
+             latency,
+#ifdef HAVE_SDL3
+             (int)(frames * 4 * 1000 / mic->device_spec.freq)
+#else
+             (int)(mic->device_spec.samples * 4 * 1000 / mic->device_spec.freq)
+#endif
+             );
 
    /* Create a buffer twice as big as needed and prefill the buffer. */
+#ifdef HAVE_SDL3
+   bufsize            = frames * 2 * (SDL_AUDIO_BITSIZE(mic->device_spec.format) / 8);
+#else
    bufsize            = mic->device_spec.samples * 2 * (SDL_AUDIO_BITSIZE(mic->device_spec.format) / 8);
+#endif
    tmp                = calloc(1, bufsize);
    mic->sample_buffer = fifo_new(bufsize);
 
@@ -244,7 +338,11 @@ static void *sdl_microphone_open_mic(void *driver_context, const char *device,
       free(tmp);
    }
 
+#ifdef HAVE_SDL3
+   RARCH_LOG("[SDL audio] Initialized microphone (SDL3 stream).\n");
+#else
    RARCH_LOG("[SDL audio] Initialized microphone with device ID %u.\n", mic->device_id);
+#endif
    return mic;
 
 error:
@@ -257,8 +355,12 @@ static bool sdl_microphone_mic_alive(const void *data, const void *mic_context)
    const sdl_microphone_handle_t *mic = (const sdl_microphone_handle_t*)mic_context;
    if (!mic)
       return false;
-   /* Both params must be non-null */
+#ifdef HAVE_SDL3
+   /* SDL3: check if stream device is not paused */
+   return mic->stream && !SDL_AudioStreamDevicePaused(mic->stream);
+#else
    return SDL_GetAudioDeviceStatus(mic->device_id) == SDL_AUDIO_PLAYING;
+#endif
 }
 
 static bool sdl_microphone_start_mic(void *driver_context, void *mic_context)
@@ -266,6 +368,14 @@ static bool sdl_microphone_start_mic(void *driver_context, void *mic_context)
    sdl_microphone_handle_t *mic = (sdl_microphone_handle_t*)mic_context;
    if (!mic)
       return false;
+#ifdef HAVE_SDL3
+   if (!SDL_ResumeAudioStreamDevice(mic->stream))
+   {
+      RARCH_ERR("[SDL mic] Failed to start microphone: %s.\n", SDL_GetError());
+      return false;
+   }
+   RARCH_DBG("[SDL mic] Started microphone stream.\n");
+#else
    SDL_PauseAudioDevice(mic->device_id, false);
    if (SDL_GetAudioDeviceStatus(mic->device_id) != SDL_AUDIO_PLAYING)
    {
@@ -273,6 +383,7 @@ static bool sdl_microphone_start_mic(void *driver_context, void *mic_context)
       return false;
    }
    RARCH_DBG("[SDL mic] Started microphone %u.\n", mic->device_id);
+#endif
    return true;
 }
 
@@ -284,6 +395,13 @@ static bool sdl_microphone_stop_mic(void *driver_context, void *mic_context)
    if (!sdl || !mic)
       return false;
 
+#ifdef HAVE_SDL3
+   if (!SDL_PauseAudioStreamDevice(mic->stream))
+   {
+      RARCH_ERR("[SDL mic] Failed to pause microphone stream: %s.\n", SDL_GetError());
+      return false;
+   }
+#else
    SDL_PauseAudioDevice(mic->device_id, true);
 
    switch (SDL_GetAudioDeviceStatus(mic->device_id))
@@ -302,6 +420,7 @@ static bool sdl_microphone_stop_mic(void *driver_context, void *mic_context)
                mic->device_id);
          return false;
    }
+#endif
 
    return true;
 }
@@ -327,7 +446,11 @@ static int sdl_microphone_read(void *driver_context, void *mic_context, void *sv
    if (sdl->nonblock)
    {
       size_t avail, read_amt;
+#ifdef HAVE_SDL3
+      SDL_LockAudioStream(mic->stream);   /* Stop the SDL mic callback */
+#else
       SDL_LockAudioDevice(mic->device_id); /* Stop the SDL mic thread */
+#endif
       avail    = FIFO_READ_AVAIL(mic->sample_buffer);
       read_amt = avail > len ? len : avail;
       /* If the incoming queue isn't empty, then
@@ -335,7 +458,11 @@ static int sdl_microphone_read(void *driver_context, void *mic_context, void *sv
        * */
       if (read_amt > 0)
          fifo_read(mic->sample_buffer, s, read_amt);
+#ifdef HAVE_SDL3
+      SDL_UnlockAudioStream(mic->stream);   /* Let the mic callback run again */
+#else
       SDL_UnlockAudioDevice(mic->device_id); /* Let the mic thread run again */
+#endif
       ret = (int)read_amt;
    }
    else
@@ -347,13 +474,21 @@ static int sdl_microphone_read(void *driver_context, void *mic_context, void *sv
       {
          size_t avail;
 
+#ifdef HAVE_SDL3
+         SDL_LockAudioStream(mic->stream);
+#else
          SDL_LockAudioDevice(mic->device_id);
+#endif
          /* Stop the SDL microphone thread from running */
          avail = FIFO_READ_AVAIL(mic->sample_buffer);
 
          if (avail == 0)
          { /* If the incoming sample queue is empty... */
+#ifdef HAVE_SDL3
+            SDL_UnlockAudioStream(mic->stream);
+#else
             SDL_UnlockAudioDevice(mic->device_id);
+#endif
             /* Let the SDL microphone thread run so it can
              * push some incoming samples */
 #ifdef HAVE_THREADS
@@ -374,7 +509,11 @@ static int sdl_microphone_read(void *driver_context, void *mic_context, void *sv
             fifo_read(mic->sample_buffer, s + read, read_amt);
             /* Read as many samples as we have available without
              * underflowing the queue */
+#ifdef HAVE_SDL3
+            SDL_UnlockAudioStream(mic->stream);
+#else
             SDL_UnlockAudioDevice(mic->device_id);
+#endif
             /* Let the SDL microphone thread run again */
             read += read_amt;
          }
@@ -396,7 +535,11 @@ microphone_driver_t microphone_sdl = {
       sdl_microphone_free,
       sdl_microphone_read,
       sdl_microphone_set_nonblock_state,
+#ifdef HAVE_SDL3
+      "sdl3",
+#else
       "sdl2",
+#endif
       NULL,
       NULL,
       sdl_microphone_open_mic,
@@ -451,7 +594,11 @@ typedef struct sdl_audio
    bool nonblock;
    bool is_paused;
    SDL_AudioSpec device_spec;
+#ifdef HAVE_SDL3
+   SDL_AudioStream  *speaker_stream;
+#else
    SDL_AudioDeviceID speaker_device;
+#endif
 } sdl_audio_t;
 
 static void sdl_audio_playback_cb(void *data, Uint8 *stream, int len)
@@ -467,9 +614,49 @@ static void sdl_audio_playback_cb(void *data, Uint8 *stream, int len)
    memset(stream + _len, 0, len - _len);
 }
 
+#ifdef HAVE_SDL3
+/* SDL3: playback callback is push-based; SDL asks us to provide data */
+static void sdl_audio_playback_cb_sdl3(void *userdata, SDL_AudioStream *stream,
+      int additional_amount, int total_amount)
+{
+   sdl_audio_t *sdl  = (sdl_audio_t*)userdata;
+   size_t     avail  = FIFO_READ_AVAIL(sdl->speaker_buffer);
+   int        to_put = MIN(additional_amount, (int)avail);
+
+   if (to_put > 0)
+   {
+      uint8_t *buf = (uint8_t*)alloca(to_put);
+      fifo_read(sdl->speaker_buffer, buf, to_put);
+      SDL_PutAudioStreamData(stream, buf, to_put);
+   }
+#ifdef HAVE_THREADS
+   scond_signal(sdl->cond);
+#endif
+   /* If underrun, SDL will handle silence automatically */
+}
+#endif
+
 static void *sdl_audio_list_new(void *u)
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   int i, num = 0;
+   union string_list_elem_attr attr;
+   struct string_list *sl    = string_list_new();
+   SDL_AudioDeviceID  *devices;
+
+   if (!sl)
+      return NULL;
+
+   attr.i  = 0;
+   devices = SDL_GetAudioPlaybackDevices(&num);
+   if (devices)
+   {
+      for (i = 0; i < num; i++)
+         string_list_append(sl, SDL_GetAudioDeviceName(devices[i]), attr);
+      SDL_free(devices);
+   }
+   return sl;
+#elif defined(HAVE_SDL2)
    int i, num = 0;
    union string_list_elem_attr attr;
    struct string_list *sl = string_list_new();
@@ -506,13 +693,23 @@ static void *sdl_audio_init(const char *device,
    /* Initialise audio subsystem, if required */
    if (sdl_subsystem_flags == 0)
    {
+#ifdef HAVE_SDL3
+      if (!SDL_Init(SDL_INIT_AUDIO))
+         return NULL;
+#else
       if (SDL_Init(SDL_INIT_AUDIO) < 0)
          return NULL;
+#endif
    }
    else if ((sdl_subsystem_flags & SDL_INIT_AUDIO) == 0)
    {
+#ifdef HAVE_SDL3
+      if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
+         return NULL;
+#else
       if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
          return NULL;
+#endif
    }
 
    sdl = (sdl_audio_t*)calloc(1, sizeof(*sdl));
@@ -527,34 +724,50 @@ static void *sdl_audio_init(const char *device,
 
    /* First, let's initialize the output device. */
    spec.freq     = rate;
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   spec.format   = SDL_AUDIO_F32;
+#elif defined(HAVE_SDL2)
    spec.format   = AUDIO_F32SYS;
 #else
    spec.format   = AUDIO_S16SYS;
 #endif
    spec.channels = 2;
+#ifndef HAVE_SDL3
    spec.samples  = frames; /* This is in audio frames, not samples ... :( */
    spec.callback = sdl_audio_playback_cb;
    spec.userdata = sdl;
+#endif
 
+#if defined(HAVE_SDL3)
+   sdl->speaker_stream = SDL_OpenAudioDeviceStream(
+         SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+         &spec,
+         sdl_audio_playback_cb_sdl3,
+         sdl);
+
+   if (!sdl->speaker_stream)
+   {
+      RARCH_ERR("[SDL audio] Failed to open SDL3 audio stream: %s.\n", SDL_GetError());
+      free(sdl);
+      return NULL;
+   }
+
+   sdl->device_spec = spec; /* SDL3: no negotiation */
+   *new_rate        = spec.freq;
+   RARCH_DBG("[SDL audio] Opened SDL3 audio stream.\n");
+#elif defined(HAVE_SDL2)
    /* No compatibility stub for SDL_OpenAudioDevice because its return value
     * is different from that of SDL_OpenAudio. */
-#ifdef HAVE_SDL2
    sdl->speaker_device = SDL_OpenAudioDevice(NULL, false, &spec, &sdl->device_spec, 0);
 
    if (sdl->speaker_device == 0)
-#else
-   sdl->speaker_device = SDL_OpenAudio(&spec, &sdl->device_spec);
-
-   if (sdl->speaker_device < 0)
-#endif
    {
       RARCH_ERR("[SDL audio] Failed to open SDL audio output device: %s.\n", SDL_GetError());
       free(sdl);
       return NULL;
    }
 
-   *new_rate                = sdl->device_spec.freq;
+   *new_rate = sdl->device_spec.freq;
    RARCH_DBG("[SDL audio] Opened SDL audio out device with ID %u.\n",
              sdl->speaker_device);
    RARCH_DBG("[SDL audio] Requested a speaker frequency of %u Hz, received %u Hz.\n",
@@ -574,6 +787,18 @@ static void *sdl_audio_init(const char *device,
              SDL_AUDIO_ISSIGNED(sdl->device_spec.format) ? "signed" : "unsigned",
              SDL_AUDIO_ISFLOAT(sdl->device_spec.format) ? "floating-point" : "integer",
              SDL_AUDIO_ISBIGENDIAN(sdl->device_spec.format) ? "big" : "little");
+#else
+   sdl->speaker_device = SDL_OpenAudio(&spec, &sdl->device_spec);
+
+   if (sdl->speaker_device < 0)
+   {
+      RARCH_ERR("[SDL audio] Failed to open SDL audio output device: %s.\n", SDL_GetError());
+      free(sdl);
+      return NULL;
+   }
+
+   *new_rate = sdl->device_spec.freq;
+#endif
 
 #ifdef HAVE_THREADS
    sdl->lock                = slock_new();
@@ -581,10 +806,20 @@ static void *sdl_audio_init(const char *device,
 #endif
 
    RARCH_LOG("[SDL audio] Requested %u ms latency for output device, received %d ms.\n",
-         latency, (int)(sdl->device_spec.samples * 4 * 1000 / (*new_rate)));
+         latency,
+#ifdef HAVE_SDL3
+         (int)(frames * 4 * 1000 / (*new_rate))
+#else
+         (int)(sdl->device_spec.samples * 4 * 1000 / (*new_rate))
+#endif
+         );
 
    /* Create a buffer twice as big as needed and prefill the buffer. */
+#ifdef HAVE_SDL3
+   bufsize             = frames * 4 * (SDL_AUDIO_BITSIZE(spec.format) / 8);
+#else
    bufsize             = sdl->device_spec.samples * 4 * (SDL_AUDIO_BITSIZE(sdl->device_spec.format) / 8);
+#endif
    tmp                 = calloc(1, bufsize);
    sdl->speaker_buffer = fifo_new(bufsize);
 
@@ -596,7 +831,11 @@ static void *sdl_audio_init(const char *device,
 
    RARCH_DBG("[SDL audio] Initialized speaker sample queue with %u bytes.\n", bufsize);
 
+#ifdef HAVE_SDL3
+   SDL_ResumeAudioStreamDevice(sdl->speaker_stream);
+#else
    SDL_PauseAudioDevice(sdl->speaker_device, false);
+#endif
 
    return sdl;
 }
@@ -610,11 +849,19 @@ static ssize_t sdl_audio_write(void *data, const void *s, size_t len)
    if (sdl->nonblock)
    {
       size_t avail, write_amt;
-      SDL_LockAudioDevice(sdl->speaker_device); /* Stop the SDL speaker thread from running */
+#ifdef HAVE_SDL3
+      SDL_LockAudioStream(sdl->speaker_stream);   /* Stop the SDL speaker callback */
+#else
+      SDL_LockAudioDevice(sdl->speaker_device);   /* Stop the SDL speaker thread from running */
+#endif
       avail     = FIFO_WRITE_AVAIL(sdl->speaker_buffer);
       write_amt = (avail > len) ? len : avail; /* Enqueue as much data as we can */
       fifo_write(sdl->speaker_buffer, s, write_amt);
+#ifdef HAVE_SDL3
+      SDL_UnlockAudioStream(sdl->speaker_stream); /* Let the speaker callback run again */
+#else
       SDL_UnlockAudioDevice(sdl->speaker_device); /* Let the speaker thread run again */
+#endif
       _len      = write_amt; /* If the queue was full...well, too bad. */
    }
    else
@@ -625,13 +872,21 @@ static ssize_t sdl_audio_write(void *data, const void *s, size_t len)
          size_t avail;
 
          /* Stop the SDL speaker thread from running */
+#ifdef HAVE_SDL3
+         SDL_LockAudioStream(sdl->speaker_stream);
+#else
          SDL_LockAudioDevice(sdl->speaker_device);
+#endif
          avail = FIFO_WRITE_AVAIL(sdl->speaker_buffer);
 
          /* If the outgoing sample queue is full... */
          if (avail == 0)
          {
+#ifdef HAVE_SDL3
+            SDL_UnlockAudioStream(sdl->speaker_stream);
+#else
             SDL_UnlockAudioDevice(sdl->speaker_device);
+#endif
             /* Let the SDL speaker thread run so it can play the enqueued samples,
              * which will free up space for us to write new ones. */
 #ifdef HAVE_THREADS
@@ -648,7 +903,11 @@ static ssize_t sdl_audio_write(void *data, const void *s, size_t len)
             size_t write_amt = len - _len > avail ? avail : len - _len;
             fifo_write(sdl->speaker_buffer, (const char*)s + _len, write_amt);
             /* Enqueue as many samples as we have available without overflowing the queue */
+#ifdef HAVE_SDL3
+            SDL_UnlockAudioStream(sdl->speaker_stream); /* Let the speaker callback run again */
+#else
             SDL_UnlockAudioDevice(sdl->speaker_device); /* Let the SDL speaker thread run again */
+#endif
             _len += write_amt;
          }
       }
@@ -661,7 +920,11 @@ static bool sdl_audio_stop(void *data)
 {
    sdl_audio_t *sdl = (sdl_audio_t*)data;
    sdl->is_paused   = true;
+#ifdef HAVE_SDL3
+   SDL_PauseAudioStreamDevice(sdl->speaker_stream);
+#else
    SDL_PauseAudioDevice(sdl->speaker_device, true);
+#endif
    return true;
 }
 
@@ -677,7 +940,11 @@ static bool sdl_audio_start(void *data, bool is_shutdown)
 {
    sdl_audio_t *sdl = (sdl_audio_t*)data;
    sdl->is_paused   = false;
+#ifdef HAVE_SDL3
+   SDL_ResumeAudioStreamDevice(sdl->speaker_stream);
+#else
    SDL_PauseAudioDevice(sdl->speaker_device, false);
+#endif
    return true;
 }
 
@@ -694,10 +961,13 @@ static void sdl_audio_free(void *data)
 
    if (sdl)
    {
+#ifdef HAVE_SDL3
+      if (sdl->speaker_stream)
+         SDL_DestroyAudioStream(sdl->speaker_stream);
+#else
       if (sdl->speaker_device > 0)
-      {
          SDL_CloseAudioDevice(sdl->speaker_device);
-      }
+#endif
 
       if (sdl->speaker_buffer)
          fifo_free(sdl->speaker_buffer);
@@ -738,7 +1008,9 @@ audio_driver_t audio_sdl = {
    sdl_audio_set_nonblock_state,
    sdl_audio_free,
    sdl_audio_use_float,
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   "sdl3",
+#elif defined(HAVE_SDL2)
    "sdl2",
 #else
    "sdl",

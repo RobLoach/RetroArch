@@ -1,0 +1,731 @@
+/*  RetroArch - A frontend for libretro.
+ *  Copyright (C) 2010-2014 - Hans-Kristian Arntzen
+ *  Copyright (C) 2011-2017 - Daniel De Matteis
+ *  Copyright (C) 2011-2017 - Higor Euripedes
+ *
+ *  RetroArch is free software: you can redistribute it and/or modify it under the terms
+ *  of the GNU General Public License as published by the Free Software Found-
+ *  ation, either version 3 of the License, or (at your option) any later version.
+ *
+ *  RetroArch is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *  PURPOSE.  See the GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with RetroArch.
+ *  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <stdlib.h>
+#include <string.h>
+
+#include <retro_inline.h>
+#include <gfx/scaler/scaler.h>
+
+#ifdef HAVE_CONFIG_H
+#include "../../config.h"
+#endif
+
+#ifdef HAVE_X11
+#include "../common/x11_common.h"
+#endif
+
+#ifdef HAVE_MENU
+#include "../../menu/menu_driver.h"
+#endif
+
+#include <SDL3/SDL.h>
+#include "../common/sdl3_common.h"
+
+#include "../font_driver.h"
+
+#include "../../configuration.h"
+#include "../../retroarch.h"
+#include "../../verbosity.h"
+
+/*
+ * FORWARD DECLARATIONS
+ */
+
+static void sdl3_gfx_free(void *data);
+
+static INLINE void sdl_tex_zero(sdl3_tex_t *t)
+{
+   if (t->tex)
+      SDL_DestroyTexture(t->tex);
+
+   t->tex = NULL;
+   t->w = t->h = t->pitch = 0;
+}
+
+static void sdl3_init_font(sdl3_video_t *vid, const char *font_path,
+      unsigned font_size)
+{
+   int i, r, g, b;
+   SDL_Color colors[256];
+   SDL_Surface               *tmp = NULL;
+   SDL_Palette               *pal = NULL;
+   const struct font_atlas *atlas = NULL;
+   settings_t           *settings = config_get_ptr();
+   bool video_font_enable         = settings->bools.video_font_enable;
+   float msg_color_r              = settings->floats.video_msg_color_r;
+   float msg_color_g              = settings->floats.video_msg_color_g;
+   float msg_color_b              = settings->floats.video_msg_color_b;
+
+   if (!video_font_enable)
+      return;
+
+   if (!font_renderer_create_default(
+            &vid->font_driver, &vid->font_data,
+            *font_path ? font_path : NULL, font_size))
+   {
+      RARCH_WARN("[SDL3] Could not initialize fonts.\n");
+      return;
+   }
+
+   r           = msg_color_r * 255;
+   g           = msg_color_g * 255;
+   b           = msg_color_b * 255;
+
+   r           = (r < 0) ? 0 : (r > 255 ? 255 : r);
+   g           = (g < 0) ? 0 : (g > 255 ? 255 : g);
+   b           = (b < 0) ? 0 : (b > 255 ? 255 : b);
+
+   vid->font_r = r;
+   vid->font_g = g;
+   vid->font_b = b;
+
+   atlas       = vid->font_driver->get_atlas(vid->font_data);
+
+   tmp         = SDL_CreateRGBSurfaceFrom(
+         atlas->buffer, atlas->width,
+         atlas->height, 8, atlas->width,
+         0, 0, 0, 0);
+
+   for (i = 0; i < 256; ++i)
+   {
+      colors[i].r = colors[i].g = colors[i].b = i;
+      colors[i].a = 255;
+   }
+
+   pal = SDL_AllocPalette(256);
+   SDL_SetPaletteColors(pal, colors, 0, 256);
+   SDL_SetSurfacePalette(tmp, pal);
+   /* SDL3: SDL_TRUE removed, use plain true */
+   SDL_SetColorKey(tmp, true, 0);
+
+   vid->font.tex  = SDL_CreateTextureFromSurface(vid->renderer, tmp);
+
+   if (vid->font.tex)
+   {
+      vid->font.w      = atlas->width;
+      vid->font.h      = atlas->height;
+      vid->font.active = true;
+
+      SDL_SetTextureBlendMode(vid->font.tex, SDL_BLENDMODE_ADD);
+   }
+   else
+      RARCH_WARN("[SDL3] Failed to initialize font texture: %s\n", SDL_GetError());
+
+   SDL_FreePalette(pal);
+   SDL_FreeSurface(tmp);
+}
+
+static void sdl3_render_msg(sdl3_video_t *vid, const char *msg)
+{
+   int delta_x          = 0;
+   int delta_y          = 0;
+   unsigned      width  = vid->vp.width;
+   unsigned      height = vid->vp.height;
+   settings_t *settings = config_get_ptr();
+   float msg_pos_x      = settings->floats.video_msg_pos_x;
+   float msg_pos_y      = settings->floats.video_msg_pos_y;
+   int x                = msg_pos_x * width;
+   int y                = (1.0f - msg_pos_y) * height;
+
+   if (!vid->font_data)
+      return;
+
+   SDL_SetTextureColorMod(vid->font.tex,
+         vid->font_r, vid->font_g, vid->font_b);
+
+   for (; *msg; msg++)
+   {
+      SDL_Rect src_rect, dst_rect;
+      int off_x, off_y, tex_x, tex_y;
+      const struct font_glyph *gly =
+         vid->font_driver->get_glyph(vid->font_data, (uint8_t)*msg);
+
+      if (!gly)
+         gly = vid->font_driver->get_glyph(vid->font_data, '?');
+
+      if (!gly)
+         continue;
+
+      off_x      = gly->draw_offset_x;
+      off_y      = gly->draw_offset_y;
+      tex_x      = gly->atlas_offset_x;
+      tex_y      = gly->atlas_offset_y;
+
+      src_rect.x = tex_x;
+      src_rect.y = tex_y;
+      src_rect.w = (int)gly->width;
+      src_rect.h = (int)gly->height;
+
+      dst_rect.x = x + delta_x + off_x;
+      dst_rect.y = y + delta_y + off_y;
+      dst_rect.w = (int)gly->width;
+      dst_rect.h = (int)gly->height;
+
+      /* SDL3: SDL_RenderCopyEx -> SDL_RenderTextureRotated */
+      SDL_RenderTextureRotated(vid->renderer, vid->font.tex,
+            &src_rect, &dst_rect, 0, NULL, SDL_FLIP_NONE);
+
+      delta_x += gly->advance_x;
+      delta_y -= gly->advance_y;
+   }
+}
+
+static void sdl3_init_renderer(sdl3_video_t *vid)
+{
+   /* SDL3: SDL_CreateRenderer(window, name) — no index or flags parameter.
+    * Use NULL for the renderer name to select the default.
+    * VSync is set separately via SDL_SetRenderVSync. */
+   SDL_ClearHints();
+   SDL_SetHintWithPriority(SDL_HINT_RENDER_VSYNC,
+                           vid->video.vsync ? "1" : "0", SDL_HINT_OVERRIDE);
+   vid->renderer = SDL_CreateRenderer(vid->window, NULL);
+
+   if (!vid->renderer)
+   {
+      RARCH_ERR("[SDL3] Failed to initialize renderer: %s.", SDL_GetError());
+      return;
+   }
+
+   if (vid->video.vsync)
+      SDL_SetRenderVSync(vid->renderer, 1);
+
+   SDL_SetRenderDrawColor(vid->renderer, 0, 0, 0, 255);
+}
+
+static void sdl_refresh_renderer(sdl3_video_t *vid)
+{
+   SDL_Rect r;
+
+   SDL_RenderClear(vid->renderer);
+
+   r.x      = vid->vp.x;
+   r.y      = vid->vp.y;
+   r.w      = (int)vid->vp.width;
+   r.h      = (int)vid->vp.height;
+
+   /* SDL3: SDL_RenderSetViewport -> SDL_SetRenderViewport */
+   SDL_SetRenderViewport(vid->renderer, &r);
+
+   /* breaks int scaling */
+#if 0
+   SDL_SetRenderLogicalPresentation(vid->renderer,
+         vid->vp.width, vid->vp.height,
+         SDL_LOGICAL_PRESENTATION_STRETCH, SDL_SCALEMODE_LINEAR);
+#endif
+}
+
+static void sdl_refresh_viewport(sdl3_video_t *vid)
+{
+   int win_w, win_h;
+
+   SDL_GetWindowSize(vid->window, &win_w, &win_h);
+
+   vid->vp.full_width  = win_w;
+   vid->vp.full_height = win_h;
+   video_driver_update_viewport(&vid->vp, false, vid->video.force_aspect, true);
+
+   vid->flags &= ~SDL3_FLAG_SHOULD_RESIZE;
+
+   sdl_refresh_renderer(vid);
+}
+
+static void sdl_refresh_input_size(sdl3_video_t *vid, bool menu, bool rgb32,
+      unsigned width, unsigned height, unsigned pitch)
+{
+   sdl3_tex_t *target = menu ? &vid->menu : &vid->frame;
+
+   if (!target->tex || target->w != width || target->h != height
+       || target->rgb32 != rgb32 || target->pitch != pitch)
+   {
+      unsigned format;
+
+      sdl_tex_zero(target);
+
+      if (menu)
+         format = rgb32 ? SDL_PIXELFORMAT_ARGB8888 : SDL_PIXELFORMAT_RGBA4444;
+      else /* this assumes the frontend will convert 0RGB1555 to RGB565 */
+         format = rgb32 ? SDL_PIXELFORMAT_ARGB8888 : SDL_PIXELFORMAT_RGB565;
+
+      target->tex = SDL_CreateTexture(vid->renderer, format,
+                                      SDL_TEXTUREACCESS_STREAMING, width, height);
+
+      SDL_SetTextureScaleMode(target->tex, menu ? SDL_SCALEMODE_NEAREST : (vid->video.smooth ? SDL_SCALEMODE_LINEAR : SDL_SCALEMODE_NEAREST));
+
+      if (!target->tex)
+      {
+         RARCH_ERR("[SDL3] Failed to create %s texture: %s.\n", menu ? "menu" : "main",
+                   SDL_GetError());
+         return;
+      }
+
+      if (menu)
+         SDL_SetTextureBlendMode(target->tex, SDL_BLENDMODE_BLEND);
+
+      target->w = width;
+      target->h = height;
+      target->pitch = pitch;
+      target->rgb32 = rgb32;
+
+      /* If target is menu, do not override 'active'
+       * state (this should only be set by
+       * sdl3_poke_texture_enable()) */
+      if (!menu)
+         target->active = true;
+   }
+}
+
+static void *sdl3_gfx_init(const video_info_t *video,
+      input_driver_t **input, void **input_data)
+{
+   int i, num_displays;
+   unsigned flags;
+   sdl3_video_t *vid            = NULL;
+   uint32_t sdl_subsystem_flags = SDL_WasInit(0);
+   settings_t *settings         = config_get_ptr();
+#if defined(HAVE_X11) || defined(HAVE_WAYLAND)
+   const char *video_driver     = NULL;
+#endif
+
+#ifdef HAVE_X11
+   XInitThreads();
+#endif
+
+   /* Initialise graphics subsystem, if required */
+   if (sdl_subsystem_flags == 0)
+   {
+      /* SDL3: SDL_Init returns bool instead of int */
+      if (!SDL_Init(SDL_INIT_VIDEO))
+         return NULL;
+   }
+   else if ((sdl_subsystem_flags & SDL_INIT_VIDEO) == 0)
+   {
+      if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
+         return NULL;
+   }
+
+   vid = (sdl3_video_t*)calloc(1, sizeof(*vid));
+   if (!vid)
+      return NULL;
+
+   /* SDL3: SDL_GetRenderDrivers returns a const char** array */
+   {
+      int num_drivers               = 0;
+      const char * const *drivers   = SDL_GetRenderDrivers(&num_drivers);
+      RARCH_LOG("[SDL3] Available renderers (change with $SDL_RENDER_DRIVER):\n");
+      for (i = 0; i < num_drivers; i++)
+         RARCH_LOG("[SDL3] \t%s\n", drivers[i]);
+   }
+
+   /* SDL3: SDL_GetDisplays returns an array of display IDs */
+   {
+      SDL_DisplayID *displays = SDL_GetDisplays(&num_displays);
+      RARCH_LOG("[SDL3] Available displays:\n");
+      for (i = 0; i < num_displays; ++i)
+      {
+         /* SDL3: SDL_GetCurrentDisplayMode returns a pointer, not an out-param */
+         const SDL_DisplayMode *mode = SDL_GetCurrentDisplayMode(displays[i]);
+         if (!mode)
+            RARCH_LOG("[SDL3] \tDisplay #%i mode: unknown.\n", i);
+         else
+            RARCH_LOG("[SDL3] \tDisplay #%i mode: %ix%i@%.0fhz.\n", i,
+                  mode->w, mode->h, (double)mode->refresh_rate);
+      }
+      SDL_free(displays);
+   }
+
+   if (!video->fullscreen)
+      RARCH_LOG("[SDL3] Creating window @ %ux%u.\n", video->width, video->height);
+
+   /* SDL3: SDL_CreateWindow(title, w, h, flags) — no position parameters.
+    * SDL_WINDOW_FULLSCREEN_DESKTOP is removed; use SDL_SetWindowFullscreenMode
+    * with a NULL mode for borderless/desktop fullscreen. */
+   if (video->fullscreen)
+      flags = SDL_WINDOW_FULLSCREEN;
+   else
+      flags = SDL_WINDOW_RESIZABLE;
+
+   vid->window = SDL_CreateWindow("", video->width, video->height, flags);
+
+   if (!vid->window)
+   {
+      RARCH_ERR("[SDL3] Failed to init SDL window: %s.\n", SDL_GetError());
+      goto error;
+   }
+
+   /* SDL3: Windowed fullscreen (borderless) uses NULL mode */
+   if (video->fullscreen && settings->bools.video_windowed_fullscreen)
+      SDL_SetWindowFullscreenMode(vid->window, NULL);
+
+   vid->video         = *video;
+   vid->video.smooth  = video->smooth;
+   vid->flags        |=  SDL3_FLAG_SHOULD_RESIZE;
+
+   sdl_tex_zero(&vid->frame);
+   sdl_tex_zero(&vid->menu);
+
+   if (video->fullscreen)
+      /* SDL3: SDL_ShowCursor(SDL_DISABLE) removed; use SDL_HideCursor() */
+      SDL_HideCursor();
+
+   sdl3_init_renderer(vid);
+   sdl3_init_font(vid,
+         settings->paths.path_font,
+         settings->floats.video_font_size);
+
+#if defined(_WIN32)
+   sdl3_set_handles(vid->window, RARCH_DISPLAY_WIN32);
+#elif defined(HAVE_COCOA)
+   sdl3_set_handles(vid->window, RARCH_DISPLAY_OSX);
+#else
+#if defined(HAVE_X11) || defined(HAVE_WAYLAND)
+   video_driver = SDL_GetCurrentVideoDriver();
+#endif
+#ifdef HAVE_X11
+   if (strcmp(video_driver, "x11") == 0)
+      sdl3_set_handles(vid->window, RARCH_DISPLAY_X11);
+   else
+#endif
+#ifdef HAVE_WAYLAND
+   if (strcmp(video_driver, "wayland") == 0)
+      sdl3_set_handles(vid->window, RARCH_DISPLAY_WAYLAND);
+   else
+#endif
+      sdl3_set_handles(vid->window, RARCH_DISPLAY_NONE);
+#endif
+
+   sdl_refresh_viewport(vid);
+
+   *input      = NULL;
+   *input_data = NULL;
+
+   return vid;
+
+error:
+   sdl3_gfx_free(vid);
+   return NULL;
+}
+
+static void check_window(sdl3_video_t *vid)
+{
+   SDL_Event event;
+
+   SDL_PumpEvents();
+   /* SDL3: Window events are separate top-level event types, not SDL_WINDOWEVENT subtypes.
+    * SDL_EVENT_WINDOW_LAST covers all window events. */
+   while (SDL_PeepEvents(&event, 1,
+            SDL_GETEVENT, SDL_EVENT_QUIT, SDL_EVENT_WINDOW_LAST) > 0)
+   {
+      switch (event.type)
+      {
+         case SDL_EVENT_QUIT:
+            vid->flags |= SDL3_FLAG_QUITTING;
+            break;
+
+         case SDL_EVENT_WINDOW_RESIZED:
+            vid->flags |= SDL3_FLAG_SHOULD_RESIZE;
+            break;
+         default:
+            break;
+      }
+   }
+}
+
+static bool sdl3_gfx_frame(void *data, const void *frame, unsigned width,
+      unsigned height, uint64_t frame_count,
+      unsigned pitch, const char *msg, video_frame_info_t *video_info)
+{
+   char title[128];
+   sdl3_video_t *vid  = (sdl3_video_t*)data;
+#ifdef HAVE_MENU
+   bool menu_is_alive = (video_info->menu_st_flags & MENU_ST_FLAG_ALIVE) ? true : false;
+#endif
+
+   if (vid->flags & SDL3_FLAG_SHOULD_RESIZE)
+      sdl_refresh_viewport(vid);
+
+   if (frame)
+   {
+      SDL_RenderClear(vid->renderer);
+      sdl_refresh_input_size(vid, false, vid->video.rgb32, width, height, pitch);
+      SDL_UpdateTexture(vid->frame.tex, NULL, frame, pitch);
+   }
+
+   /* SDL3: SDL_RenderCopyEx -> SDL_RenderTextureRotated */
+   SDL_RenderTextureRotated(vid->renderer, vid->frame.tex,
+         NULL, NULL, vid->rotation, NULL, SDL_FLIP_NONE);
+
+#ifdef HAVE_MENU
+   menu_driver_frame(menu_is_alive, video_info);
+#endif
+
+   if (vid->menu.active)
+      /* SDL3: SDL_RenderCopy -> SDL_RenderTexture */
+      SDL_RenderTexture(vid->renderer, vid->menu.tex, NULL, NULL);
+
+   if (msg)
+      sdl3_render_msg(vid, msg);
+
+   SDL_RenderPresent(vid->renderer);
+
+   title[0] = '\0';
+
+   video_driver_get_window_title(title, sizeof(title));
+
+   if (title[0])
+      SDL_SetWindowTitle((SDL_Window*)video_driver_display_userdata_get(), title);
+
+   return true;
+}
+
+static void sdl3_gfx_set_nonblock_state(void *data, bool toggle,
+      bool adaptive_vsync_enabled, unsigned swap_interval)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   vid->video.vsync  = !toggle;
+   sdl_refresh_renderer(vid);
+}
+
+static bool sdl3_gfx_alive(void *data)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   check_window(vid);
+   if (vid->flags & SDL3_FLAG_QUITTING)
+      return false;
+   return true;
+}
+
+static bool sdl3_gfx_focus(void *data)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   unsigned flags = (SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS);
+   return (SDL_GetWindowFlags(vid->window) & flags) == flags;
+}
+
+#if !defined(HAVE_X11)
+static bool sdl3_gfx_suspend_screensaver(void *data, bool enable) { return false; }
+#endif
+
+/* TODO/FIXME - implement */
+static bool sdl3_gfx_has_windowed(void *data) { return true; }
+
+static void sdl3_gfx_free(void *data)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   if (!vid)
+      return;
+
+   if (vid->renderer)
+      SDL_DestroyRenderer(vid->renderer);
+
+   if (vid->window)
+      SDL_DestroyWindow(vid->window);
+
+   if (vid->font_data)
+      vid->font_driver->free(vid->font_data);
+
+   free(vid);
+}
+
+static void sdl3_gfx_set_rotation(void *data, unsigned rotation)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+
+   if (vid)
+      vid->rotation = 270 * rotation;
+}
+
+static void sdl3_gfx_viewport_info(void *data, struct video_viewport *vp)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   *vp = vid->vp;
+}
+
+static bool sdl3_gfx_read_viewport(void *data, uint8_t *buffer, bool is_idle)
+{
+   SDL_Surface *surf = NULL, *bgr24 = NULL;
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+
+   if (!is_idle)
+      video_driver_cached_frame();
+
+   surf  = SDL_GetWindowSurface(vid->window);
+   /* SDL3: SDL_ConvertSurfaceFormat no longer takes a flags parameter */
+   bgr24 = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_BGR24);
+
+   if (!bgr24)
+   {
+      RARCH_WARN("[SDL3] Failed to convert viewport data to BGR24: %s.", SDL_GetError());
+      return false;
+   }
+
+   memcpy(buffer, bgr24->pixels, bgr24->h * bgr24->pitch);
+
+   return true;
+}
+
+static void sdl3_poke_set_filtering(void *data, unsigned index, bool smooth, bool ctx_scaling)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   vid->video.smooth = smooth;
+
+   sdl_tex_zero(&vid->frame);
+}
+
+static void sdl3_poke_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
+{
+   sdl3_video_t *vid    = (sdl3_video_t*)data;
+
+   /* FIXME: Why is vid NULL here when starting content? */
+   if (!vid)
+      return;
+
+   vid->video.force_aspect = true;
+   vid->flags             |= SDL3_FLAG_SHOULD_RESIZE;
+}
+
+static void sdl3_poke_apply_state_changes(void *data)
+{
+   sdl3_video_t *vid       = (sdl3_video_t*)data;
+   vid->flags             |= SDL3_FLAG_SHOULD_RESIZE;
+}
+
+static void sdl3_poke_set_texture_frame(void *data,
+      const void *frame, bool rgb32,
+      unsigned width, unsigned height, float alpha)
+{
+   if (frame)
+   {
+      sdl3_video_t *vid = (sdl3_video_t*)data;
+
+      sdl_refresh_input_size(vid, true, rgb32, width, height,
+            width * (rgb32 ? 4 : 2));
+
+      SDL_UpdateTexture(vid->menu.tex, NULL, frame, (int)vid->menu.pitch);
+   }
+}
+
+static void sdl3_poke_texture_enable(void *data,
+      bool enable, bool full_screen)
+{
+   sdl3_video_t *vid   = (sdl3_video_t*)data;
+
+   if (!vid)
+      return;
+
+   vid->menu.active = enable;
+}
+
+static void sdl3_poke_set_osd_msg(void *data, const char *msg,
+      const struct font_params *params, void *font)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   sdl3_render_msg(vid, msg);
+}
+
+static void sdl3_show_mouse(void *data, bool state)
+{
+   /* SDL3: SDL_ShowCursor(state) removed; use SDL_ShowCursor() / SDL_HideCursor() */
+   if (state)
+      SDL_ShowCursor();
+   else
+      SDL_HideCursor();
+}
+
+static void sdl3_grab_mouse_toggle(void *data)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   /* SDL3: SDL_SetWindowGrab split into SDL_SetWindowMouseGrab / SDL_SetWindowKeyboardGrab */
+   SDL_SetWindowMouseGrab(vid->window, !SDL_GetWindowMouseGrab(vid->window));
+}
+
+static uint32_t sdl3_get_flags(void *data) { return 0; }
+
+static video_poke_interface_t sdl3_video_poke_interface = {
+   sdl3_get_flags,
+   NULL, /* load_texture */
+   NULL, /* unload_texture */
+   NULL, /* set_video_mode */
+   NULL, /* get_refresh_rate */
+   sdl3_poke_set_filtering,
+   NULL, /* get_video_output_size */
+   NULL, /* get_video_output_prev */
+   NULL, /* get_video_output_next */
+   NULL, /* get_current_framebuffer */
+   NULL, /* get_proc_address */
+   sdl3_poke_set_aspect_ratio,
+   sdl3_poke_apply_state_changes,
+   sdl3_poke_set_texture_frame,
+   sdl3_poke_texture_enable,
+   sdl3_poke_set_osd_msg,
+   sdl3_show_mouse,
+   sdl3_grab_mouse_toggle,
+   NULL, /* get_current_shader */
+   NULL, /* get_current_software_framebuffer */
+   NULL, /* get_hw_render_interface */
+   NULL, /* set_hdr_max_nits */
+   NULL, /* set_hdr_paper_white_nits */
+   NULL, /* set_hdr_expand_gamut */
+   NULL, /* set_hdr_scanlines */
+   NULL  /* set_hdr_subpixel_layout */
+};
+
+static void sdl3_gfx_poke_interface(void *data, const video_poke_interface_t **iface)
+{
+   (void)data;
+   *iface = &sdl3_video_poke_interface;
+}
+
+static bool sdl3_gfx_set_shader(void *data,
+      enum rarch_shader_type type, const char *path)
+{
+   (void)data;
+   (void)type;
+   (void)path;
+
+   return false;
+}
+
+video_driver_t video_sdl3 = {
+   sdl3_gfx_init,
+   sdl3_gfx_frame,
+   sdl3_gfx_set_nonblock_state,
+   sdl3_gfx_alive,
+   sdl3_gfx_focus,
+#ifdef HAVE_X11
+   x11_suspend_screensaver,
+#else
+   sdl3_gfx_suspend_screensaver,
+#endif
+   sdl3_gfx_has_windowed,
+   sdl3_gfx_set_shader,
+   sdl3_gfx_free,
+   "sdl3",
+   NULL, /* set_viewport */
+   sdl3_gfx_set_rotation,
+   sdl3_gfx_viewport_info,
+   sdl3_gfx_read_viewport,
+   NULL, /* read_frame_raw */
+#ifdef HAVE_OVERLAY
+   NULL, /* get_overlay_interface */
+#endif
+   sdl3_gfx_poke_interface,
+   NULL, /* wrap_type_to_enum */
+#ifdef HAVE_GFX_WIDGETS
+   NULL  /* gfx_widgets_enabled */
+#endif
+};

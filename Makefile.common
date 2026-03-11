@@ -1664,7 +1664,13 @@ endif
 
 endif
 
-ifeq ($(HAVE_SDL2), 1)
+ifeq ($(HAVE_SDL3), 1)
+   HAVE_SDL_COMMON = 1
+   OBJ += gfx/drivers/sdl3_gfx.o \
+	  gfx/common/sdl3_common.o
+   DEF_FLAGS += $(SDL3_CFLAGS)
+   LIBS += $(SDL3_LIBS)
+else ifeq ($(HAVE_SDL2), 1)
    HAVE_SDL_COMMON = 1
    OBJ += gfx/drivers/sdl2_gfx.o \
 	  gfx/common/sdl2_common.o

@@ -27,10 +27,14 @@
 #include "../../gfx/video_driver.h"
 #include "../../verbosity.h"
 
+#if defined(HAVE_SDL3)
+#include <SDL3/SDL.h>
+#include "../common/sdl3_common.h"
+#elif defined(HAVE_SDL2)
 #include "SDL.h"
-
-#ifdef HAVE_SDL2
 #include "../common/sdl2_common.h"
+#else
+#include "SDL.h"
 #endif
 
 #if defined(WEBOS) && defined(HAVE_SDL2)
@@ -39,7 +43,7 @@
 
 typedef struct gfx_ctx_sdl_data
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    SDL_Window    *win;
    SDL_GLContext  ctx;
    SDL_GLContext  shared_ctx;
@@ -64,7 +68,7 @@ static void sdl_ctx_destroy_resources(gfx_ctx_sdl_data_t *sdl)
    if (!sdl)
       return;
 
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    if (sdl->ctx)
       SDL_GL_DeleteContext(sdl->ctx);
 
@@ -120,13 +124,24 @@ static void *sdl_ctx_init(void *video_driver)
    /* Initialise graphics subsystem, if required */
    if (sdl_subsystem_flags == 0)
    {
+#ifdef HAVE_SDL3
+      /* SDL3: SDL_Init returns bool instead of int */
+      if (!SDL_Init(SDL_INIT_VIDEO))
+         goto error;
+#else
       if (SDL_Init(SDL_INIT_VIDEO) < 0)
          goto error;
+#endif
    }
    else if ((sdl_subsystem_flags & SDL_INIT_VIDEO) == 0)
    {
+#ifdef HAVE_SDL3
+      if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
+         goto error;
+#else
       if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
          goto error;
+#endif
       sdl->subsystem_inited = true;
    }
 
@@ -151,7 +166,7 @@ static bool sdl_ctx_bind_api(void *data,
       enum gfx_ctx_api api, unsigned major,
       unsigned minor)
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    unsigned profile;
 
    if (api != GFX_CTX_OPENGL_API && api != GFX_CTX_OPENGL_ES_API)
@@ -170,7 +185,7 @@ static bool sdl_ctx_bind_api(void *data,
 
    sdl_api = api;
 
-#ifndef HAVE_SDL2
+#if !defined(HAVE_SDL2) && !defined(HAVE_SDL3)
    if (api != GFX_CTX_OPENGL_API)
       return false;
 #endif
@@ -179,7 +194,7 @@ static bool sdl_ctx_bind_api(void *data,
 
 static void sdl_ctx_swap_interval(void *data, int interval)
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    SDL_GL_SetSwapInterval(interval);
 #else
    SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, interval);
@@ -199,7 +214,33 @@ static bool sdl_ctx_set_video_mode(void *data,
    sdl->new_width               = width;
    sdl->new_height              = height;
 
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+
+   if (fullscreen)
+      fsflag                    = SDL_WINDOW_FULLSCREEN;
+
+   if (sdl->win)
+   {
+      SDL_SetWindowSize(sdl->win, width, height);
+
+      if (fullscreen)
+      {
+         /* SDL3: SDL_SetWindowFullscreen takes bool */
+         SDL_SetWindowFullscreen(sdl->win, true);
+         /* SDL3: NULL mode = borderless/desktop fullscreen */
+         if (windowed_fullscreen)
+            SDL_SetWindowFullscreenMode(sdl->win, NULL);
+      }
+   }
+   else
+   {
+      /* SDL3: SDL_CreateWindow(title, w, h, flags) — no position params */
+      sdl->win                  = SDL_CreateWindow("RetroArch",
+            width, height,
+            SDL_WINDOW_OPENGL | fsflag);
+   }
+
+#elif defined(HAVE_SDL2)
 
    if (fullscreen)
    {
@@ -225,6 +266,7 @@ static bool sdl_ctx_set_video_mode(void *data,
             width, height,
             SDL_WINDOW_OPENGL | fsflag);
    }
+
 #else
    if (fullscreen)
       fsflag                    = SDL_FULLSCREEN;
@@ -235,7 +277,27 @@ static bool sdl_ctx_set_video_mode(void *data,
    if (!sdl->win)
       goto error;
 
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+#if defined(_WIN32)
+   sdl3_set_handles(sdl->win, RARCH_DISPLAY_WIN32);
+#elif defined(HAVE_X11)
+   sdl3_set_handles(sdl->win, RARCH_DISPLAY_X11);
+#elif defined(HAVE_COCOA)
+   sdl3_set_handles(sdl->win, RARCH_DISPLAY_OSX);
+#endif
+
+   if (sdl->ctx)
+   {
+      video_state_get_ptr()->flags |= VIDEO_FLAG_CACHE_CONTEXT_ACK;
+      RARCH_LOG("[SDL GL] Using cached GL context.\n");
+   }
+   else
+   {
+      if (!(sdl->ctx = SDL_GL_CreateContext(sdl->win)))
+         goto error;
+   }
+
+#elif defined(HAVE_SDL2)
 #if defined(_WIN32)
    sdl2_set_handles(sdl->win, RARCH_DISPLAY_WIN32);
 #elif defined(HAVE_X11)
@@ -281,12 +343,29 @@ static void sdl_ctx_get_video_size(void *data,
 
    if (!sdl->win)
    {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+      /* SDL3: SDL_GetCurrentDisplayMode returns a pointer, not an out-param */
+      int i                       = settings->uints.video_monitor_index;
+      SDL_DisplayID *displays     = SDL_GetDisplays(NULL);
+      const SDL_DisplayMode *mode = displays
+            ? SDL_GetCurrentDisplayMode(displays[i]) : NULL;
+      if (!mode)
+         RARCH_WARN("[SDL GL] Failed to get display #%i mode: %s.\n", i,
+                    SDL_GetError());
+      else
+      {
+         *width  = mode->w;
+         *height = mode->h;
+      }
+      SDL_free(displays);
+#elif defined(HAVE_SDL2)
       SDL_DisplayMode mode = {0};
       int i                = settings->uints.video_monitor_index;
       if (SDL_GetCurrentDisplayMode(i, &mode) < 0)
          RARCH_WARN("[SDL GL] Failed to get display #%i mode: %s.\n", i,
                     SDL_GetError());
+      *width               = mode.w;
+      *height              = mode.h;
 #else
       SDL_Rect **modes     = SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_HWSURFACE);
       SDL_Rect mode        = {0};
@@ -295,9 +374,9 @@ static void sdl_ctx_get_video_size(void *data,
                     SDL_GetError());
       else if (*modes)
          mode              = **modes;
-#endif
       *width               = mode.w;
       *height              = mode.h;
+#endif
    }
 }
 
@@ -310,7 +389,7 @@ static void sdl_ctx_update_title(void *data)
 
    if (title[0])
    {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
       SDL_SetWindowTitle((SDL_Window*)
             video_driver_display_userdata_get(), title);
 #else
@@ -328,23 +407,37 @@ static void sdl_ctx_check_window(void *data, bool *quit,
 
    SDL_PumpEvents();
 
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL3)
+   /* SDL3: Window events are separate top-level types; use SDL_EVENT_WINDOW_LAST
+    * as the upper bound to cover all window events. */
+   while (SDL_PeepEvents(&event, 1,
+            SDL_GETEVENT, SDL_EVENT_QUIT, SDL_EVENT_WINDOW_LAST) > 0)
+   {
+      switch (event.type)
+      {
+         case SDL_EVENT_QUIT:
+         case SDL_EVENT_TERMINATING:
+            *quit = true;
+            break;
+         case SDL_EVENT_WINDOW_RESIZED:
+            sdl->resized    = true;
+            sdl->new_width  = event.window.data1;
+            sdl->new_height = event.window.data2;
+            break;
+         default:
+            break;
+      }
+   }
+#elif defined(HAVE_SDL2)
    while (SDL_PeepEvents(&event, 1,
             SDL_GETEVENT, SDL_QUIT, SDL_WINDOWEVENT) > 0)
-#else
-   while (SDL_PeepEvents(&event, 1,
-            SDL_GETEVENT, SDL_QUITMASK|SDL_VIDEORESIZEMASK) > 0)
-#endif
    {
       switch (event.type)
       {
          case SDL_QUIT:
-#ifdef HAVE_SDL2
          case SDL_APP_TERMINATING:
-#endif
             *quit = true;
             break;
-#ifdef HAVE_SDL2
          case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED)
             {
@@ -352,17 +445,30 @@ static void sdl_ctx_check_window(void *data, bool *quit,
                sdl->new_width  = event.window.data1;
                sdl->new_height = event.window.data2;
             }
-#else
-         case SDL_VIDEORESIZE:
-            sdl->resized       = true;
-            sdl->new_width     = event.resize.w;
-            sdl->new_height    = event.resize.h;
-#endif
             break;
          default:
             break;
       }
    }
+#else
+   while (SDL_PeepEvents(&event, 1,
+            SDL_GETEVENT, SDL_QUITMASK|SDL_VIDEORESIZEMASK) > 0)
+   {
+      switch (event.type)
+      {
+         case SDL_QUIT:
+            *quit = true;
+            break;
+         case SDL_VIDEORESIZE:
+            sdl->resized       = true;
+            sdl->new_width     = event.resize.w;
+            sdl->new_height    = event.resize.h;
+            break;
+         default:
+            break;
+      }
+   }
+#endif
 
    if (sdl->resized)
    {
@@ -375,7 +481,7 @@ static void sdl_ctx_check_window(void *data, bool *quit,
 
 static bool sdl_ctx_has_focus(void *data)
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    gfx_ctx_sdl_data_t *sdl = (gfx_ctx_sdl_data_t*)data;
 #ifdef WEBOS
    /* We do not receive mouse focus when non-magic remote is used. */
@@ -392,7 +498,7 @@ static bool sdl_ctx_has_focus(void *data)
 
 static void sdl_ctx_swap_buffers(void *data)
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    gfx_ctx_sdl_data_t *sdl = (gfx_ctx_sdl_data_t*)data;
    if (sdl)
       SDL_GL_SwapWindow(sdl->win);
@@ -415,7 +521,18 @@ static gfx_ctx_proc_t sdl_ctx_get_proc_address(const char *name)
    return *((gfx_ctx_proc_t*)(&addr));
 }
 
-static void sdl_ctx_show_mouse(void *data, bool state) { SDL_ShowCursor(state); }
+static void sdl_ctx_show_mouse(void *data, bool state)
+{
+#ifdef HAVE_SDL3
+   /* SDL3: SDL_ShowCursor(bool) removed; use SDL_ShowCursor() / SDL_HideCursor() */
+   if (state)
+      SDL_ShowCursor();
+   else
+      SDL_HideCursor();
+#else
+   SDL_ShowCursor(state);
+#endif
+}
 
 static uint32_t sdl_ctx_get_flags(void *data)
 {
@@ -431,7 +548,7 @@ static void sdl_ctx_set_flags(void *data, uint32_t flags) { }
 
 static void sdl_ctx_bind_hw_render(void *data, bool enable)
 {
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    gfx_ctx_sdl_data_t *sdl = (gfx_ctx_sdl_data_t*)data;
    if (!sdl || !sdl->win || !sdl->ctx)
       return;

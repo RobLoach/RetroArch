@@ -50,7 +50,9 @@
 #endif
 #endif
 
-#if defined(HAVE_SDL) || defined(HAVE_SDL2)
+#if defined(HAVE_SDL3)
+#include <SDL3/SDL.h>
+#elif defined(HAVE_SDL) || defined(HAVE_SDL2)
 #include "SDL.h"
 #endif
 
@@ -623,7 +625,7 @@ const struct rarch_key_map rarch_key_map_ps4[] = {
 };
 #endif
 
-#if defined(HAVE_SDL) || defined(HAVE_SDL2)
+#if defined(HAVE_SDL) || defined(HAVE_SDL2) || defined(HAVE_SDL3)
 const struct rarch_key_map rarch_key_map_sdl[] = {
    { SDLK_BACKSPACE, RETROK_BACKSPACE },
    { SDLK_TAB, RETROK_TAB },
@@ -696,7 +698,7 @@ const struct rarch_key_map rarch_key_map_sdl[] = {
    { SDLK_y, RETROK_y },
    { SDLK_z, RETROK_z },
    { SDLK_DELETE, RETROK_DELETE },
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    { SDLK_KP_0, RETROK_KP0 },
    { SDLK_KP_1, RETROK_KP1 },
    { SDLK_KP_2, RETROK_KP2 },
@@ -750,13 +752,13 @@ const struct rarch_key_map rarch_key_map_sdl[] = {
    { SDLK_F13, RETROK_F13 },
    { SDLK_F14, RETROK_F14 },
    { SDLK_F15, RETROK_F15 },
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    { SDLK_NUMLOCKCLEAR, RETROK_NUMLOCK },
 #else
    { SDLK_NUMLOCK, RETROK_NUMLOCK },
 #endif
    { SDLK_CAPSLOCK, RETROK_CAPSLOCK },
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    { SDLK_SCROLLLOCK, RETROK_SCROLLOCK },
 #else
    { SDLK_SCROLLOCK, RETROK_SCROLLOCK },
@@ -767,7 +769,7 @@ const struct rarch_key_map rarch_key_map_sdl[] = {
    { SDLK_LCTRL, RETROK_LCTRL },
    { SDLK_RALT, RETROK_RALT },
    { SDLK_LALT, RETROK_LALT },
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    /* { ?, RETROK_RMETA }, */
    /* { ?, RETROK_LMETA }, */
    { SDLK_LGUI, RETROK_LSUPER },
@@ -779,11 +781,11 @@ const struct rarch_key_map rarch_key_map_sdl[] = {
    { SDLK_RSUPER, RETROK_RSUPER },
 #endif
    { SDLK_MODE, RETROK_MODE },
-#ifndef HAVE_SDL2
+#if !defined(HAVE_SDL2) && !defined(HAVE_SDL3)
    { SDLK_COMPOSE, RETROK_COMPOSE },
 #endif
    { SDLK_HELP, RETROK_HELP },
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    { SDLK_PRINTSCREEN, RETROK_PRINT },
 #else
    { SDLK_PRINT, RETROK_PRINT },
@@ -793,12 +795,12 @@ const struct rarch_key_map rarch_key_map_sdl[] = {
    { SDLK_MENU, RETROK_MENU },
    { SDLK_POWER, RETROK_POWER },
 
-#ifndef HAVE_SDL2
+#if !defined(HAVE_SDL2) && !defined(HAVE_SDL3)
    { SDLK_EURO, RETROK_EURO },
 #endif
    { SDLK_UNDO, RETROK_UNDO },
 
-#ifdef HAVE_SDL2
+#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    { SDLK_AUDIONEXT,    RETROK_MEDIA_NEXT },
    { SDLK_AUDIOPREV,    RETROK_MEDIA_PREV },
    { SDLK_AUDIOSTOP,    RETROK_MEDIA_STOP },
