@@ -635,11 +635,19 @@ const struct rarch_key_map rarch_key_map_sdl[] = {
    { SDLK_ESCAPE, RETROK_ESCAPE },
    { SDLK_SPACE, RETROK_SPACE },
    { SDLK_EXCLAIM, RETROK_EXCLAIM },
+#ifdef HAVE_SDL3
+   { SDLK_DBLAPOSTROPHE, RETROK_QUOTEDBL },
+#else
    { SDLK_QUOTEDBL, RETROK_QUOTEDBL },
+#endif
    { SDLK_HASH, RETROK_HASH },
    { SDLK_DOLLAR, RETROK_DOLLAR },
    { SDLK_AMPERSAND, RETROK_AMPERSAND },
+#ifdef HAVE_SDL3
+   { SDLK_APOSTROPHE, RETROK_QUOTE },
+#else
    { SDLK_QUOTE, RETROK_QUOTE },
+#endif
    { SDLK_LEFTPAREN, RETROK_LEFTPAREN },
    { SDLK_RIGHTPAREN, RETROK_RIGHTPAREN },
    { SDLK_ASTERISK, RETROK_ASTERISK },
@@ -670,6 +678,35 @@ const struct rarch_key_map rarch_key_map_sdl[] = {
    { SDLK_RIGHTBRACKET, RETROK_RIGHTBRACKET },
    { SDLK_CARET, RETROK_CARET },
    { SDLK_UNDERSCORE, RETROK_UNDERSCORE },
+#ifdef HAVE_SDL3
+   { SDLK_GRAVE, RETROK_BACKQUOTE },
+   { SDLK_A, RETROK_a },
+   { SDLK_B, RETROK_b },
+   { SDLK_C, RETROK_c },
+   { SDLK_D, RETROK_d },
+   { SDLK_E, RETROK_e },
+   { SDLK_F, RETROK_f },
+   { SDLK_G, RETROK_g },
+   { SDLK_H, RETROK_h },
+   { SDLK_I, RETROK_i },
+   { SDLK_J, RETROK_j },
+   { SDLK_K, RETROK_k },
+   { SDLK_L, RETROK_l },
+   { SDLK_M, RETROK_m },
+   { SDLK_N, RETROK_n },
+   { SDLK_O, RETROK_o },
+   { SDLK_P, RETROK_p },
+   { SDLK_Q, RETROK_q },
+   { SDLK_R, RETROK_r },
+   { SDLK_S, RETROK_s },
+   { SDLK_T, RETROK_t },
+   { SDLK_U, RETROK_u },
+   { SDLK_V, RETROK_v },
+   { SDLK_W, RETROK_w },
+   { SDLK_X, RETROK_x },
+   { SDLK_Y, RETROK_y },
+   { SDLK_Z, RETROK_z },
+#else
    { SDLK_BACKQUOTE, RETROK_BACKQUOTE },
    { SDLK_a, RETROK_a },
    { SDLK_b, RETROK_b },
@@ -697,6 +734,7 @@ const struct rarch_key_map rarch_key_map_sdl[] = {
    { SDLK_x, RETROK_x },
    { SDLK_y, RETROK_y },
    { SDLK_z, RETROK_z },
+#endif
    { SDLK_DELETE, RETROK_DELETE },
 #if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    { SDLK_KP_0, RETROK_KP0 },
@@ -800,7 +838,24 @@ const struct rarch_key_map rarch_key_map_sdl[] = {
 #endif
    { SDLK_UNDO, RETROK_UNDO },
 
-#if defined(HAVE_SDL2) || defined(HAVE_SDL3)
+#if defined(HAVE_SDL3)
+   { SDLK_MEDIA_NEXT_TRACK,     RETROK_MEDIA_NEXT },
+   { SDLK_MEDIA_PREVIOUS_TRACK, RETROK_MEDIA_PREV },
+   { SDLK_MEDIA_STOP,           RETROK_MEDIA_STOP },
+   { SDLK_MEDIA_PLAY,           RETROK_MEDIA_PLAY_PAUSE },
+   { SDLK_MUTE,                 RETROK_VOLUME_MUTE },
+   { SDLK_MEDIA_SELECT,         RETROK_LAUNCH_MEDIA },
+   /* SDLK_MAIL, SDLK_CALCULATOR, SDLK_COMPUTER removed in SDL3 */
+   { SDLK_AC_SEARCH,    RETROK_BROWSER_SEARCH },
+   { SDLK_AC_HOME,      RETROK_BROWSER_HOME },
+   { SDLK_AC_BACK,      RETROK_BROWSER_BACK },
+   { SDLK_AC_FORWARD,   RETROK_BROWSER_FORWARD },
+   { SDLK_AC_STOP,      RETROK_BROWSER_STOP },
+   { SDLK_AC_REFRESH,   RETROK_BROWSER_REFRESH },
+   { SDLK_AC_BOOKMARKS, RETROK_BROWSER_FAVORITES },
+   { SDLK_VOLUMEUP,     RETROK_VOLUME_UP },
+   { SDLK_VOLUMEDOWN,   RETROK_VOLUME_DOWN },
+#elif defined(HAVE_SDL2)
    { SDLK_AUDIONEXT,    RETROK_MEDIA_NEXT },
    { SDLK_AUDIOPREV,    RETROK_MEDIA_PREV },
    { SDLK_AUDIOSTOP,    RETROK_MEDIA_STOP },

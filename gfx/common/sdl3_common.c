@@ -26,7 +26,6 @@
 #include "../../retroarch.h"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_syswm.h>
 
 void sdl3_set_handles(void *data, enum rarch_display_type display_type)
 {

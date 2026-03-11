@@ -96,10 +96,9 @@ static void sdl3_init_font(sdl3_video_t *vid, const char *font_path,
 
    atlas       = vid->font_driver->get_atlas(vid->font_data);
 
-   tmp         = SDL_CreateRGBSurfaceFrom(
-         atlas->buffer, atlas->width,
-         atlas->height, 8, atlas->width,
-         0, 0, 0, 0);
+   tmp = SDL_CreateSurfaceFrom(atlas->width, atlas->height,
+         SDL_GetPixelFormatForMasks(8, 0, 0, 0, 0),
+         atlas->buffer, atlas->width);
 
    for (i = 0; i < 256; ++i)
    {
@@ -107,11 +106,10 @@ static void sdl3_init_font(sdl3_video_t *vid, const char *font_path,
       colors[i].a = 255;
    }
 
-   pal = SDL_AllocPalette(256);
+   pal = SDL_CreatePalette(256);
    SDL_SetPaletteColors(pal, colors, 0, 256);
    SDL_SetSurfacePalette(tmp, pal);
-   /* SDL3: SDL_TRUE removed, use plain true */
-   SDL_SetColorKey(tmp, true, 0);
+   SDL_SetSurfaceColorKey(tmp, true, 0);
 
    vid->font.tex  = SDL_CreateTextureFromSurface(vid->renderer, tmp);
 
@@ -150,8 +148,8 @@ static void sdl3_render_msg(sdl3_video_t *vid, const char *msg)
 
    for (; *msg; msg++)
    {
-      SDL_Rect src_rect, dst_rect;
-      int off_x, off_y, tex_x, tex_y;
+      SDL_FRect src_rect, dst_rect;
+      float off_x, off_y, tex_x, tex_y;
       const struct font_glyph *gly =
          vid->font_driver->get_glyph(vid->font_data, (uint8_t)*msg);
 
@@ -168,13 +166,13 @@ static void sdl3_render_msg(sdl3_video_t *vid, const char *msg)
 
       src_rect.x = tex_x;
       src_rect.y = tex_y;
-      src_rect.w = (int)gly->width;
-      src_rect.h = (int)gly->height;
+      src_rect.w = (float)gly->width;
+      src_rect.h = (float)gly->height;
 
       dst_rect.x = x + delta_x + off_x;
       dst_rect.y = y + delta_y + off_y;
-      dst_rect.w = (int)gly->width;
-      dst_rect.h = (int)gly->height;
+      dst_rect.w = (float)gly->width;
+      dst_rect.h = (float)gly->height;
 
       /* SDL3: SDL_RenderCopyEx -> SDL_RenderTextureRotated */
       SDL_RenderTextureRotated(vid->renderer, vid->font.tex,
@@ -190,7 +188,7 @@ static void sdl3_init_renderer(sdl3_video_t *vid)
    /* SDL3: SDL_CreateRenderer(window, name) — no index or flags parameter.
     * Use NULL for the renderer name to select the default.
     * VSync is set separately via SDL_SetRenderVSync. */
-   SDL_ClearHints();
+   SDL_ResetHints();
    SDL_SetHintWithPriority(SDL_HINT_RENDER_VSYNC,
                            vid->video.vsync ? "1" : "0", SDL_HINT_OVERRIDE);
    vid->renderer = SDL_CreateRenderer(vid->window, NULL);
@@ -324,11 +322,10 @@ static void *sdl3_gfx_init(const video_info_t *video,
 
    /* SDL3: SDL_GetRenderDrivers returns a const char** array */
    {
-      int num_drivers               = 0;
-      const char * const *drivers   = SDL_GetRenderDrivers(&num_drivers);
+      int num_drivers =  SDL_GetNumRenderDrivers();
       RARCH_LOG("[SDL3] Available renderers (change with $SDL_RENDER_DRIVER):\n");
       for (i = 0; i < num_drivers; i++)
-         RARCH_LOG("[SDL3] \t%s\n", drivers[i]);
+         RARCH_LOG("[SDL3] \t%s\n", SDL_GetRenderDriver(i));
    }
 
    /* SDL3: SDL_GetDisplays returns an array of display IDs */
@@ -564,10 +561,9 @@ static bool sdl3_gfx_read_viewport(void *data, uint8_t *buffer, bool is_idle)
       video_driver_cached_frame();
 
    surf  = SDL_GetWindowSurface(vid->window);
-   /* SDL3: SDL_ConvertSurfaceFormat no longer takes a flags parameter */
-   bgr24 = SDL_ConvertSurfaceFormat(surf, SDL_PIXELFORMAT_BGR24);
+   bgr24 = SDL_ConvertSurface(surf, SDL_PIXELFORMAT_BGR24);
 
-   if (!bgr24)
+   if (bgr24 == NULL)
    {
       RARCH_WARN("[SDL3] Failed to convert viewport data to BGR24: %s.", SDL_GetError());
       return false;
