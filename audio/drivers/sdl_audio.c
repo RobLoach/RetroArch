@@ -601,6 +601,7 @@ typedef struct sdl_audio
 #endif
 } sdl_audio_t;
 
+#ifndef HAVE_SDL3
 static void sdl_audio_playback_cb(void *data, Uint8 *stream, int len)
 {
    sdl_audio_t  *sdl = (sdl_audio_t*)data;
@@ -613,8 +614,7 @@ static void sdl_audio_playback_cb(void *data, Uint8 *stream, int len)
    /* If underrun, fill rest with silence. */
    memset(stream + _len, 0, len - _len);
 }
-
-#ifdef HAVE_SDL3
+#else
 /* SDL3: playback callback is push-based; SDL asks us to provide data */
 static void sdl_audio_playback_cb_sdl3(void *userdata, SDL_AudioStream *stream,
       int additional_amount, int total_amount)

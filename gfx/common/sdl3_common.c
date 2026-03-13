@@ -29,13 +29,8 @@
 
 void sdl3_set_handles(void *data, enum rarch_display_type display_type)
 {
-   /* SysWMinfo headers are broken on OSX. */
-   SDL_SysWMinfo info;
-   SDL_Window *window = (SDL_Window*)data;
-
-   /* SDL3: SDL_GetWindowWMInfo takes a size argument instead of a version struct */
-   if (!SDL_GetWindowWMInfo(window, &info, sizeof(info)))
-      return;
+   SDL_Window       *window = (SDL_Window*)data;
+   SDL_PropertiesID  props  = SDL_GetWindowProperties(window);
 
    video_driver_display_userdata_set((uintptr_t)window);
 
@@ -45,29 +40,34 @@ void sdl3_set_handles(void *data, enum rarch_display_type display_type)
 #if defined(_WIN32)
          video_driver_display_type_set(RARCH_DISPLAY_WIN32);
          video_driver_display_set(0);
-         video_driver_window_set((uintptr_t)info.info.win.window);
+         video_driver_window_set((uintptr_t)SDL_GetPointerProperty(props,
+               SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL));
 #endif
          break;
       case RARCH_DISPLAY_X11:
 #if defined(HAVE_X11)
          video_driver_display_type_set(RARCH_DISPLAY_X11);
-         video_driver_display_set((uintptr_t)info.info.x11.display);
-         video_driver_window_set((uintptr_t)info.info.x11.window);
+         video_driver_display_set((uintptr_t)SDL_GetPointerProperty(props,
+               SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL));
+         video_driver_window_set((uintptr_t)SDL_GetNumberProperty(props,
+               SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0));
 #endif
          break;
       case RARCH_DISPLAY_OSX:
 #ifdef HAVE_COCOA
          video_driver_display_type_set(RARCH_DISPLAY_OSX);
          video_driver_display_set(0);
-         video_driver_window_set((uintptr_t)info.info.cocoa.window);
+         video_driver_window_set((uintptr_t)SDL_GetPointerProperty(props,
+               SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL));
 #endif
          break;
       case RARCH_DISPLAY_WAYLAND:
-/* SDL_VIDEO_DRIVER_WAYLAND is defined by SDL3 */
-#if defined(HAVE_WAYLAND) && defined(SDL_VIDEO_DRIVER_WAYLAND)
+#if defined(HAVE_WAYLAND)
          video_driver_display_type_set(RARCH_DISPLAY_WAYLAND);
-         video_driver_display_set((uintptr_t)info.info.wl.display);
-         video_driver_window_set((uintptr_t)info.info.wl.surface);
+         video_driver_display_set((uintptr_t)SDL_GetPointerProperty(props,
+               SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER, NULL));
+         video_driver_window_set((uintptr_t)SDL_GetPointerProperty(props,
+               SDL_PROP_WINDOW_WAYLAND_SURFACE_POINTER, NULL));
 #endif
          break;
       default:

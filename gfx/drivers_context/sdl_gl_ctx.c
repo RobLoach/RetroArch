@@ -70,10 +70,18 @@ static void sdl_ctx_destroy_resources(gfx_ctx_sdl_data_t *sdl)
 
 #if defined(HAVE_SDL2) || defined(HAVE_SDL3)
    if (sdl->ctx)
+#ifdef HAVE_SDL3
+      SDL_GL_DestroyContext(sdl->ctx);
+#else
       SDL_GL_DeleteContext(sdl->ctx);
+#endif
 
    if (sdl->shared_ctx)
+#ifdef HAVE_SDL3
+      SDL_GL_DestroyContext(sdl->shared_ctx);
+#else
       SDL_GL_DeleteContext(sdl->shared_ctx);
+#endif
 
    if (sdl->win)
       SDL_DestroyWindow(sdl->win);
@@ -145,8 +153,13 @@ static void *sdl_ctx_init(void *video_driver)
       sdl->subsystem_inited = true;
    }
 
+   #if HAVE_SDL3
+   RARCH_LOG("[SDL GL] SDL %i.%i.%i gfx context driver initialized.\n",
+         SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_MICRO_VERSION);
+   #else
    RARCH_LOG("[SDL GL] SDL %i.%i.%i gfx context driver initialized.\n",
          SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
+   #endif
 
    return sdl;
 

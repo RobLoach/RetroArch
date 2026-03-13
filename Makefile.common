@@ -1667,18 +1667,21 @@ endif
 ifeq ($(HAVE_SDL3), 1)
    HAVE_SDL_COMMON = 1
    OBJ += gfx/drivers/sdl3_gfx.o \
-	  gfx/common/sdl3_common.o
-   DEF_FLAGS += $(SDL3_CFLAGS)
+	  gfx/common/sdl3_common.o \
+	  input/drivers_joypad/sdl3_joypad.o
+   DEF_FLAGS += -DHAVE_SDL3 $(SDL3_CFLAGS)
    LIBS += $(SDL3_LIBS)
 else ifeq ($(HAVE_SDL2), 1)
    HAVE_SDL_COMMON = 1
    OBJ += gfx/drivers/sdl2_gfx.o \
-	  gfx/common/sdl2_common.o
+	  gfx/common/sdl2_common.o \
+	  input/drivers_joypad/sdl_joypad.o
    DEF_FLAGS += $(SDL2_CFLAGS)
    LIBS += $(SDL2_LIBS)
 else ifeq ($(HAVE_SDL), 1)
    HAVE_SDL_COMMON = 1
-   OBJ += gfx/drivers/sdl_gfx.o
+   OBJ += gfx/drivers/sdl_gfx.o \
+	  input/drivers_joypad/sdl_joypad.o
    DEF_FLAGS += $(SDL_CFLAGS)
    LIBS += $(SDL_LIBS)
 else ifeq ($(HAVE_SDL_DINGUX), 1)
@@ -1694,14 +1697,14 @@ else ifeq ($(HAVE_SDL_DINGUX), 1)
    endif
 
    OBJ += input/drivers/sdl_dingux_input.o \
-          input/drivers_joypad/sdl_dingux_joypad.o
+          input/drivers_joypad/sdl_dingux_joypad.o \
+          input/drivers_joypad/sdl_joypad.o
    DEF_FLAGS += $(SDL_DINGUX_CFLAGS)
    LIBS += $(SDL_DINGUX_LIBS)
 endif
 
 ifeq ($(HAVE_SDL_COMMON), 1)
    OBJ += input/drivers/sdl_input.o \
-          input/drivers_joypad/sdl_joypad.o \
           audio/drivers/sdl_audio.o
 
    ifeq ($(HAVE_GL_CONTEXT), 1)

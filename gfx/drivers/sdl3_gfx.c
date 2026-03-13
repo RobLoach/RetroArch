@@ -124,8 +124,8 @@ static void sdl3_init_font(sdl3_video_t *vid, const char *font_path,
    else
       RARCH_WARN("[SDL3] Failed to initialize font texture: %s\n", SDL_GetError());
 
-   SDL_FreePalette(pal);
-   SDL_FreeSurface(tmp);
+   SDL_DestroyPalette(pal);
+   SDL_DestroySurface(tmp);
 }
 
 static void sdl3_render_msg(sdl3_video_t *vid, const char *msg)
@@ -208,6 +208,9 @@ static void sdl3_init_renderer(sdl3_video_t *vid)
 static void sdl_refresh_renderer(sdl3_video_t *vid)
 {
    SDL_Rect r;
+
+   if (!vid->renderer)
+      return;
 
    SDL_RenderClear(vid->renderer);
 
@@ -380,6 +383,9 @@ static void *sdl3_gfx_init(const video_info_t *video,
       SDL_HideCursor();
 
    sdl3_init_renderer(vid);
+   if (!vid->renderer)
+      goto error;
+
    sdl3_init_font(vid,
          settings->paths.path_font,
          settings->floats.video_font_size);
@@ -393,12 +399,12 @@ static void *sdl3_gfx_init(const video_info_t *video,
    video_driver = SDL_GetCurrentVideoDriver();
 #endif
 #ifdef HAVE_X11
-   if (strcmp(video_driver, "x11") == 0)
+   if (video_driver && strcmp(video_driver, "x11") == 0)
       sdl3_set_handles(vid->window, RARCH_DISPLAY_X11);
    else
 #endif
 #ifdef HAVE_WAYLAND
-   if (strcmp(video_driver, "wayland") == 0)
+   if (video_driver && strcmp(video_driver, "wayland") == 0)
       sdl3_set_handles(vid->window, RARCH_DISPLAY_WAYLAND);
    else
 #endif
@@ -462,16 +468,15 @@ static bool sdl3_gfx_frame(void *data, const void *frame, unsigned width,
       SDL_UpdateTexture(vid->frame.tex, NULL, frame, pitch);
    }
 
-   /* SDL3: SDL_RenderCopyEx -> SDL_RenderTextureRotated */
-   SDL_RenderTextureRotated(vid->renderer, vid->frame.tex,
-         NULL, NULL, vid->rotation, NULL, SDL_FLIP_NONE);
+   if (vid->frame.tex)
+      SDL_RenderTextureRotated(vid->renderer, vid->frame.tex,
+            NULL, NULL, vid->rotation, NULL, SDL_FLIP_NONE);
 
 #ifdef HAVE_MENU
    menu_driver_frame(menu_is_alive, video_info);
 #endif
 
-   if (vid->menu.active)
-      /* SDL3: SDL_RenderCopy -> SDL_RenderTexture */
+   if (vid->menu.active && vid->menu.tex)
       SDL_RenderTexture(vid->renderer, vid->menu.tex, NULL, NULL);
 
    if (msg)
