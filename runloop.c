@@ -8670,4 +8670,57 @@ float get_video_dimensions(const char *key)
       return -1.0f;
    }
 }
+
+void ejs_set_controller_port_device(unsigned port, unsigned device)
+{
+   retro_ctx_controller_info_t pad;
+   pad.port   = port;
+   pad.device = device;
+   core_set_controller_port_device(&pad);
+}
+
+char* ejs_get_controller_port_info(void)
+{
+   runloop_state_t     *runloop_st = &runloop_state;
+   rarch_system_info_t *sys_info   = &runloop_st->system;
+
+   if (!sys_info || !sys_info->ports.data || sys_info->ports.size == 0)
+      return "";
+
+   /* Calculate required buffer size */
+   size_t size = 1;
+   for (size_t i = 0; i < sys_info->ports.size; i++)
+   {
+      const struct retro_controller_info *port = &sys_info->ports.data[i];
+      for (size_t j = 0; j < port->num_types; j++)
+      {
+         if (!port->types[j].desc)
+            continue;
+         size += snprintf(NULL, 0, "%zu:%u:%s\n",
+               i, port->types[j].id, port->types[j].desc);
+      }
+   }
+
+   static char *rv = NULL;
+   free(rv);
+   rv = (char*)calloc(size, 1);
+   if (!rv)
+      return "";
+
+   for (size_t i = 0; i < sys_info->ports.size; i++)
+   {
+      const struct retro_controller_info *port = &sys_info->ports.data[i];
+      for (size_t j = 0; j < port->num_types; j++)
+      {
+         if (!port->types[j].desc)
+            continue;
+         char line[256];
+         snprintf(line, sizeof(line), "%zu:%u:%s\n",
+               i, port->types[j].id, port->types[j].desc);
+         strcat(rv, line);
+      }
+   }
+
+   return rv;
+}
 #endif

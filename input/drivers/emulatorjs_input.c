@@ -801,6 +801,44 @@ static int16_t rwebinput_input_state(
       case RETRO_DEVICE_MOUSE:
       case RARCH_DEVICE_MOUSE_SCREEN:
          return rwebinput_mouse_state(&rwebinput->mouse, id, device == RARCH_DEVICE_MOUSE_SCREEN);
+      case RETRO_DEVICE_LIGHTGUN:
+         {
+            struct video_viewport vp    = {0};
+            rwebinput_mouse_state_t
+               *mouse                   = &rwebinput->mouse;
+            int16_t res_x               = 0;
+            int16_t res_y               = 0;
+            int16_t res_screen_x        = 0;
+            int16_t res_screen_y        = 0;
+
+            if (!(video_driver_translate_coord_viewport_confined_wrap(
+                        &vp, mouse->x, mouse->y,
+                        &res_x, &res_y, &res_screen_x, &res_screen_y)))
+               return 0;
+
+            switch (id)
+            {
+               case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
+                  return res_x;
+               case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
+                  return res_y;
+               case RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN:
+                  return input_driver_pointer_is_offscreen(res_x, res_y);
+               case RETRO_DEVICE_ID_LIGHTGUN_TRIGGER:
+                  return !!(mouse->buttons & (1 << RWEBINPUT_MOUSE_BTNL));
+               case RETRO_DEVICE_ID_LIGHTGUN_AUX_A:
+                  return !!(mouse->buttons & (1 << RWEBINPUT_MOUSE_BTNR));
+               case RETRO_DEVICE_ID_LIGHTGUN_AUX_B:
+                  return !!(mouse->buttons & (1 << RWEBINPUT_MOUSE_BTNM));
+               case RETRO_DEVICE_ID_LIGHTGUN_START:
+                  return !!(mouse->buttons & (1 << RWEBINPUT_MOUSE_BTN4));
+               case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
+                  return !!(mouse->buttons & (1 << RWEBINPUT_MOUSE_BTN5));
+               default:
+                  break;
+            }
+         }
+         break;
       case RETRO_DEVICE_POINTER:
       case RARCH_DEVICE_POINTER_SCREEN:
          {
@@ -1046,6 +1084,7 @@ static uint64_t rwebinput_get_capabilities(void *data)
          | (1 << RETRO_DEVICE_ANALOG)
          | (1 << RETRO_DEVICE_KEYBOARD)
          | (1 << RETRO_DEVICE_MOUSE)
+         | (1 << RETRO_DEVICE_LIGHTGUN)
          | (1 << RETRO_DEVICE_POINTER);
 }
 
