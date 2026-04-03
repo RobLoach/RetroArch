@@ -84,6 +84,9 @@ static const struct nk_draw_vertex_layout_element nk_vertex_layout[] = {
 /* Initial capacity for per-frame scratch arrays (in vertex count). */
 #define NUKLEAR_SCRATCH_INITIAL 1024
 
+/* Gamepad slot used for menu input (player 0). */
+#define NUKLEAR_GAMEPAD_PLAYER 0
+
 /* ── Private state ─────────────────────────────────────────────────── */
 
 typedef struct
@@ -121,7 +124,11 @@ typedef struct
    float                         *float_values;    /* FLOAT property values        */
    size_t                         label_count;     /* == entry_count               */
 
+   /* Gamepad system fed from RetroArch's menu input each frame. */
+   struct nk_gamepads             gamepads;
+
    bool                           atlas_initialized; /* nk_font_atlas_init called */
+   bool                           gamepads_initialized;
    bool                           menu_dirty;
    unsigned                       last_width;
    unsigned                       last_height;
@@ -164,6 +171,160 @@ static void nuklear_free_scratch(nuklear_t *nk)
    nk->scratch_uv    = NULL;
    nk->scratch_color = NULL;
    nk->scratch_cap   = 0;
+}
+
+/* ── Gamepad input source ──────────────────────────────────────────── */
+
+/* Maps a single nk_gamepad_button to an nk_bool state, setting it on
+ * the gamepad if the bit is raised.  Centralises the set/clear call. */
+static void nuklear_gp_push(struct nk_gamepads *gp,
+      int num, enum nk_gamepad_button btn, nk_bool down)
+{
+   nk_gamepad_button(gp, num, btn, down);
+}
+
+/* Update callback invoked by nk_gamepad_update() once per frame.
+ *
+ * Two input sources are merged:
+ *
+ *  1. Physical joypad — read directly from the primary joypad driver
+ *     via get_buttons().  Provides D-pad and face-button state with
+ *     proper held-down semantics so nuklear_console's auto-repeat works.
+ *
+ *  2. Pointer hardware (mouse / touch) — the PRESS_* flags in
+ *     menu_st->input_pointer_hw_state fold in any pointer-device
+ *     navigation events that RetroArch has already filtered and
+ *     de-bounced (e.g. touch swipe directions, on-screen D-pad).
+ *
+ * The two sources are OR'd: either can drive a button high.
+ */
+static void nuklear_gamepad_update(struct nk_gamepads *gp, void *user_data)
+{
+   nuklear_t                         *nk           = (nuklear_t*)user_data;
+   struct menu_state                 *menu_st       = menu_state_get_ptr();
+   menu_input_t                      *menu_input    = &menu_st->input_state;
+   menu_input_pointer_hw_state_t     *ptr_hw        = &menu_st->input_pointer_hw_state;
+   input_driver_state_t              *input_st      = input_state_get_ptr();
+   const input_device_driver_t       *joypad        = input_st ? input_st->primary_joypad : NULL;
+   settings_t                        *settings      = config_get_ptr();
+   input_bits_t                       joypad_bits;
+   unsigned                           joy_idx        = 0;
+   nk_bool up, down, left, right, a_btn, b_btn;
+   nk_bool x_btn, y_btn, lb, rb, start_btn, back_btn;
+
+   (void)nk;
+
+   if (!menu_st || !menu_input)
+      return;
+
+   /* ── 1. Read physical joypad ─────────────────────────────────────── */
+   memset(&joypad_bits, 0, sizeof(joypad_bits));
+   if (joypad && joypad->get_buttons && settings)
+   {
+      joy_idx = settings->uints.input_joypad_index[NUKLEAR_GAMEPAD_PLAYER];
+      joypad->get_buttons(joy_idx, &joypad_bits);
+   }
+
+#define JOYPAD_HELD(id) \
+   ((joypad_bits.data[(id) >> 5] >> ((id) & 31)) & 1)
+
+   up     = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_UP);
+   down   = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_DOWN);
+   left   = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_LEFT);
+   right  = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_RIGHT);
+   a_btn  = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_A);
+   b_btn  = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_B);
+   x_btn  = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_X);
+   y_btn  = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_Y);
+   lb     = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_L);
+   rb     = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_R);
+   start_btn = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_START);
+   back_btn  = (nk_bool)JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_SELECT);
+
+#undef JOYPAD_HELD
+
+   /* ── 2. OR in pointer-hardware state from menu_input_t ───────────── */
+   {
+      uint16_t ptr_flags = ptr_hw->flags;
+      uint16_t inp_flags = menu_input->pointer.flags;
+
+      /* Pointer-device direction presses (touch swipe, mouse
+       * D-pad overlay, etc.).  Both hw_state and pointer.flags
+       * carry the same PRESS_* bitmask — OR them both in. */
+      if (  (ptr_flags & MENU_INP_PTR_FLG_PRESS_UP)
+          | (inp_flags & MENU_INP_PTR_FLG_PRESS_UP))
+         up = nk_true;
+      if (  (ptr_flags & MENU_INP_PTR_FLG_PRESS_DOWN)
+          | (inp_flags & MENU_INP_PTR_FLG_PRESS_DOWN))
+         down = nk_true;
+      if (  (ptr_flags & MENU_INP_PTR_FLG_PRESS_LEFT)
+          | (inp_flags & MENU_INP_PTR_FLG_PRESS_LEFT))
+         left = nk_true;
+      if (  (ptr_flags & MENU_INP_PTR_FLG_PRESS_RIGHT)
+          | (inp_flags & MENU_INP_PTR_FLG_PRESS_RIGHT))
+         right = nk_true;
+
+      /* Select / cancel — gate on the inhibit flags so we don't
+       * fire during the brief window RetroArch suppresses input
+       * (e.g. immediately after returning from a core). */
+      if (!menu_input->select_inhibit)
+      {
+         if (  (ptr_flags & MENU_INP_PTR_FLG_PRESS_SELECT)
+             | (inp_flags & MENU_INP_PTR_FLG_PRESS_SELECT))
+            a_btn = nk_true;
+      }
+      if (!menu_input->cancel_inhibit)
+      {
+         if (  (ptr_flags & MENU_INP_PTR_FLG_PRESS_CANCEL)
+             | (inp_flags & MENU_INP_PTR_FLG_PRESS_CANCEL))
+            b_btn = nk_true;
+      }
+   }
+
+   /* ── 3. Push merged state into nk_gamepad slot 0 ─────────────────── */
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_UP,    up);
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_DOWN,  down);
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_LEFT,  left);
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_RIGHT, right);
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_A,     a_btn);
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_B,     b_btn);
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_X,     x_btn);
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_Y,     y_btn);
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_LB,    lb);
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_RB,    rb);
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_START, start_btn);
+   nuklear_gp_push(gp, NUKLEAR_GAMEPAD_PLAYER, NK_GAMEPAD_BUTTON_BACK,  back_btn);
+}
+
+/* Build the input source descriptor used by nk_gamepad_init_with_source(). */
+static struct nk_gamepad_input_source nuklear_gamepad_input_source(void *user_data)
+{
+   struct nk_gamepad_input_source src;
+   memset(&src, 0, sizeof(src));
+   src.id               = NK_GAMEPAD_INPUT_SOURCE_NONE;
+   src.input_source_name = "retroarch";
+   src.user_data        = user_data;
+   src.update           = nuklear_gamepad_update;
+   return src;
+}
+
+/* Initialise the nk_gamepads system and mark player 0 as available. */
+static bool nuklear_gamepads_init(nuklear_t *nk)
+{
+   struct nk_gamepad_input_source src = nuklear_gamepad_input_source(nk);
+   if (!nk_gamepad_init_with_source(&nk->gamepads, &nk->ctx, src))
+      return false;
+   nk_gamepad_set_available(&nk->gamepads, NUKLEAR_GAMEPAD_PLAYER, nk_true);
+   nk->gamepads_initialized = true;
+   return true;
+}
+
+static void nuklear_gamepads_free(nuklear_t *nk)
+{
+   if (!nk->gamepads_initialized)
+      return;
+   nk_gamepad_free(&nk->gamepads);
+   nk->gamepads_initialized = false;
 }
 
 /* ── Entry-widget list and persistent-string helpers ───────────────── */
@@ -261,6 +422,11 @@ static void nuklear_build_menu(nuklear_t *nk)
       nuklear_clear_labels(nk);
       return;
    }
+
+   /* Connect the gamepad system so nuklear_console can use it for
+    * navigation auto-repeat and axis-based scrolling. */
+   if (nk->gamepads_initialized)
+      nk_console_set_gamepads(nk->console, &nk->gamepads);
 
    /* Non-selectable title label — uses our persistent copy. */
    nk_console_label(nk->console, nk->menu_title ? nk->menu_title : "");
@@ -390,6 +556,12 @@ static void *nuklear_init(void **userdata, bool video_is_threaded)
    }
    nk->scratch_cap = NUKLEAR_SCRATCH_INITIAL;
 
+   /* Initialise the gamepad system.  Failure is non-fatal: the menu
+    * still renders, it just won't have auto-repeat navigation from
+    * nuklear_console.  RetroArch's own input loop drives entry_action
+    * regardless. */
+   nuklear_gamepads_init(nk);
+
    nk->menu_dirty = true;
    *userdata       = nk;
    return menu;
@@ -408,6 +580,7 @@ static void nuklear_free(void *data)
    }
    nuklear_clear_entry_widgets(nk);
    nuklear_clear_labels(nk);
+   nuklear_gamepads_free(nk);
 
    if (nk->atlas_texture)
    {
@@ -562,9 +735,107 @@ static void nuklear_frame(void *data, video_frame_info_t *video_info)
 
    nuklear_sync_selection(nk);
 
-   /* Feed empty input block (RetroArch owns all navigation). */
-   nk_input_begin(&nk->ctx);
-   nk_input_end(&nk->ctx);
+   /* Advance the gamepad state for this frame.
+    * nk_gamepad_update() saves current→prev, clears current, then calls
+    * our update callback which re-fills current from RetroArch input.
+    * This must happen before nk_console_render_window() so that
+    * nuklear_console's button_pushed / button_down queries see fresh state. */
+   if (nk->gamepads_initialized)
+      nk_gamepad_update(&nk->gamepads);
+
+   /* ── Nuklear input block ───────────────────────────────────────────
+    * Pass RetroArch's current input state into Nuklear's own input
+    * subsystem.  This drives:
+    *   • mouse-hover / click on widgets when a pointer device is active
+    *   • NK_KEY_* events so property-int/float editors and text fields
+    *     respond to D-pad and face-buttons
+    *   • scroll from the pointer's y-acceleration (touch fling / wheel)
+    *
+    * Navigation at the menu-list level is still owned by RetroArch
+    * (entry_action → generic_menu_entry_action), with the nk_gamepad
+    * layer giving nuklear_console auto-repeat.  The NK_KEY_* events
+    * below complement that: they let Nuklear's built-in widget
+    * handlers (e.g. nk_property, nk_edit_string) respond correctly.
+    * ─────────────────────────────────────────────────────────────── */
+   {
+      struct menu_state             *menu_st   = menu_state_get_ptr();
+      menu_input_t                  *menu_input = &menu_st->input_state;
+      menu_input_pointer_hw_state_t *ptr_hw     = &menu_st->input_pointer_hw_state;
+      input_driver_state_t          *input_st   = input_state_get_ptr();
+      const input_device_driver_t   *joypad     = input_st ? input_st->primary_joypad : NULL;
+      settings_t                    *settings   = config_get_ptr();
+      input_bits_t                   joypad_bits;
+      unsigned                       joy_idx    = 0;
+
+      memset(&joypad_bits, 0, sizeof(joypad_bits));
+      if (joypad && joypad->get_buttons && settings)
+      {
+         joy_idx = settings->uints.input_joypad_index[NUKLEAR_GAMEPAD_PLAYER];
+         joypad->get_buttons(joy_idx, &joypad_bits);
+      }
+
+#define NK_JOYPAD_HELD(id) \
+      (nk_bool)(((joypad_bits.data[(id) >> 5] >> ((id) & 31)) & 1))
+
+      nk_input_begin(&nk->ctx);
+
+      /* ── Pointer device (mouse / touch) ──────────────────────────── */
+      if (ptr_hw->flags & MENU_INP_PTR_FLG_ACTIVE)
+      {
+         int px = (int)ptr_hw->x;
+         int py = (int)ptr_hw->y;
+
+         /* Current position */
+         nk_input_motion(&nk->ctx, px, py);
+
+         /* Primary (select) button — held while the pointer is pressed */
+         nk_input_button(&nk->ctx, NK_BUTTON_LEFT, px, py,
+               (ptr_hw->flags & MENU_INP_PTR_FLG_PRESSED)      ? nk_true :
+               (ptr_hw->flags & MENU_INP_PTR_FLG_PRESS_SELECT) ? nk_true : nk_false);
+
+         /* Secondary (cancel / context) button */
+         nk_input_button(&nk->ctx, NK_BUTTON_RIGHT, px, py,
+               (ptr_hw->flags & MENU_INP_PTR_FLG_PRESS_CANCEL) ? nk_true : nk_false);
+
+         /* Vertical scroll from pointer acceleration (touch fling / wheel).
+          * y_accel is pre-computed by RetroArch in scroll-units per frame;
+          * positive = downward.  Negate so scroll-up moves the list up. */
+         if (menu_input->pointer.y_accel != 0.0f)
+            nk_input_scroll(&nk->ctx, nk_vec2(0.0f, -menu_input->pointer.y_accel));
+      }
+
+      /* ── D-pad → NK_KEY_* (drives text-edit cursors and property
+       *   increment/decrement inside Nuklear's own widget handlers) ── */
+      nk_input_key(&nk->ctx, NK_KEY_UP,
+            NK_JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_UP)
+            || (nk_bool)((ptr_hw->flags & MENU_INP_PTR_FLG_PRESS_UP) != 0));
+      nk_input_key(&nk->ctx, NK_KEY_DOWN,
+            NK_JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_DOWN)
+            || (nk_bool)((ptr_hw->flags & MENU_INP_PTR_FLG_PRESS_DOWN) != 0));
+      nk_input_key(&nk->ctx, NK_KEY_LEFT,
+            NK_JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_LEFT)
+            || (nk_bool)((ptr_hw->flags & MENU_INP_PTR_FLG_PRESS_LEFT) != 0));
+      nk_input_key(&nk->ctx, NK_KEY_RIGHT,
+            NK_JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_RIGHT)
+            || (nk_bool)((ptr_hw->flags & MENU_INP_PTR_FLG_PRESS_RIGHT) != 0));
+
+      /* ── Face buttons → confirm / delete ───────────────────────── */
+      /* A = confirm / accept in text fields and property editors */
+      nk_input_key(&nk->ctx, NK_KEY_ENTER,
+            NK_JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_A)
+            || (nk_bool)((ptr_hw->flags & MENU_INP_PTR_FLG_PRESS_SELECT) != 0));
+      /* B = backspace / delete last character */
+      nk_input_key(&nk->ctx, NK_KEY_BACKSPACE,
+            NK_JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_B)
+            || (nk_bool)((ptr_hw->flags & MENU_INP_PTR_FLG_PRESS_CANCEL) != 0));
+      /* Y = delete-forward inside text fields */
+      nk_input_key(&nk->ctx, NK_KEY_DEL,
+            NK_JOYPAD_HELD(RETRO_DEVICE_ID_JOYPAD_Y));
+
+#undef NK_JOYPAD_HELD
+
+      nk_input_end(&nk->ctx);
+   }
 
    /* Pump the nuklear_console widget tree into Nuklear's command queue. */
    menu_entries_get_title(title, sizeof(title));
@@ -699,8 +970,9 @@ static void nuklear_populate_entries(void *data,
 
 static void nuklear_toggle(void *userdata, bool value)
 {
-   (void)userdata;
-   (void)value;
+   nuklear_t *nk = (nuklear_t*)userdata;
+   if (nk && value)
+      nk->menu_dirty = true;
 }
 
 static int nuklear_bind_init(menu_file_list_cbs_t *cbs,
@@ -728,11 +1000,97 @@ static size_t nuklear_list_get_size(void *data, enum menu_list_type type)
    return 0;
 }
 
+/* ── Navigation callbacks ──────────────────────────────────────────── */
+
+/* Called when the selection is cleared (e.g. entering a new list). */
+static void nuklear_navigation_clear(void *data, bool pending_push)
+{
+   nuklear_t         *nk      = (nuklear_t*)data;
+   struct menu_state *menu_st = menu_state_get_ptr();
+   (void)pending_push;
+   if (!nk)
+      return;
+   menu_st->entries.begin = 0;
+   nuklear_sync_selection(nk);
+}
+
+/* Called whenever the selection pointer changes. */
+static void nuklear_navigation_set(void *data, bool scroll)
+{
+   nuklear_t *nk = (nuklear_t*)data;
+   (void)scroll;
+   if (nk)
+      nuklear_sync_selection(nk);
+}
+
+static void nuklear_navigation_set_last(void *data)
+{
+   nuklear_navigation_set(data, true);
+}
+
+static void nuklear_navigation_descend_alphabet(void *data, size_t *unused)
+{
+   (void)unused;
+   nuklear_navigation_set(data, true);
+}
+
+static void nuklear_navigation_ascend_alphabet(void *data, size_t *unused)
+{
+   (void)unused;
+   nuklear_navigation_set(data, true);
+}
+
+static void nuklear_navigation_decrement(void *data)
+{
+   nuklear_navigation_set(data, true);
+}
+
+static void nuklear_navigation_increment(void *data)
+{
+   nuklear_navigation_set(data, true);
+}
+
+/* ── List selection callbacks ──────────────────────────────────────── */
+
+static size_t nuklear_list_get_selection(void *data)
+{
+   (void)data;
+   return menu_state_get_ptr()->selection_ptr;
+}
+
+static void nuklear_list_set_selection(void *data, file_list_t *list)
+{
+   (void)data;
+   (void)list;
+   /* Selection is driven by menu_state->selection_ptr; nothing to do here. */
+}
+
+/* ── Entry action ──────────────────────────────────────────────────── */
+
+/* Main input dispatch for the nuklear driver.
+ *
+ * We forward every action to generic_menu_entry_action() unchanged.
+ * After the action is processed, mark the widget tree dirty so
+ * nuklear_build_menu() re-syncs labels/values on the next frame —
+ * this covers OK (entering a sub-menu), CANCEL (going back), and
+ * any value-changing LEFT/RIGHT/START actions. */
+static int nuklear_menu_entry_action(void *userdata,
+      menu_entry_t *entry, size_t i, enum menu_action action)
+{
+   nuklear_t *nk  = (nuklear_t*)userdata;
+   int        ret = generic_menu_entry_action(userdata, entry, i, action);
+
+   if (nk)
+      nk->menu_dirty = true;
+
+   return ret;
+}
+
 /* ── Driver registration ───────────────────────────────────────────── */
 
 menu_ctx_driver_t menu_ctx_nuklear = {
-   NULL,                        /* set_texture           */
-   NULL,                        /* render_messagebox     */
+   NULL,                              /* set_texture           */
+   NULL,                              /* render_messagebox     */
    nuklear_render,
    nuklear_frame,
    nuklear_init,
@@ -741,36 +1099,36 @@ menu_ctx_driver_t menu_ctx_nuklear = {
    nuklear_context_destroy,
    nuklear_populate_entries,
    nuklear_toggle,
-   NULL,                        /* navigation_clear      */
-   NULL,                        /* navigation_decrement  */
-   NULL,                        /* navigation_increment  */
-   NULL,                        /* navigation_set        */
-   NULL,                        /* navigation_set_last   */
-   NULL,                        /* navigation_descend_alphabet */
-   NULL,                        /* navigation_ascend_alphabet  */
-   NULL,                        /* lists_init            */
-   NULL,                        /* list_insert           */
-   NULL,                        /* list_prepend          */
-   NULL,                        /* list_free             */
-   NULL,                        /* list_clear            */
-   NULL,                        /* list_cache            */
-   NULL,                        /* list_push             */
-   NULL,                        /* list_get_selection    */
+   nuklear_navigation_clear,
+   nuklear_navigation_decrement,
+   nuklear_navigation_increment,
+   nuklear_navigation_set,
+   nuklear_navigation_set_last,
+   nuklear_navigation_descend_alphabet,
+   nuklear_navigation_ascend_alphabet,
+   NULL,                              /* lists_init            */
+   NULL,                              /* list_insert           */
+   NULL,                              /* list_prepend          */
+   NULL,                              /* list_free             */
+   NULL,                              /* list_clear            */
+   NULL,                              /* list_cache            */
+   NULL,                              /* list_push             */
+   nuklear_list_get_selection,
    nuklear_list_get_size,
-   NULL,                        /* list_get_entry        */
-   NULL,                        /* list_set_selection    */
+   NULL,                              /* list_get_entry        */
+   nuklear_list_set_selection,
    nuklear_bind_init,
-   NULL,                        /* load_image            */
+   NULL,                              /* load_image            */
    "nuklear",
-   NULL,                        /* environ_cb            */
-   NULL,                        /* update_thumbnail_path        */
-   NULL,                        /* update_thumbnail_image       */
-   NULL,                        /* refresh_thumbnail_image      */
-   NULL,                        /* set_thumbnail_content        */
-   NULL,                        /* osk_ptr_at_pos               */
-   NULL,                        /* update_savestate_thumbnail_path  */
-   NULL,                        /* update_savestate_thumbnail_image */
-   NULL,                        /* pointer_down          */
-   NULL,                        /* pointer_up            */
-   NULL                         /* entry_action          */
+   NULL,                              /* environ_cb            */
+   NULL,                              /* update_thumbnail_path        */
+   NULL,                              /* update_thumbnail_image       */
+   NULL,                              /* refresh_thumbnail_image      */
+   NULL,                              /* set_thumbnail_content        */
+   NULL,                              /* osk_ptr_at_pos               */
+   NULL,                              /* update_savestate_thumbnail_path  */
+   NULL,                              /* update_savestate_thumbnail_image */
+   NULL,                              /* pointer_down          */
+   NULL,                              /* pointer_up            */
+   nuklear_menu_entry_action
 };
