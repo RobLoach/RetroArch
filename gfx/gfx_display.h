@@ -80,7 +80,8 @@ enum menu_driver_id_type
    MENU_DRIVER_ID_RGUI,
    MENU_DRIVER_ID_OZONE,
    MENU_DRIVER_ID_GLUI,
-   MENU_DRIVER_ID_XMB
+   MENU_DRIVER_ID_XMB,
+   MENU_DRIVER_ID_NUKLEAR
 };
 
 enum gfx_display_prim_type

@@ -340,6 +340,9 @@ const menu_ctx_driver_t *menu_ctx_drivers[] = {
 #if defined(HAVE_XMB)
    &menu_ctx_xmb,
 #endif
+#if defined(HAVE_NUKLEAR)
+   &menu_ctx_nuklear,
+#endif
    &menu_ctx_null,
    NULL
 };
@@ -3836,6 +3839,10 @@ static enum menu_driver_id_type menu_driver_set_id(
 #ifdef HAVE_XMB
       if (memcmp(driver_name, "xmb", 4) == 0)
          return MENU_DRIVER_ID_XMB;
+#endif
+#ifdef HAVE_NUKLEAR
+      if (memcmp(driver_name, "nuklear", 8) == 0)
+         return MENU_DRIVER_ID_NUKLEAR;
 #endif
    }
    return MENU_DRIVER_ID_UNKNOWN;
