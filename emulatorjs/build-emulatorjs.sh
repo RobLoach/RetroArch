@@ -56,12 +56,12 @@ fi
 
 lastGles=0
 
-largeStack=("mupen64plus_next")
-largeHeap=("mupen64plus_next" "picodrive" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "mednafen_psx" "mednafen_psx_hw" "parallel_n64" "ppsspp")
-needsGles3=("ppsspp")
-needsThreads=("ppsspp")
-largeThreads=("ppsspp")
-noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide")
+largeStack=("mupen64plus_next" "azahar")
+largeHeap=("mupen64plus_next" "picodrive" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "mednafen_psx" "mednafen_psx_hw" "parallel_n64" "ppsspp" "azahar")
+needsGles3=("ppsspp" "azahar")
+needsThreads=("ppsspp" "azahar")
+largeThreads=("ppsspp" "azahar")
+noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar")
 no7Zip=("bsnes")
 
 for f in $(ls -v *_emscripten.bc); do
