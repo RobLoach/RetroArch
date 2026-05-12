@@ -63,10 +63,11 @@ needsThreads=("ppsspp" "azahar")
 largeThreads=("ppsspp" "azahar")
 noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar")
 no7Zip=("bsnes")
+needsAsync=("mupen64plus_next" "dosbox_pure" "ppsspp" "azahar")
 
 for f in $(ls -v *_emscripten.bc); do
   name=`echo "$f" | sed "s/\(_libretro_emscripten\|\).bc$//"`
-  async=1
+  async=0
   sevenZip=1
   wasm=1
   gles3=1
@@ -103,6 +104,9 @@ for f in $(ls -v *_emscripten.bc); do
   fi
   if [[ $(containsElement $name "${no7Zip[@]}") = 1 ]]; then
     sevenZip=0
+  fi
+  if [[ $(containsElement $name "${needsAsync[@]}") = 1 ]]; then
+    async=1
   fi
   if [[ $(containsElement $name "${needsGles3[@]}") = 1 && $gles3 = 0 ]]; then
     echo "$name"' does not support gles2 (legacy)! Please build without --legacy! Exiting...'

@@ -43,16 +43,16 @@ var LibraryEmulatorJS = {
                 stringToUTF8(result, ptr, lenBytes);
                 wakeUp(ptr);
             };
-            const fn = Module.EJS_getInputText;
+            const fn = Module.getInputText;
             if (typeof fn !== "function") {
-                console.warn("EmulatorJSShowKeyboard: Module.EJS_getInputText not set, falling back to prompt()");
+                console.warn("EmulatorJSShowKeyboard: Module.getInputText not set, falling back to prompt()");
                 respond(window.prompt(hint || "Enter text:", "") || null);
                 return;
             }
             Promise.resolve(fn({ hint: hint, maxLength: maxLength, password: !!passwordMode }))
                 .then(respond)
                 .catch(function(err) {
-                    console.error("EJS_getInputText threw:", err);
+                    console.error("getInputText threw:", err);
                     respond(null);
                 });
         });

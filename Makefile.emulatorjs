@@ -63,10 +63,10 @@ HAVE_THREADS ?= 0
 HAVE_AUDIOWORKLET ?= 0
 
 # doesn't work on PROXY_TO_PTHREAD
-HAVE_RWEBAUDIO ?= 0
+HAVE_RWEBAUDIO ?= 1
 
 # requires ASYNC or PROXY_TO_PTHREAD
-HAVE_AL ?= 1
+HAVE_AL ?= 0
 
 # whether the browser thread is allowed to block to wait for audio to play, not CPU usage-friendly!
 # currently this variable is only used by rwebaudio and audioworklet; openal will never busywait.
