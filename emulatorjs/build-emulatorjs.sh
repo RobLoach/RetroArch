@@ -22,6 +22,10 @@ for i in "$@"; do
       CLEAN=YES
       shift
       ;;
+    --light-debug)
+      LIGHT_DEBUG=YES
+      shift
+      ;;
     *)
       echo "Unknown option $i"
       echo "Usage: $0 [option] ..."
@@ -29,6 +33,7 @@ for i in "$@"; do
       echo "  --threads"
       echo "  --legacy"
       echo "  --clean"
+      echo "  --light-debug"
       exit 1
       ;;
   esac
@@ -57,6 +62,7 @@ fi
 lastGles=0
 
 largeStack=("mupen64plus_next" "azahar")
+useOpenAL=()
 largeHeap=("mupen64plus_next" "picodrive" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "mednafen_psx" "mednafen_psx_hw" "parallel_n64" "ppsspp" "azahar")
 needsGles3=("ppsspp" "azahar")
 needsThreads=("ppsspp" "azahar")
@@ -76,6 +82,8 @@ for f in $(ls -v *_emscripten.bc); do
   pthread=0
   chd=1
   threads=0
+  have_al=0
+  have_rwebaudio=1
 
   if [ "$LEGACY" = "YES" ]; then
     gles3=0
@@ -91,6 +99,10 @@ for f in $(ls -v *_emscripten.bc); do
   fi
   if [[ $(containsElement $name "${largeHeap[@]}") = 1 ]]; then
     heap_mem=536870912 # 512mb
+  fi
+  if [[ $(containsElement $name "${useOpenAL[@]}") = 1 ]]; then
+    have_al=1
+    have_rwebaudio=0
   fi
   if [[ $(containsElement $name "${needsThreads[@]}") = 1 && $pthread = 0 ]]; then
     echo "$name"' requires threads! Please build with --threads! Exiting...'
@@ -133,9 +145,14 @@ for f in $(ls -v *_emscripten.bc); do
   fi
   lastGles=$gles3
 
+  light_debug=0
+  if [[ "$LIGHT_DEBUG" = "YES" ]]; then
+    light_debug=1
+  fi
+
   # Compile core
-  echo "BUILD COMMAND: make -C ../ -f Makefile.emulatorjs HAVE_7ZIP=$sevenZip HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem TARGET=${name}_libretro.js -j"$(nproc)
-  make -C ../ -f Makefile.emulatorjs HAVE_7ZIP=$sevenZip HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem TARGET=${name}_libretro.js -j$(nproc) || exit 1
+  echo "BUILD COMMAND: make -C ../ -f Makefile.emulatorjs HAVE_7ZIP=$sevenZip HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem HAVE_AL=$have_al HAVE_RWEBAUDIO=$have_rwebaudio LIGHT_DEBUG=$light_debug TARGET=${name}_libretro.js -j"$(nproc)
+  make -C ../ -f Makefile.emulatorjs HAVE_7ZIP=$sevenZip HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem HAVE_AL=$have_al HAVE_RWEBAUDIO=$have_rwebaudio LIGHT_DEBUG=$light_debug TARGET=${name}_libretro.js -j$(nproc) || exit 1
 
   # Move executable files
   out_dir="../../EmulatorJS/data/cores"
