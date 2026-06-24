@@ -106,6 +106,7 @@ enum video_driver_enum
    VIDEO_XVIDEO,
    VIDEO_SDL,
    VIDEO_SDL2,
+   VIDEO_SDL3,
    VIDEO_SDL_DINGUX,
    VIDEO_SDL_RS90,
    VIDEO_EXT,
@@ -195,6 +196,7 @@ enum input_driver_enum
    INPUT_ANDROID            = AUDIO_RESAMPLER_NULL + 1,
    INPUT_SDL,
    INPUT_SDL2,
+   INPUT_SDL3,
    INPUT_SDL_DINGUX,
    INPUT_X,
    INPUT_WAYLAND,
@@ -487,6 +489,8 @@ static const enum video_driver_enum VIDEO_DEFAULT_DRIVER = VIDEO_CTR;
 static const enum video_driver_enum VIDEO_DEFAULT_DRIVER = VIDEO_SWITCH;
 #elif defined(HAVE_XVIDEO)
 static const enum video_driver_enum VIDEO_DEFAULT_DRIVER = VIDEO_XVIDEO;
+#elif defined(HAVE_SDL3)
+static const enum video_driver_enum VIDEO_DEFAULT_DRIVER = VIDEO_SDL3;
 #elif defined(HAVE_SDL) && !defined(HAVE_SDL_DINGUX)
 static const enum video_driver_enum VIDEO_DEFAULT_DRIVER = VIDEO_SDL;
 #elif defined(HAVE_SDL2)
@@ -676,6 +680,8 @@ static const enum input_driver_enum INPUT_DEFAULT_DRIVER = INPUT_WAYLAND;
 static const enum input_driver_enum INPUT_DEFAULT_DRIVER = INPUT_COCOA;
 #elif defined(__QNX__)
 static const enum input_driver_enum INPUT_DEFAULT_DRIVER = INPUT_QNX;
+#elif defined(HAVE_SDL3)
+static const enum input_driver_enum INPUT_DEFAULT_DRIVER = INPUT_SDL3;
 #elif defined(HAVE_SDL)
 static const enum input_driver_enum INPUT_DEFAULT_DRIVER = INPUT_SDL;
 #elif defined(HAVE_SDL2)
@@ -1146,6 +1152,8 @@ const char *config_get_default_video(void)
          return "sdl";
       case VIDEO_SDL2:
          return "sdl2";
+      case VIDEO_SDL3:
+         return "sdl3";
       case VIDEO_EXT:
          return "ext";
       case VIDEO_VG:
@@ -1210,6 +1218,8 @@ const char *config_get_default_input(void)
          return "sdl";
       case INPUT_SDL2:
          return "sdl2";
+      case INPUT_SDL3:
+         return "sdl3";
       case INPUT_SDL_DINGUX:
          return "sdl_dingux";
       case INPUT_DINPUT:

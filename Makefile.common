@@ -1687,7 +1687,9 @@ ifeq ($(HAVE_SDL3), 1)
    DEF_FLAGS += $(SDL3_CFLAGS)
    LIBS += $(SDL3_LIBS)
 	DEFINES += -DHAVE_SDL3
-   OBJ += input/drivers_joypad/sdl3_joypad.o
+   OBJ += gfx/drivers/sdl3_gfx.o \
+          input/drivers/sdl3_input.o \
+          input/drivers_joypad/sdl3_joypad.o
 else ifeq ($(HAVE_SDL2), 1)
    HAVE_SDL_COMMON = 1
    OBJ += gfx/drivers/sdl2_gfx.o \
