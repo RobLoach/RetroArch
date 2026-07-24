@@ -967,9 +967,6 @@ const struct rarch_key_map rarch_key_map_sdl3[] = {
    { SDLK_MEDIA_PREVIOUS_TRACK, RETROK_MEDIA_PREV },
    { SDLK_MEDIA_STOP,           RETROK_MEDIA_STOP },
    { SDLK_MEDIA_PLAY,           RETROK_MEDIA_PLAY_PAUSE },
-   /* Most keyboards' media key arrives as PLAY_PAUSE (SDL3 split it
-    * from the discrete PLAY key SDL2 called SDLK_AUDIOPLAY). Listed
-    * after MEDIA_PLAY so it wins the reverse bind LUT. */
    { SDLK_MEDIA_PLAY_PAUSE,     RETROK_MEDIA_PLAY_PAUSE },
    { SDLK_MUTE,                 RETROK_VOLUME_MUTE },
    { SDLK_MEDIA_SELECT,         RETROK_LAUNCH_MEDIA },
