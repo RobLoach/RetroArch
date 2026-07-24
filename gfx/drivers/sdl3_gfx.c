@@ -227,9 +227,7 @@ static void *sdl3_gfx_init(const video_info_t *video,
    XInitThreads();
 #endif
 
-   /* SDL3 subsystem init is ref-counted, so this pairs with the
-    * SDL_QuitSubSystem in sdl3_gfx_free regardless of who else has
-    * the video subsystem open. */
+   /* Initialize the video system. */
    if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
       return NULL;
 
