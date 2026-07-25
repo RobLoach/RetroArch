@@ -8598,15 +8598,9 @@ char* get_core_options(void)
     return rv;
 }
 
-/* Serialises the core option list as JSON, retaining the data that
- * get_core_options() discards: human readable descriptions, value
- * labels, info text and visibility.
- *
- * The core option manager normalises every core option interface into
- * the same representation, so this is populated for legacy
- * (RETRO_ENVIRONMENT_SET_VARIABLES) cores too - there the description
- * comes from the "Description; a|b|c" prefix and the value labels fall
- * back to the raw values. */
+/* Outputs the Core Options as JSON, so that additional information
+ * from the core options can be read, like human readable
+ * labels, descriptions, and visibility. */
 char* get_core_options_json(void)
 {
    runloop_state_t       *runloop_st = &runloop_state;
@@ -8708,8 +8702,7 @@ char* get_core_options_json(void)
 
    json = rjsonwriter_get_memory_buffer(writer, &len);
 
-   /* The writer owns its buffer, so keep a copy alive for the
-    * frontend to read - freed on the next call */
+   /* The buffer is owned by the writer, so copy the buffer. */
    free(rv);
    rv = ((json) && (len > 0)) ? strdup(json) : NULL;
    rjsonwriter_free(writer);
