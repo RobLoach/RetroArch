@@ -90,6 +90,11 @@
 #include <emscripten/emscripten.h>
 #endif
 
+#ifdef EMULATORJS
+#include <formats/rjson.h>
+#include <formats/rjson_helpers.h>
+#endif
+
 #ifdef HAVE_LIBNX
 #include <switch.h>
 #include "switch_performance_profiles.h"
@@ -8591,6 +8596,125 @@ char* get_core_options(void)
         }
     }
     return rv;
+}
+
+/* Serialises the core option list as JSON, retaining the data that
+ * get_core_options() discards: human readable descriptions, value
+ * labels, info text and visibility.
+ *
+ * The core option manager normalises every core option interface into
+ * the same representation, so this is populated for legacy
+ * (RETRO_ENVIRONMENT_SET_VARIABLES) cores too - there the description
+ * comes from the "Description; a|b|c" prefix and the value labels fall
+ * back to the raw values. */
+char* get_core_options_json(void)
+{
+   runloop_state_t       *runloop_st = &runloop_state;
+   core_option_manager_t *coreopts   = runloop_st->core_options;
+   rjsonwriter_t         *writer     = NULL;
+   static char           *rv         = NULL;
+   char                  *json       = NULL;
+   int                    len        = 0;
+   size_t i, j;
+
+   if (   !coreopts
+       || (coreopts->size == 0))
+      return "";
+
+   if (!(writer = rjsonwriter_open_memory()))
+      return "";
+
+   rjsonwriter_add_start_object(writer);
+   rjsonwriter_add_string(writer, "options");
+   rjsonwriter_add_colon(writer);
+   rjsonwriter_add_start_array(writer);
+
+   for (i = 0; i < coreopts->size; i++)
+   {
+      struct core_option *option = (struct core_option*)&coreopts->opts[i];
+
+      if (i > 0)
+         rjsonwriter_add_comma(writer);
+      rjsonwriter_add_start_object(writer);
+
+      rjsonwriter_add_string(writer, "key");
+      rjsonwriter_add_colon(writer);
+      rjsonwriter_add_string(writer, option->key);
+
+      /* Request the uncategorised strings - the frontend presents all
+       * core options in a single flat list */
+      rjsonwriter_add_comma(writer);
+      rjsonwriter_add_string(writer, "desc");
+      rjsonwriter_add_colon(writer);
+      rjsonwriter_add_string(writer,
+            core_option_manager_get_desc(coreopts, i, false));
+
+      rjsonwriter_add_comma(writer);
+      rjsonwriter_add_string(writer, "info");
+      rjsonwriter_add_colon(writer);
+      rjsonwriter_add_string(writer,
+            core_option_manager_get_info(coreopts, i, false));
+
+      rjsonwriter_add_comma(writer);
+      rjsonwriter_add_string(writer, "current");
+      rjsonwriter_add_colon(writer);
+      rjsonwriter_add_string(writer,
+            core_option_manager_get_val(coreopts, i));
+
+      rjsonwriter_add_comma(writer);
+      rjsonwriter_add_string(writer, "default");
+      rjsonwriter_add_colon(writer);
+      rjsonwriter_add_string(writer,
+            (option->default_index < option->vals->size)
+                  ? option->vals->elems[option->default_index].data
+                  : NULL);
+
+      rjsonwriter_add_comma(writer);
+      rjsonwriter_add_string(writer, "visible");
+      rjsonwriter_add_colon(writer);
+      rjsonwriter_add_bool(writer, option->visible);
+
+      rjsonwriter_add_comma(writer);
+      rjsonwriter_add_string(writer, "values");
+      rjsonwriter_add_colon(writer);
+      rjsonwriter_add_start_array(writer);
+      for (j = 0; j < option->vals->size; j++)
+      {
+         if (j > 0)
+            rjsonwriter_add_comma(writer);
+         rjsonwriter_add_start_object(writer);
+
+         rjsonwriter_add_string(writer, "value");
+         rjsonwriter_add_colon(writer);
+         rjsonwriter_add_string(writer, option->vals->elems[j].data);
+
+         rjsonwriter_add_comma(writer);
+         rjsonwriter_add_string(writer, "label");
+         rjsonwriter_add_colon(writer);
+         rjsonwriter_add_string(writer,
+               (j < option->val_labels->size)
+                     ? option->val_labels->elems[j].data
+                     : option->vals->elems[j].data);
+
+         rjsonwriter_add_end_object(writer);
+      }
+      rjsonwriter_add_end_array(writer);
+
+      rjsonwriter_add_end_object(writer);
+   }
+
+   rjsonwriter_add_end_array(writer);
+   rjsonwriter_add_end_object(writer);
+
+   json = rjsonwriter_get_memory_buffer(writer, &len);
+
+   /* The writer owns its buffer, so keep a copy alive for the
+    * frontend to read - freed on the next call */
+   free(rv);
+   rv = ((json) && (len > 0)) ? strdup(json) : NULL;
+   rjsonwriter_free(writer);
+
+   return (rv) ? rv : "";
 }
 
 void set_video_rotation(int rotation)
