@@ -1514,6 +1514,7 @@ extern video_driver_t video_xenon360;
 extern video_driver_t video_xvideo;
 extern video_driver_t video_sdl;
 extern video_driver_t video_sdl2;
+extern video_driver_t video_sdl3;
 extern video_driver_t video_sdl_dingux;
 extern video_driver_t video_sdl_rs90;
 extern video_driver_t video_vg;
@@ -1534,6 +1535,8 @@ extern video_driver_t video_null;
 
 extern const gfx_ctx_driver_t gfx_ctx_osmesa;
 extern const gfx_ctx_driver_t gfx_ctx_sdl_gl;
+extern const gfx_ctx_driver_t gfx_ctx_sdl3_gl;
+extern const gfx_ctx_driver_t gfx_ctx_sdl3_vk;
 extern const gfx_ctx_driver_t gfx_ctx_x_egl;
 extern const gfx_ctx_driver_t gfx_ctx_uwp;
 extern const gfx_ctx_driver_t gfx_ctx_vk_wayland;

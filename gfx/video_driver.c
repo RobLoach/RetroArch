@@ -168,6 +168,13 @@ static const gfx_ctx_driver_t *gfx_ctx_gl_drivers[] = {
 #if defined(__WINRT__) && defined(HAVE_OPENGLES)
    &gfx_ctx_uwp,
 #endif
+#if defined(HAVE_SDL3) && (defined(HAVE_OPENGL) || defined(HAVE_OPENGL1) || defined(HAVE_OPENGL_CORE) || defined(HAVE_OPENGLES)) && !defined(HAVE_COCOA)
+   /* Listed ahead of the native wayland/x contexts: the SDL3
+    * input/joypad drivers only receive events when an SDL window
+    * exists, so SDL3 builds prefer SDL3 windowing. Override with
+    * video_context_driver if the native contexts are wanted. */
+   &gfx_ctx_sdl3_gl,
+#endif
 #if defined(HAVE_WAYLAND)
    &gfx_ctx_wayland,
 #endif
@@ -490,6 +497,9 @@ const video_driver_t *video_drivers[] = {
 #endif
 #if defined(HAVE_SDL2) && !(defined(HAVE_COCOA) || defined(HAVE_COCOA_METAL))
    &video_sdl2,
+#endif
+#if defined(HAVE_SDL3) && !(defined(HAVE_COCOA) || defined(HAVE_COCOA_METAL))
+   &video_sdl3,
 #endif
 #ifdef HAVE_SDL_DINGUX
 #if defined(RS90) || defined(MIYOO)

@@ -181,6 +181,7 @@ static bool font_init_first(
                return true;
             }
          }
+         break;
 #endif
 #ifdef HAVE_SDL2
 #if SDL_VERSION_ATLEAST(2, 0, 18)
@@ -197,6 +198,20 @@ static bool font_init_first(
          }
          break;
 #endif
+#endif
+#ifdef HAVE_SDL3
+      case FONT_DRIVER_RENDER_SDL3:
+         {
+            void *data = sdl3_raster_font.init(video_data,
+                  font_path, font_size, is_threaded);
+            if (data)
+            {
+               *font_driver = &sdl3_raster_font;
+               *font_handle = data;
+               return true;
+            }
+         }
+         break;
 #endif
 #ifdef HAVE_D3D8
       case FONT_DRIVER_RENDER_D3D8_API:
@@ -1030,7 +1045,10 @@ void font_driver_free(font_data_t *font)
       font_driver_generation++;
 
 #ifdef HAVE_THREADS
-      is_threaded             = *video_driver_get_threaded();
+      /* Ask for the real threaded state, not the video_threaded
+       * setting. The two differ when a hw-render core is loaded,
+       * since that forces the video driver to run non-threaded. */
+      is_threaded = video_driver_is_threaded();
 #endif
 
       font_driver_release_renderer_state(font->renderer,
