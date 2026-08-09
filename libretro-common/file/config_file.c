@@ -234,26 +234,22 @@ static char *config_file_extract_value(char *line)
          while ((c = line[idx]) && c != '\"')
             idx++;
 
-         /* If it's a quote preceed by a backslash, unescape it and find the next (") character */
+         /* If it's a quote preceded by a backslash, unescape it and find the next (") character */
          if (c && line[idx - 1] == '\\')
          {
             size_t read_idx = idx + 1; /* Skip over the quote */
 
-            do
+            /* Only treat the quote as escaped if another (") exists later
+             * on the line; otherwise it terminates the value. This handles
+             * values ending in '\', trailing whitespace, and CRLF line
+             * endings, where characters remain after the closing quote. */
+            while (c && line[idx - 1] == '\\' && strchr(&line[read_idx], '\"'))
             {
-               c = line[read_idx];
-               if (!c)
-               {
-                  /* If the quote is the last character of the line, assume it's not escaped */
-               }
-               else
-               {
-                  line[idx - 1] = '\"'; /* Replace the backslash with a quote */
+               line[idx - 1] = '\"'; /* Replace the backslash with a quote */
 
-                  while ((c = line[read_idx++]) && c != '\"')
-                     line[idx++] = c;
-               }
-            } while (c && line[idx - 1] == '\\'); /* If it's another escaped quote, keep going */
+               while ((c = line[read_idx++]) && c != '\"')
+                  line[idx++] = c;
+            }
          }
 
          line[idx] = '\0';
