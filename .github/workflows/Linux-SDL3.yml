@@ -25,6 +25,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set environment
+        # make re-resolves sdl3 through pkg-config at build time, so
+        # the path must be visible to every following step.
+        run: echo "PKG_CONFIG_PATH=$HOME/sdl3-prefix/lib/pkgconfig:$HOME/sdl3-prefix/lib/x86_64-linux-gnu/pkgconfig" >> "$GITHUB_ENV"
+
       - name: Cache SDL3
         id: cache-sdl3
         uses: actions/cache@v4
@@ -43,7 +48,6 @@ jobs:
 
       - name: Configure
         run: |
-          export PKG_CONFIG_PATH="$HOME/sdl3-prefix/lib/pkgconfig:$HOME/sdl3-prefix/lib/x86_64-linux-gnu/pkgconfig"
           ./configure --enable-sdl3
           # configure exits 0 even when a lib is missing; make sure
           # SDL3 was actually picked up.
