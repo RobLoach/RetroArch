@@ -39,6 +39,10 @@
 #define SDL3_JOYPAD_VBTN_TOUCHPAD_LEFT  32
 #define SDL3_JOYPAD_VBTN_TOUCHPAD_RIGHT 33
 
+#if SDL_GAMEPAD_BUTTON_COUNT > SDL3_JOYPAD_VBTN_TOUCHPAD_LEFT
+#error "SDL_GamepadButton overlaps the virtual touchpad buttons; move SDL3_JOYPAD_VBTN_* up"
+#endif
+
 typedef struct _sdl3_joypad
 {
    SDL_Joystick   *joypad;
@@ -49,9 +53,9 @@ typedef struct _sdl3_joypad
    unsigned        num_hats;
    uint16_t        rumble_gain; /* 0-100 */
    uint16_t        rumble[2];   /* raw magnitude per retro_rumble_effect (strong/weak) */
-   bool            has_touchpad;
-   bool            touchpad_left;  /* finger touching the left half */
-   bool            touchpad_right; /* finger touching the right half */
+   int             touchpad_fingers; /* finger slots on touchpad 0; 0 = no touchpad */
+   bool            touchpad_left;    /* finger touching the left half */
+   bool            touchpad_right;   /* finger touching the right half */
 } sdl3_joypad_t;
 
 /**
@@ -252,7 +256,8 @@ static void sdl3_joypad_connect(SDL_JoystickID jid)
       pad->num_axes     = SDL_GAMEPAD_AXIS_COUNT;
       pad->num_buttons  = SDL_GAMEPAD_BUTTON_COUNT;
       pad->num_hats     = 0;
-      pad->has_touchpad = SDL_GetNumGamepadTouchpads(gamepad) > 0;
+      if (SDL_GetNumGamepadTouchpads(gamepad) > 0)
+         pad->touchpad_fingers = SDL_GetNumGamepadTouchpadFingers(gamepad, 0);
    }
    else
    {
@@ -506,18 +511,17 @@ static int16_t sdl3_joypad_state(
 static void sdl3_joypad_poll_touchpad(sdl3_joypad_t *pad)
 {
    int i;
-   int fingers = SDL_GetNumGamepadTouchpadFingers(pad->gamepad, 0);
 
    pad->touchpad_left  = false;
    pad->touchpad_right = false;
 
-   for (i = 0; i < fingers; i++)
+   for (i = 0; i < pad->touchpad_fingers; i++)
    {
       bool down;
-      float x, y, pressure;
+      float x;
 
       if (     SDL_GetGamepadTouchpadFinger(pad->gamepad, 0, i,
-                  &down, &x, &y, &pressure)
+                  &down, &x, NULL, NULL)
             && down)
       {
          if (x < 0.5f)
@@ -552,7 +556,7 @@ static void sdl3_joypad_poll(void)
    SDL_UpdateGamepads();
 
    for (i = 0; i < MAX_USERS; i++)
-      if (sdl3_joypads[i].has_touchpad)
+      if (sdl3_joypads[i].touchpad_fingers > 0)
          sdl3_joypad_poll_touchpad(&sdl3_joypads[i]);
 
    /* Flush all remaining gamepad/joystick input events, since we handle it directly. */
