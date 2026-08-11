@@ -17,7 +17,10 @@ jobs:
       - name: Dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y build-essential cmake ninja-build pkg-config zlib1g-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxfixes-dev libxss-dev libxkbcommon-dev libwayland-dev libdecor-0-dev libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev libgbm-dev libdrm-dev libudev-dev libdbus-1-dev libasound2-dev libpulse-dev libavcodec-dev libxml2-dev
+          # SDL3's documented Linux build dependencies
+          # (https://wiki.libsdl.org/SDL3/README-linux), plus what the
+          # RetroArch configure itself needs.
+          sudo apt-get install -y build-essential cmake ninja-build pkg-config zlib1g-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxfixes-dev libxss-dev libxtst-dev libxkbcommon-dev libwayland-dev libdecor-0-dev libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev libgbm-dev libdrm-dev libudev-dev libdbus-1-dev libibus-1.0-dev libasound2-dev libpulse-dev libavcodec-dev libxml2-dev
 
       - name: Checkout
         uses: actions/checkout@v4
