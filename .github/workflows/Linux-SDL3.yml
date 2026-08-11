@@ -1,0 +1,50 @@
+name: CI Linux (SDL3)
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  SDL3_VERSION: 3.4.12
+
+jobs:
+  linux-sdl3: # Compile check for the SDL3 drivers (--enable-sdl3)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y build-essential cmake ninja-build pkg-config zlib1g-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev libgbm-dev libasound2-dev libpulse-dev libavcodec-dev libxml2-dev
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache SDL3
+        id: cache-sdl3
+        uses: actions/cache@v4
+        with:
+          path: ~/sdl3-prefix
+          key: sdl3-${{ runner.os }}-${{ env.SDL3_VERSION }}
+
+      - name: Build SDL3
+        if: steps.cache-sdl3.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o SDL3.tar.gz "https://github.com/libsdl-org/SDL/releases/download/release-${SDL3_VERSION}/SDL3-${SDL3_VERSION}.tar.gz"
+          tar xf SDL3.tar.gz
+          cmake -S "SDL3-${SDL3_VERSION}" -B SDL3-build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_INSTALL_PREFIX=$HOME/sdl3-prefix"
+          cmake --build SDL3-build
+          cmake --install SDL3-build
+
+      - name: Configure
+        run: |
+          export PKG_CONFIG_PATH="$HOME/sdl3-prefix/lib/pkgconfig:$HOME/sdl3-prefix/lib/x86_64-linux-gnu/pkgconfig"
+          ./configure --enable-sdl3
+          # configure exits 0 even when a lib is missing; make sure
+          # SDL3 was actually picked up.
+          grep -q '^HAVE_SDL3 = 1' config.mk
+
+      - name: Build
+        run: make -j$(getconf _NPROCESSORS_ONLN)
