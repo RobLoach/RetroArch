@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <boolean.h>
 #include <string/stdstring.h>
@@ -35,6 +36,35 @@
 
 /* OVERLAY_MAX_TOUCH */
 #define SDL3_MAX_TOUCH 16
+
+#define SDL3_MAX_MICE 8
+
+/* Per-device mouse state, accumulated from SDL events so that
+ * input_mouse_index can address individual mice. Index 0 keeps the
+ * merged system mouse below (SDL_GetMouseState and friends), while
+ * indices 1..N map into this list in SDL_GetMice() order. Only
+ * relative motion, buttons and wheel are per-device; the absolute
+ * cursor position exists solely for the merged system mouse. */
+typedef struct sdl3_mouse
+{
+   SDL_MouseID id;
+   /* Whole-pixel relative motion. */
+   int16_t x;
+   int16_t y;
+   /* Sub-pixel remainder carried into the next frame. */
+   float rel_x;
+   float rel_y;
+   /* Button states. */
+   bool l;
+   bool r;
+   bool m;
+   bool b4;
+   bool b5;
+   bool wu;
+   bool wd;
+   bool wl;
+   bool wr;
+} sdl3_mouse_t;
 
 typedef struct sdl3_input
 {
@@ -63,6 +93,10 @@ typedef struct sdl3_input
    bool mouse_wl;
    bool mouse_wr;
 
+   /* Individually addressable mice (input_mouse_index 1..N). */
+   int num_mice;
+   sdl3_mouse_t mice[SDL3_MAX_MICE];
+
    /* Number of connected touch devices. Saves having to query them
     * every frame. */
    int num_touch_devices;
@@ -85,6 +119,52 @@ static void sdl3_build_scancode_lut(sdl3_input_t *sdl)
       sdl->key_scancode_lut[i] = rarch_keysym_lut[i]
             ? SDL_GetScancodeFromKey((SDL_Keycode)rarch_keysym_lut[i], NULL)
             : SDL_SCANCODE_UNKNOWN;
+}
+
+static sdl3_mouse_t *sdl3_get_mouse(sdl3_input_t *sdl, SDL_MouseID id)
+{
+   int i;
+   for (i = 0; i < sdl->num_mice; i++)
+   {
+      if (sdl->mice[i].id == id)
+         return &sdl->mice[i];
+   }
+   return NULL;
+}
+
+static void sdl3_mouse_added(sdl3_input_t *sdl, SDL_MouseID id)
+{
+   /* Events with a 0 instance id belong to the merged system mouse,
+    * and SDL_TOUCH_MOUSEID marks touch-synthesized events; neither is
+    * an addressable device. */
+   if (id == 0 || id == SDL_TOUCH_MOUSEID)
+      return;
+   /* The list is seeded from SDL_GetMice() at init, so the ADDED
+    * events SDL delivers for already-connected mice must not
+    * duplicate entries. */
+   if (sdl3_get_mouse(sdl, id))
+      return;
+   if (sdl->num_mice >= SDL3_MAX_MICE)
+      return;
+   memset(&sdl->mice[sdl->num_mice], 0, sizeof(sdl->mice[0]));
+   sdl->mice[sdl->num_mice].id = id;
+   sdl->num_mice++;
+}
+
+static void sdl3_mouse_removed(sdl3_input_t *sdl, SDL_MouseID id)
+{
+   int i;
+   for (i = 0; i < sdl->num_mice; i++)
+   {
+      if (sdl->mice[i].id != id)
+         continue;
+      /* Keep the remaining mice in connection order so the
+       * input_mouse_index mapping of the others stays stable. */
+      memmove(&sdl->mice[i], &sdl->mice[i + 1],
+            (size_t)(sdl->num_mice - i - 1) * sizeof(sdl->mice[0]));
+      sdl->num_mice--;
+      return;
+   }
 }
 
 static void *sdl3_input_init(const char *joypad_driver)
@@ -110,6 +190,20 @@ static void *sdl3_input_init(const char *joypad_driver)
    {
       SDL_TouchID *devices = SDL_GetTouchDevices(&sdl->num_touch_devices);
       SDL_free(devices);
+   }
+
+   /* Seed the per-device mouse list from the mice already connected;
+    * SDL_EVENT_MOUSE_ADDED/REMOVED keep it current from here on. */
+   {
+      int i;
+      int num_mice      = 0;
+      SDL_MouseID *mice = SDL_GetMice(&num_mice);
+      if (mice)
+      {
+         for (i = 0; i < num_mice; i++)
+            sdl3_mouse_added(sdl, mice[i]);
+         SDL_free(mice);
+      }
    }
 
    return sdl;
@@ -237,36 +331,78 @@ static int16_t sdl3_input_state(
          return ret;
       case RETRO_DEVICE_MOUSE:
       case RARCH_DEVICE_MOUSE_SCREEN:
-         if (config_get_ptr()->uints.input_mouse_index[ port ] == 0)
          {
-            switch (id)
+            unsigned mouse_index = config_get_ptr()->uints.input_mouse_index[ port ];
+
+            /* Index 0 is the merged system mouse; 1..N address the
+             * individual mice enumerated by SDL_GetMice(). */
+            if (mouse_index == 0)
             {
-               case RETRO_DEVICE_ID_MOUSE_LEFT:
-                  return sdl->mouse_l;
-               case RETRO_DEVICE_ID_MOUSE_RIGHT:
-                  return sdl->mouse_r;
-               case RETRO_DEVICE_ID_MOUSE_WHEELUP:
-                  return sdl->mouse_wu;
-               case RETRO_DEVICE_ID_MOUSE_WHEELDOWN:
-                  return sdl->mouse_wd;
-               case RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP:
-                  return sdl->mouse_wr;
-               case RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN:
-                  return sdl->mouse_wl;
-               case RETRO_DEVICE_ID_MOUSE_X:
-                  if (device == RARCH_DEVICE_MOUSE_SCREEN)
-                     return (int16_t)sdl->mouse_abs_x;
-                  return sdl->mouse_x;
-               case RETRO_DEVICE_ID_MOUSE_Y:
-                  if (device == RARCH_DEVICE_MOUSE_SCREEN)
-                     return (int16_t)sdl->mouse_abs_y;
-                  return sdl->mouse_y;
-               case RETRO_DEVICE_ID_MOUSE_MIDDLE:
-                  return sdl->mouse_m;
-               case RETRO_DEVICE_ID_MOUSE_BUTTON_4:
-                  return sdl->mouse_b4;
-               case RETRO_DEVICE_ID_MOUSE_BUTTON_5:
-                  return sdl->mouse_b5;
+               switch (id)
+               {
+                  case RETRO_DEVICE_ID_MOUSE_LEFT:
+                     return sdl->mouse_l;
+                  case RETRO_DEVICE_ID_MOUSE_RIGHT:
+                     return sdl->mouse_r;
+                  case RETRO_DEVICE_ID_MOUSE_WHEELUP:
+                     return sdl->mouse_wu;
+                  case RETRO_DEVICE_ID_MOUSE_WHEELDOWN:
+                     return sdl->mouse_wd;
+                  case RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP:
+                     return sdl->mouse_wr;
+                  case RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN:
+                     return sdl->mouse_wl;
+                  case RETRO_DEVICE_ID_MOUSE_X:
+                     if (device == RARCH_DEVICE_MOUSE_SCREEN)
+                        return (int16_t)sdl->mouse_abs_x;
+                     return sdl->mouse_x;
+                  case RETRO_DEVICE_ID_MOUSE_Y:
+                     if (device == RARCH_DEVICE_MOUSE_SCREEN)
+                        return (int16_t)sdl->mouse_abs_y;
+                     return sdl->mouse_y;
+                  case RETRO_DEVICE_ID_MOUSE_MIDDLE:
+                     return sdl->mouse_m;
+                  case RETRO_DEVICE_ID_MOUSE_BUTTON_4:
+                     return sdl->mouse_b4;
+                  case RETRO_DEVICE_ID_MOUSE_BUTTON_5:
+                     return sdl->mouse_b5;
+               }
+            }
+            else if (mouse_index <= (unsigned)sdl->num_mice)
+            {
+               sdl3_mouse_t *mouse = &sdl->mice[mouse_index - 1];
+
+               switch (id)
+               {
+                  case RETRO_DEVICE_ID_MOUSE_LEFT:
+                     return mouse->l;
+                  case RETRO_DEVICE_ID_MOUSE_RIGHT:
+                     return mouse->r;
+                  case RETRO_DEVICE_ID_MOUSE_WHEELUP:
+                     return mouse->wu;
+                  case RETRO_DEVICE_ID_MOUSE_WHEELDOWN:
+                     return mouse->wd;
+                  case RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP:
+                     return mouse->wr;
+                  case RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN:
+                     return mouse->wl;
+                  case RETRO_DEVICE_ID_MOUSE_X:
+                     /* Only relative motion is per-device; the screen
+                      * cursor is a single system-wide position. */
+                     if (device == RARCH_DEVICE_MOUSE_SCREEN)
+                        return (int16_t)sdl->mouse_abs_x;
+                     return mouse->x;
+                  case RETRO_DEVICE_ID_MOUSE_Y:
+                     if (device == RARCH_DEVICE_MOUSE_SCREEN)
+                        return (int16_t)sdl->mouse_abs_y;
+                     return mouse->y;
+                  case RETRO_DEVICE_ID_MOUSE_MIDDLE:
+                     return mouse->m;
+                  case RETRO_DEVICE_ID_MOUSE_BUTTON_4:
+                     return mouse->b4;
+                  case RETRO_DEVICE_ID_MOUSE_BUTTON_5:
+                     return mouse->b5;
+               }
             }
          }
          break;
@@ -665,6 +801,7 @@ static void sdl3_paste_clipboard(void)
 static void sdl3_input_poll(void *data)
 {
    SDL_Event event;
+   int i;
    sdl3_input_t *sdl = (sdl3_input_t*)data;
 
    /* SDL only emits keyboard/mouse-wheel events for a window that owns
@@ -680,6 +817,14 @@ static void sdl3_input_poll(void *data)
    sdl->mouse_wd = false;
    sdl->mouse_wl = false;
    sdl->mouse_wr = false;
+
+   for (i = 0; i < sdl->num_mice; i++)
+   {
+      sdl->mice[i].wu = false;
+      sdl->mice[i].wd = false;
+      sdl->mice[i].wl = false;
+      sdl->mice[i].wr = false;
+   }
 
    while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_KEY_DOWN, SDL_EVENT_MOUSE_REMOVED) > 0)
    {
@@ -715,6 +860,7 @@ static void sdl3_input_poll(void *data)
       }
       else if (event.type == SDL_EVENT_MOUSE_WHEEL)
       {
+         sdl3_mouse_t *mouse = sdl3_get_mouse(sdl, event.wheel.which);
          float wx = event.wheel.x;
          float wy = event.wheel.y;
 
@@ -729,9 +875,77 @@ static void sdl3_input_poll(void *data)
          sdl->mouse_wd |= wy < 0;
          sdl->mouse_wl |= wx < 0;
          sdl->mouse_wr |= wx > 0;
+
+         if (mouse)
+         {
+            mouse->wu |= wy > 0;
+            mouse->wd |= wy < 0;
+            mouse->wl |= wx < 0;
+            mouse->wr |= wx > 0;
+         }
       }
+      else if (event.type == SDL_EVENT_MOUSE_MOTION)
+      {
+         /* The merged mouse (index 0) reads its motion from
+          * SDL_GetRelativeMouseState in sdl3_poll_mouse; events only
+          * feed the per-device state. which is 0 for motion SDL
+          * synthesizes itself (e.g. warps), which has no device. */
+         sdl3_mouse_t *mouse = sdl3_get_mouse(sdl, event.motion.which);
+         if (mouse)
+         {
+            mouse->rel_x += event.motion.xrel;
+            mouse->rel_y += event.motion.yrel;
+         }
+      }
+      else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN
+            || event.type == SDL_EVENT_MOUSE_BUTTON_UP)
+      {
+         sdl3_mouse_t *mouse = sdl3_get_mouse(sdl, event.button.which);
+         if (mouse)
+         {
+            bool down = event.type == SDL_EVENT_MOUSE_BUTTON_DOWN;
+            switch (event.button.button)
+            {
+               case SDL_BUTTON_LEFT:
+                  mouse->l = down;
+                  break;
+               case SDL_BUTTON_RIGHT:
+                  mouse->r = down;
+                  break;
+               case SDL_BUTTON_MIDDLE:
+                  mouse->m = down;
+                  break;
+               case SDL_BUTTON_X1:
+                  mouse->b4 = down;
+                  break;
+               case SDL_BUTTON_X2:
+                  mouse->b5 = down;
+                  break;
+            }
+         }
+      }
+      else if (event.type == SDL_EVENT_MOUSE_ADDED)
+         sdl3_mouse_added(sdl, event.mdevice.which);
+      else if (event.type == SDL_EVENT_MOUSE_REMOVED)
+         sdl3_mouse_removed(sdl, event.mdevice.which);
       else if (event.type == SDL_EVENT_KEYMAP_CHANGED)
          sdl3_build_scancode_lut(sdl);
+   }
+
+   /* Fold this frame's per-device motion into whole pixels, carrying
+    * the sub-pixel remainder, mirroring the merged path above. */
+   for (i = 0; i < sdl->num_mice; i++)
+   {
+      sdl3_mouse_t *mouse = &sdl->mice[i];
+
+      mouse->rel_x = MIN(MAX(mouse->rel_x, -32767.0f), 32767.0f);
+      mouse->rel_y = MIN(MAX(mouse->rel_y, -32767.0f), 32767.0f);
+
+      mouse->x = (int16_t)mouse->rel_x;
+      mouse->y = (int16_t)mouse->rel_y;
+
+      mouse->rel_x -= (float)mouse->x;
+      mouse->rel_y -= (float)mouse->y;
    }
 
    /* Neither range is consumed anywhere: sdl3_poll_touch reads finger
