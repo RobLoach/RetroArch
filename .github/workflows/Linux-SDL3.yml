@@ -7,9 +7,6 @@ on:
 permissions:
   contents: read
 
-env:
-  SDL3_VERSION: 3.4.12
-
 jobs:
   linux-sdl3: # Compile check for the SDL3 drivers (--enable-sdl3)
     runs-on: ubuntu-latest
@@ -17,34 +14,25 @@ jobs:
       - name: Dependencies
         run: |
           sudo apt-get update -y
-          # SDL3's documented Linux build dependencies
-          # (https://wiki.libsdl.org/SDL3/README-linux), plus what the
-          # RetroArch configure itself needs.
-          sudo apt-get install -y build-essential cmake ninja-build pkg-config zlib1g-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxfixes-dev libxss-dev libxtst-dev libxkbcommon-dev libwayland-dev libdecor-0-dev libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev libgbm-dev libdrm-dev libudev-dev libdbus-1-dev libibus-1.0-dev libasound2-dev libpulse-dev libavcodec-dev libxml2-dev
+          # RetroArch's own build dependencies. SDL3's are installed by
+          # the setup-sdl step below.
+          sudo apt-get install -y build-essential pkg-config zlib1g-dev libfreetype6-dev libx11-xcb-dev libavcodec-dev libxml2-dev
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set environment
-        # make re-resolves sdl3 through pkg-config at build time, so
-        # the path must be visible to every following step.
-        run: echo "PKG_CONFIG_PATH=$HOME/sdl3-prefix/lib/pkgconfig:$HOME/sdl3-prefix/lib/x86_64-linux-gnu/pkgconfig" >> "$GITHUB_ENV"
-
-      - name: Cache SDL3
-        id: cache-sdl3
-        uses: actions/cache@v4
+      - name: Setup SDL3
+        # Builds SDL3 from source and installs its own Linux build
+        # dependencies. The action caches the built package itself,
+        # keyed on the requested version and the runner os/arch, so
+        # subsequent runs restore it instead of rebuilding. It also
+        # exports PKG_CONFIG_PATH, which is what configure and make
+        # both resolve sdl3 through.
+        uses: libsdl-org/setup-sdl@v1
         with:
-          path: ~/sdl3-prefix
-          key: sdl3-${{ runner.os }}-${{ env.SDL3_VERSION }}
-
-      - name: Build SDL3
-        if: steps.cache-sdl3.outputs.cache-hit != 'true'
-        run: |
-          curl -fsSL -o SDL3.tar.gz "https://github.com/libsdl-org/SDL/releases/download/release-${SDL3_VERSION}/SDL3-${SDL3_VERSION}.tar.gz"
-          tar xf SDL3.tar.gz
-          cmake -S "SDL3-${SDL3_VERSION}" -B SDL3-build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_INSTALL_PREFIX=$HOME/sdl3-prefix"
-          cmake --build SDL3-build
-          cmake --install SDL3-build
+          version: 3.4.12
+          build-type: Release
+          install-linux-dependencies: true
 
       - name: Configure
         run: |
