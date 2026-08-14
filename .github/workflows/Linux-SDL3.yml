@@ -19,14 +19,21 @@ jobs:
       - name: Dependencies
         run: |
           sudo apt-get update -y
-          # RetroArch's own build dependencies. SDL3's are installed by
-          # the setup-sdl step below.
-          sudo apt-get install -y build-essential pkg-config zlib1g-dev libfreetype6-dev libx11-xcb-dev libavcodec-dev libxml2-dev
+          # Just a toolchain and pkg-config, which configure resolves
+          # sdl3 through. RetroArch's other Linux libraries are all
+          # optional - configure auto-disables what it can't find -
+          # and SDL3's own build deps are installed by the setup-sdl
+          # step below.
+          sudo apt-get install -y build-essential pkg-config
 
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup SDL3
+        # Caches the built SDL3 package on its own via actions/cache,
+        # keyed on the version and runner os/arch, so nothing extra is
+        # needed to avoid rebuilding it every run. Exports
+        # PKG_CONFIG_PATH so configure picks it up.
         uses: libsdl-org/setup-sdl@v1
         with:
           version: 3.4.14
@@ -51,3 +58,8 @@ jobs:
 
       - name: Build
         run: make -j$(getconf _NPROCESSORS_ONLN)
+
+      - name: Verify features
+        # Confirm the built binary actually carries the SDL3 drivers.
+        run: |
+          ./retroarch --features | grep 'SDL3.*: yes'
