@@ -27,13 +27,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup SDL3
-        # Builds SDL3 from source and installs its own Linux build
-        # dependencies. The action caches the built package
-        # automatically via actions/cache, keyed on the requested
-        # version plus a discriminator (runner os/arch by default),
-        # so subsequent runs restore it instead of rebuilding. It
-        # also exports PKG_CONFIG_PATH, which is what configure and
-        # make both resolve sdl3 through.
         uses: libsdl-org/setup-sdl@v1
         with:
           version: 3.4.14
