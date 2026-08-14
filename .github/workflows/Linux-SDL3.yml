@@ -7,9 +7,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   linux-sdl3: # Compile check for the SDL3 drivers (--enable-sdl3)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Dependencies
         run: |
@@ -23,16 +28,26 @@ jobs:
 
       - name: Setup SDL3
         # Builds SDL3 from source and installs its own Linux build
-        # dependencies. The action caches the built package itself,
-        # keyed on the requested version and the runner os/arch, so
-        # subsequent runs restore it instead of rebuilding. It also
-        # exports PKG_CONFIG_PATH, which is what configure and make
-        # both resolve sdl3 through.
+        # dependencies. The action caches the built package
+        # automatically via actions/cache, keyed on the requested
+        # version plus a discriminator (runner os/arch by default),
+        # so subsequent runs restore it instead of rebuilding. It
+        # also exports PKG_CONFIG_PATH, which is what configure and
+        # make both resolve sdl3 through.
         uses: libsdl-org/setup-sdl@v1
         with:
-          version: 3.4.12
+          version: 3.4.14
           build-type: Release
           install-linux-dependencies: true
+
+      - name: Setup ccache
+        # Caches RetroArch object files between runs. create-symlink
+        # masquerades gcc/g++ as ccache, so configure and make need
+        # no changes.
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: linux-sdl3
+          create-symlink: true
 
       - name: Configure
         run: |
