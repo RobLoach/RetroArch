@@ -395,6 +395,8 @@ extern struct android_app *g_android;
 
 void frontend_android_get_name(char *s, size_t len);
 
+void frontend_android_get_manufacturer_model(char *s, size_t len);
+
 void frontend_android_get_version(int32_t *major, int32_t *minor, int32_t *rel);
 
 void frontend_android_get_version_sdk(int32_t *sdk);
@@ -402,7 +404,11 @@ void frontend_android_get_version_sdk(int32_t *sdk);
 bool is_screen_reader_enabled(void);
 
 #ifdef HAVE_SAF
+struct retro_vfs_authorized_locations;
+
 void android_show_saf_tree_picker(void);
+bool android_get_vfs_authorized_locations(
+      struct retro_vfs_authorized_locations *locations);
 #endif
 
 #endif
