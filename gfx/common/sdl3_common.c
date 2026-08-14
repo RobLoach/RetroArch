@@ -28,8 +28,12 @@
 
 #include "sdl3_common.h"
 #include "../../configuration.h"
+#include "../../core_info.h"
 #include "../../input/input_driver.h"
+#include "../../paths.h"
 #include "../../retroarch.h"
+#include "../../tasks/task_content.h"
+#include "../../verbosity.h"
 #include "../../version.h"
 
 /* 16x16 ARGB8888 window icon, matching x_ctx.c, wayland_common.c, ui_qt.cpp. */
@@ -96,6 +100,56 @@ static void sdl3_window_save_position(SDL_Window *win)
    settings->uints.window_position_height = (unsigned)h;
 }
 
+/* Loads content dropped onto the window, mirroring what
+ * win32_load_content_from_gui does for WM_DROPFILES. If the running
+ * core supports the file it is kept, otherwise a supported core is
+ * loaded alongside the content. */
+static bool sdl3_load_content_from_drop(const char *path)
+{
+   core_info_list_t *core_info_list = NULL;
+
+   core_info_get_list(&core_info_list);
+
+   if (core_info_list)
+   {
+      size_t list_size;
+      content_ctx_info_t content_info = { 0 };
+      const core_info_t *core_info    = NULL;
+      core_info_list_get_supported_cores(core_info_list,
+            path, &core_info, &list_size);
+
+      if (list_size)
+      {
+         path_set(RARCH_PATH_CONTENT, path);
+
+         if (!path_is_empty(RARCH_PATH_CONTENT))
+         {
+            size_t i;
+
+            /* The running core supports the content, so load it. */
+            for (i = 0; i < list_size; i++)
+            {
+               const core_info_t *info = (const core_info_t*)&core_info[i];
+
+               if (string_is_equal(path_get(RARCH_PATH_CORE), info->path))
+                  return task_push_load_content_with_current_core_from_companion_ui(
+                        NULL, &content_info, CORE_TYPE_PLAIN, NULL, NULL);
+            }
+         }
+
+         /* Load the content with the first supported core. Unlike the
+          * win32 WM_DROPFILES handler, there is no native dialog here
+          * to pick between multiple candidates. */
+         return task_push_load_content_with_new_core_from_companion_ui(
+               core_info[0].path, NULL, NULL, NULL, NULL,
+               &content_info, NULL, NULL);
+      }
+   }
+
+   RARCH_WARN("[SDL3] No core supports the dropped file: %s\n", path);
+   return false;
+}
+
 void sdl3_pump_window_events(bool *quit, bool *resize)
 {
    SDL_Event event;
@@ -121,6 +175,15 @@ void sdl3_pump_window_events(bool *quit, bool *resize)
    {
       if (event.type == SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED)
          *resize = true;
+   }
+
+   /* Load content that is dropped onto the window. The other drop
+    * events (begin/position/complete) are consumed and ignored.
+    * event.drop.data is owned by SDL and must not be freed here. */
+   while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_DROP_FILE, SDL_EVENT_DROP_POSITION) > 0)
+   {
+      if (event.type == SDL_EVENT_DROP_FILE && event.drop.data)
+         sdl3_load_content_from_drop(event.drop.data);
    }
 
     /* Clear out the input queue if we're not using the
