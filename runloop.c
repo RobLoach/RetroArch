@@ -100,6 +100,11 @@
 #include "play_feature_delivery/play_feature_delivery.h"
 #endif
 
+#if defined(ANDROID) && defined(HAVE_SAF)
+bool android_get_vfs_authorized_locations(
+      struct retro_vfs_authorized_locations *locations);
+#endif
+
 #ifdef HAVE_PRESENCE
 #include "network/presence.h"
 #endif
@@ -1504,8 +1509,11 @@ bool runloop_environment_cb(unsigned cmd, void *data)
                return true;
             }
 
-            RARCH_DBG("[Environ] GET_VARIABLE: %s = \"%s\"\n",
-                  var->key, var->value);
+            /* Log initial environment gets here and handle
+             * runtime logging in 'core_option_manager.c' */
+            if (runloop_st->core_options->log)
+               RARCH_DBG("[Environ] GET_VARIABLE: %s = \"%s\"\n",
+                     var->key, var->value);
          }
          break;
 
@@ -1770,10 +1778,11 @@ bool runloop_environment_cb(unsigned cmd, void *data)
 
             if (runloop_st->core_options && core_options_display)
             {
-               RARCH_DBG("[Environ] SET_CORE_OPTIONS_DISPLAY: %s = %s\n",
-                     core_options_display->key,
-                     core_options_display->visible ? "visible" : "hidden");
-               core_option_manager_set_visible(
+               if (runloop_st->core_options->log)
+                  RARCH_DBG("[Environ] SET_CORE_OPTIONS_DISPLAY: %s = %s\n",
+                        core_options_display->key,
+                        core_options_display->visible ? "visible" : "hidden");
+               core_option_manager_set_display(
                      runloop_st->core_options,
                      core_options_display->key,
                      core_options_display->visible);
@@ -3191,6 +3200,16 @@ bool runloop_environment_cb(unsigned cmd, void *data)
             return false;
          }
          break;
+      }
+
+      case RETRO_ENVIRONMENT_GET_VFS_AUTHORIZED_LOCATIONS:
+      {
+#if defined(ANDROID) && defined(HAVE_SAF)
+         return android_get_vfs_authorized_locations(
+               (struct retro_vfs_authorized_locations*)data);
+#else
+         return false;
+#endif
       }
 
       case RETRO_ENVIRONMENT_GET_LED_INTERFACE:
