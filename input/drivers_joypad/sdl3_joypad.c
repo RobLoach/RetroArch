@@ -39,9 +39,10 @@
 #define SDL3_JOYPAD_VBTN_TOUCHPAD_LEFT  32
 #define SDL3_JOYPAD_VBTN_TOUCHPAD_RIGHT 33
 
-#if SDL_GAMEPAD_BUTTON_COUNT > SDL3_JOYPAD_VBTN_TOUCHPAD_LEFT
-#error "SDL_GamepadButton overlaps the virtual touchpad buttons; move SDL3_JOYPAD_VBTN_* up"
-#endif
+/* SDL_GAMEPAD_BUTTON_COUNT is an enumerator, so a preprocessor #if would
+ * silently evaluate it as 0; assert the no-overlap constraint in C instead. */
+SDL_COMPILE_TIME_ASSERT(sdl3_joypad_touchpad_vbtn_overlap,
+      SDL_GAMEPAD_BUTTON_COUNT <= SDL3_JOYPAD_VBTN_TOUCHPAD_LEFT);
 
 typedef struct _sdl3_joypad
 {
