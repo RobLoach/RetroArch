@@ -14,6 +14,7 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -280,6 +281,15 @@ static SDL_Window *sdl3_window_create(unsigned width, unsigned height,
    return win;
 }
 
+/* Exclusive-fullscreen mode picked from the Screen Resolution menu
+ * (get_video_output_prev/next). Kept at file scope so the selection
+ * survives video reinits, where the driver data and window are
+ * recreated. A width of 0 means nothing was picked, and the mode is
+ * derived from the configured video size instead. */
+static int sdl3_output_width          = 0;
+static int sdl3_output_height         = 0;
+static float sdl3_output_refresh_rate = 0.0f;
+
 /* Applies the fullscreen state. */
 static void sdl3_window_apply_fullscreen(SDL_Window *win,
       unsigned width, unsigned height, bool fullscreen)
@@ -287,11 +297,23 @@ static void sdl3_window_apply_fullscreen(SDL_Window *win,
    SDL_DisplayMode mode;
    settings_t *settings = config_get_ptr();
    bool exclusive = fullscreen
-         && !settings->bools.video_windowed_fullscreen
-         && SDL_GetClosestFullscreenDisplayMode(
+         && !settings->bools.video_windowed_fullscreen;
+
+   /* Prefer the mode picked in the Screen Resolution menu over the
+    * configured video size. */
+   if (exclusive)
+   {
+      if (sdl3_output_width > 0)
+         exclusive = SDL_GetClosestFullscreenDisplayMode(
+               SDL_GetDisplayForWindow(win),
+               sdl3_output_width, sdl3_output_height,
+               sdl3_output_refresh_rate, true, &mode);
+      else
+         exclusive = SDL_GetClosestFullscreenDisplayMode(
                SDL_GetDisplayForWindow(win),
                width, height,
                settings->floats.video_refresh_rate, false, &mode);
+   }
 
    SDL_SetWindowFullscreenMode(win, exclusive ? &mode : NULL);
    SDL_SetWindowFullscreen(win, fullscreen);
@@ -478,6 +500,127 @@ void sdl3_ctx_get_video_size(void *data, unsigned *width, unsigned *height)
 float sdl3_ctx_get_refresh_rate(void *data)
 {
    return sdl3_window_get_refresh_rate(sdl3_ctx_window(data));
+}
+
+/* Returns the display the window is on, or the primary display when
+ * the window doesn't exist yet. */
+static SDL_DisplayID sdl3_window_display(SDL_Window *win)
+{
+   SDL_DisplayID display = win ? SDL_GetDisplayForWindow(win) : 0;
+   return display ? display : SDL_GetPrimaryDisplay();
+}
+
+/* The mode the Screen Resolution setting currently points at: the
+ * remembered selection when there is one, otherwise the mode the
+ * window/display is actually in. */
+static bool sdl3_current_output_mode(SDL_Window *win, SDL_DisplayMode *mode)
+{
+   const SDL_DisplayMode *current;
+
+   if (sdl3_output_width > 0
+         && SDL_GetClosestFullscreenDisplayMode(sdl3_window_display(win),
+               sdl3_output_width, sdl3_output_height,
+               sdl3_output_refresh_rate, true, mode))
+      return true;
+
+   /* Exclusive fullscreen reports the applied mode. */
+   if (win && (current = SDL_GetWindowFullscreenMode(win)))
+   {
+      *mode = *current;
+      return true;
+   }
+
+   if ((current = SDL_GetCurrentDisplayMode(sdl3_window_display(win))))
+   {
+      *mode = *current;
+      return true;
+   }
+
+   return false;
+}
+
+/* Steps the Screen Resolution selection through the display's
+ * fullscreen mode list. When already in exclusive fullscreen the new
+ * mode is applied immediately; the selection is remembered either
+ * way so the next set_video_mode uses it. */
+static void sdl3_step_output_mode(SDL_Window *win, int step)
+{
+   int i, count = 0;
+   int idx = -1;
+   SDL_DisplayMode current;
+   settings_t *settings = config_get_ptr();
+   SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes(
+         sdl3_window_display(win), &count);
+
+   if (!modes || count < 1)
+   {
+      SDL_free(modes);
+      return;
+   }
+
+   /* Find the entry the selection is currently on. */
+   if (sdl3_current_output_mode(win, &current))
+   {
+      for (i = 0; i < count; i++)
+      {
+         if (   modes[i]->w == current.w
+             && modes[i]->h == current.h
+             && modes[i]->refresh_rate == current.refresh_rate)
+         {
+            idx = i;
+            break;
+         }
+      }
+   }
+
+   /* Step through the list, wrapping around at both ends. When the
+    * current mode isn't in the list, start from the beginning. */
+   if (idx < 0)
+      idx = 0;
+   else
+      idx = (idx + step + count) % count;
+
+   sdl3_output_width        = modes[idx]->w;
+   sdl3_output_height       = modes[idx]->h;
+   sdl3_output_refresh_rate = modes[idx]->refresh_rate;
+
+   /* Apply immediately when in exclusive fullscreen. Windowed
+    * fullscreen keeps the desktop mode, so only remember the
+    * selection there. */
+   if (win
+         && !settings->bools.video_windowed_fullscreen
+         && (SDL_GetWindowFlags(win) & SDL_WINDOW_FULLSCREEN))
+   {
+      SDL_SetWindowFullscreenMode(win, modes[idx]);
+      SDL_SyncWindow(win);
+   }
+
+   SDL_free(modes);
+}
+
+void sdl3_ctx_get_video_output_size(void *data,
+      unsigned *width, unsigned *height, char *desc, size_t desc_len)
+{
+   SDL_DisplayMode mode;
+
+   if (!sdl3_current_output_mode(sdl3_ctx_window(data), &mode))
+      return;
+
+   *width  = mode.w;
+   *height = mode.h;
+
+   if (desc && desc_len && mode.refresh_rate > 0.0f)
+      snprintf(desc, desc_len, "%.2f Hz", mode.refresh_rate);
+}
+
+void sdl3_ctx_get_video_output_prev(void *data)
+{
+   sdl3_step_output_mode(sdl3_ctx_window(data), -1);
+}
+
+void sdl3_ctx_get_video_output_next(void *data)
+{
+   sdl3_step_output_mode(sdl3_ctx_window(data), 1);
 }
 
 void sdl3_ctx_update_title(void *data)
