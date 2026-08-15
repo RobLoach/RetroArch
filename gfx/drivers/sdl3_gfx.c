@@ -727,6 +727,11 @@ static void sdl3_get_video_output_next(void *data)
    sdl3_cycle_video_mode((sdl3_video_t*)data, 1);
 }
 
+static bool sdl3_can_switch_video_output(void *data)
+{
+   return sdl3_current_video_mode((sdl3_video_t*)data) != NULL;
+}
+
 static void sdl3_poke_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
 {
    sdl3_video_t *vid = (sdl3_video_t*)data;
@@ -1708,7 +1713,10 @@ static video_poke_interface_t sdl3_video_poke_interface = {
    NULL,                            /* set_hdr_paper_white_nits */
    NULL,                            /* set_hdr_expand_gamut */
    NULL,                            /* set_hdr_scanlines */
-   NULL                             /* set_hdr_subpixel_layout */
+   NULL,                            /* set_hdr_subpixel_layout */
+   NULL,                            /* supports_texture_format */
+   NULL,                            /* load_texture_compressed */
+   sdl3_can_switch_video_output
 };
 
 static void sdl3_gfx_poke_interface(void *data, const video_poke_interface_t **iface)

@@ -8412,6 +8412,10 @@ static int action_ok_video_resolution(const char *path,
 
    return 0;
 #else
+   /* Video drivers that cycle modes themselves have no resolution list
+    * to populate the dropdown with, so left/right is the only control. */
+   if (!video_display_server_has_resolution_list())
+      return 0;
    return generic_dropdown_box_list(idx,
          ACTION_OK_DL_DROPDOWN_BOX_LIST_RESOLUTION);
 #endif

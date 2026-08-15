@@ -10373,7 +10373,7 @@ unsigned menu_displaylist_build_list(
 #if defined(GEKKO) || defined(PS2) || defined(__PS3__)
             if (true)
 #else
-            if (video_display_server_has_resolution_list())
+            if (video_driver_can_switch_video_out())
 #endif
             {
                if (MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(list,
