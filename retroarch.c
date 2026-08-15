@@ -4600,10 +4600,7 @@ bool command_event(enum event_command cmd, void *data)
                   && (runloop_st->flags & RUNLOOP_FLAG_CORE_RUNNING)
                   && !(runloop_st->flags & RUNLOOP_FLAG_SHUTDOWN_INITIATED)
                   && settings->bools.savestate_auto_save)
-            {
                command_event_save_auto_state();
-               content_wait_for_save_state_task();
-            }
 
             /* Wait for any in-flight save / load state tasks before
              * tearing down the core. Both task_save_handler and
@@ -4614,11 +4611,14 @@ bool command_event(enum event_command cmd, void *data)
              * runloop_event_deinit_core runs uninit_libretro_symbols,
              * the worker dispatches into a closed dylib.
              *
-             * The autosave_auto_save wait above only covers the
-             * auto-state save we just kicked off; it does not cover
-             * a manually-triggered save state task (menu / hotkey /
-             * netplay) that was already in flight when the user
-             * closed content with savestate_auto_save disabled. */
+             * This covers the auto-state save conditionally kicked
+             * off just above as well: it runs unconditionally,
+             * against the same condition, with nothing in between
+             * that can push a task, so the auto-save path needs no
+             * wait of its own. It also covers what that one could
+             * not - a manually triggered save (menu / hotkey /
+             * netplay) already in flight when the user closed
+             * content with savestate_auto_save disabled. */
             content_wait_for_save_state_task();
             content_wait_for_load_state_task();
 
@@ -8789,6 +8789,44 @@ error:
    return false;
 }
 
+#ifdef DEBUG
+/* Reports a task handler that occupied the main thread for longer
+ * than its budget.  Rate-limited per handler: a task that stalls
+ * once usually stalls every invocation, and a warning per frame
+ * would bury the first (most useful) report. */
+static void runloop_task_slow_handler(retro_task_t *task,
+      retro_time_t usec)
+{
+   /* Held as the handler's own type: a function pointer is not
+    * convertible to void* in ISO C, and comparing the two is not
+    * valid either. */
+   static retro_task_handler_t last_handler;
+   static unsigned suppressed;
+
+   if (!task)
+      return;
+
+   if (task->handler == last_handler)
+   {
+      suppressed++;
+      return;
+   }
+
+   if (suppressed)
+      RARCH_WARN("[Task] (%u further over-budget invocations suppressed)\n",
+            suppressed);
+
+   last_handler = task->handler;
+   suppressed   = 0;
+
+   RARCH_WARN("[Task] Handler occupied the main thread for %d ms"
+         " (budget %d ms)%s%s.\n",
+         (int)(usec / 1000), 16,
+         task->title ? " - " : "",
+         task->title ? task->title : "");
+}
+#endif
+
 void retroarch_init_task_queue(void)
 {
 #ifdef HAVE_THREADS
@@ -8808,6 +8846,28 @@ void retroarch_init_task_queue(void)
    net_http_init();
 #endif
    task_queue_init(threaded_enable, runloop_task_msg_queue_push);
+
+#ifdef DEBUG
+   /* With Threaded Tasks off, task handlers run on the thread that
+    * also drives the frame loop, so a handler that does not return
+    * promptly is a visible stall - and the queue is the only place
+    * that can attribute one to a specific task rather than to
+    * "something in the frame".  Debug builds only: this exists to
+    * catch a regression during development, not to police release
+    * builds, and with no callback registered the queue reads no
+    * clock at all.
+    *
+    * The budget is a whole frame at 60Hz.  Handlers designed to be
+    * sliced (the budgeted directory walks, playlist parse and scan)
+    * aim far below it and consult the shared per-frame I/O window;
+    * anything crossing a full frame in one call is either
+    * unsliced work or a slice that has stopped honouring its
+    * budget. */
+   if (!threaded_enable)
+      task_queue_set_slow_handler_cb(runloop_task_slow_handler, 16000);
+   else
+      task_queue_set_slow_handler_cb(NULL, 0);
+#endif
 }
 
 bool retroarch_ctl(enum rarch_ctl_state state, void *data)
