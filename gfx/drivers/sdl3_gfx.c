@@ -14,6 +14,14 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* SDL3 software-frame video driver. Core frames are CPU pixel buffers
+ * uploaded to an SDL_Renderer texture - there is no libretro HW render
+ * path here, so get_proc_address and get_hw_render_interface stay NULL
+ * in the poke interface. GL and Vulkan HW-render cores run on the
+ * gl/gl1/glcore/vulkan video drivers instead, which keep their context
+ * inside the SDL3 window through the gl_sdl3/vk_sdl3 context drivers
+ * (gfx/drivers_context/sdl3_gl_ctx.c, sdl3_vk_ctx.c). */
+
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>

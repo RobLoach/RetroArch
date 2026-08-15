@@ -17,7 +17,14 @@
 
 /* SDL3 Vulkan context driver. While the SDL3 video driver itself is
  * software rendered via SDL_Renderer, this context driver allows
- * the vulkan video driver to render within the SDL3 window. */
+ * the vulkan video driver to render within the SDL3 window.
+ *
+ * The core-facing retro_hw_render_callback hooks are serviced outside
+ * this file: the frontend fires context_reset/context_destroy around
+ * init and teardown, and Vulkan cores fetch their entry points through
+ * the context negotiation interface (vkGetInstanceProcAddr) rather than
+ * hw_render.get_proc_address, so get_proc_address stays NULL in the
+ * vtable, as in every other Vulkan context driver. */
 
 #include <stdint.h>
 #include <stdlib.h>

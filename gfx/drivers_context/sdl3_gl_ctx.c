@@ -17,7 +17,13 @@
 
 /* SDL3 OpenGL context driver. While the SDL3 video driver itself is
  * software rendered via SDL_Renderer, this context driver allows
- * the gl/gl1/glcore video drivers to render within the SDL3 window. */
+ * the gl/gl1/glcore video drivers to render within the SDL3 window.
+ *
+ * The core-facing retro_hw_render_callback hooks are serviced outside
+ * this file: the frontend fires context_reset after set_video_mode
+ * (skipped when the cache-context ack is set below) and context_destroy
+ * before teardown, while hw_render.get_proc_address reaches
+ * sdl3_ctx_get_proc_address through the video driver's poke interface. */
 
 #ifdef HAVE_CONFIG_H
 #include "../../config.h"
