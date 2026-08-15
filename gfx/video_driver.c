@@ -2448,6 +2448,17 @@ bool video_driver_get_prev_video_out(void)
    return true;
 }
 
+bool video_driver_can_switch_video_out(void)
+{
+   video_driver_state_t *video_st     = &video_driver_st;
+   const video_poke_interface_t *poke = video_st->poke;
+   if (video_display_server_has_resolution_list())
+      return true;
+   if (!poke || !poke->can_switch_video_output)
+      return false;
+   return poke->can_switch_video_output(video_st->data);
+}
+
 void video_driver_monitor_reset(void)
 {
    video_driver_state_t *video_st = &video_driver_st;

@@ -694,6 +694,12 @@ typedef struct video_poke_interface
    uintptr_t (*load_texture_compressed)(void *video_data,
          const struct texture_compressed *tc, bool threaded,
          enum texture_filter_type filter_type);
+
+   /* Whether get_video_output_prev/next would currently switch the
+    * screen resolution. Drivers that only forward the request to a
+    * context driver leave this NULL (the default), so the menu does
+    * not offer an entry that cannot do anything. */
+   bool (*can_switch_video_output)(void *data);
 } video_poke_interface_t;
 
 /* msg is for showing a message on the screen
@@ -1031,6 +1037,10 @@ unsigned video_driver_hdr_max_mode(void);
 bool video_driver_get_next_video_out(void);
 
 bool video_driver_get_prev_video_out(void);
+
+/* Whether the screen resolution can be cycled, either through the
+ * display server or through the video driver itself. */
+bool video_driver_can_switch_video_out(void);
 
 void video_driver_monitor_reset(void);
 
