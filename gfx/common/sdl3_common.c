@@ -141,6 +141,7 @@ static bool sdl3_load_content_from_drop(const char *path)
 void sdl3_pump_window_events(bool *quit, bool *resize)
 {
    SDL_Event event;
+   bool dropped_file = false;
 
    SDL_PumpEvents();
 
@@ -165,13 +166,18 @@ void sdl3_pump_window_events(bool *quit, bool *resize)
          *resize = true;
    }
 
-   /* Load content that is dropped onto the window. The other drop
-    * events (begin/position/complete) are consumed and ignored.
-    * event.drop.data is owned by SDL and must not be freed here. */
+   /* Load content that is dropped onto the window. Like the win32
+    * WM_DROPFILES handler, only the first file of a multi-file drop is
+    * loaded; the remaining drop events (file/text/begin/complete/
+    * position) are drained and ignored. event.drop.data is owned by
+    * SDL and must not be freed here. */
    while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_DROP_FILE, SDL_EVENT_DROP_POSITION) > 0)
    {
-      if (event.type == SDL_EVENT_DROP_FILE && event.drop.data)
+      if (!dropped_file && event.type == SDL_EVENT_DROP_FILE && event.drop.data)
+      {
          sdl3_load_content_from_drop(event.drop.data);
+         dropped_file = true;
+      }
    }
 
     /* Clear out the input queue if we're not using the
