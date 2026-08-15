@@ -100,17 +100,15 @@ static void sdl3_window_save_position(SDL_Window *win)
    settings->uints.window_position_height = (unsigned)h;
 }
 
-/* Loads content dropped onto the window, mirroring what
- * win32_load_content_from_gui does for WM_DROPFILES. If the running
- * core supports the file it is kept, otherwise a supported core is
- * loaded alongside the content. */
+/* Loads the content that was dropped onto the window. This
+ * is similar to what win32_load_content_from_gui() does. */
 static bool sdl3_load_content_from_drop(const char *path)
 {
    size_t i;
-   size_t list_size                 = 0;
-   content_ctx_info_t content_info  = { 0 };
+   size_t list_size = 0;
+   content_ctx_info_t content_info = { 0 };
    core_info_list_t *core_info_list = NULL;
-   const core_info_t *core_info     = NULL;
+   const core_info_t *core_info = NULL;
 
    core_info_get_list(&core_info_list);
    core_info_list_get_supported_cores(core_info_list,
@@ -124,15 +122,13 @@ static bool sdl3_load_content_from_drop(const char *path)
 
    path_set(RARCH_PATH_CONTENT, path);
 
-   /* Keep the running core when it already supports the content. */
+   /* Keep the running core if it already supports the provided content. */
    for (i = 0; i < list_size; i++)
       if (string_is_equal(path_get(RARCH_PATH_CORE), core_info[i].path))
          return task_push_load_content_with_current_core_from_companion_ui(
                NULL, &content_info, CORE_TYPE_PLAIN, NULL, NULL);
 
-   /* Load the content with the first supported core. Unlike the
-    * win32 WM_DROPFILES handler, there is no native dialog here
-    * to pick between multiple candidates. */
+   /* Load the content with the first supported core. */
    return task_push_load_content_with_new_core_from_companion_ui(
          core_info[0].path, NULL, NULL, NULL, NULL,
          &content_info, NULL, NULL);
@@ -166,11 +162,9 @@ void sdl3_pump_window_events(bool *quit, bool *resize)
          *resize = true;
    }
 
-   /* Load content that is dropped onto the window. Like the win32
-    * WM_DROPFILES handler, only the first file of a multi-file drop is
-    * loaded; the remaining drop events (file/text/begin/complete/
-    * position) are drained and ignored. event.drop.data is owned by
-    * SDL and must not be freed here. */
+   /* Load content that is dropped onto the window. Only acts
+    * on the first file that was provided. The other events
+    * are ignored. */
    while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_DROP_FILE, SDL_EVENT_DROP_POSITION) > 0)
    {
       if (!dropped_file && event.type == SDL_EVENT_DROP_FILE && event.drop.data)
