@@ -3065,6 +3065,204 @@ bool task_push_load_content_with_current_core_from_companion_ui(
 }
 
 
+/* ---- deferred frontend content load ---- */
+
+/* A frontend can be handed a content path from a context where
+ * loading it there and then is not safe.  A window-system file drop
+ * is the case this exists for: it is delivered by the video driver's
+ * event pump, which the runloop calls from the middle of
+ * runloop_check_state(), and content_load() frees and re-creates the
+ * video driver.  Loading from the pump therefore returns into a freed
+ * driver handle - the pump's own caller keeps writing to it, and the
+ * half-finished check-state pass above carries on around it.
+ *
+ * So the path is parked here and runloop_iterate() performs the load
+ * at the top of the next frame, before check state and before the
+ * core runs - the same call depth every other load path uses.  Same
+ * reasoning as the deferred menu load above, and the same reason
+ * neither can be a task callback: content_load() reinitializes the
+ * task queue.
+ *
+ * One parked path at a time.  A second drop arriving before the first
+ * is consumed replaces it, which is what dropping two files in quick
+ * succession asks for anyway. */
+static char deferred_frontend_load_path[PATH_MAX_LENGTH];
+
+void task_push_load_content_from_frontend_deferred(const char *path)
+{
+   if (string_is_empty(path))
+      return;
+
+   /* Logged verbatim: a frontend handing over a percent-encoded or
+    * "file://" path rather than a filesystem one fails much later
+    * and much less legibly, so record what actually arrived. */
+   RARCH_LOG("[Content] Frontend parked content: \"%s\".\n", path);
+
+   strlcpy(deferred_frontend_load_path, path,
+         sizeof(deferred_frontend_load_path));
+}
+
+#ifdef HAVE_COMPRESSION
+/* Cores match an archive in two very different ways: some list the
+ * archive extension itself ("zip") because they read archives
+ * directly, and some match a file inside it.  core_info reports both
+ * as "supported" and orders the result alphabetically, so an Amstrad
+ * CPC emulator that happens to accept .zip outranks the console core
+ * the content is actually for - every archive would load into the
+ * wrong core, and for a core that wants uncompressed content the load
+ * then dies in file_archive_extract_file() with "failed to extract",
+ * because the archive holds nothing matching that core's extensions.
+ *
+ * So prefer a core that claims something *inside* the archive.  When
+ * none does - an arcade romset, say, where every candidate matches on
+ * "zip" alone - there is nothing here to tell them apart, and the
+ * caller falls back to the alphabetical pick. */
+static const core_info_t *content_find_core_for_archive_contents(
+      const core_info_t *core_info, size_t list_size, const char *path)
+{
+   size_t i, j, k;
+   const core_info_t *found    = NULL;
+   struct string_list *archive = file_archive_get_file_list(path, NULL);
+
+   if (!archive)
+      return NULL;
+
+   /* core_info is already ordered, so the first core to claim any
+    * entry is the pick. */
+   for (i = 0; i < list_size && !found; i++)
+   {
+      const struct string_list *exts =
+         core_info[i].supported_extensions_list;
+
+      if (!exts)
+         continue;
+
+      for (j = 0; j < archive->size && !found; j++)
+      {
+         const char *ext = path_get_extension(archive->elems[j].data);
+
+         if (string_is_empty(ext))
+            continue;
+
+         for (k = 0; k < exts->size; k++)
+         {
+            if (string_is_equal_noncase(exts->elems[k].data, ext))
+            {
+               found = &core_info[i];
+               break;
+            }
+         }
+      }
+   }
+
+   string_list_free(archive);
+   return found;
+}
+#endif
+
+void task_content_deferred_frontend_load_check(void)
+{
+   size_t i;
+   char path[PATH_MAX_LENGTH];
+   size_t list_size                 = 0;
+   content_ctx_info_t content_info  = {0};
+   core_info_list_t *core_info_list = NULL;
+   const core_info_t *core_info     = NULL;
+   const core_info_t *pick          = NULL;
+
+   if (string_is_empty(deferred_frontend_load_path))
+      return;
+
+   /* Claim the path before loading anything: content_load() pumps
+    * the frontend again on its way through, so a fresh drop can be
+    * parked while this one is still being acted on. */
+   strlcpy(path, deferred_frontend_load_path, sizeof(path));
+   deferred_frontend_load_path[0] = '\0';
+
+   core_info_get_list(&core_info_list);
+   core_info_list_get_supported_cores(core_info_list, path,
+         &core_info, &list_size);
+
+   if (!list_size)
+   {
+      const char *_msg = msg_hash_to_str(MSG_FAILED_TO_LOAD_CONTENT);
+      RARCH_WARN("[Content] No core supports \"%s\".\n", path);
+      runloop_msg_queue_push(_msg, strlen(_msg), 2, 180, false, NULL,
+            MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_ERROR);
+      return;
+   }
+
+   path_set(RARCH_PATH_CONTENT, path);
+
+#ifdef HAVE_COMPRESSION
+   /* A bare archive needs the contents-aware pick; a path that already
+    * names an entry ("foo.zip#game.z64") is matched on the entry
+    * anyway and needs nothing special. */
+   if (     path_is_compressed_file(path)
+       && !path_contains_compressed_file(path))
+      pick = content_find_core_for_archive_contents(core_info,
+            list_size, path);
+#endif
+
+   /* Keep the running core when it already handles this content.
+    * "Running" is the operative word, and the reason this is not just
+    * the RARCH_PATH_CORE comparison win32_load_content_from_gui()
+    * does: RARCH_PATH_CORE names the *configured* core, which stays
+    * set while the dummy core is what is actually loaded - the menu's
+    * resting state, and exactly where a file drop arrives.
+    *
+    * The load reads valid_extensions, need_fullpath and block_extract
+    * from the loaded core, so reusing a core that is only nominally
+    * current hands it the dummy's empty extension list - which for an
+    * archive fails the same way an outright wrong core does.  Fall
+    * through to the explicit-core path in that case; it loads the
+    * core before reading any of this. */
+   if (!retroarch_ctl(RARCH_CTL_IS_DUMMY_CORE, NULL))
+   {
+      const char *running = path_get(RARCH_PATH_CORE);
+      bool keep_running   = false;
+
+      /* When the archive's contents named a core, the running core
+       * has to be that one - being an archive-extension match is what
+       * put the wrong core in the candidate list to begin with. */
+      if (pick)
+         keep_running = string_is_equal(running, pick->path);
+      else
+      {
+         for (i = 0; i < list_size; i++)
+         {
+            if (string_is_equal(running, core_info[i].path))
+            {
+               keep_running = true;
+               break;
+            }
+         }
+      }
+
+      if (keep_running)
+      {
+         RARCH_LOG("[Content] Loading \"%s\" with the running core.\n",
+               path);
+         task_push_load_content_with_current_core_from_companion_ui(
+               NULL, &content_info, CORE_TYPE_PLAIN, NULL, NULL);
+         return;
+      }
+   }
+
+   /* Failing all that, the first core that claims support - which
+    * after core_info_list_get_supported_cores() means the
+    * alphabetically first of them. */
+   if (!pick)
+      pick = &core_info[0];
+
+   RARCH_LOG("[Content] Loading \"%s\" with \"%s\" (%u core(s) support it).\n",
+         path, pick->path, (unsigned)list_size);
+
+   task_push_load_content_with_new_core_from_companion_ui(
+         pick->path, NULL, NULL, NULL, NULL,
+         &content_info, NULL, NULL);
+}
+
 bool task_push_load_subsystem_with_core(
       const char *fullpath,
       const char *label,
