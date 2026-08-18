@@ -101,8 +101,7 @@ typedef struct sdl3_input
    /* The SDL_Window input is read against. */
    SDL_Window *window;
 
-   /* Host device sensors, opened on demand by sdl3_set_sensor_state.
-    * Gamepad gyro/accel are handled by the SDL3 joypad driver. */
+   /* Sensors. Used if the SDL3 joypad driver isn't active. */
    SDL_Sensor *accel;
    SDL_Sensor *gyro;
    float accel_data[3];
@@ -663,9 +662,9 @@ static void sdl3_input_free(void *data)
 static SDL_Sensor *sdl3_open_sensor(SDL_SensorType type)
 {
    int i;
-   int num_sensors        = 0;
-   SDL_Sensor *sensor     = NULL;
-   SDL_SensorID *sensors  = SDL_GetSensors(&num_sensors);
+   int num_sensors = 0;
+   SDL_Sensor *sensor = NULL;
+   SDL_SensorID *sensors = SDL_GetSensors(&num_sensors);
 
    if (!sensors)
       return NULL;
@@ -683,8 +682,7 @@ static SDL_Sensor *sdl3_open_sensor(SDL_SensorType type)
    return sensor;
 }
 
-/* Enables the host device's own accelerometer/gyroscope. The requested
- * rate is ignored - SDL3 offers no sensor rate control. */
+/* Enables the accelerometer/gyroscope. */
 static bool sdl3_set_sensor_state(void *data, unsigned port,
       enum retro_sensor_action action, unsigned rate)
 {
@@ -699,14 +697,13 @@ static bool sdl3_set_sensor_state(void *data, unsigned port,
       case RETRO_SENSOR_ACCELEROMETER_ENABLE:
       case RETRO_SENSOR_GYROSCOPE_ENABLE:
          {
-            bool accel          = action == RETRO_SENSOR_ACCELEROMETER_ENABLE;
-            SDL_Sensor **sensor = accel ? &sdl->accel : &sdl->gyro;
+            bool accelerometer = action == RETRO_SENSOR_ACCELEROMETER_ENABLE;
+            SDL_Sensor **sensor = accelerometer ? &sdl->accel : &sdl->gyro;
 
             if (*sensor)
                return true;
 
-            /* Deferred so launches that never touch sensors don't pay
-             * for sensor enumeration. */
+            /* Make sure the Sensor subsystem is available. */
             if (!sdl->sensors_init)
             {
                if (!SDL_InitSubSystem(SDL_INIT_SENSOR))
@@ -714,8 +711,7 @@ static bool sdl3_set_sensor_state(void *data, unsigned port,
                sdl->sensors_init = true;
             }
 
-            return (*sensor = sdl3_open_sensor(
-                  accel ? SDL_SENSOR_ACCEL : SDL_SENSOR_GYRO)) != NULL;
+            return (*sensor = sdl3_open_sensor(accelerometer ? SDL_SENSOR_ACCEL : SDL_SENSOR_GYRO)) != NULL;
          }
       case RETRO_SENSOR_ACCELEROMETER_DISABLE:
          if (sdl->accel)
@@ -1136,8 +1132,7 @@ static void sdl3_input_poll(void *data)
 
    if (sdl->accel || sdl->gyro)
    {
-      /* The event pump only refreshes sensor state alongside window
-       * events; SDL_UpdateSensors works without a focused window. */
+      /* SDL_UpdateSensors works without a focused window. */
       SDL_UpdateSensors();
       /* Zero on failure so a vanished sensor reads as at rest
        * rather than frozen at its last reported values. */
