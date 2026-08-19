@@ -589,7 +589,7 @@ static const audio_driver_t audio_thread = {
    audio_thread_device_list_free,
    audio_thread_write_avail,
    audio_thread_buffer_size,
-   NULL, /* write_raw */
+   NULL, /* write_raw: per-call rate/gain doesn't fit the FIFO model. */
    audio_thread_wait_writable,
    audio_thread_frames_consumed,
    audio_thread_underruns,
@@ -629,6 +629,12 @@ bool audio_init_thread(const audio_driver_t **out_driver,
    thr->raise_priority    = raise_priority;
    thr->prefer_fast_cores = prefer_fast_cores;
    thr->device         = device;
+
+   /* The wrapper has no write_raw slot, so the int16 fast path in
+    * audio_driver.c never engages while threaded audio is on. */
+   if (drv && drv->write_raw)
+      RARCH_LOG("[Audio] Threaded audio hides \"%s\" driver's write_raw fast path; using the resampled path.\n",
+            drv->ident);
    thr->out_rate       = audio_out_rate;
    thr->new_rate       = new_rate;
    thr->latency        = latency;
