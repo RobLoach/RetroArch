@@ -131,6 +131,11 @@ void sdl3_pump_window_events(bool *quit, bool *resize)
       SDL_FlushEvents(SDL_EVENT_FINGER_DOWN,      SDL_EVENT_FINGER_CANCELED);
       SDL_FlushEvents(SDL_EVENT_PEN_PROXIMITY_IN, SDL_EVENT_PEN_AXIS);
    }
+
+   /* Nothing polls audio device hotplug events; the audio driver's
+    * event watch already saw them at push time. Left queued, they
+    * accumulate until SDL's queue fills and drops real events. */
+   SDL_FlushEvents(SDL_EVENT_AUDIO_DEVICE_ADDED, SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED);
 }
 
 void sdl3_set_handles(SDL_Window *window)

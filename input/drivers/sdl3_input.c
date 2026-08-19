@@ -742,6 +742,10 @@ static void sdl3_input_poll(void *data)
     * keys) get dropped along with them. */
    SDL_FlushEvents(SDL_EVENT_FINGER_DOWN,      SDL_EVENT_FINGER_CANCELED);
    SDL_FlushEvents(SDL_EVENT_PEN_PROXIMITY_IN, SDL_EVENT_PEN_AXIS);
+
+   /* Audio device hotplug events are also consumed by nobody - the
+    * audio driver's event watch already saw them at push time. */
+   SDL_FlushEvents(SDL_EVENT_AUDIO_DEVICE_ADDED, SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED);
 }
 
 static void sdl3_grab_mouse(void *data, bool state)
