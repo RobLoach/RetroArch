@@ -56,6 +56,7 @@ typedef struct sdl3_audio
    float ratio; /**< Frequency ratio currently set on the stream, to skip redundant sets. */
    float gain; /**< Gain currently set on the stream, to skip redundant sets. */
    SDL_AtomicInt device_removed; /**< Becomes true when the stream's device is unplugged. Set under lock so a blocked wait wakes. */
+   Uint64 last_pump; /**< SDL_GetTicks of the last self-pump; rate-limits sdl3_audio_pump_events. */
    bool nonblock; /**< When true, drop samples instead of waiting for the device to clear. */
    bool data_moved; /**< Wake token set by the stream callback, consumed by waiters. Guarded by lock; makes the queue-full test race-free. */
    bool defunct; /**< True when the device has completely failed. Saves from retrying each frame. */
@@ -459,6 +460,38 @@ static bool sdl3_audio_reopen_default(sdl3_audio_t *sdl)
    return true;
 }
 
+/* How often the driver pumps SDL events itself when nothing else does. */
+#define SDL3_AUDIO_PUMP_INTERVAL_MS 500
+
+/**
+ * SDL only delivers pending audio device events - and with them the
+ * removal watch - from SDL_PumpEvents. The SDL3 video/input drivers
+ * pump every frame; when neither is active nobody does, so pump from
+ * the audio path instead, rate-limited.
+ *
+ * Guarded on the video subsystem being uninitialized: without it no
+ * window system is attached (so the main-thread pump constraint does
+ * not apply) and no other component owns the event queue.
+ */
+static void sdl3_audio_pump_events(sdl3_audio_t *ctx)
+{
+   Uint64 now;
+
+   if (SDL_WasInit(SDL_INIT_VIDEO))
+      return;
+
+   now = SDL_GetTicks();
+   if (now - ctx->last_pump < SDL3_AUDIO_PUMP_INTERVAL_MS)
+      return;
+   ctx->last_pump = now;
+
+   SDL_PumpEvents();
+
+   /* Nothing polls the queue in this configuration; the watch already
+    * fired at push time, so drop the queued copies. */
+   SDL_FlushEvents(SDL_EVENT_AUDIO_DEVICE_ADDED, SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED);
+}
+
 /**
  * Checks whether or not the given audio stream is okay, and attempts
  * to reopen it if it was removed.
@@ -467,6 +500,7 @@ static bool sdl3_audio_reopen_default(sdl3_audio_t *sdl)
  */
 static bool sdl3_audio_stream_ok(sdl3_audio_t *sdl)
 {
+   sdl3_audio_pump_events(sdl);
    if (sdl->defunct)
       return false;
    if (SDL_GetAtomicInt(&sdl->device_removed))
@@ -874,6 +908,8 @@ static int sdl3_microphone_read(void *driver_context, void *mic_context,
 
    if (!sdl || !mic || !s)
       return -1;
+
+   sdl3_audio_pump_events(mic);
 
    /* Avoid using a recording device that doesn't exist. */
    if (SDL_GetAtomicInt(&mic->device_removed))
