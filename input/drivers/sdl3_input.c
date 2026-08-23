@@ -385,7 +385,6 @@ static int16_t sdl3_input_state(
       case RARCH_DEVICE_MOUSE_SCREEN:
          {
             const sdl3_mouse_t *mouse = sdl3_get_port_mouse(sdl, port);
-
             if (!mouse)
                break;
 
