@@ -59,8 +59,7 @@ typedef struct sdl3_mouse
     * it carries the sub-pixel part the boundary truncation drops. */
    float rel_x;
    float rel_y;
-   /* Button and wheel state, indexed by RETRO_DEVICE_ID_MOUSE_*.
-    * The X/Y slots (0 and 1) stay unused; motion lives above. */
+   /* Button and wheel state, indexed by RETRO_DEVICE_ID_MOUSE_*. */
    bool buttons[RETRO_DEVICE_ID_MOUSE_BUTTON_5 + 1];
 } sdl3_mouse_t;
 
@@ -70,15 +69,14 @@ typedef struct sdl3_input
    const bool *kb_state;
    int kb_num_keys;
    SDL_Scancode key_scancode_lut[RETROK_LAST];
-   /* The merged system mouse (input_mouse_index 0), fed from
-    * SDL_GetMouseState and SDL_GetRelativeMouseState; its id stays 0. */
+   /* The merged system mouse (input_mouse_index 0). */
    sdl3_mouse_t mouse;
    /* Absolute position stays fractional; it's truncated at the API
     * boundary, where nothing accumulates. */
    float mouse_abs_x;
    float mouse_abs_y;
 
-   /* Individually addressable mice (input_mouse_index 1..N). */
+   /* Per-device slots (input_mouse_index 1..N). */
    int num_mice;
    sdl3_mouse_t mice[SDL3_MAX_MICE];
 
@@ -202,8 +200,7 @@ static void sdl3_mouse_added(sdl3_input_t *sdl, SDL_MouseID id)
    if (sdl3_get_mouse(sdl, id))
       return;
 
-   /* Fill the first vacant slot so a re-plugged mouse lands back on
-    * a free index instead of pushing the others around. */
+   /* Reuse the first vacant slot instead of growing the list. */
    for (slot = 0; slot < sdl->num_mice; slot++)
    {
       if (sdl->mice[slot].id == 0)
@@ -887,10 +884,8 @@ static void sdl3_input_poll(void *data)
       }
       else if (event.type == SDL_EVENT_MOUSE_MOTION)
       {
-         /* The merged mouse (index 0) reads its motion from
-          * SDL_GetRelativeMouseState in sdl3_poll_mouse; events only
-          * feed the per-device state. which is 0 for motion SDL
-          * synthesizes itself (e.g. warps), which has no device. */
+         /* Only feeds the per-device state; the merged mouse gets its
+          * motion from SDL_GetRelativeMouseState in sdl3_poll_mouse. */
          sdl3_mouse_t *mouse = sdl3_get_mouse(sdl, event.motion.which);
          if (mouse)
          {
