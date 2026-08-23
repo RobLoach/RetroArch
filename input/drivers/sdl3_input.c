@@ -40,14 +40,6 @@
 
 #define SDL3_MAX_MICE 8
 
-/* Mouse state, so that input_mouse_index can address individual mice.
- * Index 0 is the merged system mouse (SDL_GetMouseState and friends),
- * while indices 1..N map to per-device state accumulated from SDL
- * events. Only relative motion, buttons and wheel are per-device; the
- * absolute cursor position exists solely for the merged system mouse.
- * An id of 0 marks a vacant slot: slots are kept in place when a
- * mouse unplugs, so the input_mouse_index mapping of the remaining
- * mice never shifts mid-session. */
 typedef struct sdl3_mouse
 {
    SDL_MouseID id;
@@ -76,7 +68,6 @@ typedef struct sdl3_input
    float mouse_abs_x;
    float mouse_abs_y;
 
-   /* Per-device slots (input_mouse_index 1..N). */
    int num_mice;
    sdl3_mouse_t mice[SDL3_MAX_MICE];
 
@@ -107,9 +98,7 @@ static void sdl3_build_scancode_lut(sdl3_input_t *sdl)
 static sdl3_mouse_t *sdl3_get_mouse(sdl3_input_t *sdl, SDL_MouseID id)
 {
    int i;
-   /* 0 is what SDL puts in an event's which field for motion it
-    * synthesizes itself (e.g. warps); it must not match the 0 that
-    * marks a vacant slot. */
+   /* When id is 0, report it as NULL for the primary mouse. */
    if (id == 0)
       return NULL;
    for (i = 0; i < sdl->num_mice; i++)
@@ -120,9 +109,7 @@ static sdl3_mouse_t *sdl3_get_mouse(sdl3_input_t *sdl, SDL_MouseID id)
    return NULL;
 }
 
-/* Resolves a port's Mouse Index setting onto the mouse it addresses,
- * or NULL when it points past the known devices. Index 0 is the
- * merged system mouse; 1..N are the individual slots. */
+/* Gets the mouse for the provided port. */
 static const sdl3_mouse_t *sdl3_get_port_mouse(sdl3_input_t *sdl, unsigned port)
 {
    unsigned mouse_index = config_get_ptr()->uints.input_mouse_index[port];
@@ -133,8 +120,7 @@ static const sdl3_mouse_t *sdl3_get_port_mouse(sdl3_input_t *sdl, unsigned port)
    return NULL;
 }
 
-/* Folds accumulated motion into this frame's x/y, carrying over the
- * sub-pixel part that the int16_t boundary conversion drops. */
+/* Converts the mouse values to the int16_t boundary that libretro expects. */
 static void sdl3_mouse_fold_motion(sdl3_mouse_t *mouse)
 {
    /* Converting a float outside int16_t's range is undefined behaviour
@@ -195,14 +181,8 @@ static void sdl3_mouse_added(sdl3_input_t *sdl, SDL_MouseID id)
    int slot;
    const char *name;
 
-   /* Events with a 0 instance id belong to the merged system mouse,
-    * and SDL_TOUCH_MOUSEID marks touch-synthesized events; neither is
-    * an addressable device. */
    if (id == 0 || id == SDL_TOUCH_MOUSEID)
       return;
-   /* The list is seeded from SDL_GetMice() at init, so the ADDED
-    * events SDL delivers for already-connected mice must not
-    * duplicate entries. */
    if (sdl3_get_mouse(sdl, id))
       return;
 
@@ -243,9 +223,8 @@ static void sdl3_mouse_removed(sdl3_input_t *sdl, SDL_MouseID id)
    slot = (int)(mouse - sdl->mice);
    RARCH_LOG("[SDL3] Mouse #%d removed.\n", slot + 1);
 
-   /* Vacate the slot in place (id 0), leaving the other mice on
-    * their indices; the slot reads back as no input until a new
-    * mouse fills it. */
+   /* Clean out the values for the mouse so it can
+    * be used again if another mouse is plugged in. */
    memset(mouse, 0, sizeof(*mouse));
    input_config_set_mouse_display_name((unsigned)slot + 1, "N/A");
 
@@ -279,16 +258,13 @@ static void *sdl3_input_init(const char *joypad_driver)
    }
 
    /* Seed the per-device mouse list from the mice already connected;
-    * SDL_EVENT_MOUSE_ADDED/REMOVED keep it current from here on. */
+   /* Initialize the mouse values of those that are plugged in already. */
    {
       int i;
-      int num_mice      = 0;
+      int num_mice = 0;
       SDL_MouseID *mice = SDL_GetMice(&num_mice);
 
-      /* Menu index 0 is the merged system mouse; the device slots
-       * follow at 1..N. The names are global state a previous input
-       * driver may have filled, so reset them all first. */
-      input_config_set_mouse_display_name(0, "System mouse");
+      input_config_set_mouse_display_name(0, "Mouse");
       for (i = 1; i <= SDL3_MAX_MICE; i++)
          input_config_set_mouse_display_name((unsigned)i, "N/A");
 
@@ -322,7 +298,6 @@ static bool sdl3_mouse_button_pressed(
       sdl3_input_t *sdl, unsigned port, unsigned key)
 {
    const sdl3_mouse_t *mouse = sdl3_get_port_mouse(sdl, port);
-   /* The X/Y slots (0 and 1) are never set, so they read back false. */
    if (mouse && key <= RETRO_DEVICE_ID_MOUSE_BUTTON_5)
       return mouse->buttons[key];
    return false;
@@ -890,8 +865,6 @@ static void sdl3_input_poll(void *data)
       }
       else if (event.type == SDL_EVENT_MOUSE_MOTION)
       {
-         /* Only feeds the per-device state; the merged mouse gets its
-          * motion from SDL_GetRelativeMouseState in sdl3_poll_mouse. */
          sdl3_mouse_t *mouse = sdl3_get_mouse(sdl, event.motion.which);
          if (mouse)
          {
@@ -915,8 +888,6 @@ static void sdl3_input_poll(void *data)
          sdl3_build_scancode_lut(sdl);
    }
 
-   /* Fold this frame's per-device motion, mirroring the merged path
-    * in sdl3_poll_mouse above. */
    for (i = 0; i < sdl->num_mice; i++)
       sdl3_mouse_fold_motion(&sdl->mice[i]);
 
