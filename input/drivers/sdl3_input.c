@@ -147,8 +147,10 @@ static void sdl3_mouse_fold_motion(sdl3_mouse_t *mouse)
    mouse->x = mouse->rel_x;
    mouse->y = mouse->rel_y;
 
-   mouse->rel_x -= (float)(int16_t)mouse->x;
-   mouse->rel_y -= (float)(int16_t)mouse->y;
+   /* Keep only the sub-pixel part; the whole pixels are what the
+    * boundary cast will report. */
+   mouse->rel_x -= SDL_truncf(mouse->x);
+   mouse->rel_y -= SDL_truncf(mouse->y);
 }
 
 /* Wheel state is edge-style: it reflects this frame's events only. */
