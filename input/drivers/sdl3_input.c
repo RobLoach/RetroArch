@@ -171,23 +171,19 @@ static void sdl3_mouse_wheel(sdl3_mouse_t *mouse, float wx, float wy)
 }
 
 /* Maps an SDL mouse button onto its RETRO_DEVICE_ID_MOUSE_* index,
- * or -1 for buttons libretro has no id for. */
+ * or -1 for buttons libretro has no id for. SDL button numbers are
+ * contiguous from SDL_BUTTON_LEFT (1) through SDL_BUTTON_X2 (5). */
 static int sdl3_translate_mouse_button(Uint8 button)
 {
-   switch (button)
-   {
-      case SDL_BUTTON_LEFT:
-         return RETRO_DEVICE_ID_MOUSE_LEFT;
-      case SDL_BUTTON_RIGHT:
-         return RETRO_DEVICE_ID_MOUSE_RIGHT;
-      case SDL_BUTTON_MIDDLE:
-         return RETRO_DEVICE_ID_MOUSE_MIDDLE;
-      case SDL_BUTTON_X1:
-         return RETRO_DEVICE_ID_MOUSE_BUTTON_4;
-      case SDL_BUTTON_X2:
-         return RETRO_DEVICE_ID_MOUSE_BUTTON_5;
-   }
-   return -1;
+   static const int8_t lut[] = {
+      -1,                              /* 0 is not a button */
+      RETRO_DEVICE_ID_MOUSE_LEFT,      /* SDL_BUTTON_LEFT */
+      RETRO_DEVICE_ID_MOUSE_MIDDLE,    /* SDL_BUTTON_MIDDLE */
+      RETRO_DEVICE_ID_MOUSE_RIGHT,     /* SDL_BUTTON_RIGHT */
+      RETRO_DEVICE_ID_MOUSE_BUTTON_4,  /* SDL_BUTTON_X1 */
+      RETRO_DEVICE_ID_MOUSE_BUTTON_5   /* SDL_BUTTON_X2 */
+   };
+   return (button < ARRAY_SIZE(lut)) ? lut[button] : -1;
 }
 
 static void sdl3_mouse_added(sdl3_input_t *sdl, SDL_MouseID id)
