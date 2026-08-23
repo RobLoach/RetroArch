@@ -31,6 +31,7 @@
 
 #include "../../configuration.h"
 #include "../../retroarch.h"
+#include "../../verbosity.h"
 
 #include "../../gfx/common/sdl3_common.h"
 
@@ -42,9 +43,11 @@
 /* Mouse state, so that input_mouse_index can address individual mice.
  * Index 0 is the merged system mouse (SDL_GetMouseState and friends),
  * while indices 1..N map to per-device state accumulated from SDL
- * events, in SDL_GetMice() order. Only relative motion, buttons and
- * wheel are per-device; the absolute cursor position exists solely
- * for the merged system mouse. */
+ * events. Only relative motion, buttons and wheel are per-device; the
+ * absolute cursor position exists solely for the merged system mouse.
+ * An id of 0 marks a vacant slot: slots are kept in place when a
+ * mouse unplugs, so the input_mouse_index mapping of the remaining
+ * mice never shifts mid-session. */
 typedef struct sdl3_mouse
 {
    SDL_MouseID id;
@@ -106,11 +109,29 @@ static void sdl3_build_scancode_lut(sdl3_input_t *sdl)
 static sdl3_mouse_t *sdl3_get_mouse(sdl3_input_t *sdl, SDL_MouseID id)
 {
    int i;
+   /* 0 is what SDL puts in an event's which field for motion it
+    * synthesizes itself (e.g. warps); it must not match the 0 that
+    * marks a vacant slot. */
+   if (id == 0)
+      return NULL;
    for (i = 0; i < sdl->num_mice; i++)
    {
       if (sdl->mice[i].id == id)
          return &sdl->mice[i];
    }
+   return NULL;
+}
+
+/* Resolves a port's Mouse Index setting onto the mouse it addresses,
+ * or NULL when it points past the known devices. Index 0 is the
+ * merged system mouse; 1..N are the individual slots. */
+static const sdl3_mouse_t *sdl3_get_port_mouse(sdl3_input_t *sdl, unsigned port)
+{
+   unsigned mouse_index = config_get_ptr()->uints.input_mouse_index[port];
+   if (mouse_index == 0)
+      return &sdl->mouse;
+   if (mouse_index <= (unsigned)sdl->num_mice)
+      return &sdl->mice[mouse_index - 1];
    return NULL;
 }
 
@@ -171,6 +192,9 @@ static int sdl3_translate_mouse_button(Uint8 button)
 
 static void sdl3_mouse_added(sdl3_input_t *sdl, SDL_MouseID id)
 {
+   int slot;
+   const char *name;
+
    /* Events with a 0 instance id belong to the merged system mouse,
     * and SDL_TOUCH_MOUSEID marks touch-synthesized events; neither is
     * an addressable device. */
@@ -181,27 +205,53 @@ static void sdl3_mouse_added(sdl3_input_t *sdl, SDL_MouseID id)
     * duplicate entries. */
    if (sdl3_get_mouse(sdl, id))
       return;
-   if (sdl->num_mice >= SDL3_MAX_MICE)
+
+   /* Fill the first vacant slot so a re-plugged mouse lands back on
+    * a free index instead of pushing the others around. */
+   for (slot = 0; slot < sdl->num_mice; slot++)
+   {
+      if (sdl->mice[slot].id == 0)
+         break;
+   }
+   if (slot >= SDL3_MAX_MICE)
+   {
+      RARCH_WARN("[SDL3] Ignoring mouse %u; only %d mice are supported.\n",
+            (unsigned)id, SDL3_MAX_MICE);
       return;
-   memset(&sdl->mice[sdl->num_mice], 0, sizeof(sdl->mice[0]));
-   sdl->mice[sdl->num_mice].id = id;
-   sdl->num_mice++;
+   }
+
+   memset(&sdl->mice[slot], 0, sizeof(sdl->mice[0]));
+   sdl->mice[slot].id = id;
+   if (slot == sdl->num_mice)
+      sdl->num_mice++;
+
+   /* Shown by the Mouse Index setting; slot 0 lives at menu index 1,
+    * as menu index 0 is the merged system mouse. */
+   if (!(name = SDL_GetMouseNameForID(id)))
+      name = "Mouse";
+   input_config_set_mouse_display_name((unsigned)slot + 1, name);
+   RARCH_LOG("[SDL3] Mouse #%d: \"%s\".\n", slot + 1, name);
 }
 
 static void sdl3_mouse_removed(sdl3_input_t *sdl, SDL_MouseID id)
 {
-   int i;
-   for (i = 0; i < sdl->num_mice; i++)
-   {
-      if (sdl->mice[i].id != id)
-         continue;
-      /* Keep the remaining mice in connection order so the
-       * input_mouse_index mapping of the others stays stable. */
-      memmove(&sdl->mice[i], &sdl->mice[i + 1],
-            (size_t)(sdl->num_mice - i - 1) * sizeof(sdl->mice[0]));
-      sdl->num_mice--;
+   int slot;
+   sdl3_mouse_t *mouse = sdl3_get_mouse(sdl, id);
+
+   if (!mouse)
       return;
-   }
+
+   slot = (int)(mouse - sdl->mice);
+   RARCH_LOG("[SDL3] Mouse #%d removed.\n", slot + 1);
+
+   /* Vacate the slot in place (id 0), leaving the other mice on
+    * their indices; the slot reads back as no input until a new
+    * mouse fills it. */
+   memset(mouse, 0, sizeof(*mouse));
+   input_config_set_mouse_display_name((unsigned)slot + 1, "N/A");
+
+   while (sdl->num_mice > 0 && sdl->mice[sdl->num_mice - 1].id == 0)
+      sdl->num_mice--;
 }
 
 static void *sdl3_input_init(const char *joypad_driver)
@@ -235,6 +285,14 @@ static void *sdl3_input_init(const char *joypad_driver)
       int i;
       int num_mice      = 0;
       SDL_MouseID *mice = SDL_GetMice(&num_mice);
+
+      /* Menu index 0 is the merged system mouse; the device slots
+       * follow at 1..N. The names are global state a previous input
+       * driver may have filled, so reset them all first. */
+      input_config_set_mouse_display_name(0, "System mouse");
+      for (i = 1; i <= SDL3_MAX_MICE; i++)
+         input_config_set_mouse_display_name((unsigned)i, "N/A");
+
       if (mice)
       {
          for (i = 0; i < num_mice; i++)
@@ -260,12 +318,14 @@ static bool sdl3_key_pressed(sdl3_input_t *sdl, int key)
 }
 
 /* Resolves a retro_keybind mouse-button bind (bind->mbutton) against
- * the polled mouse state; used by the lightgun bind checks below. */
-static bool sdl3_mouse_button_pressed(sdl3_input_t *sdl, unsigned key)
+ * the port's mouse state; used by the lightgun bind checks below. */
+static bool sdl3_mouse_button_pressed(
+      sdl3_input_t *sdl, unsigned port, unsigned key)
 {
+   const sdl3_mouse_t *mouse = sdl3_get_port_mouse(sdl, port);
    /* The X/Y slots (0 and 1) are never set, so they read back false. */
-   if (key <= RETRO_DEVICE_ID_MOUSE_BUTTON_5)
-      return sdl->mouse.buttons[key];
+   if (mouse && key <= RETRO_DEVICE_ID_MOUSE_BUTTON_5)
+      return mouse->buttons[key];
    return false;
 }
 
@@ -350,16 +410,9 @@ static int16_t sdl3_input_state(
       case RETRO_DEVICE_MOUSE:
       case RARCH_DEVICE_MOUSE_SCREEN:
          {
-            unsigned mouse_index = config_get_ptr()->uints.input_mouse_index[port];
-            const sdl3_mouse_t *mouse = NULL;
+            const sdl3_mouse_t *mouse = sdl3_get_port_mouse(sdl, port);
 
-            /* Index 0 is the merged system mouse; 1..N address the
-             * individual mice enumerated by SDL_GetMice(). */
-            if (mouse_index == 0)
-               mouse = &sdl->mouse;
-            else if (mouse_index <= (unsigned)sdl->num_mice)
-               mouse = &sdl->mice[mouse_index - 1];
-            else
+            if (!mouse)
                break;
 
             switch (id)
@@ -521,7 +574,7 @@ static int16_t sdl3_input_state(
                            && sdl3_key_pressed(sdl, binds[port][new_id].key)
                         )
                         return 1;
-                     else if (sdl3_mouse_button_pressed(sdl,
+                     else if (sdl3_mouse_button_pressed(sdl, port,
                            binds[port][new_id].mbutton))
                         return 1;
                   }
@@ -529,9 +582,15 @@ static int16_t sdl3_input_state(
                break;
             /* Deprecated relative aiming */
             case RETRO_DEVICE_ID_LIGHTGUN_X:
-               return (int16_t)sdl->mouse.x;
             case RETRO_DEVICE_ID_LIGHTGUN_Y:
-               return (int16_t)sdl->mouse.y;
+               {
+                  const sdl3_mouse_t *mouse = sdl3_get_port_mouse(sdl, port);
+                  if (!mouse)
+                     break;
+                  if (id == RETRO_DEVICE_ID_LIGHTGUN_X)
+                     return (int16_t)mouse->x;
+                  return (int16_t)mouse->y;
+               }
          }
          break;
    }
