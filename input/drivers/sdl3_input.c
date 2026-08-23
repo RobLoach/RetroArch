@@ -141,8 +141,8 @@ static void sdl3_mouse_fold_motion(sdl3_mouse_t *mouse)
     * rather than a wrap, so clamp before the cast. Only reachable if
     * the frontend stops polling for a long stretch while the mouse
     * keeps moving. */
-   mouse->rel_x = MIN(MAX(mouse->rel_x, -32767.0f), 32767.0f);
-   mouse->rel_y = MIN(MAX(mouse->rel_y, -32767.0f), 32767.0f);
+   mouse->rel_x = SDL_clamp(mouse->rel_x, -32767.0f, 32767.0f);
+   mouse->rel_y = SDL_clamp(mouse->rel_y, -32767.0f, 32767.0f);
 
    mouse->x = mouse->rel_x;
    mouse->y = mouse->rel_y;
