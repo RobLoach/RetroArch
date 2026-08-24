@@ -31,6 +31,19 @@
 #include "../../tasks/tasks_internal.h"
 #include "../../verbosity.h"
 
+/* Virtual buttons synthesized by this driver for the left/right halves of a
+ * gamepad touchpad (DualShock 4 / DualSense). Anchored to a fixed base rather
+ * than SDL_GAMEPAD_BUTTON_COUNT so saved binds don't shift if SDL adds
+ * buttons (the count grew from 21 to 26 between SDL2 and SDL3). Must stay
+ * below MENU_MAX_BUTTONS (219) and the hat bit range (4096). */
+#define SDL3_JOYPAD_VBTN_TOUCHPAD_LEFT  32
+#define SDL3_JOYPAD_VBTN_TOUCHPAD_RIGHT 33
+
+/* SDL_GAMEPAD_BUTTON_COUNT is an enumerator, so a preprocessor #if would
+ * silently evaluate it as 0; assert the no-overlap constraint in C instead. */
+SDL_COMPILE_TIME_ASSERT(sdl3_joypad_touchpad_vbtn_overlap,
+      SDL_GAMEPAD_BUTTON_COUNT <= SDL3_JOYPAD_VBTN_TOUCHPAD_LEFT);
+
 typedef struct _sdl3_joypad
 {
    SDL_Joystick   *joypad;
@@ -41,6 +54,9 @@ typedef struct _sdl3_joypad
    unsigned        num_hats;
    uint16_t        rumble_gain; /* 0-100 */
    uint16_t        rumble[2];   /* raw magnitude per retro_rumble_effect (strong/weak) */
+   int             touchpad_fingers; /* finger slots on touchpad 0; 0 = no touchpad */
+   bool            touchpad_left;    /* finger touching the left half */
+   bool            touchpad_right;   /* finger touching the right half */
 } sdl3_joypad_t;
 
 /**
@@ -238,9 +254,11 @@ static void sdl3_joypad_connect(SDL_JoystickID jid)
        *
        * -flibit
        */
-      pad->num_axes    = SDL_GAMEPAD_AXIS_COUNT;
-      pad->num_buttons = SDL_GAMEPAD_BUTTON_COUNT;
-      pad->num_hats    = 0;
+      pad->num_axes     = SDL_GAMEPAD_AXIS_COUNT;
+      pad->num_buttons  = SDL_GAMEPAD_BUTTON_COUNT;
+      pad->num_hats     = 0;
+      if (SDL_GetNumGamepadTouchpads(gamepad) > 0)
+         pad->touchpad_fingers = SDL_GetNumGamepadTouchpadFingers(gamepad, 0);
    }
    else
    {
@@ -399,6 +417,10 @@ static int32_t sdl3_joypad_button_state(sdl3_joypad_t *pad, uint16_t joykey)
       }
       /* hat requested and no hat button down */
    }
+   else if (pad->gamepad && joykey == SDL3_JOYPAD_VBTN_TOUCHPAD_LEFT)
+      return pad->touchpad_left;
+   else if (pad->gamepad && joykey == SDL3_JOYPAD_VBTN_TOUCHPAD_RIGHT)
+      return pad->touchpad_right;
    else if (joykey < pad->num_buttons)
       return sdl3_joypad_get_button(pad, joykey);
 
@@ -487,8 +509,33 @@ static int16_t sdl3_joypad_state(
    return ret;
 }
 
+static void sdl3_joypad_poll_touchpad(sdl3_joypad_t *pad)
+{
+   int i;
+
+   pad->touchpad_left  = false;
+   pad->touchpad_right = false;
+
+   for (i = 0; i < pad->touchpad_fingers; i++)
+   {
+      bool down;
+      float x;
+
+      if (     SDL_GetGamepadTouchpadFinger(pad->gamepad, 0, i,
+                  &down, &x, NULL, NULL)
+            && down)
+      {
+         if (x < 0.5f)
+            pad->touchpad_left  = true;
+         else
+            pad->touchpad_right = true;
+      }
+   }
+}
+
 static void sdl3_joypad_poll(void)
 {
+   int i;
    SDL_Event event;
 
    SDL_PumpEvents();
@@ -508,6 +555,10 @@ static void sdl3_joypad_poll(void)
    }
 
    SDL_UpdateGamepads();
+
+   for (i = 0; i < MAX_USERS; i++)
+      if (sdl3_joypads[i].touchpad_fingers > 0)
+         sdl3_joypad_poll_touchpad(&sdl3_joypads[i]);
 
    /* Flush all remaining gamepad/joystick input events, since we handle it directly. */
    SDL_FlushEvents(SDL_EVENT_JOYSTICK_AXIS_MOTION, SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED);
