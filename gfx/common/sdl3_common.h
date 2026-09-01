@@ -42,6 +42,19 @@ typedef struct sdl3_tex
    bool rgb32;
 } sdl3_tex_t;
 
+/* On-screen input overlay entry for SDL3. Texture dimensions are
+ * read from the public SDL_Texture w/h fields. */
+struct sdl3_overlay
+{
+   SDL_Texture *tex;
+   /* Both are normalised 0..1 rects: tex_coords slices the source
+    * texture, vert_coords places the quad within its base area. */
+   SDL_FRect tex_coords;
+   SDL_FRect vert_coords;
+   float     alpha_mod;
+   bool      fullscreen;
+};
+
 typedef struct _sdl3_video
 {
    SDL_Window *window; /* Must be first because it's shared across
@@ -55,6 +68,10 @@ typedef struct _sdl3_video
    sdl3_tex_t menu;  /* ptr alignment */
 
    SDL_Renderer *renderer;
+
+   struct sdl3_overlay *overlays;
+   unsigned overlays_size;
+   bool overlays_enabled;
 
    uint8_t flags;
 } sdl3_video_t;
