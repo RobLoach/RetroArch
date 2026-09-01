@@ -63,9 +63,44 @@ static INLINE void sdl3_tex_zero(sdl3_tex_t *t)
    t->h = 0;
 }
 
+/* Balances the SDL_LockTexture taken in
+ * sdl3_get_current_software_framebuffer. Must run before the frame
+ * texture is rendered or destroyed. */
+static void sdl3_frame_unlock(sdl3_video_t *vid)
+{
+   if (vid->flags & SDL3_FLAG_FRAME_LOCKED)
+   {
+      SDL_UnlockTexture(vid->frame.tex);
+      vid->flags &= ~SDL3_FLAG_FRAME_LOCKED;
+   }
+}
+
+/* Frame-cache predicate: true when the cached frame points into the
+ * texture mapping handed out by get_current_software_framebuffer. */
+static bool sdl3_cached_frame_is_mapping(void *userdata, const void *data)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)userdata;
+   return data == vid->frame_lock_pixels;
+}
+
+/* The frame texture's staging memory is about to go away with the
+ * texture: unlock it, and drop the frame cache if it still points
+ * there (screenshots and paused redraws read the cache). */
+static void sdl3_frame_mapping_drop(sdl3_video_t *vid)
+{
+   sdl3_frame_unlock(vid);
+   if (vid->frame_lock_pixels)
+   {
+      video_driver_cached_frame_invalidate_if(vid,
+            sdl3_cached_frame_is_mapping);
+      vid->frame_lock_pixels = NULL;
+   }
+}
+
 static bool sdl3_init_renderer(sdl3_video_t *vid)
 {
    int vsync;
+   const char *renderer_name;
 
    /* Let SDL pick the graphics backend.
     *
@@ -78,7 +113,22 @@ static bool sdl3_init_renderer(sdl3_video_t *vid)
       return false;
    }
 
-   RARCH_LOG("[SDL3] Renderer: %s.\n", SDL_GetRendererName(vid->renderer));
+   renderer_name = SDL_GetRendererName(vid->renderer);
+   RARCH_LOG("[SDL3] Renderer: %s.\n", renderer_name);
+
+   /* Backends whose SDL_LockTexture returns persistent CPU staging
+    * memory (verified against SDL 3.4.12 sources): the pointer stays
+    * valid and readable after unlock, keeping it until the texture is
+    * recreated. get_current_software_framebuffer relies on that -
+    * RetroArch's frame cache holds the pointer the core submitted and
+    * reads it later for screenshots and paused redraws. The remaining
+    * backends (vulkan, direct3d*, metal, ps2, psp, vita) map transient
+    * GPU memory instead, so they take the copy path. */
+   if (     string_is_equal(renderer_name, "software")
+         || string_is_equal(renderer_name, "opengl")
+         || string_is_equal(renderer_name, "opengles2")
+         || string_is_equal(renderer_name, "gpu"))
+      vid->flags |= SDL3_FLAG_SWFB_SAFE;
 
    /* Try setting vsync in order to determine whether or not it's supported. */
    if (SDL_SetRenderVSync(vid->renderer, SDL_RENDERER_VSYNC_ADAPTIVE))
@@ -147,6 +197,11 @@ static void sdl3_refresh_input_size(sdl3_video_t *vid, bool menu, bool rgb32,
          target->rgb32 != rgb32)
    {
       SDL_PixelFormat format;
+
+      /* Never destroy the frame texture while the core (or the
+       * frame cache) still references its staging mapping. */
+      if (!menu)
+         sdl3_frame_mapping_drop(vid);
 
       sdl3_tex_zero(target);
 
@@ -481,6 +536,18 @@ static bool sdl3_gfx_frame(void *data, const void *frame, unsigned width,
     * the back buffer is undefined on several backends. */
    SDL_RenderClear(vid->renderer);
 
+   /* When the core rendered straight into the mapped texture,
+    * unlocking is the upload. Unlock on a dupe (frame == NULL) too:
+    * the mapping is only handed out for a single retro_run. */
+   if (vid->flags & SDL3_FLAG_FRAME_LOCKED)
+      sdl3_frame_unlock(vid);
+
+   /* Pixels the texture already owns - either just unlocked above,
+    * or a paused/menu replay of a cached frame that was rendered
+    * through the mapping. Nothing to upload. */
+   if (frame && frame == vid->frame_lock_pixels)
+      frame = NULL;
+
    if (frame)
    {
       sdl3_refresh_input_size(vid, false, vid->video.rgb32, width, height);
@@ -549,6 +616,7 @@ static void sdl3_gfx_free(void *data)
 
    /* Make sure the on-screen display font is cleared out. */
 
+   sdl3_frame_mapping_drop(vid);
    sdl3_tex_zero(&vid->frame);
    sdl3_tex_zero(&vid->menu);
 
@@ -756,6 +824,71 @@ static void sdl3_poke_texture_enable(void *data, bool enable, bool full_screen)
    if (!vid)
       return;
    vid->menu.active = enable;
+}
+
+/* RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER: map the
+ * streaming frame texture so the core renders straight into it,
+ * skipping the per-frame copy in sdl3_stream_upload. Under threaded
+ * video this poke is never reached (the thread wrapper leaves its
+ * slot NULL), so the mapping only ever happens on the render thread. */
+static bool sdl3_get_current_software_framebuffer(void *data,
+      struct retro_framebuffer *fb)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   void *pixels      = NULL;
+   int pitch         = 0;
+
+   if (!vid || !fb)
+      return false;
+
+   /* Only on backends where the mapping is persistent heap memory
+    * (see sdl3_init_renderer). That also makes it readable, so
+    * RETRO_MEMORY_ACCESS_READ needs no special casing. */
+   if (!(vid->flags & SDL3_FLAG_SWFB_SAFE))
+      return false;
+
+   /* Only the two formats the frame texture can represent. 0RGB1555
+    * in particular must take the copy path: the frontend converts
+    * such frames to RGB565 before they reach the driver, reading
+    * from the buffer the core submits. */
+   {
+      enum retro_pixel_format pix_fmt = video_state_get_ptr()->pix_fmt;
+      if (     pix_fmt != RETRO_PIXEL_FORMAT_RGB565
+            && pix_fmt != RETRO_PIXEL_FORMAT_XRGB8888)
+         return false;
+   }
+
+   /* Map only when the existing texture already matches the request -
+    * recreating it here would churn textures if a core alternates
+    * sizes. On a mismatch the copy path serves this frame and sizes
+    * the texture, so the next frame maps cleanly. */
+   if (     !vid->frame.tex
+         ||  vid->frame.w     != fb->width
+         ||  vid->frame.h     != fb->height
+         ||  vid->frame.rgb32 != vid->video.rgb32)
+      return false;
+
+   if (!(vid->flags & SDL3_FLAG_FRAME_LOCKED))
+   {
+      if (!SDL_LockTexture(vid->frame.tex, NULL, &pixels, &pitch))
+         return false;
+      vid->frame_lock_pixels = pixels;
+      vid->frame_lock_pitch  = pitch;
+      vid->flags            |= SDL3_FLAG_FRAME_LOCKED;
+   }
+
+   fb->data         = vid->frame_lock_pixels;
+   fb->pitch        = (size_t)vid->frame_lock_pitch;
+   /* The texture format tracks the core's SET_PIXEL_FORMAT
+    * (0RGB1555 is converted to RGB565 before it reaches the
+    * driver, so it never appears here). */
+   fb->format       = vid->video.rgb32
+         ? RETRO_PIXEL_FORMAT_XRGB8888
+         : RETRO_PIXEL_FORMAT_RGB565;
+   /* Ordinary heap staging on the whitelisted backends, retaining
+    * its contents across frames - cores may read-modify-write. */
+   fb->memory_flags = RETRO_MEMORY_TYPE_CACHED;
+   return true;
 }
 
 static void sdl3_grab_mouse_toggle(void *data)
@@ -1699,7 +1832,7 @@ static video_poke_interface_t sdl3_video_poke_interface = {
    sdl3_show_mouse,
    sdl3_grab_mouse_toggle,
    NULL,                            /* get_current_shader */
-   NULL,                            /* get_current_software_framebuffer */
+   sdl3_get_current_software_framebuffer,
    NULL,                            /* get_hw_render_interface */
    NULL,                            /* set_hdr_menu_nits */
    NULL,                            /* set_hdr_paper_white_nits */
