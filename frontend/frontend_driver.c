@@ -31,6 +31,11 @@
 #include <3ds.h>
 #endif
 
+#ifdef HAVE_SDL3
+#include <SDL3/SDL.h>
+#include "../retroarch.h"
+#endif
+
 #include "frontend_driver.h"
 
 #ifndef __WINRT__
@@ -556,13 +561,65 @@ const char* frontend_driver_get_cpu_model_name(void)
    return NULL;
 }
 
+#ifdef HAVE_SDL3
+/* Fallback for platforms whose frontend driver does not implement
+ * get_user_language. SDL_GetPreferredLocales does not require
+ * SDL_Init, so do not initialize SDL here. */
+static enum retro_language frontend_driver_sdl3_get_user_language(void)
+{
+   int i;
+   int count                = 0;
+   enum retro_language lang = RETRO_LANGUAGE_ENGLISH;
+   SDL_Locale **locales     = SDL_GetPreferredLocales(&count);
+
+   if (!locales)
+      return lang;
+
+   for (i = 0; i < count; i++)
+   {
+      char iso[64];
+      enum retro_language found;
+      const SDL_Locale *locale = locales[i];
+
+      if (!locale || !locale->language)
+         continue;
+
+      /* Compose "ll_CC" so region variants (pt_BR, zh_TW, ...)
+       * are matched before the bare language code. */
+      if (locale->country)
+         snprintf(iso, sizeof(iso), "%s_%s",
+               locale->language, locale->country);
+      else
+         strlcpy(iso, locale->language, sizeof(iso));
+
+      found = retroarch_get_language_from_iso(iso);
+
+      /* ENGLISH doubles as the "no match" result; fall through to
+       * the next preferred locale unless English was requested. */
+      if (   found != RETRO_LANGUAGE_ENGLISH
+          || string_is_equal_case_insensitive(locale->language, "en"))
+      {
+         lang = found;
+         break;
+      }
+   }
+
+   SDL_free(locales);
+   return lang;
+}
+#endif
+
 enum retro_language frontend_driver_get_user_language(void)
 {
    frontend_state_t *frontend_st   = &frontend_driver_st;
    frontend_ctx_driver_t *frontend = frontend_st->current_frontend_ctx;
    if (frontend && frontend->get_user_language)
       return frontend->get_user_language();
+#ifdef HAVE_SDL3
+   return frontend_driver_sdl3_get_user_language();
+#else
    return RETRO_LANGUAGE_ENGLISH;
+#endif
 }
 
 bool frontend_driver_has_gamemode(void)
