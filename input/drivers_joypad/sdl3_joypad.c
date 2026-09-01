@@ -493,6 +493,11 @@ static void sdl3_joypad_poll(void)
 
    SDL_PumpEvents();
 
+   /* Update before draining ADDED/REMOVED: hotplug detection can post
+    * them here, and any posted after the drain would be lost to the
+    * flush below. */
+   SDL_UpdateGamepads();
+
    while (SDL_PeepEvents(&event, 1, SDL_GETEVENT,
             SDL_EVENT_JOYSTICK_ADDED, SDL_EVENT_JOYSTICK_REMOVED) > 0)
    {
@@ -506,8 +511,6 @@ static void sdl3_joypad_poll(void)
             break;
       }
    }
-
-   SDL_UpdateGamepads();
 
    /* Flush all remaining gamepad/joystick input events, since we handle it directly. */
    SDL_FlushEvents(SDL_EVENT_JOYSTICK_AXIS_MOTION, SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED);
