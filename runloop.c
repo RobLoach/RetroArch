@@ -7956,6 +7956,12 @@ int runloop_iterate(void)
    task_content_deferred_load_check();
 #endif
 
+   /* Perform a content load parked by the frontend (a window-system
+    * file drop, for one).  Same constraint as above, plus its own:
+    * the requester is the video driver's event pump, and the load
+    * frees the video driver that pump belongs to. */
+   task_content_deferred_frontend_load_check();
+
    /* Tick deferred shader compilation (one pass per frame) */
    video_driver_shader_deferred_tick();
 

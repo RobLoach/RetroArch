@@ -127,6 +127,22 @@ bool task_push_load_subsystem_with_core(
       retro_task_callback_t cb,
       void *user_data);
 
+/* Parks a content path handed to the frontend from a context that
+ * cannot load it itself - a window-system file drop, delivered by the
+ * video driver's event pump from the middle of runloop_check_state(),
+ * where content_load() would free the video driver underneath its own
+ * caller.  The load runs from runloop_iterate() on the next frame.
+ * Only the most recently parked path is kept. */
+void task_push_load_content_from_frontend_deferred(const char *path);
+
+/* Loads a path parked by task_push_load_content_from_frontend_deferred(),
+ * if there is one, picking the running core when it supports the
+ * content and the first supported core otherwise.  Called once per
+ * frame from runloop_iterate(); like the deferred menu load, it must
+ * run outside the task system's dispatch because content_load()
+ * reinitializes the task queue. */
+void task_content_deferred_frontend_load_check(void);
+
 
 RETRO_END_DECLS
 

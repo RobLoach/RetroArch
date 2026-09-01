@@ -30,6 +30,7 @@
 #include "../../configuration.h"
 #include "../../input/input_driver.h"
 #include "../../retroarch.h"
+#include "../../tasks/task_content.h"
 #include "../../version.h"
 
 /* 16x16 ARGB8888 window icon, matching x_ctx.c, wayland_common.c, ui_qt.cpp. */
@@ -99,6 +100,7 @@ static void sdl3_window_save_position(SDL_Window *win)
 void sdl3_pump_window_events(bool *quit, bool *resize)
 {
    SDL_Event event;
+   bool dropped_file = false;
 
    SDL_PumpEvents();
 
@@ -121,6 +123,30 @@ void sdl3_pump_window_events(bool *quit, bool *resize)
    {
       if (event.type == SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED)
          *resize = true;
+   }
+
+   /* Load content that is dropped onto the window. Only acts on the
+    * first file that was provided; the remaining drop events are
+    * drained and ignored.
+    *
+    * The load cannot happen here. This function is driven from the
+    * video driver's alive() / check_window() callback, which the
+    * runloop calls from the middle of runloop_check_state() - and
+    * loading content frees and re-creates the video driver. The rest
+    * of this pump, its caller, and the half-finished check-state pass
+    * above it would all carry on against a freed driver. Park the
+    * path instead and let runloop_iterate() load it at the top of the
+    * next frame. That also settles the lifetime of event.drop.data,
+    * which SDL owns and frees on the next event queue operation: the
+    * path is copied out immediately, rather than being handed to code
+    * that pumps events again. */
+   while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_DROP_FILE, SDL_EVENT_DROP_POSITION) > 0)
+   {
+      if (!dropped_file && event.type == SDL_EVENT_DROP_FILE && event.drop.data)
+      {
+         task_push_load_content_from_frontend_deferred(event.drop.data);
+         dropped_file = true;
+      }
    }
 
     /* Clear out the input queue if we're not using the
