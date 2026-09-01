@@ -275,9 +275,9 @@ const gfx_ctx_driver_t gfx_ctx_sdl3_vk = {
    sdl3_vk_ctx_set_video_mode,
    sdl3_ctx_get_video_size,
    sdl3_ctx_get_refresh_rate,
-   NULL, /* get_video_output_size */
-   NULL, /* get_video_output_prev */
-   NULL, /* get_video_output_next */
+   sdl3_ctx_get_video_output_size,
+   sdl3_ctx_get_video_output_prev,
+   sdl3_ctx_get_video_output_next,
    sdl3_ctx_get_metrics,
    NULL, /* translate_aspect */
    sdl3_ctx_update_title,
