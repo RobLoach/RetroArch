@@ -50,6 +50,12 @@ typedef struct _sdl3_joypad
  */
 static sdl3_joypad_t sdl3_joypads[MAX_USERS];
 
+/* Defined in input/drivers/sdl3_input.c. Gamepad touchpad contacts
+ * (DualSense/DS4) surface as RETRO_DEVICE_POINTER entries there, but
+ * their events land in this driver's poll, so they are handed over
+ * before the flush below can eat them. */
+void sdl3_input_gamepad_touchpad_event(const SDL_Event *event);
+
 static const char *sdl3_joypad_name(unsigned pad)
 {
    if (pad >= MAX_USERS || !sdl3_joypads[pad].jid)
@@ -503,11 +509,18 @@ static void sdl3_joypad_poll(void)
             break;
          case SDL_EVENT_JOYSTICK_REMOVED:
             sdl3_joypad_disconnect(event.jdevice.which);
+            /* Lift any touchpad fingers the pad left behind. */
+            sdl3_input_gamepad_touchpad_event(&event);
             break;
       }
    }
 
    SDL_UpdateGamepads();
+
+   /* Touchpad contacts feed the sdl3 input driver's pointer state. */
+   while (SDL_PeepEvents(&event, 1, SDL_GETEVENT,
+            SDL_EVENT_GAMEPAD_TOUCHPAD_DOWN, SDL_EVENT_GAMEPAD_TOUCHPAD_UP) > 0)
+      sdl3_input_gamepad_touchpad_event(&event);
 
    /* Flush all remaining gamepad/joystick input events, since we handle it directly. */
    SDL_FlushEvents(SDL_EVENT_JOYSTICK_AXIS_MOTION, SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED);

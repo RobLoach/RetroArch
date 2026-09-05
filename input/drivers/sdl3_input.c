@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <boolean.h>
 #include <string/stdstring.h>
@@ -35,6 +36,9 @@
 
 /* OVERLAY_MAX_TOUCH */
 #define SDL3_MAX_TOUCH 16
+
+/* Fingers across all gamepad touchpads (a DualSense tracks two). */
+#define SDL3_MAX_TOUCHPAD_FINGERS 8
 
 typedef struct sdl3_input
 {
@@ -75,7 +79,27 @@ typedef struct sdl3_input
       float x;
       float y;
    } touches[SDL3_MAX_TOUCH];
+
+   /* Active fingers on gamepad touchpads (DualSense/DS4), fed by the
+    * SDL3 joypad driver via sdl3_input_gamepad_touchpad_event(). They
+    * are appended after the touchscreen contacts in the
+    * RETRO_DEVICE_POINTER index space. */
+   int num_touchpad_fingers;
+   struct
+   {
+      SDL_JoystickID which;
+      Sint32 touchpad;
+      Sint32 finger;
+      /* Normalized 0..1, same space as SDL_Finger. */
+      float x;
+      float y;
+   } touchpad_fingers[SDL3_MAX_TOUCHPAD_FINGERS];
 } sdl3_input_t;
+
+/* The gamepad touchpad events land in the SDL3 joypad driver's event
+ * range and are peeped there; this is how they find their way back to
+ * the pointer state above (see sdl3_input_gamepad_touchpad_event). */
+static sdl3_input_t *sdl3_input_instance;
 
 /* Rebuilt on SDL_EVENT_KEYMAP_CHANGED (e.g. system layout switch). */
 static void sdl3_build_scancode_lut(sdl3_input_t *sdl)
@@ -112,7 +136,80 @@ static void *sdl3_input_init(const char *joypad_driver)
       SDL_free(devices);
    }
 
+   sdl3_input_instance = sdl;
+
    return sdl;
+}
+
+/* Looks up an active touchpad finger by its SDL identity; -1 if it
+ * isn't being tracked. */
+static int sdl3_find_touchpad_finger(sdl3_input_t *sdl,
+      SDL_JoystickID which, Sint32 touchpad, Sint32 finger)
+{
+   int i;
+   for (i = 0; i < sdl->num_touchpad_fingers; i++)
+   {
+      if (     sdl->touchpad_fingers[i].which    == which
+            && sdl->touchpad_fingers[i].touchpad == touchpad
+            && sdl->touchpad_fingers[i].finger   == finger)
+         return i;
+   }
+   return -1;
+}
+
+static void sdl3_drop_touchpad_finger(sdl3_input_t *sdl, int i)
+{
+   sdl->num_touchpad_fingers--;
+   memmove(&sdl->touchpad_fingers[i], &sdl->touchpad_fingers[i + 1],
+         (sdl->num_touchpad_fingers - i) * sizeof(sdl->touchpad_fingers[0]));
+}
+
+/* Called by the SDL3 joypad driver, whose poll owns the gamepad event
+ * range (see sdl3_joypad_poll): touchpad contacts are tracked here so
+ * sdl3_input_state can expose them through RETRO_DEVICE_POINTER, after
+ * any touchscreen fingers. Also fed SDL_EVENT_JOYSTICK_REMOVED so an
+ * unplugged pad doesn't leave its fingers stuck down. */
+void sdl3_input_gamepad_touchpad_event(const SDL_Event *event)
+{
+   int i;
+   sdl3_input_t *sdl = sdl3_input_instance;
+
+   /* The sdl3 joypad driver may be paired with another input driver. */
+   if (!sdl)
+      return;
+
+   switch (event->type)
+   {
+      case SDL_EVENT_GAMEPAD_TOUCHPAD_DOWN:
+      case SDL_EVENT_GAMEPAD_TOUCHPAD_MOTION:
+         i = sdl3_find_touchpad_finger(sdl, event->gtouchpad.which,
+               event->gtouchpad.touchpad, event->gtouchpad.finger);
+         if (i < 0)
+         {
+            if (sdl->num_touchpad_fingers >= SDL3_MAX_TOUCHPAD_FINGERS)
+               break;
+            i = sdl->num_touchpad_fingers++;
+            sdl->touchpad_fingers[i].which    = event->gtouchpad.which;
+            sdl->touchpad_fingers[i].touchpad = event->gtouchpad.touchpad;
+            sdl->touchpad_fingers[i].finger   = event->gtouchpad.finger;
+         }
+         sdl->touchpad_fingers[i].x = event->gtouchpad.x;
+         sdl->touchpad_fingers[i].y = event->gtouchpad.y;
+         break;
+      case SDL_EVENT_GAMEPAD_TOUCHPAD_UP:
+         i = sdl3_find_touchpad_finger(sdl, event->gtouchpad.which,
+               event->gtouchpad.touchpad, event->gtouchpad.finger);
+         if (i >= 0)
+            sdl3_drop_touchpad_finger(sdl, i);
+         break;
+      case SDL_EVENT_JOYSTICK_REMOVED:
+         for (i = sdl->num_touchpad_fingers - 1; i >= 0; i--)
+         {
+            if (sdl->touchpad_fingers[i].which == event->jdevice.which)
+               sdl3_drop_touchpad_finger(sdl, i);
+         }
+         break;
+   }
 }
 
 static bool sdl3_key_pressed(sdl3_input_t *sdl, int key)
@@ -282,23 +379,36 @@ static int16_t sdl3_input_state(
             int abs_x = 0;
             int abs_y = 0;
             int16_t pressed = 0;
+            int num_fingers = sdl->num_touches + sdl->num_touchpad_fingers;
 
             if (id == RETRO_DEVICE_ID_POINTER_COUNT)
-               return sdl->num_touches ? sdl->num_touches : (sdl->mouse_l ? 1 : 0);
+               return num_fingers ? num_fingers : (sdl->mouse_l ? 1 : 0);
 
             if (!video_driver_get_viewport_info(&vp))
                break;
 
-            /* Touch contacts take precedence; the mouse doubles as
-             * pointer 0 when no fingers are down (touch/pointer
-             * overlay support - input_poll_overlay walks pointer
-             * indices until PRESSED reads 0). */
-            if (sdl->num_touches > 0)
+            /* Touch contacts take precedence, with gamepad touchpad
+             * fingers appended after the touchscreen ones; the mouse
+             * doubles as pointer 0 when no fingers are down
+             * (touch/pointer overlay support - input_poll_overlay
+             * walks pointer indices until PRESSED reads 0). */
+            if (num_fingers > 0)
             {
-               if ((int)idx >= sdl->num_touches)
+               if ((int)idx >= num_fingers)
                   return 0;
-               abs_x = (int)(sdl->touches[idx].x * (float)vp.full_width);
-               abs_y = (int)(sdl->touches[idx].y * (float)vp.full_height);
+               if ((int)idx < sdl->num_touches)
+               {
+                  abs_x = (int)(sdl->touches[idx].x * (float)vp.full_width);
+                  abs_y = (int)(sdl->touches[idx].y * (float)vp.full_height);
+               }
+               else
+               {
+                  /* Touchpad coordinates are normalized 0..1 like
+                   * SDL_Finger's, so they scale the same way. */
+                  int tp = (int)idx - sdl->num_touches;
+                  abs_x = (int)(sdl->touchpad_fingers[tp].x * (float)vp.full_width);
+                  abs_y = (int)(sdl->touchpad_fingers[tp].y * (float)vp.full_height);
+               }
                pressed = 1;
             }
             else
@@ -444,6 +554,9 @@ static void sdl3_input_free(void *data)
    SDL_FlushEvents(SDL_EVENT_KEY_DOWN,         SDL_EVENT_MOUSE_REMOVED);
    SDL_FlushEvents(SDL_EVENT_FINGER_DOWN,      SDL_EVENT_FINGER_CANCELED);
    SDL_FlushEvents(SDL_EVENT_PEN_PROXIMITY_IN, SDL_EVENT_PEN_AXIS);
+
+   if (sdl3_input_instance == sdl)
+      sdl3_input_instance = NULL;
 
    SDL_QuitSubSystem(SDL_INIT_EVENTS);
    free(sdl);
