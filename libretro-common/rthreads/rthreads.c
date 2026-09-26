@@ -1313,19 +1313,166 @@ static sthread_t *sthread_create_ex(void (*thread_func)(void*),
 }
 
 #ifdef RTHREADS_HAVE_AFFINITY
-/* The set of CPUs whose maximum frequency matches the highest in the
- * system, intersected with what this thread may already run on.
- * Computed once; on a homogeneous part it comes out equal to the
- * allowed set and the pin is skipped. */
-static unsigned long rthreads_fast_mask[4];
+/* The fast cores of an asymmetric part, intersected with what this
+ * thread may already run on. Computed once; on a homogeneous part it
+ * comes out equal to the allowed set and the pin is skipped.
+ *
+ * Three sources, in order of trust:
+ *  1. The kernel's own hybrid classification: on Intel hybrid parts
+ *     the perf driver publishes the P-cores as cpu_core/cpus and the
+ *     E-cores as cpu_atom/cpus.
+ *  2. cpu_capacity, the scheduler's per-CPU throughput figure on ARM
+ *     big.LITTLE, where the biggest cluster is 1024 and a little one
+ *     a few hundred. A three-tier part (one prime, some big, some
+ *     little) keeps its big cores in the fast set by taking everything
+ *     within RTHREADS_FAST_CAPACITY_PCT of the best.
+ *  3. cpuinfo_max_freq, within RTHREADS_FAST_FREQ_PCT of the highest.
+ *     The band is what makes this usable on x86: favoured cores
+ *     (Intel Turbo Boost Max 3.0, AMD CPPC preferred cores) and the
+ *     two CCDs of an X3D part differ from their siblings by a few
+ *     percent, while a real slow cluster sits 20-40% lower. An exact
+ *     match, as this used to be, shrank the fast set to the two
+ *     favoured cores and pinned the main and audio threads onto them. */
+#define RTHREADS_MASK_WORDS 4
+#define RTHREADS_MASK_BITS  (RTHREADS_MASK_WORDS * 8 * (int)sizeof(unsigned long))
+#define RTHREADS_FAST_CAPACITY_PCT 70
+#define RTHREADS_FAST_FREQ_PCT     85
+
+static unsigned long rthreads_fast_mask[RTHREADS_MASK_WORDS];
 static int           rthreads_fast_state; /* 0 unknown, 1 pin, -1 no-op */
+
+#define RTHREADS_MASK_TEST(m, i) \
+   (((m)[(i) / (8 * sizeof(unsigned long))] >> ((i) % (8 * sizeof(unsigned long)))) & 1ul)
+#define RTHREADS_MASK_SET(m, i) \
+   ((m)[(i) / (8 * sizeof(unsigned long))] |= 1ul << ((i) % (8 * sizeof(unsigned long))))
+
+/* Reads one unsigned long from a sysfs file; 0 when absent or empty. */
+static unsigned long rthreads_sysfs_read_ulong(const char *path)
+{
+   unsigned long v = 0;
+   FILE *f         = fopen(path, "r");
+   if (!f)
+      return 0;
+   if (fscanf(f, "%lu", &v) != 1)
+      v = 0;
+   fclose(f);
+   return v;
+}
+
+/* Parses a sysfs cpulist ("0-7,16-23") from the file at path into
+ * mask; returns whether the file existed and named at least one CPU. */
+static bool rthreads_sysfs_read_cpulist(const char *path, unsigned long *mask)
+{
+   char  line[512];
+   char *p;
+   bool  any = false;
+   FILE *f   = fopen(path, "r");
+   if (!f)
+      return false;
+   line[0] = '\0';
+   if (!fgets(line, sizeof(line), f))
+      line[0] = '\0';
+   fclose(f);
+   for (p = line; *p; )
+   {
+      char *next;
+      unsigned long lo, hi, i;
+      if (*p < '0' || *p > '9')
+      {
+         p++;
+         continue;
+      }
+      lo = hi = strtoul(p, &next, 10);
+      if (*next == '-')
+         hi = strtoul(next + 1, &next, 10);
+      for (i = lo; i <= hi && i < (unsigned long)RTHREADS_MASK_BITS; i++)
+      {
+         RTHREADS_MASK_SET(mask, i);
+         any = true;
+      }
+      p = next;
+   }
+   return any;
+}
+
+/* Marks in mask every present CPU whose per-CPU sysfs value at
+ * "<cpu>/<leaf>" is within pct percent of the highest; returns the
+ * number of CPUs that had a value at all. */
+static unsigned rthreads_fast_by_value(const char *leaf, unsigned pct,
+      unsigned long *mask)
+{
+   unsigned long vals[RTHREADS_MASK_BITS];
+   unsigned long best = 0;
+   unsigned      i, n = 0;
+   for (i = 0; i < (unsigned)RTHREADS_MASK_BITS; i++)
+   {
+      char path[512];
+      snprintf(path, sizeof(path), RTHREADS_CPU_SYSFS "/cpu%u/%s", i, leaf);
+      vals[i] = rthreads_sysfs_read_ulong(path);
+      if (vals[i])
+      {
+         n++;
+         if (vals[i] > best)
+            best = vals[i];
+      }
+   }
+   if (!n)
+      return 0;
+   for (i = 0; i < (unsigned)RTHREADS_MASK_BITS; i++)
+      if (vals[i] && vals[i] * 100 >= best * pct)
+         RTHREADS_MASK_SET(mask, i);
+   return n;
+}
+
+/* Classifies the system's cores into fast, intersects with allowed,
+ * and stores the result in fast. Returns 1 when the thread should be
+ * pinned to fast and -1 when it should be left alone: nothing was
+ * readable, every allowed CPU is a fast one (a homogeneous part, or
+ * an affinity already inside the fast set), or none is. */
+static int rthreads_classify_fast_cores(const unsigned long *allowed,
+      unsigned long *fast)
+{
+   unsigned long cls[RTHREADS_MASK_WORDS];
+   unsigned long atom[RTHREADS_MASK_WORDS];
+   unsigned      i;
+   bool          any = false, all = true;
+
+   memset(cls,  0, sizeof(cls));
+   memset(atom, 0, sizeof(atom));
+   memset(fast, 0, RTHREADS_MASK_WORDS * sizeof(unsigned long));
+
+   /* 1. Intel hybrid, as the kernel sees it (/sys/devices/cpu_core and
+    *    cpu_atom, beside /sys/devices/system). Only meaningful when
+    *    both kinds exist: cpu_core alone is what a homogeneous Intel
+    *    part publishes. */
+   if (  !rthreads_sysfs_read_cpulist(RTHREADS_CPU_SYSFS "/../../cpu_core/cpus", cls)
+      || !rthreads_sysfs_read_cpulist(RTHREADS_CPU_SYSFS "/../../cpu_atom/cpus", atom))
+   {
+      /* 2. Scheduler capacity (ARM), then 3. maximum clock. */
+      memset(cls, 0, sizeof(cls));
+      if (!rthreads_fast_by_value("cpu_capacity", RTHREADS_FAST_CAPACITY_PCT, cls))
+         if (!rthreads_fast_by_value("cpufreq/cpuinfo_max_freq", RTHREADS_FAST_FREQ_PCT, cls))
+            return -1;
+   }
+
+   for (i = 0; i < (unsigned)RTHREADS_MASK_BITS; i++)
+   {
+      if (!RTHREADS_MASK_TEST(allowed, i))
+         continue;
+      if (RTHREADS_MASK_TEST(cls, i))
+      {
+         RTHREADS_MASK_SET(fast, i);
+         any = true;
+      }
+      else
+         all = false;
+   }
+   return (any && !all) ? 1 : -1;
+}
 
 static void rthreads_find_fast_cores(void)
 {
-   unsigned long allowed[4];
-   unsigned long best = 0;
-   unsigned      i;
-   int           ncpu = (int)(sizeof(allowed) * 8);
+   unsigned long allowed[RTHREADS_MASK_WORDS];
 
    memset(allowed, 0, sizeof(allowed));
    if (syscall(__NR_sched_getaffinity, 0, sizeof(allowed), allowed) <= 0)
@@ -1333,37 +1480,7 @@ static void rthreads_find_fast_cores(void)
       rthreads_fast_state = -1;
       return;
    }
-   memset(rthreads_fast_mask, 0, sizeof(rthreads_fast_mask));
-   for (i = 0; i < (unsigned)ncpu; i++)
-   {
-      char path[96];
-      FILE *f;
-      unsigned long khz = 0;
-      if (!(allowed[i / (8 * sizeof(unsigned long))]
-               & (1ul << (i % (8 * sizeof(unsigned long))))))
-         continue;
-      sprintf(path, RTHREADS_CPU_SYSFS "/cpu%u/cpufreq/cpuinfo_max_freq", i);
-      f = fopen(path, "r");
-      if (!f)
-         continue;
-      if (fscanf(f, "%lu", &khz) != 1)
-         khz = 0;
-      fclose(f);
-      if (khz > best)
-      {
-         best = khz;
-         memset(rthreads_fast_mask, 0, sizeof(rthreads_fast_mask));
-      }
-      if (khz && khz == best)
-         rthreads_fast_mask[i / (8 * sizeof(unsigned long))]
-            |= 1ul << (i % (8 * sizeof(unsigned long)));
-   }
-   /* Nothing readable, or every allowed CPU is a fast one: leave the
-    * thread where the scheduler puts it. */
-   if (!best || !memcmp(rthreads_fast_mask, allowed, sizeof(allowed)))
-      rthreads_fast_state = -1;
-   else
-      rthreads_fast_state = 1;
+   rthreads_fast_state = rthreads_classify_fast_cores(allowed, rthreads_fast_mask);
 }
 #endif
 

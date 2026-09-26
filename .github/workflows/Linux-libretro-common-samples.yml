@@ -183,6 +183,7 @@ jobs:
             retro_procbarrier_test
             retro_asym_eventcount_test
             sthread_ex_test
+            fast_cores_test
             memshm_test
             fastjmp_test
             rdds_block_test
