@@ -30,5 +30,5 @@ S_UINT(video_filter_threads, VIDEO_FILTER_THREADS,
       "video_filter_threads",
       DEFAULT_VIDEO_FILTER_THREADS, SD_FLAG_ADVANCED, SDESC_RANGE_MINMAX, CMD_EVENT_NONE, 0, MAXIMUM_VIDEO_FILTER_THREADS, 1, 0, setting_action_ok_uint, setting_get_string_representation_uint_video_filter_threads,
       "Video Filter Threads",
-      "How many threads a CPU video filter may run on. 'Automatic' uses one per CPU core. Light filters can run slower when spread over many threads, so a lower count may be faster for them; heavy filters such as NTSC gain the most from more threads. A running filter picks up the change straight away.")
+      "How many threads a CPU video filter may run on. 'Automatic' uses the cores left after the emulation, video, audio and task threads have theirs, at most 8, and fewer for light filters that run slower when spread out. Heavy filters such as NTSC gain the most from more threads. A running filter picks up the change straight away.")
 #endif

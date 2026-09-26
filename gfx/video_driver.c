@@ -2369,6 +2369,22 @@ void video_driver_init_filter(enum retro_pixel_format colfmt_int,
       return;
    }
 
+   /* Cores the frame-critical threads hold, for the Automatic worker
+    * count: the emulation thread, plus each pipeline that runs on a
+    * thread of its own. */
+   {
+      unsigned reserved = 1;
+#ifdef HAVE_THREADS
+      if (VIDEO_DRIVER_IS_THREADED_INTERNAL(video_st))
+         reserved++;
+      if (settings->bools.audio_threaded_pipeline)
+         reserved++;
+      if (settings->bools.threaded_data_runloop_enable)
+         reserved++;
+#endif
+      rarch_softfilter_set_auto_reserved(reserved);
+   }
+
    if (!(video_st->state_filter = rarch_softfilter_new(
          settings->paths.path_softfilter_plugin,
          settings->uints.video_filter_threads, colfmt, dims)))
