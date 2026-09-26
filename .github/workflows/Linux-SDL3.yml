@@ -1,0 +1,65 @@
+name: CI Linux (SDL3)
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-sdl3: # Compile check for the SDL3 drivers (--enable-sdl3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Dependencies
+        run: |
+          sudo apt-get update -y
+          # Just a toolchain and pkg-config, which configure resolves
+          # sdl3 through. RetroArch's other Linux libraries are all
+          # optional - configure auto-disables what it can't find -
+          # and SDL3's own build deps are installed by the setup-sdl
+          # step below.
+          sudo apt-get install -y build-essential pkg-config
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SDL3
+        # Caches the built SDL3 package on its own via actions/cache,
+        # keyed on the version and runner os/arch, so nothing extra is
+        # needed to avoid rebuilding it every run. Exports
+        # PKG_CONFIG_PATH so configure picks it up.
+        uses: libsdl-org/setup-sdl@v1
+        with:
+          version: 3.4.14
+          build-type: Release
+          install-linux-dependencies: true
+
+      - name: Setup ccache
+        # Caches RetroArch object files between runs. create-symlink
+        # masquerades gcc/g++ as ccache, so configure and make need
+        # no changes.
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: linux-sdl3
+          create-symlink: true
+
+      - name: Configure
+        run: |
+          ./configure --enable-sdl3
+          # configure exits 0 even when a lib is missing; make sure
+          # SDL3 was actually picked up.
+          grep -q '^HAVE_SDL3 = 1' config.mk
+
+      - name: Build
+        run: make -j$(getconf _NPROCESSORS_ONLN)
+
+      - name: Verify features
+        # Confirm the built binary actually carries the SDL3 drivers.
+        run: |
+          ./retroarch --features | grep 'SDL3.*: yes'
