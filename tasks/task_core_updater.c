@@ -339,15 +339,34 @@ static bool core_updater_sub_task_finder(retro_task_t *task, void *user_data)
    return true;
 }
 
-/* The queue frees a sub-task right after its callback, so it is only
- * read through find(), which holds the queue locks.  Callers check
- * the callback's complete flag first; a reused address can then cost
- * one wrong progress value at most. */
+/* The threaded queue frees a sub-task on the main thread right after
+ * its callback, while this handler runs on the worker, so there the
+ * sub-task is only read through find(), which holds the queue locks.
+ * Callers check the callback's complete flag first; a reused address
+ * can then cost one wrong progress value at most.
+ *
+ * The unthreaded queue runs handlers in list order and only retires
+ * finished tasks after the whole pass.  A sub-task is pushed from
+ * this handler's own tick, so it always sits ahead of the updater
+ * and has already ticked - alive, at worst finished but not yet
+ * freed - when the updater reads it; by the next pass its callback
+ * has set the complete flag and the updater stops looking.  find()
+ * cannot be used there: the gather detaches the running list before
+ * it ticks anything, so no sub-task is findable from inside a
+ * handler and progress would never be copied. */
 static bool core_updater_sub_task_running(retro_task_t *sub_task,
       int8_t *progress)
 {
    task_finder_data_t find_data;
    struct core_updater_sub_task_probe probe;
+
+   if (!task_queue_is_threaded())
+   {
+      if (task_get_flags(sub_task) & RETRO_TASK_FLG_FINISHED)
+         return false;
+      *progress = task_get_progress(sub_task);
+      return true;
+   }
 
    probe.target       = sub_task;
    probe.flags        = 0;
