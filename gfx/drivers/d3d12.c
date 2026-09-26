@@ -574,7 +574,33 @@ typedef struct
     * thread. */
    unsigned swapchain_bit_depth_latched;
    int8_t wait_for_vblank;
+
+   /* Streamed recording readback. While recording, every frame's
+    * command list copies the back buffer into the next readback buffer
+    * of this ring, a fence value is signalled behind the list, and
+    * read_viewport maps the buffer copied D3D12_RECORD_RING frames ago
+    * once its fence has passed - never waiting on the GPU. Before this
+    * the recorder re-rendered the frame, drained the queue, created a
+    * fresh readback buffer and copied into it, every frame. */
+#define D3D12_RECORD_RING 3
+   struct
+   {
+      D3D12Resource readback[D3D12_RECORD_RING];
+      UINT64        fence[D3D12_RECORD_RING];
+      bool          valid[D3D12_RECORD_RING];
+      unsigned      index;
+      unsigned      dims;
+      DXGI_FORMAT   format;
+      D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
+      UINT64        total_bytes;
+      bool          enable;
+      /* Set by the capture recorded into a frame's list, consumed by
+       * the signal after that list is executed. */
+      bool          pending;
+   } record;
 } d3d12_video_t;
+
+static void d3d12_record_free(d3d12_video_t *d3d12);
 
 #define D3D12_ROLLING_SCANLINE_SIMULATION
 
@@ -4058,6 +4084,7 @@ static void d3d12_gfx_free(void* data)
    Release(d3d12->chain.retained);
    d3d12->chain.retained = NULL;
    d3d12_hw_ring_free(d3d12);
+   d3d12_record_free(d3d12);
 
 
 #ifdef HAVE_OVERLAY
@@ -5351,6 +5378,140 @@ static void dx12_inject_black_frame(d3d12_video_t* d3d12);
  * when it does not match. Left in COPY_SOURCE for present_last(). The
  * desc comes from the swapchain, not ID3D12Resource::GetDesc, which the
  * C vtable declares struct-by-value and mingw cannot call as declared. */
+static void d3d12_record_free(d3d12_video_t *d3d12)
+{
+   unsigned i;
+   for (i = 0; i < D3D12_RECORD_RING; i++)
+   {
+      Release(d3d12->record.readback[i]);
+      d3d12->record.readback[i] = NULL;
+      d3d12->record.valid[i]    = false;
+      d3d12->record.fence[i]    = 0;
+   }
+   d3d12->record.index   = 0;
+   d3d12->record.dims    = 0;
+   d3d12->record.enable  = false;
+   d3d12->record.pending = false;
+}
+
+/* Record a copy of this frame's back buffer into the ring, into the
+ * frame's own command list, with the back buffer already transitioned
+ * to PRESENT. Recreates the ring when the swapchain changes size or
+ * format. The fence for the slot is signalled by d3d12_record_signal()
+ * once the list is executed. */
+static void d3d12_record_capture(d3d12_video_t *d3d12, D3D12GraphicsCommandList cmd)
+{
+   DXGI_SWAP_CHAIN_DESC1 sc;
+   D3D12Resource back_buffer = d3d12->chain.renderTargets[d3d12->chain.frame_index];
+   D3D12_TEXTURE_COPY_LOCATION src_loc;
+   D3D12_TEXTURE_COPY_LOCATION dst_loc;
+   D3D12_BOX src_box;
+   unsigned dims;
+
+   if (!back_buffer)
+      return;
+   if (FAILED(d3d12->chain.handle->lpVtbl->GetDesc1(d3d12->chain.handle, &sc)))
+      return;
+   dims = VIDEO_SCALE_PACK(sc.Width, sc.Height);
+
+   if (     !d3d12->record.enable
+         || d3d12->record.dims   != dims
+         || d3d12->record.format != sc.Format)
+   {
+      D3D12_RESOURCE_DESC   tex_desc;
+      D3D12_HEAP_PROPERTIES heap_props;
+      D3D12_RESOURCE_DESC   buf_desc;
+      UINT   num_rows        = 0;
+      UINT64 row_size_bytes  = 0;
+      unsigned i;
+
+      d3d12_record_free(d3d12);
+
+      memset(&tex_desc, 0, sizeof(tex_desc));
+      tex_desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+      tex_desc.Width              = sc.Width;
+      tex_desc.Height             = sc.Height;
+      tex_desc.DepthOrArraySize   = 1;
+      tex_desc.MipLevels          = 1;
+      tex_desc.Format             = sc.Format;
+      tex_desc.SampleDesc.Count   = 1;
+      tex_desc.Layout             = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+      tex_desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+      d3d12->device->lpVtbl->GetCopyableFootprints(d3d12->device,
+            &tex_desc, 0, 1, 0, &d3d12->record.footprint, &num_rows,
+            &row_size_bytes, &d3d12->record.total_bytes);
+
+      heap_props.Type                 = D3D12_HEAP_TYPE_READBACK;
+      heap_props.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+      heap_props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+      heap_props.CreationNodeMask     = 1;
+      heap_props.VisibleNodeMask      = 1;
+      memset(&buf_desc, 0, sizeof(buf_desc));
+      buf_desc.Dimension              = D3D12_RESOURCE_DIMENSION_BUFFER;
+      buf_desc.Alignment              = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+      buf_desc.Width                  = d3d12->record.total_bytes;
+      buf_desc.Height                 = 1;
+      buf_desc.DepthOrArraySize       = 1;
+      buf_desc.MipLevels              = 1;
+      buf_desc.Format                 = DXGI_FORMAT_UNKNOWN;
+      buf_desc.SampleDesc.Count       = 1;
+      buf_desc.Layout                 = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+      buf_desc.Flags                  = D3D12_RESOURCE_FLAG_NONE;
+      for (i = 0; i < D3D12_RECORD_RING; i++)
+      {
+         if (FAILED(d3d12->device->lpVtbl->CreateCommittedResource(d3d12->device,
+                     &heap_props, D3D12_HEAP_FLAG_NONE,
+                     &buf_desc, D3D12_RESOURCE_STATE_COPY_DEST, NULL,
+                     uuidof(ID3D12Resource), (void**)&d3d12->record.readback[i])))
+         {
+            RARCH_ERR("[D3D12] Recording readback buffer failed.\n");
+            d3d12_record_free(d3d12);
+            return;
+         }
+      }
+      d3d12->record.dims   = dims;
+      d3d12->record.format = sc.Format;
+      d3d12->record.enable = true;
+   }
+
+   D3D12_RESOURCE_TRANSITION(cmd, back_buffer,
+         D3D12_RESOURCE_STATE_PRESENT,
+         D3D12_RESOURCE_STATE_COPY_SOURCE);
+   src_loc.pResource        = back_buffer;
+   src_loc.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+   src_loc.SubresourceIndex = 0;
+   dst_loc.pResource        = d3d12->record.readback[d3d12->record.index];
+   dst_loc.Type             = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+   dst_loc.PlacedFootprint  = d3d12->record.footprint;
+   src_box.left   = 0;
+   src_box.top    = 0;
+   src_box.front  = 0;
+   src_box.right  = (UINT)sc.Width;
+   src_box.bottom = sc.Height;
+   src_box.back   = 1;
+   cmd->lpVtbl->CopyTextureRegion(cmd, &dst_loc, 0, 0, 0, &src_loc, &src_box);
+   D3D12_RESOURCE_TRANSITION(cmd, back_buffer,
+         D3D12_RESOURCE_STATE_COPY_SOURCE,
+         D3D12_RESOURCE_STATE_PRESENT);
+   d3d12->record.pending = true;
+}
+
+/* After the list carrying the capture is executed: a signal behind it
+ * marks the slot readable once the queue reaches it. */
+static void d3d12_record_signal(d3d12_video_t *d3d12)
+{
+   unsigned slot;
+   if (!d3d12->record.pending)
+      return;
+   d3d12->record.pending = false;
+   slot = d3d12->record.index;
+   d3d12->record.fence[slot] = ++d3d12->queue.fenceValue;
+   d3d12->queue.handle->lpVtbl->Signal(d3d12->queue.handle,
+         d3d12->queue.fence, d3d12->record.fence[slot]);
+   d3d12->record.valid[slot] = true;
+   d3d12->record.index = (slot + 1) % D3D12_RECORD_RING;
+}
+
 static void d3d12_retain_backbuffer(d3d12_video_t *d3d12,
       D3D12GraphicsCommandList cmd)
 {
@@ -7004,9 +7165,19 @@ static bool d3d12_gfx_frame(
       d3d12->chain.retained_dark  = 0;
    }
 
+   /* The recorder's copy of this frame, in this frame's list; the
+    * fence behind the list tells read_viewport when it can be read.
+    * Torn down when recording stops. */
+   if (video_info->gpu_recording
+         && !(d3d12->flags & D3D12_ST_FLAG_FRAME_DUPE_LOCK))
+      d3d12_record_capture(d3d12, cmd);
+   else if (!video_info->gpu_recording && d3d12->record.enable)
+      d3d12_record_free(d3d12);
+
    cmd->lpVtbl->Close(cmd);
    d3d12->queue.handle->lpVtbl->ExecuteCommandLists(d3d12->queue.handle, 1,
          (ID3D12CommandList* const*)&d3d12->queue.cmd);
+   d3d12_record_signal(d3d12);
 
    /* Version 2: the core's texture is the core's again once this list,
     * which copied from it, has executed. Signalled on the queue, behind
@@ -7699,68 +7870,40 @@ static bool d3d12_gfx_read_viewport_hdr(void *data, uint16_t *buffer,
 
 static bool d3d12_gfx_read_viewport(void* data, uint8_t* buffer, bool is_idle)
 {
-   d3d12_video_t*            d3d12      = (d3d12_video_t*)data;
-   D3D12GraphicsCommandList  cmd;
-   D3D12Resource             back_buffer = NULL;
-   D3D12Resource             readback    = NULL;
-   D3D12_RESOURCE_DESC       tex_desc;
-   D3D12_HEAP_PROPERTIES     heap_props;
-   D3D12_RESOURCE_DESC       buf_desc;
-   D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
-   D3D12_TEXTURE_COPY_LOCATION src_loc;
-   D3D12_TEXTURE_COPY_LOCATION dst_loc;
-   D3D12_BOX                 src_box;
-   D3D12_RANGE               read_range;
-   UINT64                    total_bytes    = 0;
-   UINT                      num_rows       = 0;
-   UINT64                    row_size_bytes = 0;
-   const uint8_t*            src_pixels     = NULL;
-   uint8_t*                  mapped         = NULL;
-   unsigned                  vp_x, vp_y, vp_w, vp_h, y, x;
+   d3d12_video_t*  d3d12    = (d3d12_video_t*)data;
+   D3D12Resource   readback = NULL;
+   D3D12_RANGE     read_range;
+   const uint8_t*  src_pixels = NULL;
+   uint8_t*        mapped     = NULL;
+   unsigned        slot, vp_x, vp_y, vp_w, vp_h, y, x;
    enum { READBACK_RGBA8, READBACK_BGRA8, READBACK_HDR10, READBACK_SCRGB }
-                             readback_mode;
-   bool                      ret = true;
+                   readback_mode;
+   bool            ret = true;
+   const D3D12_PLACED_SUBRESOURCE_FOOTPRINT *footprint;
+
+   (void)is_idle;
 
    if (!d3d12)
       return false;
 
-   if (!is_idle)
-      video_driver_cached_frame();
-
-   /* Ensure the cached_frame submission above has finished on the GPU
-    * before we reuse the command allocator. */
-   {
-      d3d12_queue_drain(d3d12);
-   }
-
-   /* cached_frame rendered into chain.renderTargets[chain.frame_index]
-    * and Present'd it without updating frame_index afterwards, so that
-    * slot still refers to the buffer we want to read back. */
-   back_buffer = d3d12->chain.renderTargets[d3d12->chain.frame_index];
-   if (!back_buffer)
+   /* Nothing captured yet: the frame after recording starts records
+    * the first copy, and the ring fills over the next few frames. The
+    * recorder treats false as "not this frame" and tries again. */
+   if (!d3d12->record.enable)
       return false;
 
-   /* We intentionally don't call ID3D12Resource::GetDesc here: the
-    * Windows SDK version takes an out-param while the MinGW header
-    * returns the struct by value, which breaks cross-toolchain builds.
-    * The only fields we need are Format / Width / Height, which we
-    * already know from the swapchain state. */
-   memset(&tex_desc, 0, sizeof(tex_desc));
-   tex_desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-   tex_desc.Alignment          = 0;
-   tex_desc.Width              = (UINT64)d3d12->chain.viewport.Width;
-   tex_desc.Height             = (UINT)  d3d12->chain.viewport.Height;
-   tex_desc.DepthOrArraySize   = 1;
-   tex_desc.MipLevels          = 1;
-   tex_desc.Format             = d3d12->chain.formats[d3d12->chain.bit_depth];
-   tex_desc.SampleDesc.Count   = 1;
-   tex_desc.SampleDesc.Quality = 0;
-   tex_desc.Layout             = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-   tex_desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+   slot     = d3d12->record.index; /* the oldest: copied RING frames ago */
+   readback = d3d12->record.readback[slot];
+   if (!d3d12->record.valid[slot] || !readback)
+      return false;
 
-   /* Classify the source format so we know how to decode it CPU-side
-    * after the readback copy completes. */
-   switch (tex_desc.Format)
+   /* Not executed yet: read on a later frame, never waited for. */
+   if (d3d12->queue.fence->lpVtbl->GetCompletedValue(d3d12->queue.fence)
+         < d3d12->record.fence[slot])
+      return false;
+   d3d12->record.valid[slot] = false;
+
+   switch (d3d12->record.format)
    {
       case DXGI_FORMAT_R8G8B8A8_UNORM:
       case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
@@ -7772,22 +7915,18 @@ static bool d3d12_gfx_read_viewport(void* data, uint8_t* buffer, bool is_idle)
          break;
 #ifdef HAVE_DXGI_HDR
       case DXGI_FORMAT_R10G10B10A2_UNORM:
-         /* HDR10: ST.2084 PQ, BT.2020 primaries. */
          readback_mode = READBACK_HDR10;
          break;
       case DXGI_FORMAT_R16G16B16A16_FLOAT:
-         /* scRGB: linear BT.709, FP16, 1.0 == 80 nits. */
          readback_mode = READBACK_SCRGB;
          break;
 #endif
       default:
          RARCH_ERR("[D3D12] Unexpected swapchain format %u.\n",
-               (unsigned)tex_desc.Format);
+               (unsigned)d3d12->record.format);
          return false;
    }
 
-   /* Compute the viewport clamp once so both the GPU HDR path (below)
-    * and the CPU swizzle loops (at the end) can use it. */
    vp_x = (VIDEO_POS_X(d3d12->vp.pos) > 0) ? VIDEO_POS_X(d3d12->vp.pos) : 0;
    vp_y = (VIDEO_POS_Y(d3d12->vp.pos) > 0) ? VIDEO_POS_Y(d3d12->vp.pos) : 0;
    vp_w = (VIDEO_SCALE_W(d3d12->vp.dims)  > VIDEO_SCALE_W(d3d12->vp.full_dims))
@@ -7795,128 +7934,32 @@ static bool d3d12_gfx_read_viewport(void* data, uint8_t* buffer, bool is_idle)
    vp_h = (VIDEO_SCALE_H(d3d12->vp.dims) > VIDEO_SCALE_H(d3d12->vp.full_dims))
          ? VIDEO_SCALE_H(d3d12->vp.full_dims) : VIDEO_SCALE_H(d3d12->vp.dims);
    dxgi_readback_clamp_window(
-         (unsigned)tex_desc.Width, (unsigned)tex_desc.Height,
+         VIDEO_SCALE_W(d3d12->record.dims), VIDEO_SCALE_H(d3d12->record.dims),
          &vp_x, &vp_y, &vp_w, &vp_h);
 
-#ifdef HAVE_DXGI_HDR
-   /* HDR fast path: try the GPU tonemap.  On success we're done and
-    * return before allocating the SDR readback buffer.  On failure we
-    * fall through — the CPU decoder will still work against the raw
-    * readback of the swapchain backbuffer. */
-   if (readback_mode == READBACK_HDR10 || readback_mode == READBACK_SCRGB)
-   {
-      if (d3d12_gpu_hdr_readback_to_bgr24(
-               d3d12, tex_desc.Format,
-               (unsigned)tex_desc.Width, (unsigned)tex_desc.Height,
-               vp_x, vp_y, vp_w, vp_h, buffer))
-         return true;
-      RARCH_WARN("[D3D12] GPU HDR readback failed, falling back to CPU.\n");
-   }
-#endif
-
-   /* Ask the device what layout a readback copy of this texture needs.
-    * D3D12 requires 256-byte row pitches and 512-byte base offsets in
-    * readback buffers, so we can't just pick arbitrary dimensions. */
-   d3d12->device->lpVtbl->GetCopyableFootprints(d3d12->device,
-         &tex_desc, 0, 1, 0, &footprint, &num_rows,
-         &row_size_bytes, &total_bytes);
-
-   /* Create a readback heap buffer large enough for the footprint. */
-   heap_props.Type                 = D3D12_HEAP_TYPE_READBACK;
-   heap_props.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-   heap_props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-   heap_props.CreationNodeMask     = 1;
-   heap_props.VisibleNodeMask      = 1;
-
-   buf_desc.Dimension              = D3D12_RESOURCE_DIMENSION_BUFFER;
-   buf_desc.Alignment              = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-   buf_desc.Width                  = total_bytes;
-   buf_desc.Height                 = 1;
-   buf_desc.DepthOrArraySize       = 1;
-   buf_desc.MipLevels              = 1;
-   buf_desc.Format                 = DXGI_FORMAT_UNKNOWN;
-   buf_desc.SampleDesc.Count       = 1;
-   buf_desc.SampleDesc.Quality     = 0;
-   buf_desc.Layout                 = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-   buf_desc.Flags                  = D3D12_RESOURCE_FLAG_NONE;
-
-   if (FAILED(d3d12->device->lpVtbl->CreateCommittedResource(d3d12->device,
-               &heap_props, D3D12_HEAP_FLAG_NONE,
-               &buf_desc, D3D12_RESOURCE_STATE_COPY_DEST, NULL,
-               uuidof(ID3D12Resource), (void**)&readback)))
-   {
-      RARCH_ERR("[D3D12] Failed to create readback buffer.\n");
-      return false;
-   }
-
-   /* Record a tiny command list that transitions the backbuffer to
-    * COPY_SOURCE, copies it into the readback buffer, and transitions
-    * it back to PRESENT so Present on the next frame stays legal. */
-   d3d12->queue.allocator->lpVtbl->Reset(d3d12->queue.allocator);
-   cmd = d3d12->queue.cmd;
-   cmd->lpVtbl->Reset(cmd, d3d12->queue.allocator,
-         d3d12->pipes[VIDEO_SHADER_STOCK_BLEND]);
-
-   D3D12_RESOURCE_TRANSITION(cmd, back_buffer,
-         D3D12_RESOURCE_STATE_PRESENT,
-         D3D12_RESOURCE_STATE_COPY_SOURCE);
-
-   src_loc.pResource        = back_buffer;
-   src_loc.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-   src_loc.SubresourceIndex = 0;
-
-   dst_loc.pResource        = readback;
-   dst_loc.Type             = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-   dst_loc.PlacedFootprint  = footprint;
-
-   src_box.left   = 0;
-   src_box.top    = 0;
-   src_box.front  = 0;
-   src_box.right  = (UINT)tex_desc.Width;
-   src_box.bottom = tex_desc.Height;
-   src_box.back   = 1;
-
-   cmd->lpVtbl->CopyTextureRegion(cmd, &dst_loc, 0, 0, 0, &src_loc, &src_box);
-
-   D3D12_RESOURCE_TRANSITION(cmd, back_buffer,
-         D3D12_RESOURCE_STATE_COPY_SOURCE,
-         D3D12_RESOURCE_STATE_PRESENT);
-
-   cmd->lpVtbl->Close(cmd);
-   d3d12->queue.handle->lpVtbl->ExecuteCommandLists(d3d12->queue.handle, 1,
-         (ID3D12CommandList* const*)&d3d12->queue.cmd);
-
-   /* Wait for the copy to complete before mapping. */
-   {
-      d3d12_queue_drain(d3d12);
-   }
-
+   footprint        = &d3d12->record.footprint;
    read_range.Begin = 0;
-   read_range.End   = (SIZE_T)total_bytes;
+   read_range.End   = (SIZE_T)d3d12->record.total_bytes;
    if (FAILED(readback->lpVtbl->Map(readback, 0, &read_range,
                (void**)&mapped)))
    {
-      Release(readback);
       RARCH_ERR("[D3D12] Failed to map readback buffer.\n");
       return false;
    }
+   src_pixels = mapped + footprint->Offset;
 
-   src_pixels = mapped + footprint.Offset;
-
-   /* (vp_x/y/w/h were already computed above for the GPU HDR attempt.) */
    switch (readback_mode)
    {
       case READBACK_RGBA8:
       case READBACK_BGRA8:
-         src_pixels += (size_t)footprint.Footprint.RowPitch * vp_y;
+         src_pixels += (size_t)footprint->Footprint.RowPitch * vp_y;
          /* Unswizzle into the caller's BGR24 bottom-up output buffer,
           * clamped to the current viewport. */
-         for (y = 0; y < vp_h; y++, src_pixels += footprint.Footprint.RowPitch)
+         for (y = 0; y < vp_h; y++, src_pixels += footprint->Footprint.RowPitch)
          {
             uint8_t* dst = buffer + 3 * (vp_h - y - 1) * vp_w;
             if (readback_mode == READBACK_BGRA8)
             {
-               /* BGRA source -> BGR dst: drop alpha, keep channel order. */
                for (x = 0; x < vp_w; x++)
                {
                   dst[3 * x + 0] = src_pixels[4 * (x + vp_x) + 0];
@@ -7926,7 +7969,6 @@ static bool d3d12_gfx_read_viewport(void* data, uint8_t* buffer, bool is_idle)
             }
             else
             {
-               /* RGBA source -> BGR dst: swap R and B. */
                for (x = 0; x < vp_w; x++)
                {
                   dst[3 * x + 0] = src_pixels[4 * (x + vp_x) + 2];
@@ -7940,12 +7982,13 @@ static bool d3d12_gfx_read_viewport(void* data, uint8_t* buffer, bool is_idle)
 #ifdef HAVE_DXGI_HDR
       case READBACK_HDR10:
       case READBACK_SCRGB:
-         /* HDR10 PQ or scRGB: hand off to the CPU HDR decoder.
-          * It undoes the forward HDR encoding using paper_white_nits
-          * and writes sRGB-encoded BGR24 bottom-up. */
+         /* HDR10 PQ or scRGB, decoded on the CPU from the readback
+          * copy. The GPU tonemap pass renders from the live back
+          * buffer and waits for the result; the screenshot path keeps
+          * it, this streamed path does not wait on the GPU. */
          if (!dxgi_hdr_readback_to_bgr24(
-               tex_desc.Format,
-               src_pixels, (unsigned)footprint.Footprint.RowPitch,
+               d3d12->record.format,
+               src_pixels, (unsigned)footprint->Footprint.RowPitch,
                vp_x, vp_y, vp_w, vp_h,
                d3d12->hdr.ubo_values.paper_white_nits,
                buffer))
@@ -7958,8 +8001,6 @@ static bool d3d12_gfx_read_viewport(void* data, uint8_t* buffer, bool is_idle)
       D3D12_RANGE empty_write = { 0, 0 };
       readback->lpVtbl->Unmap(readback, 0, &empty_write);
    }
-
-   Release(readback);
    return ret;
 }
 
