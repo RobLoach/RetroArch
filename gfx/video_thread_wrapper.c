@@ -1983,7 +1983,8 @@ static void video_thread_loop(void *data)
                   /* A dupe goes to the driver as the NULL the core
                    * sent, exactly as it does without the wrapper. */
                   const void *fdata = thr->frame.slot[slot].dupe
-                     ? NULL : thr->frame.slot[slot].buffer;
+                     ? NULL : thr->frame.slot[slot].buffer
+                            + thr->frame.slot[slot].offset;
                   unsigned fdims    = thr->frame.slot[slot].dims;
                   unsigned fpitch   = thr->frame.slot[slot].pitch;
                   if (fdata && thr->frame.slot[slot].convert)
@@ -2433,6 +2434,7 @@ static bool video_thread_frame(void *data, const void *frame_,
    bool dropped        = false;
    bool zero_copy      = false;
    bool waited         = false;
+   size_t lent_off     = 0;
 #ifdef HAVE_VIDEO_FILTER
    unsigned filter_bpp = 0;
 #endif
@@ -2577,16 +2579,22 @@ static bool video_thread_frame(void *data, const void *frame_,
 
    /* A frame rendered straight into the lent slot: publish that slot,
     * no copy. The loan kept it free, so it is still neither pending nor
-    * being rendered. Any other push means the core rendered elsewhere;
-    * the loan lapses and the slot is picked as usual. */
+    * being rendered. The frame may start anywhere inside the slot and
+    * carry any pitch: a core that renders a whole surface into the loan
+    * and crops by pointer offset, or keeps its own stride, is still in
+    * place. Any other push means the core rendered elsewhere; the loan
+    * lapses and the slot is picked as usual. */
    if (thr->frame.lent >= 0)
    {
       unsigned l = (unsigned)thr->frame.lent;
+      const uint8_t *f = (const uint8_t*)frame_;
+      const uint8_t *b = thr->frame.slot[l].buffer;
       thr->frame.lent = -1;
-      if (frame_ && frame_ == thr->frame.slot[l].buffer)
+      if (f && f >= b && f < b + thr->frame.buffer_size)
       {
          zero_copy = true;
          slot      = l;
+         lent_off  = (size_t)(f - b);
       }
       else
          thr->handoff.lapsed++;
@@ -2652,14 +2660,14 @@ static bool video_thread_frame(void *data, const void *frame_,
 
       if (zero_copy)
       {
-         /* Already in place; the slot's pitch is the one the core was
-          * given, which is what it rendered with. Rows past the slot
-          * are cropped as for a copied frame. */
+         /* Already in place, at lent_off into the slot and with the
+          * pitch the core pushed (the one it was given, or its own).
+          * Rows past the slot are cropped as for a copied frame. */
          thr->frame.zero_copy_count++;
          if (pitch)
             copy_stride = (unsigned)pitch;
-         if ((size_t)height * copy_stride > thr->frame.buffer_size)
-            height = (unsigned)(thr->frame.buffer_size / copy_stride);
+         if (lent_off + (size_t)height * copy_stride > thr->frame.buffer_size)
+            height = (unsigned)((thr->frame.buffer_size - lent_off) / copy_stride);
       }
       else if (src)
       {
@@ -2678,6 +2686,7 @@ static bool video_thread_frame(void *data, const void *frame_,
       }
 
       thr->frame.slot[slot].dims   = VIDEO_SCALE_PACK(width, height);
+      thr->frame.slot[slot].offset = zero_copy ? lent_off : 0;
       thr->frame.slot[slot].count  = frame_count;
       thr->frame.slot[slot].pushed_at = now;
       thr->frame.slot[slot].hw_slot = hw_slot;

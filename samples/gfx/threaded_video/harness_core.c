@@ -59,7 +59,12 @@ void retro_reset(void) { }
 /* Set by the harness through the core's own export below: when on,
  * retro_run asks the frontend for a framebuffer and renders into it,
  * exercising the wrapper's zero-copy lend. Counts how often the ask
- * was granted so the harness can check the lend actually happened. */
+ * was granted so the harness can check the lend actually happened.
+ * Mode 2 renders the whole loan but pushes a cropped window into it -
+ * a pointer past the start with the loan's pitch, the way a core that
+ * crops overscan by offset does - which must still be a lend. */
+#define CROP_X 8
+#define CROP_Y 4
 static int      harness_use_fb;
 static unsigned harness_fb_granted;
 
@@ -75,6 +80,9 @@ void retro_run(void)
    uint16_t *dst = frame;
    size_t   pitch = W * 2;
    runs++;
+
+   unsigned out_w = W, out_h = h;
+   const uint16_t *push = NULL;
 
    if (harness_use_fb && h == H)
    {
@@ -97,10 +105,19 @@ void retro_run(void)
 
    for (i = 0; i < W * h; i++)
       dst[i] = (uint16_t)(runs + i);
+   push = dst;
+   if (harness_use_fb == 2 && h == H)
+   {
+      /* Cropped window: CROP_Y rows down and CROP_X pixels in, at the
+       * full pitch. Same for a loan and for the core's own buffer. */
+      push  = dst + CROP_Y * (pitch / 2) + CROP_X;
+      out_w = W - 2 * CROP_X;
+      out_h = H - 2 * CROP_Y;
+   }
    if (runs % 3 == 0)
-      video_cb(NULL, W, h, pitch);
+      video_cb(NULL, out_w, out_h, pitch);
    else
-      video_cb(dst, W, h, pitch);
+      video_cb(push, out_w, out_h, pitch);
 }
 size_t retro_serialize_size(void) { return 0; }
 bool retro_serialize(void *data, size_t size) { (void)data; (void)size; return false; }

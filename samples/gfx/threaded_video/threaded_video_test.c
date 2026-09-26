@@ -2663,7 +2663,10 @@ static void lane_waiter_call(void)
    printf("   waiter-call lane: call ran on the waiting thread, before the reply\n");
 }
 
-static void lane_zero_copy(void)
+/* Shared by the two zero-copy lanes: mode 1 pushes the loan's start,
+ * mode 2 a cropped window inside it (an offset pointer, the loan's
+ * pitch). Both must be published from the lent slot, no copy. */
+static void lane_zero_copy_mode(int mode, const char *name)
 {
    unsigned had = failures;
    dylib_t lib = runloop_state_get_ptr()->lib_handle;
@@ -2682,8 +2685,8 @@ static void lane_zero_copy(void)
    if (menu_is_up())
       command_event(CMD_EVENT_MENU_TOGGLE, NULL);
    run_frames(10);
-   expect_wrapper(true, "zero-copy lane");
-   use_fb(1);
+   expect_wrapper(true, name);
+   use_fb(mode);
 
    /* Most asks granted, and those frames published from the lent slot.
     * Dupes (every third frame) ask and then push NULL, so the loan
@@ -2696,9 +2699,9 @@ static void lane_zero_copy(void)
    video_thread_wait_idle();
    g1  = granted();
    slock_lock(thr->lock); zc1 = (unsigned)thr->frame.zero_copy_count; slock_unlock(thr->lock);
-   CHECK(g1 - g0 >= 30, "zero-copy on but only %u of 60 asks granted", g1 - g0);
-   CHECK(zc1 - zc0 >= 20, "only %u frames published zero-copy for %u grants", zc1 - zc0, g1 - g0);
-   CHECK(zc1 - zc0 <= g1 - g0, "%u zero-copy frames for %u grants", zc1 - zc0, g1 - g0);
+   CHECK(g1 - g0 >= 30, "%s: zero-copy on but only %u of 60 asks granted", name, g1 - g0);
+   CHECK(zc1 - zc0 >= 20, "%s: only %u frames published zero-copy for %u grants", name, zc1 - zc0, g1 - g0);
+   CHECK(zc1 - zc0 <= g1 - g0, "%s: %u zero-copy frames for %u grants", name, zc1 - zc0, g1 - g0);
 
    use_fb(0);
    if (!menu_is_up())
@@ -2706,8 +2709,16 @@ static void lane_zero_copy(void)
    set_threaded_via_setting(false);
 
    if (failures == had)
-      fprintf(stderr, "[pass] zero-copy lane (%u grants, %u zero-copy frames)\n",
-            g1 - g0, zc1 - zc0);
+      fprintf(stderr, "[pass] %s (%u grants, %u zero-copy frames)\n",
+            name, g1 - g0, zc1 - zc0);
+}
+
+static void lane_zero_copy(void)
+{
+   lane_zero_copy_mode(1, "zero-copy lane");
+   /* The offset push used to lapse the loan (the wrapper matched the
+    * pointer to the slot's start) and copy every frame. */
+   lane_zero_copy_mode(2, "zero-copy lane, cropped window");
 }
 
 /* ------------------------------------------------------------------ */
