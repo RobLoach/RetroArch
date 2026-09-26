@@ -232,6 +232,11 @@ static bool gfx_ctx_wl_egl_init_context(gfx_ctx_wayland_data_t *wl)
       if (wl->gl_gpu_list)
          string_list_free(wl->gl_gpu_list);
       wl->gl_gpu_list = egl_gpu_list_new();
+      /* The device the index was chosen as, wherever the list now
+       * puts it */
+      if (wl->gl_gpu_list && settings)
+         settings->ints.gl_gpu_index = video_driver_gpu_index_resolve(
+               wl_api, settings->ints.gl_gpu_index, wl->gl_gpu_list);
       if (wl->gl_gpu_list && settings && settings->ints.gl_gpu_index > 0)
       {
          if ((device = egl_gpu_device_at(settings->ints.gl_gpu_index)))

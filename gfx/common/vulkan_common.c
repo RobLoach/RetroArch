@@ -696,6 +696,10 @@ static bool vulkan_context_init_gpu(gfx_ctx_vulkan_data_t *vk)
 
    video_driver_set_gpu_api_devices(GFX_CTX_VULKAN_API, vk->gpu_list);
 
+   /* The device the index was chosen as, wherever the list now puts it */
+   gpu_index = video_driver_gpu_index_resolve(GFX_CTX_VULKAN_API,
+         gpu_index, vk->gpu_list);
+
    if (0 <= gpu_index && gpu_index < (int)gpu_count)
    {
       RARCH_LOG("[Vulkan] Using GPU #%d: \"%s\".\n", gpu_index, vk->gpu_list->elems[gpu_index].data);

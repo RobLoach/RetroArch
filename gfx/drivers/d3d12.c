@@ -4443,6 +4443,11 @@ static void d3d12_init_base(d3d12_video_t* d3d12)
 
       video_driver_set_gpu_api_devices(GFX_CTX_DIRECT3D12_API, d3d12->gpu_list);
 
+      /* The device the index was chosen as, wherever the list now
+       * puts it */
+      gpu_index = video_driver_gpu_index_resolve(GFX_CTX_DIRECT3D12_API,
+            gpu_index, d3d12->gpu_list);
+
       if (0 <= gpu_index && gpu_index <= i && gpu_index < D3D12_MAX_GPU_COUNT)
       {
          RARCH_LOG("[D3D12] Using GPU #%d: \"%s\".\n", gpu_index, d3d12->gpu_list->elems[gpu_index].data);

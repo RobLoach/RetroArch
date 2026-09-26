@@ -4344,6 +4344,11 @@ static void metal_pull_cached_frame_cb(void *userdata,
                }
             }
 
+            /* The device the index was chosen as, wherever the list
+             * now puts it */
+            gpu_index = video_driver_gpu_index_resolve(GFX_CTX_METAL_API,
+                  gpu_index, _gpu_list);
+
             if (count > 0 && gpu_index >= 0 && gpu_index < (int)count)
             {
                const char *picked_name;

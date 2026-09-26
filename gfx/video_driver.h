@@ -2029,6 +2029,18 @@ float video_driver_get_hdr_max_nits(void);
  * driver's own fixed value, unchanged. */
 float video_driver_hdr_metadata_peak(float driver_value);
 
+/* The GPU index to use for 'api' out of the devices in 'list'.
+ *
+ * An index alone is a position in a list that a driver update, a BIOS
+ * change or another GPU reorders, after which it names a different
+ * device. The device the index was chosen as is remembered with it:
+ * where that name has moved, its new position is returned; where it is
+ * gone, 0 with a warning, rather than whatever now sits at the index.
+ * The name is kept up to date with what was resolved.
+ */
+int video_driver_gpu_index_resolve(enum gfx_ctx_api api, int index,
+      struct string_list *list);
+
 struct string_list* video_driver_get_gpu_api_devices(enum gfx_ctx_api api);
 
 const char *hw_render_context_name(

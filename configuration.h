@@ -1250,6 +1250,15 @@ typedef struct settings
       char twitch_stream_key[PATH_MAX_LENGTH];
       char facebook_stream_key[PATH_MAX_LENGTH];
       char kick_stream_key[PATH_MAX_LENGTH];
+      /* The device each GPU index named when it was chosen, so a list
+       * that has changed order since is noticed rather than silently
+       * selecting another GPU. */
+      char video_gpu_name_vulkan[NAME_MAX_LENGTH];
+      char video_gpu_name_gl[NAME_MAX_LENGTH];
+      char video_gpu_name_d3d10[NAME_MAX_LENGTH];
+      char video_gpu_name_d3d11[NAME_MAX_LENGTH];
+      char video_gpu_name_d3d12[NAME_MAX_LENGTH];
+      char video_gpu_name_metal[NAME_MAX_LENGTH];
       char discord_app_id[PATH_MAX_LENGTH];
       char ai_service_url[PATH_MAX_LENGTH];
 

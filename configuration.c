@@ -1799,6 +1799,12 @@ static struct config_array_setting *populate_settings_array(
    SETTING_ARRAY_SENSITIVE("twitch_stream_key",           settings->arrays.twitch_stream_key, true, NULL, true);
    SETTING_ARRAY_SENSITIVE("facebook_stream_key",         settings->arrays.facebook_stream_key, true, NULL, true);
    SETTING_ARRAY_SENSITIVE("kick_stream_key",             settings->arrays.kick_stream_key, true, NULL, true);
+   SETTING_ARRAY("video_gpu_name_vulkan",                 settings->arrays.video_gpu_name_vulkan, false, NULL, true);
+   SETTING_ARRAY("video_gpu_name_gl",                     settings->arrays.video_gpu_name_gl, false, NULL, true);
+   SETTING_ARRAY("video_gpu_name_d3d10",                  settings->arrays.video_gpu_name_d3d10, false, NULL, true);
+   SETTING_ARRAY("video_gpu_name_d3d11",                  settings->arrays.video_gpu_name_d3d11, false, NULL, true);
+   SETTING_ARRAY("video_gpu_name_d3d12",                  settings->arrays.video_gpu_name_d3d12, false, NULL, true);
+   SETTING_ARRAY("video_gpu_name_metal",                  settings->arrays.video_gpu_name_metal, false, NULL, true);
    SETTING_ARRAY("discord_app_id",                        settings->arrays.discord_app_id, true, DEFAULT_DISCORD_APP_ID, true);
    SETTING_ARRAY("ai_service_url",                        settings->arrays.ai_service_url, true, DEFAULT_AI_SERVICE_URL, true);
 #endif
