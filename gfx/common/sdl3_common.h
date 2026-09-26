@@ -29,7 +29,9 @@ enum sdl3_flags
 {
    SDL3_FLAG_QUITTING       = (1 << 0),
    SDL3_FLAG_SHOULD_RESIZE  = (1 << 1),
-   SDL3_FLAG_ADAPTIVE_VSYNC = (1 << 2)
+   SDL3_FLAG_ADAPTIVE_VSYNC = (1 << 2),
+   SDL3_FLAG_FRAME_LOCKED   = (1 << 3),
+   SDL3_FLAG_SWFB_SAFE      = (1 << 4)
 };
 
 typedef struct sdl3_tex
@@ -55,6 +57,15 @@ typedef struct _sdl3_video
    sdl3_tex_t menu;  /* ptr alignment */
 
    SDL_Renderer *renderer;
+
+   /* SDL_LockTexture mapping of frame.tex handed to the core via
+    * get_current_software_framebuffer. Only offered on renderer
+    * backends whose staging memory persists across unlock
+    * (SDL3_FLAG_SWFB_SAFE), so the pointer stays meaningful until
+    * the texture is recreated - RetroArch's frame cache keeps it
+    * for screenshots and paused redraws. */
+   void *frame_lock_pixels;
+   int frame_lock_pitch;
 
    uint8_t flags;
 } sdl3_video_t;
