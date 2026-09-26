@@ -668,22 +668,30 @@ bool input_driver_set_sensor(
          enum retro_sensor_action action, unsigned rate)
 {
    const input_driver_t *current_driver;
-   bool enabled = false;
+   bool enabled    = false;
+   bool is_disable =
+         (action == RETRO_SENSOR_ACCELEROMETER_DISABLE)
+      || (action == RETRO_SENSOR_GYROSCOPE_DISABLE)
+      || (action == RETRO_SENSOR_ILLUMINANCE_DISABLE);
 
    if (!input_driver_st.current_data)
       return false;
    /* If sensors are disabled, inhibit any enable
     * actions (but always allow disable actions) */
-   if (!sensors_enable
-        && ((action == RETRO_SENSOR_ACCELEROMETER_ENABLE)
-        ||  (action == RETRO_SENSOR_GYROSCOPE_ENABLE)
-        ||  (action == RETRO_SENSOR_ILLUMINANCE_ENABLE)))
+   if (!sensors_enable && !is_disable)
       return false;
 
    if (input_driver_st.primary_joypad && input_driver_st.primary_joypad->set_sensor_state)
       enabled = input_driver_st.primary_joypad->set_sensor_state(port, action, rate);
 
-   if (   !enabled
+   /* An enable stops at the first driver that takes it, so a sensor
+    * is only ever held by one of them. A disable has to reach both:
+    * a joypad driver that reports the disable of a sensor it never
+    * had as a success (as they are documented to) would otherwise
+    * hide the disable from the input driver that is actually
+    * holding the host sensor open, leaving it enabled and still
+    * feeding the core after it asked for it to stop. */
+   if (   (!enabled || is_disable)
        && (current_driver = input_driver_st.current_driver)
        &&  current_driver->set_sensor_state)
    {
