@@ -952,6 +952,19 @@ jobs:
              timeout 60 ./wayland_wlr_output_test
           echo "[pass] wayland_wlr_output_test"
 
+      - name: Build and run video_mode_select_test (ASan + UBSan)
+        shell: bash
+        working-directory: samples/gfx/video_mode_select
+        run: |
+          set -eu
+          # gfx/common/video_mode_select.c: which listed mode a size and
+          # rate name, and the order a resolution list is shown in - the
+          # code every display server's mode switch goes through.
+          make clean all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 \
+             timeout 60 ./video_mode_select_test
+          echo "[pass] video_mode_select_test"
+
       - name: Build and run wayland_kwin_output_test (ASan + UBSan)
         shell: bash
         working-directory: samples/gfx/wayland_kwin_output

@@ -1475,6 +1475,7 @@ THREAD
    || defined(__OpenBSD__) || defined(__NetBSD__)
 #include "../gfx/common/dbus_runtime.c"
 #include "../gfx/common/dbus_common.c"
+#include "../gfx/common/video_mode_select.c"
 #include "../gfx/common/mutter_displayconfig.c"
 #include "../frontend/thread_elevation/rtkit.c"
 #include "../frontend/thread_elevation/eevdf.c"

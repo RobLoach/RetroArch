@@ -1352,6 +1352,7 @@ ifeq ($(HAVE_WAYLAND), 1)
         gfx/common/wayland_color.o \
         gfx/common/wayland/kde-output-device-v2.o \
         gfx/common/wayland/kde-output-management-v2.o \
+        gfx/common/video_mode_select.o \
         gfx/common/wayland_kwin_output.o \
         gfx/common/wayland/wlr-output-management-unstable-v1.o \
         gfx/common/wayland_wlr_output.o \
