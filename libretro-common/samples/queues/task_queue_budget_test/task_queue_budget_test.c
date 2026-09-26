@@ -11,7 +11,8 @@
  * than starving its tail.
  *
  * Against the old queue the budgeted checks retire or run every task
- * at once and the first three lanes fail. */
+ * at once, and init(false) after a threaded session comes back
+ * threaded on the next check. */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -137,11 +138,12 @@ static void lane_handlers(void)
 {
    unsigned i, lo, hi, total;
 
-   /* init(false) after a threaded session: the threaded flag is
-    * sticky and the next check would re-init threaded, as RetroArch
-    * clears it through task_queue_unset_threaded() too. */
-   task_queue_unset_threaded();
+   /* init(false) after the threaded session above: the queue must
+    * stay unthreaded across a check. The flag used to stick at true,
+    * and the first check re-initialised the threaded queue. */
    task_queue_init(false, NULL);
+   task_queue_check();
+   CHECK(!task_queue_is_threaded(), "init(false) after a threaded session stays unthreaded");
    memset(runs, 0, sizeof(runs));
    release = false;
 

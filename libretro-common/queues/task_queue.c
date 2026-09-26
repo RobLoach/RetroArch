@@ -1382,9 +1382,13 @@ void task_queue_init(bool threaded, retro_task_queue_msg_t msg_push)
    impl_current   = &impl_regular;
 #ifdef HAVE_THREADS
    main_thread_id = sthread_get_current_thread_id();
+   /* The flag follows the argument both ways: it used to be set only
+    * on true, so init(false) after a threaded session left it on and
+    * the next task_queue_check() re-initialised the threaded queue
+    * behind the caller's back. */
+   task_threaded_enable = threaded;
    if (threaded)
    {
-      task_threaded_enable = true;
 #ifdef HAVE_GCD
       impl_current         = &impl_gcd;
 #else
