@@ -9057,6 +9057,9 @@ void retroarch_init_task_queue(void)
     * can each create one and then lock different objects. */
    net_http_init();
 #endif
+#ifdef HAVE_THREADS
+   task_queue_set_prefer_fast_cores(settings->bools.thread_prefer_fast_cores);
+#endif
    task_queue_init(threaded_enable, runloop_task_msg_queue_push);
 #ifdef HAVE_THREADS
    /* The queue falls back to running tasks on the caller's thread when
@@ -9064,7 +9067,10 @@ void retroarch_init_task_queue(void)
    if (threaded_enable && !task_queue_is_threaded())
       RARCH_ERR("[Task] Threaded tasks were requested but could not be started; running tasks inline.\n");
    /* The main thread runs the emulation loop; on a mixed-core part
-    * keep it off the slow cluster when asked. */
+    * keep it off the slow cluster when asked. The task worker did the
+    * same for itself at start (task_queue_set_prefer_fast_cores above),
+    * the audio thread does in audio_thread_wrapper, the video thread
+    * in video_driver.c before video_init_thread(). */
    if (settings->bools.thread_prefer_fast_cores)
       sthread_prefer_fast_cores();
 #endif

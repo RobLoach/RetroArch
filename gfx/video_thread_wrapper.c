@@ -1776,6 +1776,13 @@ static void video_thread_slot_widget_paths(
 }
 #endif
 
+static bool video_thread_prefer_fast_cores;
+
+void video_thread_set_prefer_fast_cores(bool prefer)
+{
+   video_thread_prefer_fast_cores = prefer;
+}
+
 static void video_thread_loop(void *data)
 {
    video_thread_tex_retire_t *tex_retire = NULL;
@@ -1786,6 +1793,8 @@ static void video_thread_loop(void *data)
    thread_video_t *thr = (thread_video_t*)data;
 
    sthread_setname("ra-video");
+   if (video_thread_prefer_fast_cores && sthread_prefer_fast_cores())
+      RARCH_LOG("[Video] Video thread placed on the performance cores.\n");
 
    for (;;)
    {

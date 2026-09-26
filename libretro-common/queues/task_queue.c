@@ -793,11 +793,20 @@ static void retro_task_threaded_retrieve(task_retriever_data_t *data)
    slock_unlock(running_lock);
 }
 
+static bool task_worker_prefer_fast_cores;
+
+void task_queue_set_prefer_fast_cores(bool prefer)
+{
+   task_worker_prefer_fast_cores = prefer;
+}
+
 static void threaded_worker(void *userdata)
 {
    struct task_worker *self = (struct task_worker*)userdata;
 
    sthread_setname("ra-task");
+   if (task_worker_prefer_fast_cores)
+      sthread_prefer_fast_cores();
 
    for (;;)
    {

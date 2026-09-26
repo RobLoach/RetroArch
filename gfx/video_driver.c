@@ -5912,6 +5912,8 @@ bool video_driver_init_internal(bool *video_is_threaded, bool verbosity_enabled)
       bool ret;
       RARCH_LOG("[Video] Starting threaded video driver...\n");
 
+      video_thread_set_prefer_fast_cores(
+            settings->bools.thread_prefer_fast_cores);
       ret = video_init_thread(
             (const video_driver_t**)&video_st->current_video,
             &video_st->data,

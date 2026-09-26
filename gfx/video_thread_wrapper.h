@@ -763,6 +763,15 @@ typedef struct thread_video
  *
  * Returns: true (1) if successful, otherwise false (0).
  **/
+/**
+ * video_thread_set_prefer_fast_cores:
+ *
+ * Asks that the video thread, once spawned by video_init_thread(), be
+ * placed on the fast cores of a mixed-core processor (see
+ * sthread_prefer_fast_cores). Off by default.
+ */
+void video_thread_set_prefer_fast_cores(bool prefer);
+
 bool video_init_thread(
       const video_driver_t **out_driver, void **out_data,
       input_driver_t **input, void **input_data,

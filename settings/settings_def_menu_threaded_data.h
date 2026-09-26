@@ -16,5 +16,5 @@ S_BOOL(thread_prefer_fast_cores, THREAD_PREFER_FAST_CORES,
       "thread_prefer_fast_cores",
       DEFAULT_THREAD_PREFER_FAST_CORES, SD_FLAG_ADVANCED, 0, 0,
       "Prefer Performance Cores",
-      "Keep the main and audio threads on the fastest CPU cores of a mixed-core processor. Has no effect on processors whose cores are all alike. Takes effect on restart.")
+      "Keep the main, video, audio and task threads on the fastest CPU cores of a mixed-core processor. Has no effect on processors whose cores are all alike. Takes effect on restart.")
 #endif

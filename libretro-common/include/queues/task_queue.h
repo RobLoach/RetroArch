@@ -633,6 +633,15 @@ void task_queue_unset_threaded(void);
 bool task_queue_is_threaded(void);
 
 /**
+ * Asks that the task worker thread, once spawned, be placed on the
+ * fast cores of a mixed-core processor (see sthread_prefer_fast_cores).
+ * Takes effect at the next task_queue_init(); a worker already running
+ * is not moved. Off by default. No effect where the queue runs on the
+ * caller's thread or on GCD.
+ */
+void task_queue_set_prefer_fast_cores(bool prefer);
+
+/**
  * Calls the function given in \c find_data for each task
  * until it returns \c true for one of them,
  * or until all tasks have been searched.
