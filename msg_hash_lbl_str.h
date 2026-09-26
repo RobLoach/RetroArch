@@ -149,6 +149,7 @@
 #define MENU_ENUM_LABEL_CORE_STEAM_UNINSTALL_STR "core_steam_uninstall"
 #define MENU_ENUM_LABEL_CPU_ARCHITECTURE_STR "system_information_cpu_architecture"
 #define MENU_ENUM_LABEL_CPU_CORES_STR "system_information_cpu_cores"
+#define MENU_ENUM_LABEL_CPU_THREADS_STR "system_information_cpu_threads"
 #define MENU_ENUM_LABEL_CUSTOM_BIND_STR "custom_bind"
 #define MENU_ENUM_LABEL_CUSTOM_BIND_ALL_STR "custom_bind_all"
 #define MENU_ENUM_LABEL_DATABASE_MANAGER_STR "database_manager"

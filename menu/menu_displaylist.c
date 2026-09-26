@@ -2948,12 +2948,21 @@ static unsigned menu_displaylist_parse_system_info(file_list_t *list)
 
    /* CPU Cores */
    {
-      unsigned cores = cpu_features_get_core_amount();
-      size_t _len    = strlcpy(entry,
+      /* Physical cores, with the thread count alongside where SMT
+       * doubles it - the raw thread count read as 32 cores on a
+       * 16-core part. */
+      unsigned threads = cpu_features_get_core_amount();
+      unsigned cores   = cpu_features_get_core_amount_physical();
+      size_t _len      = strlcpy(entry,
             msg_hash_to_str(MENU_ENUM_LABEL_VALUE_CPU_CORES),
             sizeof(entry));
-      snprintf(entry + _len, sizeof(entry) - _len,
-            ": %u", cores);
+      if (threads > cores)
+         snprintf(entry + _len, sizeof(entry) - _len,
+               ": %u (%u %s)", cores, threads,
+               msg_hash_to_str(MENU_ENUM_LABEL_VALUE_CPU_THREADS));
+      else
+         snprintf(entry + _len, sizeof(entry) - _len,
+               ": %u", cores);
       if (menu_entries_append(list, entry, "",
             MENU_ENUM_LABEL_CPU_CORES, MENU_SETTINGS_CORE_INFO_NONE,
             0, 0, NULL))
