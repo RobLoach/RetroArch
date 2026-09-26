@@ -42,6 +42,18 @@ typedef struct sdl3_tex
    bool rgb32;
 } sdl3_tex_t;
 
+#ifdef HAVE_OVERLAY
+/* On-screen overlay for SDL3. */
+struct sdl3_overlay
+{
+   SDL_Texture *tex;
+   SDL_FRect tex_coords; /* Normalized 0..1 for the source. */
+   SDL_FRect vert_coords; /* Normalized 0..1 within the base area. */
+   float alpha_mod;
+   bool fullscreen;
+};
+#endif
+
 typedef struct _sdl3_video
 {
    SDL_Window *window; /* Must be first because it's shared across
@@ -55,6 +67,16 @@ typedef struct _sdl3_video
    sdl3_tex_t menu;  /* ptr alignment */
 
    SDL_Renderer *renderer;
+
+#ifdef HAVE_OVERLAY
+   struct sdl3_overlay *overlays;
+   unsigned overlays_size;
+   bool overlays_enabled;
+   /* True when load() created the textures. load_textures() hands
+    * out video_driver_texture_load()'s, which the frontend owns and
+    * unloads itself. */
+   bool overlays_owned;
+#endif
 
    uint8_t flags;
 } sdl3_video_t;

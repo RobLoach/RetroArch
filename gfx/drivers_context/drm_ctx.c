@@ -1033,6 +1033,9 @@ static void *gfx_ctx_drm_init(void *video_driver)
     * the others in their usual order after it; the display follows the
     * card, through GBM. */
    drm->gl_gpu_list = egl_gpu_list_new();
+   if (drm->gl_gpu_list && settings)
+      settings->ints.gl_gpu_index = video_driver_gpu_index_resolve(
+            drm_api, settings->ints.gl_gpu_index, drm->gl_gpu_list);
    if (drm->gl_gpu_list && settings->ints.gl_gpu_index > 0)
    {
       if ((preferred = egl_gpu_device_file(settings->ints.gl_gpu_index)))

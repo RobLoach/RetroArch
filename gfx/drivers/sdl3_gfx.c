@@ -57,6 +57,11 @@
 
 static void sdl3_gfx_free(void *data);
 
+#ifdef HAVE_OVERLAY
+static void sdl3_overlay_free(sdl3_video_t *vid);
+static void sdl3_overlays_render(sdl3_video_t *vid);
+#endif
+
 static INLINE void sdl3_tex_zero(sdl3_tex_t *t)
 {
    if (t->tex)
@@ -415,6 +420,7 @@ static void sdl3_render_ui(sdl3_video_t *vid, const char *msg,
          &video_info->osd_stat_params;
    bool menu_is_alive             = false;
    bool widgets_active            = false;
+   bool overlay_visible           = false;
    bool menu_visible;
    bool show_stats;
 
@@ -436,7 +442,12 @@ static void sdl3_render_ui(sdl3_video_t *vid, const char *msg,
 
    menu_visible = vid->menu.active && vid->menu.tex;
 
-   if (!menu_is_alive && !widgets_active && !show_stats && !menu_visible && !(msg && *msg))
+#ifdef HAVE_OVERLAY
+   overlay_visible = vid->overlays_enabled && vid->overlays_size;
+#endif
+
+   if (   !menu_is_alive && !widgets_active && !show_stats
+       && !menu_visible && !overlay_visible && !(msg && *msg))
       return;
 
    sdl3_viewport_push_full(vid, &saved_vp);
@@ -463,6 +474,11 @@ static void sdl3_render_ui(sdl3_video_t *vid, const char *msg,
    if (show_stats)
       font_driver_render_msg(vid, stat_text,
             video_info->stat_text_len, osd_params, NULL);
+
+#ifdef HAVE_OVERLAY
+   if (overlay_visible)
+      sdl3_overlays_render(vid);
+#endif
 
 #ifdef HAVE_GFX_WIDGETS
    if (widgets_active)
@@ -563,6 +579,10 @@ static void sdl3_gfx_free(void *data)
 
    sdl3_tex_zero(&vid->frame);
    sdl3_tex_zero(&vid->menu);
+
+#ifdef HAVE_OVERLAY
+   sdl3_overlay_free(vid);
+#endif
 
    if (vid->window)
       SDL_StopTextInput(vid->window);
@@ -1685,6 +1705,247 @@ font_renderer_t sdl3_raster_font = {
    sdl3_raster_font_get_line_metrics
 };
 
+#ifdef HAVE_OVERLAY
+/*
+ * INPUT OVERLAY
+ *
+ * Implements video_overlay_interface_t. The overlay subsystem hands
+ * us BGRA32 images via load(), places them in 0..1 normalized space
+ * via vertex_geom() / tex_geom(), and they are drawn over the game.
+ */
+static void sdl3_overlay_free(sdl3_video_t *vid)
+{
+   unsigned i;
+   if (!vid || !vid->overlays)
+      return;
+   if (vid->overlays_owned)
+   {
+      for (i = 0; i < vid->overlays_size; i++)
+      {
+         if (vid->overlays[i].tex)
+            SDL_DestroyTexture(vid->overlays[i].tex);
+      }
+   }
+   free(vid->overlays);
+   vid->overlays       = NULL;
+   vid->overlays_size  = 0;
+   vid->overlays_owned = false;
+}
+
+static void sdl3_overlay_defaults(struct sdl3_overlay *o, SDL_Texture *tex)
+{
+   o->tex           = tex;
+   o->alpha_mod     = 1.0f;
+   o->tex_coords.w  = 1.0f;
+   o->tex_coords.h  = 1.0f;
+   o->vert_coords.w = 1.0f;
+   o->vert_coords.h = 1.0f;
+}
+
+static bool sdl3_overlay_load(void *data,
+      const void *image_data, unsigned num_images)
+{
+   unsigned i;
+   sdl3_video_t                *vid  = (sdl3_video_t*)data;
+   const struct texture_image  *imgs = (const struct texture_image*)image_data;
+
+   if (!vid)
+      return false;
+
+   /* Drop any prior overlay first. */
+   sdl3_overlay_free(vid);
+
+   if (num_images == 0 || !imgs)
+      return true;
+
+   if (!(vid->overlays = (struct sdl3_overlay*)calloc(num_images,
+         sizeof(*vid->overlays))))
+      return false;
+   vid->overlays_size  = num_images;
+   vid->overlays_owned = true;
+
+   for (i = 0; i < num_images; i++)
+   {
+      SDL_Texture *tex;
+      unsigned w = imgs[i].width;
+      unsigned h = imgs[i].height;
+
+      if (w == 0 || h == 0 || !imgs[i].pixels)
+         continue;
+
+      /* Source pixels are BGRA in byte order, which is
+       * SDL_PIXELFORMAT_ARGB8888. This matches what is used
+       * in sdl3_load_texture_internal. */
+      if (!(tex = SDL_CreateTexture(vid->renderer,
+            SDL_PIXELFORMAT_ARGB8888,
+            SDL_TEXTUREACCESS_STATIC,
+            (int)w, (int)h)))
+      {
+         RARCH_WARN("[SDL3] Failed to create overlay texture: %s.\n",
+               SDL_GetError());
+         continue;
+      }
+
+      SDL_UpdateTexture(tex, NULL, imgs[i].pixels,
+            (int)(w * sizeof(uint32_t)));
+      SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
+      /* Scale the overlay to the window, linear. This matches
+       * sdl3_load_texture_internal's TEXTURE_FILTER_LINEAR. */
+      SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_LINEAR);
+
+      sdl3_overlay_defaults(&vid->overlays[i], tex);
+   }
+
+   return true;
+}
+
+static bool sdl3_overlay_load_textures(void *data,
+      const uintptr_t *textures, unsigned num_textures)
+{
+   unsigned i;
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+
+   if (!vid)
+      return false;
+
+   sdl3_overlay_free(vid);
+
+   if (num_textures == 0 || !textures)
+      return true;
+
+   if (!(vid->overlays = (struct sdl3_overlay*)calloc(num_textures,
+         sizeof(*vid->overlays))))
+      return false;
+   vid->overlays_size = num_textures;
+
+   for (i = 0; i < num_textures; i++)
+      sdl3_overlay_defaults(&vid->overlays[i],
+            (SDL_Texture*)textures[i]);
+
+   return true;
+}
+
+static void sdl3_overlay_tex_geom(void *data, unsigned index,
+      float x, float y, float w, float h)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   if (!vid || index >= vid->overlays_size)
+      return;
+   vid->overlays[index].tex_coords.x = x;
+   vid->overlays[index].tex_coords.y = y;
+   vid->overlays[index].tex_coords.w = w;
+   vid->overlays[index].tex_coords.h = h;
+}
+
+static void sdl3_overlay_vertex_geom(void *data, unsigned index,
+      float x, float y, float w, float h)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   if (!vid || index >= vid->overlays_size)
+      return;
+   vid->overlays[index].vert_coords.x = x;
+   vid->overlays[index].vert_coords.y = y;
+   vid->overlays[index].vert_coords.w = w;
+   vid->overlays[index].vert_coords.h = h;
+}
+
+static void sdl3_overlay_enable(void *data, bool state)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   if (!vid)
+      return;
+   vid->overlays_enabled = state;
+}
+
+static void sdl3_overlay_full_screen(void *data, bool enable)
+{
+   unsigned i;
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   if (!vid || !vid->overlays)
+      return;
+   for (i = 0; i < vid->overlays_size; i++)
+      vid->overlays[i].fullscreen = enable;
+}
+
+static void sdl3_overlay_set_alpha(void *data, unsigned index, float mod)
+{
+   sdl3_video_t *vid = (sdl3_video_t*)data;
+   if (!vid || index >= vid->overlays_size)
+      return;
+   vid->overlays[index].alpha_mod = mod;
+}
+
+/* Render every loaded overlay image. Runs inside sdl3_render_ui's
+ * full-window viewport switch. */
+static void sdl3_overlays_render(sdl3_video_t *vid)
+{
+   unsigned i;
+
+   for (i = 0; i < vid->overlays_size; i++)
+   {
+      SDL_FRect src, dst;
+      struct sdl3_overlay *o = &vid->overlays[i];
+      float base_x, base_y, base_w, base_h;
+
+      if (!o->tex || o->alpha_mod <= 0.0f)
+         continue;
+
+      /* fullscreen overlays span the whole window including the
+       * letterbox/pillarbox bars; non-fullscreen ones span only the
+       * aspect-corrected game viewport. */
+      if (o->fullscreen)
+      {
+         base_x = 0.0f;
+         base_y = 0.0f;
+         base_w = (float)VIDEO_SCALE_W(vid->vp.full_dims);
+         base_h = (float)VIDEO_SCALE_H(vid->vp.full_dims);
+      }
+      else
+      {
+         base_x = (float)VIDEO_POS_X(vid->vp.pos);
+         base_y = (float)VIDEO_POS_Y(vid->vp.pos);
+         base_w = (float)VIDEO_SCALE_W(vid->vp.dims);
+         base_h = (float)VIDEO_SCALE_H(vid->vp.dims);
+      }
+
+      dst.x = base_x + o->vert_coords.x * base_w;
+      dst.y = base_y + o->vert_coords.y * base_h;
+      dst.w =          o->vert_coords.w * base_w;
+      dst.h =          o->vert_coords.h * base_h;
+
+      if (dst.w <= 0.0f || dst.h <= 0.0f)
+         continue;
+
+      src.x = o->tex_coords.x * (float)o->tex->w;
+      src.y = o->tex_coords.y * (float)o->tex->h;
+      src.w = o->tex_coords.w * (float)o->tex->w;
+      src.h = o->tex_coords.h * (float)o->tex->h;
+
+      if (src.w <= 0.0f || src.h <= 0.0f)
+         continue;
+
+      SDL_SetTextureAlphaModFloat(o->tex, o->alpha_mod);
+      SDL_RenderTexture(vid->renderer, o->tex, &src, &dst);
+   }
+}
+
+static const video_overlay_interface_t sdl3_overlay_iface = {
+   sdl3_overlay_enable,
+   sdl3_overlay_load,
+   sdl3_overlay_load_textures,
+   sdl3_overlay_tex_geom,
+   sdl3_overlay_vertex_geom,
+   sdl3_overlay_full_screen,
+   sdl3_overlay_set_alpha
+};
+
+static void sdl3_get_overlay_interface(void *data,
+      const video_overlay_interface_t **iface)
+{
+   *iface = &sdl3_overlay_iface;
+}
+#endif /* HAVE_OVERLAY */
+
 static video_poke_interface_t sdl3_video_poke_interface = {
    sdl3_get_flags,
    sdl3_load_texture,
@@ -1735,7 +1996,7 @@ video_driver_t video_sdl3 = {
    sdl3_gfx_viewport_info,
    sdl3_gfx_read_viewport,
 #ifdef HAVE_OVERLAY
-   NULL,                        /* overlay_interface */
+   sdl3_get_overlay_interface,
 #endif
    sdl3_gfx_poke_interface,
    NULL,                        /* wrap_type_to_enum */

@@ -26,6 +26,7 @@ SOURCES := mutter_displayconfig_test.c \
            $(LRC)/rthreads/rthreads.c \
            $(LRC)/dynamic/dylib.c \
            $(REPO_ROOT)/gfx/common/wayland_kwin_output.c \
+           $(REPO_ROOT)/gfx/common/video_mode_select.c \
            kde-output-device-v2-protocol.c \
            kde-output-management-v2-protocol.c \
            $(REPO_ROOT)/gfx/common/wayland_wlr_output.c \

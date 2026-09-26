@@ -15,6 +15,7 @@ GENERATED := kde-output-device-v2-server-protocol.h \
 SOURCES := wayland_kwin_output_test.c \
            kde-output-device-v2-protocol.c kde-output-management-v2-protocol.c \
            $(REPO_ROOT)/gfx/common/wayland_kwin_output.c \
+           $(REPO_ROOT)/gfx/common/video_mode_select.c \
            $(LRC)/compat/compat_strl.c
 CFLAGS  += -Wall -std=gnu99 -g -O0 -DRARCH_INTERNAL -DHAVE_WAYLAND -D_GNU_SOURCE \
            -I. -I$(REPO_ROOT) -I$(LRC)/include \

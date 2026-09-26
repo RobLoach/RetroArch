@@ -29,6 +29,8 @@
 #include <compat/strl.h>
 #include <rthreads/rthreads.h>
 
+#include "video_mode_select.h"
+
 #include "../../verbosity.h"
 
 /* libdbus, for the worker's calls only; set before its first. */
@@ -639,18 +641,6 @@ static double mdc_nearest_scale(const mdc_mode_t *m, double scale)
  * Resolution list
  * ------------------------------------------------------------------ */
 
-static int mdc_list_qsort(const void *pa, const void *pb)
-{
-   const video_display_config_t *a = (const video_display_config_t*)pa;
-   const video_display_config_t *b = (const video_display_config_t*)pb;
-   if (a->dims != b->dims)
-      return a->dims < b->dims ? -1 : 1;
-   if (a->interlaced != b->interlaced)
-      return a->interlaced ? 1 : -1;
-   if (a->refreshrate_float != b->refreshrate_float)
-      return a->refreshrate_float < b->refreshrate_float ? -1 : 1;
-   return 0;
-}
 
 /* The target head's modes as the menu's list, from a state snapshot. */
 static enum mutter_dc_result mdc_list_from(const mdc_state_t *st,
@@ -700,9 +690,7 @@ static enum mutter_dc_result mdc_list_from(const mdc_state_t *st,
          if (!dup)
             conf[n++] = e;
       }
-      qsort(conf, n, sizeof(*conf), mdc_list_qsort);
-      for (j = 0; j < n; j++)
-         conf[j].idx = j;
+      video_mode_list_finish(conf, n);
    }
 
    if (!n)

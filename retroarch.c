@@ -9096,6 +9096,16 @@ void retroarch_init_task_queue(void)
    else
       task_queue_set_slow_handler_cb(NULL, 0);
 #endif
+
+   /* What one task_queue_check() may spend of the frame it runs in.
+    * Retirement: a burst of completions (a thumbnail scan, a bulk
+    * download) retires over several frames instead of one - at most
+    * 32 callbacks or 2 ms per check, whichever comes first. Handlers
+    * (unthreaded queue): 4 ms of handler time per check, the rest of
+    * the running list waits its turn. Both leave most of a 16.7 ms
+    * frame to the core; a blocking task_queue_wait() still loops
+    * until its condition holds. */
+   task_queue_set_budget(2000, 32, 4000);
 }
 
 bool retroarch_ctl(enum rarch_ctl_state state, void *data)
