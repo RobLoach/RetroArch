@@ -600,6 +600,10 @@ typedef struct thread_video
           * which holds whatever frame was last put in it, an old one. */
          bool dupe;
          uint8_t *buffer;
+         /* Where the frame starts inside buffer: 0 for a copied frame,
+          * and for a lent frame whatever the core pushed, which may sit
+          * past the start (a core that crops by pointer offset). */
+         size_t   offset;
          unsigned dims;
          unsigned pitch;
          char msg[NAME_MAX_LENGTH];

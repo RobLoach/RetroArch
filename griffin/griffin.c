@@ -280,6 +280,7 @@ CHEATS
 #include "../libretro-common/hash/lrc_hash.c"
 
 #include "../gfx/video_driver.c"
+#include "../gfx/common/video_mode_select.c"
 /*============================================================
 UI COMMON CONTEXT
 ============================================================ */

@@ -13,6 +13,7 @@ GENERATED := wlr-output-management-unstable-v1-server-protocol.h \
 SOURCES := wayland_wlr_output_test.c \
            wlr-output-management-unstable-v1-protocol.c \
            $(REPO_ROOT)/gfx/common/wayland_wlr_output.c \
+           $(REPO_ROOT)/gfx/common/video_mode_select.c \
            $(LRC)/compat/compat_strl.c
 CFLAGS  += -Wall -std=gnu99 -g -O0 -DRARCH_INTERNAL -DHAVE_WAYLAND -D_GNU_SOURCE \
            -I. -I$(REPO_ROOT) -I$(LRC)/include \

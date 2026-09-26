@@ -330,6 +330,7 @@ OBJ += \
        input/common/input_hid_common.o \
        led/led_driver.o \
        gfx/video_driver.o \
+       gfx/common/video_mode_select.o \
        gfx/gfx_display.o \
        gfx/gfx_animation.o \
        gfx/gfx_instrument.o \

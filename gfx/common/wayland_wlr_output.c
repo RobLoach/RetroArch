@@ -20,6 +20,8 @@
 #include "wayland_wlr_output.h"
 #include "wayland/wlr-output-management-unstable-v1.h"
 
+#include "video_mode_select.h"
+
 #include "../../verbosity.h"
 
 /* The newest version whose events this file handles */
@@ -341,20 +343,21 @@ bool wlr_outputs_ready(const wlr_outputs_t *wo)
       && wlr_pick((wlr_outputs_t*)wo, NULL) != NULL;
 }
 
-static int wlr_mode_cmp(const void *a, const void *b)
+/* A mode of the head being asked about, for the shared picker */
+static bool wlr_mode_desc(void *ctx, unsigned index,
+      video_mode_desc_t *out)
 {
-   const video_display_config_t *x = (const video_display_config_t*)a;
-   const video_display_config_t *y = (const video_display_config_t*)b;
-   unsigned xw = VIDEO_SCALE_W(x->dims), yw = VIDEO_SCALE_W(y->dims);
-   unsigned xh = VIDEO_SCALE_H(x->dims), yh = VIDEO_SCALE_H(y->dims);
-   if (xw != yw)
-      return xw < yw ? -1 : 1;
-   if (xh != yh)
-      return xh < yh ? -1 : 1;
-   if (x->refreshrate_float != y->refreshrate_float)
-      return x->refreshrate_float < y->refreshrate_float ? -1 : 1;
-   return 0;
+   const wlr_output_head_info_t *h = (const wlr_output_head_info_t*)ctx;
+   const wlr_output_mode_info_t *m = &h->modes[index];
+   if (m->width <= 0 || m->height <= 0 || m->refresh_mhz <= 0)
+      return false;
+   out->dims       = VIDEO_SCALE_PACK(m->width, m->height);
+   out->refresh    = (float)m->refresh_mhz / 1000.0f;
+   out->interlaced = false;
+   out->current    = (m->mode == h->current);
+   return true;
 }
+
 
 video_display_config_t *wlr_outputs_resolution_list(wlr_outputs_t *wo,
       const char *connector, unsigned *len)
@@ -380,9 +383,7 @@ video_display_config_t *wlr_outputs_resolution_list(wlr_outputs_t *wo,
       list[n].current           = (m->mode == h->current);
       n++;
    }
-   qsort(list, n, sizeof(*list), wlr_mode_cmp);
-   for (i = 0; i < n; i++)
-      list[i].idx = i;
+   video_mode_list_finish(list, n);
    *len = n;
    return list;
 }
@@ -391,48 +392,31 @@ bool wlr_outputs_set_mode(wlr_outputs_t *wo, const char *connector,
       unsigned width, unsigned height, int int_hz, float hz)
 {
    unsigned i;
-   float want_hz;
+   int pick;
    struct zwlr_output_configuration_v1 *config;
-   const wlr_output_mode_info_t *cur  = NULL;
    const wlr_output_mode_info_t *best = NULL;
    wlr_output_head_info_t *target     = NULL;
 
    if (!wlr_outputs_ready(wo) || !(target = wlr_pick(wo, connector)))
       return false;
-   for (i = 0; i < target->nmodes; i++)
-      if (target->modes[i].mode == target->current)
-         cur = &target->modes[i];
-   if (!width)
-      width  = cur ? (unsigned)cur->width  : 0;
-   if (!height)
-      height = cur ? (unsigned)cur->height : 0;
-   want_hz = hz > 0.0f ? hz : (float)int_hz;
-   if (want_hz <= 0.0f && cur)
-      want_hz = (float)cur->refresh_mhz / 1000.0f;
-
-   /* The listed mode of that size nearest the rate */
-   for (i = 0; i < target->nmodes; i++)
-   {
-      const wlr_output_mode_info_t *m = &target->modes[i];
-      float d, bd;
-      if ((unsigned)m->width != width || (unsigned)m->height != height)
-         continue;
-      if (!best)
-      {
-         best = m;
-         continue;
-      }
-      d  = (float)m->refresh_mhz    / 1000.0f - want_hz;
-      bd = (float)best->refresh_mhz / 1000.0f - want_hz;
-      if ((d < 0 ? -d : d) < (bd < 0 ? -bd : bd))
-         best = m;
-   }
-   if (!best)
+   if (!width || !height)
+      for (i = 0; i < target->nmodes; i++)
+         if (target->modes[i].mode == target->current)
+         {
+            if (!width)
+               width  = (unsigned)target->modes[i].width;
+            if (!height)
+               height = (unsigned)target->modes[i].height;
+         }
+   if ((pick = video_mode_find_nearest(target, wlr_mode_desc,
+               target->nmodes, VIDEO_SCALE_PACK(width, height),
+               int_hz, hz)) < 0)
    {
       RARCH_WARN("[Wayland] The compositor lists no %ux%u mode on %s.\n",
             width, height, target->name[0] ? target->name : "its output");
       return false;
    }
+   best = &target->modes[pick];
    if (best->mode == target->current)
       return true;
 

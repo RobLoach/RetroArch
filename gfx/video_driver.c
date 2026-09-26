@@ -1197,6 +1197,81 @@ float video_driver_hdr_metadata_peak(float driver_value)
    return display ? (float)display : driver_value;
 }
 
+/* The setting holding the device name an API's GPU index was chosen
+ * as; NULL for an API without one. */
+static char *video_driver_gpu_name_setting(enum gfx_ctx_api api)
+{
+   settings_t *settings = config_get_ptr();
+   if (!settings)
+      return NULL;
+   switch (api)
+   {
+      case GFX_CTX_VULKAN_API:
+         return settings->arrays.video_gpu_name_vulkan;
+      case GFX_CTX_OPENGL_API:
+      case GFX_CTX_OPENGL_ES_API:
+         return settings->arrays.video_gpu_name_gl;
+      case GFX_CTX_DIRECT3D10_API:
+         return settings->arrays.video_gpu_name_d3d10;
+      case GFX_CTX_DIRECT3D11_API:
+         return settings->arrays.video_gpu_name_d3d11;
+      case GFX_CTX_DIRECT3D12_API:
+         return settings->arrays.video_gpu_name_d3d12;
+      case GFX_CTX_METAL_API:
+         return settings->arrays.video_gpu_name_metal;
+      default:
+         break;
+   }
+   return NULL;
+}
+
+int video_driver_gpu_index_resolve(enum gfx_ctx_api api, int index,
+      struct string_list *list)
+{
+   size_t i;
+   char *saved = video_driver_gpu_name_setting(api);
+
+   if (!list || list->size < 1)
+      return index;
+   /* The default device is whatever the driver puts first */
+   if (index <= 0)
+   {
+      if (saved)
+         *saved = '\0';
+      return 0;
+   }
+   if (saved && *saved)
+   {
+      /* Still where it was */
+      if (     index < (int)list->size
+            && string_is_equal(list->elems[index].data, saved))
+         return index;
+      /* Moved: follow the device, not the position */
+      for (i = 0; i < list->size; i++)
+         if (string_is_equal(list->elems[i].data, saved))
+         {
+            RARCH_WARN("[Video] GPU \"%s\" is now #%u, not #%d; using it.\n",
+                  saved, (unsigned)i, index);
+            return (int)i;
+         }
+      RARCH_WARN("[Video] GPU \"%s\" is gone; using the first device found.\n",
+            saved);
+      *saved = '\0';
+      return 0;
+   }
+   /* Chosen before the name was kept, or by hand: take it as it is and
+    * remember what it named */
+   if (index < (int)list->size)
+   {
+      if (saved)
+         strlcpy(saved, list->elems[index].data, NAME_MAX_LENGTH);
+      return index;
+   }
+   RARCH_WARN("[Video] GPU index %d is past the %u device(s) there are; using the first.\n",
+         index, (unsigned)list->size);
+   return 0;
+}
+
 void video_driver_set_gpu_api_devices(
       enum gfx_ctx_api api, struct string_list *list)
 {
