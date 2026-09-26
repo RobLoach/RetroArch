@@ -309,11 +309,29 @@ int main(void)
    expect_topology("x3d 16c/32t: 16 fast + 0 slow", 0, 31, 16, 0);
    expect_topology("x3d, affinity on 6 threads = 3 cores", 0, 5, 3, 0);
    {
-      /* One class, so the clock decides: the frequency CCD (16-31)
-       * ranks first, cores before siblings. This is the case a game
-       * would rather see reversed; it needs a cache signal to do so. */
+      /* One class and no cache figures: the clock decides, so the
+       * frequency CCD (16-31) ranks first, cores before siblings. */
       static const unsigned want[] = { 16,18,20,22,24,26,28,30 };
-      expect_order("x3d: clock orders within one class", 0, 31, want, 8);
+      expect_order("x3d, no cache info: clock decides", 0, 31, want, 8);
+   }
+   /* With the L3 published (96M behind CCD0, 32M behind CCD1) the
+    * V-cache die leads despite its lower clock; the frequency CCD's
+    * cores follow before any SMT sibling of the cache die's. */
+   for (i = 0; i < 32; i++)
+   {
+      char rel[128];
+      snprintf(rel, sizeof(rel), "cpu%u/cache/index3/size", i);
+      put(rel, i < 16 ? "96M\n" : "32768K\n");
+   }
+   {
+      static const unsigned want[] = { 0,2,4,6,8,10,12,14, 1,3,5,7,9,11,13,15,
+                                       16,18,20,22,24,26,28,30 };
+      expect_order("x3d: V-cache CCD first, then frequency CCD", 0, 31, want, 24);
+   }
+   {
+      /* Confined to the frequency CCD: it is what there is. */
+      static const unsigned want[] = { 16,18,20,22 };
+      expect_order("x3d, affinity on frequency CCD", 16, 31, want, 4);
    }
 
    /* Nothing readable at all. */
