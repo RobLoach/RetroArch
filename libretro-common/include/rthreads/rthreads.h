@@ -151,6 +151,28 @@ bool sthread_raise_current_priority(void);
 bool sthread_prefer_fast_cores(void);
 
 /**
+ * sthread_get_core_topology:
+ *
+ * Counts the physical cores the calling thread may run on, split by
+ * class: the fast ones (the big cluster, the P-cores) and the slow
+ * ones (the little cluster, the E-cores). SMT siblings count once.
+ * On a homogeneous part every core is fast and slow is 0. The class
+ * comes from the same source sthread_prefer_fast_cores() pins by.
+ *
+ * Meant for sizing worker pools: the count of cores a pool may use
+ * once the frame-critical threads have theirs, and on a mixed part
+ * whether the pool would be spreading onto the slow cluster.
+ *
+ * @fast : receives the fast core count.
+ * @slow : receives the slow core count.
+ *
+ * Returns: true when the counts are known. On a platform with no
+ * topology information at all (the consoles) nothing is written and
+ * this returns false; the caller falls back to the thread count.
+ */
+bool sthread_get_core_topology(unsigned *fast, unsigned *slow);
+
+/**
  * Labels the calling thread for debuggers, crash dumps and system
  * thread listings.
  *

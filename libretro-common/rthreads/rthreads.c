@@ -390,6 +390,7 @@ extern long syscall(long number, ...);
 #include <mach/mach.h>
 #include <mach/mach_time.h>
 #include <mach/thread_policy.h>
+#include <sys/sysctl.h> /* sthread_get_core_topology */
 #include <TargetConditionals.h>
 #include <AvailabilityMacros.h> /* MAC_OS_X_VERSION_MIN_REQUIRED (since 10.2) */
 /* The pthread QoS override API (pthread_override_qos_class_start_np, used by
@@ -1429,31 +1430,41 @@ static unsigned rthreads_fast_by_value(const char *leaf, unsigned pct,
  * pinned to fast and -1 when it should be left alone: nothing was
  * readable, every allowed CPU is a fast one (a homogeneous part, or
  * an affinity already inside the fast set), or none is. */
-static int rthreads_classify_fast_cores(const unsigned long *allowed,
-      unsigned long *fast)
+/* Reads the fast class of every CPU into cls from the sources above;
+ * returns whether any source was readable. */
+static bool rthreads_read_fast_class(unsigned long *cls)
 {
-   unsigned long cls[RTHREADS_MASK_WORDS];
    unsigned long atom[RTHREADS_MASK_WORDS];
-   unsigned      i;
-   bool          any = false, all = true;
 
-   memset(cls,  0, sizeof(cls));
+   memset(cls,  0, RTHREADS_MASK_WORDS * sizeof(unsigned long));
    memset(atom, 0, sizeof(atom));
-   memset(fast, 0, RTHREADS_MASK_WORDS * sizeof(unsigned long));
 
    /* 1. Intel hybrid, as the kernel sees it (/sys/devices/cpu_core and
     *    cpu_atom, beside /sys/devices/system). Only meaningful when
     *    both kinds exist: cpu_core alone is what a homogeneous Intel
     *    part publishes. */
-   if (  !rthreads_sysfs_read_cpulist(RTHREADS_CPU_SYSFS "/../../cpu_core/cpus", cls)
-      || !rthreads_sysfs_read_cpulist(RTHREADS_CPU_SYSFS "/../../cpu_atom/cpus", atom))
-   {
-      /* 2. Scheduler capacity (ARM), then 3. maximum clock. */
-      memset(cls, 0, sizeof(cls));
-      if (!rthreads_fast_by_value("cpu_capacity", RTHREADS_FAST_CAPACITY_PCT, cls))
-         if (!rthreads_fast_by_value("cpufreq/cpuinfo_max_freq", RTHREADS_FAST_FREQ_PCT, cls))
-            return -1;
-   }
+   if (   rthreads_sysfs_read_cpulist(RTHREADS_CPU_SYSFS "/../../cpu_core/cpus", cls)
+       && rthreads_sysfs_read_cpulist(RTHREADS_CPU_SYSFS "/../../cpu_atom/cpus", atom))
+      return true;
+
+   /* 2. Scheduler capacity (ARM), then 3. maximum clock. */
+   memset(cls, 0, RTHREADS_MASK_WORDS * sizeof(unsigned long));
+   if (rthreads_fast_by_value("cpu_capacity", RTHREADS_FAST_CAPACITY_PCT, cls))
+      return true;
+   return rthreads_fast_by_value("cpufreq/cpuinfo_max_freq",
+         RTHREADS_FAST_FREQ_PCT, cls) != 0;
+}
+
+static int rthreads_classify_fast_cores(const unsigned long *allowed,
+      unsigned long *fast)
+{
+   unsigned long cls[RTHREADS_MASK_WORDS];
+   unsigned      i;
+   bool          any = false, all = true;
+
+   memset(fast, 0, RTHREADS_MASK_WORDS * sizeof(unsigned long));
+   if (!rthreads_read_fast_class(cls))
+      return -1;
 
    for (i = 0; i < (unsigned)RTHREADS_MASK_BITS; i++)
    {
@@ -1481,6 +1492,53 @@ static void rthreads_find_fast_cores(void)
       return;
    }
    rthreads_fast_state = rthreads_classify_fast_cores(allowed, rthreads_fast_mask);
+}
+
+/* Counts the physical cores in allowed, split by class. A core is one
+ * (package, core_id) pair; without topology files every CPU is its
+ * own core. Without a readable class every core is fast. Returns
+ * whether any allowed CPU was found. */
+static bool rthreads_count_cores_masked(const unsigned long *allowed,
+      unsigned *fast, unsigned *slow)
+{
+   unsigned long cls[RTHREADS_MASK_WORDS];
+   unsigned long seen[RTHREADS_MASK_WORDS];
+   bool          have_cls = rthreads_read_fast_class(cls);
+   unsigned      i, n = 0;
+
+   *fast = *slow = 0;
+   memset(seen, 0, sizeof(seen));
+   for (i = 0; i < (unsigned)RTHREADS_MASK_BITS; i++)
+   {
+      char          path[512];
+      unsigned long sibs[RTHREADS_MASK_WORDS];
+      unsigned      j;
+      bool          core_fast = false;
+
+      if (!RTHREADS_MASK_TEST(allowed, i) || RTHREADS_MASK_TEST(seen, i))
+         continue;
+      n++;
+      /* The core is fast if any of its allowed threads is. */
+      memset(sibs, 0, sizeof(sibs));
+      snprintf(path, sizeof(path),
+            RTHREADS_CPU_SYSFS "/cpu%u/topology/thread_siblings_list", i);
+      if (!rthreads_sysfs_read_cpulist(path, sibs))
+         RTHREADS_MASK_SET(sibs, i);
+      for (j = 0; j < (unsigned)RTHREADS_MASK_BITS; j++)
+      {
+         if (!RTHREADS_MASK_TEST(sibs, j))
+            continue;
+         RTHREADS_MASK_SET(seen, j);
+         if (RTHREADS_MASK_TEST(allowed, j)
+               && (!have_cls || RTHREADS_MASK_TEST(cls, j)))
+            core_fast = true;
+      }
+      if (core_fast)
+         (*fast)++;
+      else
+         (*slow)++;
+   }
+   return n > 0;
 }
 #endif
 
@@ -1557,6 +1615,137 @@ static void rthreads_find_fast_cores(void)
       rthreads_fast_state = 1;
 }
 #endif
+
+#ifdef USE_WIN32_THREADS
+/* Physical cores by class. CPU Sets carry CoreIndex (offset 15) and
+ * EfficiencyClass (offset 18) per logical processor: one core per
+ * (Group, CoreIndex), fast when its class is the highest present.
+ * Before CPU Sets (Windows 10 1607) GetLogicalProcessorInformation
+ * counts cores and every one is fast. */
+static bool rthreads_win32_core_topology(unsigned *fast, unsigned *slow)
+{
+   HMODULE k32                    = GetModuleHandleA("kernel32.dll");
+   rthreads_get_cpusets_t getinfo = NULL;
+   unsigned char *buf             = NULL;
+   ULONG len                      = 0;
+   ULONG off;
+   BYTE  best                     = 0;
+   unsigned short key[256];
+   BYTE           keycls[256];
+   unsigned       nkey            = 0, i;
+
+   *fast = *slow = 0;
+   if (k32)
+      getinfo = (rthreads_get_cpusets_t)(void (*)(void))
+         GetProcAddress(k32, "GetSystemCpuSetInformation");
+   if (getinfo)
+   {
+      getinfo(NULL, 0, &len, GetCurrentProcess(), 0);
+      if (len && (buf = (unsigned char*)malloc(len))
+            && getinfo(buf, len, &len, GetCurrentProcess(), 0))
+      {
+         for (off = 0; off + 20 <= len; )
+         {
+            DWORD size = *(DWORD*)(buf + off);
+            if (size < 20)
+               break;
+            if (*(DWORD*)(buf + off + 4) == 0)
+            {
+               unsigned short k = (unsigned short)
+                  ((*(WORD*)(buf + off + 12) << 8) | buf[off + 15]);
+               BYTE cls         = buf[off + 18];
+               for (i = 0; i < nkey; i++)
+                  if (key[i] == k)
+                     break;
+               if (i == nkey && nkey < sizeof(key) / sizeof(key[0]))
+               {
+                  key[nkey]    = k;
+                  keycls[nkey] = cls;
+                  nkey++;
+               }
+               else if (i < nkey && cls > keycls[i])
+                  keycls[i] = cls;
+               if (cls > best)
+                  best = cls;
+            }
+            off += size;
+         }
+      }
+      if (buf)
+         free(buf);
+      if (nkey)
+      {
+         for (i = 0; i < nkey; i++)
+         {
+            if (keycls[i] == best)
+               (*fast)++;
+            else
+               (*slow)++;
+         }
+         return true;
+      }
+   }
+   /* Windows 7 to 10 1511: no core classes. */
+   {
+      SYSTEM_LOGICAL_PROCESSOR_INFORMATION *info = NULL;
+      DWORD n = 0;
+      GetLogicalProcessorInformation(NULL, &n);
+      if (n && (info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)malloc(n)))
+      {
+         if (GetLogicalProcessorInformation(info, &n))
+         {
+            DWORD c;
+            for (c = 0; c < n / sizeof(*info); c++)
+               if (info[c].Relationship == RelationProcessorCore)
+                  (*fast)++;
+         }
+         free(info);
+      }
+   }
+   return *fast > 0;
+}
+#endif
+
+bool sthread_get_core_topology(unsigned *fast, unsigned *slow)
+{
+#if defined(RTHREADS_HAVE_AFFINITY)
+   unsigned long allowed[RTHREADS_MASK_WORDS];
+   memset(allowed, 0, sizeof(allowed));
+   if (syscall(__NR_sched_getaffinity, 0, sizeof(allowed), allowed) <= 0)
+      return false;
+   return rthreads_count_cores_masked(allowed, fast, slow);
+#elif defined(USE_WIN32_THREADS)
+   return rthreads_win32_core_topology(fast, slow);
+#elif defined(__APPLE__)
+   /* macOS 12 / iOS 15 publish the per-level physical counts on Apple
+    * silicon (level 0 is the performance cluster); older systems and
+    * Intel Macs have only the total, and every core is fast. */
+   int    p = 0, e = 0, t = 0;
+   size_t l = sizeof(int);
+   if (   sysctlbyname("hw.perflevel0.physicalcpu", &p, &l, NULL, 0) == 0
+       && p > 0)
+   {
+      l = sizeof(int);
+      if (sysctlbyname("hw.perflevel1.physicalcpu", &e, &l, NULL, 0) != 0)
+         e = 0;
+      *fast = (unsigned)p;
+      *slow = (unsigned)(e > 0 ? e : 0);
+      return true;
+   }
+   l = sizeof(int);
+   if (sysctlbyname("hw.physicalcpu", &t, &l, NULL, 0) == 0 && t > 0)
+   {
+      *fast = (unsigned)t;
+      *slow = 0;
+      return true;
+   }
+   return false;
+#else
+   (void)fast;
+   (void)slow;
+   return false;
+#endif
+}
 
 bool sthread_prefer_fast_cores(void)
 {

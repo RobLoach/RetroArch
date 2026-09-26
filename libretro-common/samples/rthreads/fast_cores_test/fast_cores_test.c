@@ -72,6 +72,22 @@ static void put_cpu(unsigned cpu, const char *leaf, unsigned long v)
 
 /* Wipes the fixture tree (the directory two levels above
  * <root>/system/cpu) and recreates the empty cpu directory. */
+/* Writes thread_siblings_list for CPUs [lo,hi] in pairs (lo,lo+1),
+ * i.e. two SMT threads per core. */
+static void put_smt_pairs(unsigned lo, unsigned hi)
+{
+   unsigned i;
+   for (i = lo; i + 1 <= hi; i += 2)
+   {
+      char rel[128], text[32];
+      snprintf(text, sizeof(text), "%u-%u\n", i, i + 1);
+      snprintf(rel, sizeof(rel), "cpu%u/topology/thread_siblings_list", i);
+      put(rel, text);
+      snprintf(rel, sizeof(rel), "cpu%u/topology/thread_siblings_list", i + 1);
+      put(rel, text);
+   }
+}
+
 static void fresh(void)
 {
    char  root[1024];
@@ -98,6 +114,25 @@ static void masktext(const unsigned long *m, char *s, size_t len)
    for (i = 0; i < (unsigned)RTHREADS_MASK_BITS; i++)
       if (RTHREADS_MASK_TEST(m, i) && n < len - 8)
          n += snprintf(s + n, len - n, "%s%u", n ? "," : "", i);
+}
+
+static void expect_topology(const char *name, unsigned alo, unsigned ahi,
+      unsigned wfast, unsigned wslow)
+{
+   unsigned long allowed[RTHREADS_MASK_WORDS];
+   unsigned fast = 99, slow = 99;
+   bool ok;
+   memset(allowed, 0, sizeof(allowed));
+   allow(allowed, alo, ahi);
+   ok = rthreads_count_cores_masked(allowed, &fast, &slow);
+   if (ok && fast == wfast && slow == wslow)
+      printf("ok   %-44s %u fast + %u slow\n", name, fast, slow);
+   else
+   {
+      printf("FAIL %-44s want %u fast + %u slow, got %u + %u (%s)\n", name,
+            wfast, wslow, fast, slow, ok ? "known" : "unknown");
+      fails++;
+   }
 }
 
 /* Runs the classifier with allowed = [lo,hi] and checks the verdict
@@ -146,6 +181,10 @@ int main(void)
       put_cpu(i, "cpufreq/cpuinfo_max_freq", i < 16 ? 5000000 : 3800000);
    memset(want, 0, sizeof(want)); allow(want, 0, 15);
    expect("intel hybrid 8P+8E via cpu_core/cpu_atom", 0, 23, want);
+   put_smt_pairs(0, 15);
+   expect_topology("intel hybrid: 8 fast + 8 slow cores", 0, 23, 8, 8);
+   expect_topology("intel hybrid, affinity on P-cores only", 0, 15, 8, 0);
+   expect_topology("intel hybrid, affinity on E-cores", 16, 23, 0, 8);
    /* Confined to the E-cores already: nothing to prefer. */
    expect("intel hybrid, affinity already on E-cores", 16, 23, NULL);
    /* Confined to the P-cores already: nothing to change. */
@@ -166,6 +205,7 @@ int main(void)
       put_cpu(i, "cpu_capacity", i == 7 ? 1024 : (i >= 4 ? 870 : 380));
    memset(want, 0, sizeof(want)); allow(want, 4, 7);
    expect("arm 1+3+4 via cpu_capacity", 0, 7, want);
+   expect_topology("arm 1+3+4: 4 fast + 4 slow", 0, 7, 4, 4);
 
    /* Classic big.LITTLE with only cpufreq to go on. */
    fresh();
@@ -188,10 +228,14 @@ int main(void)
    for (i = 0; i < 32; i++)
       put_cpu(i, "cpufreq/cpuinfo_max_freq", i < 16 ? 5250000 : 5750000);
    expect("x3d two CCDs are one class", 0, 31, NULL);
+   put_smt_pairs(0, 31);
+   expect_topology("x3d 16c/32t: 16 fast + 0 slow", 0, 31, 16, 0);
+   expect_topology("x3d, affinity on 6 threads = 3 cores", 0, 5, 3, 0);
 
    /* Nothing readable at all. */
    fresh();
    expect("empty sysfs", 0, 7, NULL);
+   expect_topology("empty sysfs: every thread its own fast core", 0, 3, 4, 0);
 
    /* A hole: some CPUs have no cpufreq (offline or no driver); they
     * count as unknown and stay out of the fast set rather than
@@ -211,6 +255,16 @@ int main(void)
       if ((tail = strstr(root, "/system/cpu")))
          *tail = '\0';
       rmtree(root);
+   }
+   /* Informational: what the public entry point says about this box
+    * (its real sysfs is not the fixture, so this is not asserted). */
+   {
+      unsigned fast = 0, slow = 0;
+      unsigned long allowed[RTHREADS_MASK_WORDS];
+      memset(allowed, 0, sizeof(allowed));
+      if (syscall(__NR_sched_getaffinity, 0, sizeof(allowed), allowed) > 0)
+         printf("info this machine (fixture root, so unclassified): %s\n",
+               rthreads_count_cores_masked(allowed, &fast, &slow) ? "ok" : "unknown");
    }
    printf("%s\n", fails ? "FAILED" : "PASSED");
    return fails ? 1 : 0;
