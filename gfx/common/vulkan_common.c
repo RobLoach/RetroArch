@@ -703,7 +703,8 @@ static bool vulkan_context_init_gpu(gfx_ctx_vulkan_data_t *vk)
    if (0 <= gpu_index && gpu_index < (int)gpu_count)
    {
       RARCH_LOG("[Vulkan] Using GPU #%d: \"%s\".\n", gpu_index, vk->gpu_list->elems[gpu_index].data);
-      vk->context.gpu = gpus[gpu_index];
+      vk->context.gpu       = gpus[gpu_index];
+      vk->context.gpu_index = gpu_index;
    }
    else
    {
@@ -3588,10 +3589,29 @@ void vulkan_present(gfx_ctx_vulkan_data_t *vk, unsigned index)
    trigger_spurious_error_vkresult(&err);
 #endif
 
+   if (err == VK_SUCCESS && result == VK_SUCCESS)
+      vk->context.swapchain_never_presented = 0;
+
    if (err != VK_SUCCESS || result != VK_SUCCESS)
    {
       RARCH_LOG("[Vulkan] QueuePresent failed (err = %d, result = %d), destroying swapchain.\n",
             (int)err, (int)result);
+      /* Swapchain after swapchain with nothing ever shown: the GPU the
+       * index picked cannot present to this display, whatever it
+       * answered when asked. Say so once rather than loop in silence. */
+      if (++vk->context.swapchain_never_presented == 8)
+      {
+         struct string_list *gpus = video_driver_get_gpu_api_devices(
+               GFX_CTX_VULKAN_API);
+         int idx                  = vk->context.gpu_index;
+         RARCH_ERR("[Vulkan] Nothing has reached the display through %u swapchains.\n",
+               vk->context.swapchain_never_presented);
+         if (gpus && idx > 0 && idx < (int)gpus->size)
+            RARCH_ERR("[Vulkan] GPU #%d (\"%s\") cannot present here; set GPU Index back to 0 in Video -> Output.\n",
+                  idx, gpus->elems[idx].data);
+         else
+            RARCH_ERR("[Vulkan] The GPU in use cannot present to this display.\n");
+      }
       /* A lost device does not come back with a new swapchain: the
        * whole driver has to, and the runloop does that when it sees
        * the flag (after a TDR, a GPU reset). */

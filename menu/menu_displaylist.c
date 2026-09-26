@@ -11547,6 +11547,19 @@ unsigned menu_displaylist_build_list(
                };
                count += menu_displaylist_parse_settings_rows(list, settings,
                      dl_rows_8, (unsigned)ARRAY_SIZE(dl_rows_8));
+
+               /* Only the GPUs the driver found: an index past them
+                * names no device, and picking one leaves the frontend
+                * on a GPU that may not reach the display at all. */
+               {
+                  rarch_setting_t *gpu_setting    = menu_setting_find_enum(
+                        MENU_ENUM_LABEL_VIDEO_GPU_INDEX);
+                  struct string_list *gpu_devices =
+                     video_driver_get_gpu_api_devices(
+                           video_context_driver_get_api());
+                  if (gpu_setting && gpu_devices && gpu_devices->size > 0)
+                     gpu_setting->max = (float)(gpu_devices->size - 1);
+               }
             }
 #if defined(WIIU)
             if (MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(list,
