@@ -987,6 +987,12 @@ typedef struct video_poke_interface
     * while the audio rate was scaled for the full multiple. Drivers
     * that hold a frame for as long as they are asked leave it NULL. */
    unsigned (*get_swap_interval_cap)(void *data);
+
+   /* Whether get_video_output_prev/next would currently switch the
+    * screen resolution. Drivers that only forward the request to a
+    * context driver leave this NULL (the default), so the menu does
+    * not offer an entry that cannot do anything. */
+   bool (*can_switch_video_output)(void *data);
 } video_poke_interface_t;
 
 /* dims is the frame's size, VIDEO_SCALE_PACK'd; msg is for showing a
@@ -1483,6 +1489,10 @@ unsigned video_driver_hdr_max_mode(void);
 bool video_driver_get_next_video_out(void);
 
 bool video_driver_get_prev_video_out(void);
+
+/* Whether the screen resolution can be cycled, either through the
+ * display server or through the video driver itself. */
+bool video_driver_can_switch_video_out(void);
 
 void video_driver_monitor_reset(void);
 

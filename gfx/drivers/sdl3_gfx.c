@@ -732,6 +732,11 @@ static void sdl3_get_video_output_next(void *data)
    sdl3_cycle_video_mode((sdl3_video_t*)data, 1);
 }
 
+static bool sdl3_can_switch_video_output(void *data)
+{
+   return sdl3_current_video_mode((sdl3_video_t*)data) != NULL;
+}
+
 static void sdl3_poke_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
 {
    sdl3_video_t *vid = (sdl3_video_t*)data;
@@ -1711,7 +1716,24 @@ static video_poke_interface_t sdl3_video_poke_interface = {
    NULL,                            /* set_hdr_paper_white_nits */
    NULL,                            /* set_hdr_expand_gamut */
    NULL,                            /* set_hdr_scanlines */
-   NULL                             /* set_hdr_subpixel_layout */
+   NULL,                            /* set_hdr_subpixel_layout */
+   NULL,                            /* supports_texture_format */
+   NULL,                            /* load_texture_compressed */
+   NULL,                            /* present_last */
+   NULL,                            /* get_last_present_time */
+   NULL,                            /* hw_ring_install */
+   NULL,                            /* hw_ring_fence_new */
+   NULL,                            /* hw_ring_fence_free */
+   NULL,                            /* hw_ring_fence_signal */
+   NULL,                            /* hw_ring_fence_wait */
+   NULL,                            /* hw_ring_capture */
+   NULL,                            /* hw_ring_present_slot */
+   NULL,                            /* hw_ring_context_new */
+   NULL,                            /* hw_ring_context_free */
+   NULL,                            /* hw_ring_framebuffer */
+   NULL,                            /* update_texture */
+   NULL,                            /* get_swap_interval_cap */
+   sdl3_can_switch_video_output
 };
 
 static void sdl3_gfx_poke_interface(void *data, const video_poke_interface_t **iface)
