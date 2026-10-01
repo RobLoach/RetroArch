@@ -41,6 +41,9 @@ typedef struct _sdl3_joypad
    unsigned        num_hats;
    uint16_t        rumble_gain; /* 0-100 */
    uint16_t        rumble[2];   /* raw magnitude per retro_rumble_effect (strong/weak) */
+   SDL_Haptic     *haptic;
+   SDL_HapticEffectID haptic_effect; /* -1 = none created */
+   bool            haptic_checked;
    bool            sensor_accel; /* Whether or not the sensor has been connected. */
    bool            sensor_gyro;
 } sdl3_joypad_t;
@@ -51,6 +54,7 @@ typedef struct _sdl3_joypad
  * @todo Move away from static globals.
  */
 static sdl3_joypad_t sdl3_joypads[MAX_USERS];
+static bool sdl3_has_haptic;
 
 static const char *sdl3_joypad_name(unsigned pad)
 {
@@ -86,6 +90,48 @@ static int16_t sdl3_joypad_get_axis(sdl3_joypad_t *pad, unsigned axis)
    else if (pad->joypad)
       return SDL_GetJoystickAxis(pad->joypad, (int)axis);
    return 0;
+}
+
+/* Devices that expose rumble only through the haptic subsystem get
+ * nothing from SDL_Rumble*; drive a LEFTRIGHT effect for them. */
+static bool sdl3_joypad_haptic_rumble(sdl3_joypad_t *pad,
+      uint16_t low, uint16_t high)
+{
+   SDL_HapticEffect efx;
+
+   if (!sdl3_has_haptic || !pad->joypad)
+      return false;
+
+   if (!pad->haptic && !pad->haptic_checked)
+   {
+      pad->haptic_checked = true;
+      if (SDL_IsJoystickHaptic(pad->joypad))
+         pad->haptic = SDL_OpenHapticFromJoystick(pad->joypad);
+   }
+
+   if (!pad->haptic)
+      return false;
+
+   memset(&efx, 0, sizeof(efx));
+   efx.type                      = SDL_HAPTIC_LEFTRIGHT;
+   efx.leftright.type            = SDL_HAPTIC_LEFTRIGHT;
+   efx.leftright.length          = 5000;
+   efx.leftright.large_magnitude = low;
+   efx.leftright.small_magnitude = high;
+
+   if (pad->haptic_effect < 0)
+   {
+      if ((pad->haptic_effect = SDL_CreateHapticEffect(pad->haptic, &efx)) < 0)
+      {
+         SDL_CloseHaptic(pad->haptic);
+         pad->haptic = NULL;
+         return false;
+      }
+   }
+   else if (!SDL_UpdateHapticEffect(pad->haptic, pad->haptic_effect, &efx))
+      return false;
+
+   return SDL_RunHapticEffect(pad->haptic, pad->haptic_effect, 1);
 }
 
 static bool sdl3_joypad_set_rumble_gain(unsigned pad, unsigned gain)
@@ -169,10 +215,11 @@ static void sdl3_joypad_connect(SDL_JoystickID jid)
       return;
    }
 
-   pad          = &sdl3_joypads[slot];
-   pad->jid     = jid;
-   pad->gamepad = gamepad;
-   pad->joypad  = joypad;
+   pad                = &sdl3_joypads[slot];
+   pad->jid           = jid;
+   pad->gamepad       = gamepad;
+   pad->joypad        = joypad;
+   pad->haptic_effect = -1;
 
    /* Seed the rumble gain from the saved setting so it applies on connect. */
    {
@@ -293,6 +340,9 @@ static void sdl3_joypad_disconnect(SDL_JoystickID jid)
       if (sdl3_joypads[i].jid != jid)
          continue;
 
+      if (sdl3_joypads[i].haptic)
+         SDL_CloseHaptic(sdl3_joypads[i].haptic);
+
       if (sdl3_joypads[i].gamepad) {
          SDL_SetGamepadPlayerIndex(sdl3_joypads[i].gamepad, -1);
          SDL_CloseGamepad(sdl3_joypads[i].gamepad);
@@ -319,6 +369,8 @@ static void sdl3_joypad_destroy(void)
 
    for (int i = 0; i < MAX_USERS; i++)
    {
+      if (sdl3_joypads[i].haptic)
+         SDL_CloseHaptic(sdl3_joypads[i].haptic);
       if (sdl3_joypads[i].gamepad)
          SDL_CloseGamepad(sdl3_joypads[i].gamepad);
       else if (sdl3_joypads[i].joypad)
@@ -326,6 +378,11 @@ static void sdl3_joypad_destroy(void)
    }
 
    memset(sdl3_joypads, 0, sizeof(sdl3_joypads));
+   if (sdl3_has_haptic)
+   {
+      SDL_QuitSubSystem(SDL_INIT_HAPTIC);
+      sdl3_has_haptic = false;
+   }
    SDL_QuitSubSystem(SDL_INIT_GAMEPAD);
 }
 
@@ -388,6 +445,11 @@ static void *sdl3_joypad_init(void *data)
       if (!SDL_InitSubSystem(SDL_INIT_GAMEPAD))
          return NULL;
    }
+
+   if ((SDL_WasInit(0) & SDL_INIT_HAPTIC) == 0)
+      sdl3_has_haptic = SDL_InitSubSystem(SDL_INIT_HAPTIC);
+   else
+      sdl3_has_haptic = false;
 
    /* Set the initial state of the joypad system. */
    memset(sdl3_joypads, 0, sizeof(sdl3_joypads));
@@ -576,11 +638,19 @@ static bool sdl3_joypad_set_rumble(unsigned pad,
 
    /* The frontend re-issues rumble every frame, so just use an arbitrary duration. */
    if (sdl3_joypads[pad].gamepad)
-      return SDL_RumbleGamepad(sdl3_joypads[pad].gamepad, low, high, 5000);
+   {
+      if (SDL_RumbleGamepad(sdl3_joypads[pad].gamepad, low, high, 5000))
+         return true;
+   }
    else if (sdl3_joypads[pad].joypad)
-      return SDL_RumbleJoystick(sdl3_joypads[pad].joypad, low, high, 5000);
+   {
+      if (SDL_RumbleJoystick(sdl3_joypads[pad].joypad, low, high, 5000))
+         return true;
+   }
+   else
+      return false;
 
-   return false;
+   return sdl3_joypad_haptic_rumble(&sdl3_joypads[pad], low, high);
 }
 
 /**
