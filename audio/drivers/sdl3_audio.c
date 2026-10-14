@@ -1030,6 +1030,7 @@ static void *sdl3_microphone_open_mic(void *driver_context, const char *device,
          1, &mic->spec, &device_sample_frames)))
       goto error;
 
+   mic->latency = latency;
    SDL_SetAtomicU32(&mic->devid, SDL_GetAudioStreamDevice(mic->stream));
    SDL_AddEventWatch(sdl3_audio_device_removed_watch, mic);
 
@@ -1154,17 +1155,65 @@ static size_t sdl3_microphone_wait_readable(void *driver_context,
    }
 }
 
+/**
+ * Attempts to reopen a lost microphone on the default recording device.
+ *
+ * @return True when reads may proceed on the new stream.
+ */
+static bool sdl3_microphone_reopen_default(sdl3_audio_t *mic)
+{
+   SDL_AudioSpec spec = {0};
+   int device_sample_frames = 0;
+   SDL_AudioStream *stream = NULL;
+
+   RARCH_WARN("[SDL3 audio] Reopening microphone on the default recording device.\n");
+
+   stream = sdl3_audio_open_stream(NULL, true, (unsigned)mic->spec.freq,
+         mic->latency, mic->spec.channels, &spec, &device_sample_frames);
+
+   /* Keep the stream's read side on the original format so the rest
+    * of the pipeline is unaffected; SDL converts from the new
+    * device's format transparently. */
+   if (stream && !SDL_SetAudioStreamFormat(stream, NULL, &mic->spec))
+   {
+      SDL_DestroyAudioStream(stream);
+      stream = NULL;
+   }
+
+   if (!stream)
+   {
+      RARCH_ERR("[SDL3 audio] Failed to reopen on the default recording device, giving up on this microphone.\n");
+      SDL_SetAtomicInt(&mic->defunct, 1);
+      return false;
+   }
+
+   SDL_DestroyAudioStream(mic->stream);
+   mic->stream = stream;
+   SDL_SetAtomicU32(&mic->devid, SDL_GetAudioStreamDevice(stream));
+   SDL_SetAudioStreamPutCallback(mic->stream, sdl3_microphone_stream_cb, mic);
+
+   /* Re-arm removal tracking; a read in progress implies the frontend
+    * had the microphone running, so resume the new stream. */
+   SDL_LockMutex(mic->lock);
+   SDL_SetAtomicInt(&mic->device_removed, 0);
+   mic->data_moved = false;
+   SDL_UnlockMutex(mic->lock);
+   SDL_ResumeAudioStreamDevice(mic->stream);
+   return true;
+}
+
 static int sdl3_microphone_read(void *driver_context, void *mic_context,
       void *s, size_t len)
 {
    size_t size = 0;
    sdl3_audio_t *mic = (sdl3_audio_t*)mic_context;
 
-   if (!driver_context || !mic || !s)
+   if (!driver_context || !mic || !s || SDL_GetAtomicInt(&mic->defunct))
       return -1;
 
-   /* Avoid using a recording device that doesn't exist. */
-   if (SDL_GetAtomicInt(&mic->device_removed))
+   /* The device is gone; recover on the default recording device. */
+   if (SDL_GetAtomicInt(&mic->device_removed)
+         && !sdl3_microphone_reopen_default(mic))
       return -1;
 
    while (size < len)
