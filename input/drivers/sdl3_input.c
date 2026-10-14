@@ -1281,6 +1281,10 @@ static void sdl3_input_poll(void *data)
     * above (SDL_GetSensorData), so flush the events. */
    if (sdl->sensors_init)
       SDL_FlushEvent(SDL_EVENT_SENSOR_UPDATE);
+
+   /* Audio device hotplug events are also consumed by nobody - the
+    * audio driver's event watch already saw them at push time. */
+   SDL_FlushEvents(SDL_EVENT_AUDIO_DEVICE_ADDED, SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED);
 }
 
 static void sdl3_grab_mouse(void *data, bool state)
