@@ -14,6 +14,7 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -556,6 +557,132 @@ void sdl3_ctx_get_video_size(void *data, unsigned *dims)
 float sdl3_ctx_get_refresh_rate(void *data)
 {
    return sdl3_window_get_refresh_rate(sdl3_ctx_window(data));
+}
+
+/* The mode the Screen Resolution setting points at, worked out from
+ * what SDL and the settings already hold: the window's exclusive
+ * fullscreen mode while it has one, otherwise the closest mode to the
+ * configured fullscreen size, or the desktop's mode when that is 0x0
+ * (the display's own mode). */
+static bool sdl3_current_output_mode(SDL_Window *win, SDL_DisplayMode *mode)
+{
+   const SDL_DisplayMode *current;
+   settings_t *settings  = config_get_ptr();
+   SDL_DisplayID display = sdl3_target_display(win);
+   unsigned width        = settings->uints.video_fullscreen_x;
+   unsigned height       = settings->uints.video_fullscreen_y;
+
+   if (win && (current = SDL_GetWindowFullscreenMode(win)))
+   {
+      *mode = *current;
+      return true;
+   }
+
+   if (     width && height
+         && SDL_GetClosestFullscreenDisplayMode(display,
+               (int)width, (int)height,
+               settings->floats.video_refresh_rate, false, mode))
+      return true;
+
+   if ((current = SDL_GetDesktopDisplayMode(display)))
+   {
+      *mode = *current;
+      return true;
+   }
+
+   return false;
+}
+
+/* Steps the Screen Resolution to the previous/next resolution in the
+ * display's fullscreen mode list, wrapping around at both ends. The
+ * list is sorted by size, so the refresh rate variants of a size are
+ * next to each other and are skipped; the refresh rate is picked from
+ * the configured one, as when entering fullscreen. The size is kept in
+ * the fullscreen size settings so set_video_mode and video reinits use
+ * it, and applied at once when in exclusive fullscreen. */
+static void sdl3_step_output_mode(SDL_Window *win, int step)
+{
+   int i, idx;
+   int count             = 0;
+   SDL_DisplayMode current;
+   SDL_DisplayMode mode;
+   SDL_DisplayMode **modes;
+   settings_t *settings  = config_get_ptr();
+   SDL_DisplayID display = sdl3_target_display(win);
+
+   if (!sdl3_current_output_mode(win, &current))
+      return;
+   if (     !(modes = SDL_GetFullscreenDisplayModes(display, &count))
+         || count < 1)
+   {
+      SDL_free(modes);
+      return;
+   }
+
+   for (idx = 0; idx < count; idx++)
+      if (     modes[idx]->w == current.w
+            && modes[idx]->h == current.h)
+         break;
+
+   if (idx == count)
+      /* The current size isn't in the list: start from the top */
+      idx = 0;
+   else
+   {
+      for (i = 1; i < count; i++)
+      {
+         int j = (idx + step * i + count) % count;
+         if (     modes[j]->w != current.w
+               || modes[j]->h != current.h)
+         {
+            idx = j;
+            break;
+         }
+      }
+   }
+
+   configuration_set_uint(settings,
+         settings->uints.video_fullscreen_x, (unsigned)modes[idx]->w);
+   configuration_set_uint(settings,
+         settings->uints.video_fullscreen_y, (unsigned)modes[idx]->h);
+
+   /* Windowed fullscreen keeps the desktop's mode */
+   if (     win
+         && !settings->bools.video_windowed_fullscreen
+         && (SDL_GetWindowFlags(win) & SDL_WINDOW_FULLSCREEN)
+         && SDL_GetClosestFullscreenDisplayMode(display,
+               modes[idx]->w, modes[idx]->h,
+               settings->floats.video_refresh_rate, false, &mode))
+   {
+      SDL_SetWindowFullscreenMode(win, &mode);
+      SDL_SyncWindow(win);
+   }
+
+   SDL_free(modes);
+}
+
+void sdl3_ctx_get_video_output_size(void *data,
+      unsigned *dims, char *desc, size_t desc_len)
+{
+   SDL_DisplayMode mode;
+
+   if (!sdl3_current_output_mode(sdl3_ctx_window(data), &mode))
+      return;
+
+   *dims = VIDEO_SCALE_PACK((unsigned)mode.w, (unsigned)mode.h);
+
+   if (desc && desc_len && mode.refresh_rate > 0.0f)
+      snprintf(desc, desc_len, "%.2f Hz", mode.refresh_rate);
+}
+
+void sdl3_ctx_get_video_output_prev(void *data)
+{
+   sdl3_step_output_mode(sdl3_ctx_window(data), -1);
+}
+
+void sdl3_ctx_get_video_output_next(void *data)
+{
+   sdl3_step_output_mode(sdl3_ctx_window(data), 1);
 }
 
 void sdl3_ctx_update_title(void *data)

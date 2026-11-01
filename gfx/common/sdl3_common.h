@@ -200,6 +200,15 @@ bool sdl3_next_window_is_sdl3(void);
 
 void sdl3_ctx_get_video_size(void *data, unsigned *dims);
 float sdl3_ctx_get_refresh_rate(void *data);
+
+/* Screen Resolution menu support. get_video_output_size reports the
+ * exclusive fullscreen mode in use or configured, while prev/next step
+ * the configured fullscreen size through the display's fullscreen mode
+ * list, applying it immediately when already in exclusive fullscreen. */
+void sdl3_ctx_get_video_output_size(void *data,
+      unsigned *dims, char *desc, size_t desc_len);
+void sdl3_ctx_get_video_output_prev(void *data);
+void sdl3_ctx_get_video_output_next(void *data);
 void sdl3_ctx_update_title(void *data);
 bool sdl3_ctx_has_focus(void *data);
 void sdl3_ctx_check_window(void *data, bool *quit, bool *resize,
