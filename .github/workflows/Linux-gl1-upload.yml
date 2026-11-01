@@ -36,31 +36,41 @@ jobs:
   gl1-upload:
     name: Run retroarch on gl1 under Xvfb and check the frame
     runs-on: ubuntu-latest
+    env:
+      APT_PKGS: build-essential zlib1g-dev ccache python3 xvfb libgl1-mesa-dri libx11-dev libx11-xcb-dev libxcb1-dev libxext-dev libxxf86vm-dev libxrandr-dev libxinerama-dev libgl-dev libegl-dev
     timeout-minutes: 25
 
     steps:
-      - name: Install dependencies
-        timeout-minutes: 5
-        run: |
-          for i in 1 2 3; do
-            sudo timeout 90 apt-get update -y \
-              -o Acquire::Retries=3 -o Acquire::http::Timeout=30 && break
-            echo "apt-get update failed (attempt $i); retrying in 10s"
-            sleep 10
-          done
-          sudo apt-get install -y \
-            -o Acquire::Retries=3 -o Acquire::http::Timeout=30 \
-            build-essential zlib1g-dev ccache python3 \
-            xvfb libgl1-mesa-dri \
-            libx11-dev libx11-xcb-dev libxcb1-dev libxext-dev \
-            libxxf86vm-dev libxrandr-dev libxinerama-dev \
-            libgl-dev libegl-dev
-
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Apt cache key
+        id: apt
+        run: sh .github/workflows/scripts/apt-cache-key.sh "$APT_PKGS"
+
+      - name: Restore apt cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.apt-cache
+          key: ${{ steps.apt.outputs.key }}
+          restore-keys: ${{ steps.apt.outputs.prefix }}
+
+      - name: Install dependencies
+        timeout-minutes: 20
+        run: sh .github/workflows/scripts/apt-install.sh $APT_PKGS
+
+      - name: Save apt cache
+        if: env.APT_CACHE_SAVE == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.apt-cache
+          key: ${{ steps.apt.outputs.key }}
+
+      - name: Link with lld
+        run: sh .github/workflows/scripts/use-lld.sh
+
       - name: Restore ccache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ~/.ccache
           key: ccache-${{ github.workflow }}-${{ github.job }}-${{ github.sha }}
@@ -73,7 +83,7 @@ jobs:
           export CCACHE_DIR="$HOME/.ccache"
           echo "CCACHE_DIR=$CCACHE_DIR" >> "$GITHUB_ENV"
           echo "/usr/lib/ccache" >> "$GITHUB_PATH"
-          ccache -M 500M
+          ccache -M 250M
           ccache -z
 
       - name: Build RetroArch (X11 + OpenGL, the rest off)
@@ -102,3 +112,12 @@ jobs:
           set -eu
           make -C samples/gfx/gl1_upload
           timeout 600 python3 samples/gfx/gl1_upload/gl1_upload_test.py ./retroarch
+
+      - name: Save ccache
+        # Only master's pushes keep a cache: pull requests restore
+        # master's, so one push does not evict the next one's.
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ github.workflow }}-${{ github.job }}-${{ github.sha }}

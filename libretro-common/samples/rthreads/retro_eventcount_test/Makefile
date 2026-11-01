@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := retro_eventcount_test
 
 LIBRETRO_COMM_DIR := ../../..
@@ -8,9 +10,11 @@ LIBRETRO_COMM_DIR := ../../..
 SOURCES := \
 	retro_eventcount_test.c \
 	$(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c \
-	$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
+	$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
+	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+	$(LIBRETRO_COMM_DIR)/features/features_cpu.c
 
-CFLAGS  += -Wall -W -std=gnu99 -g -O1 \
+CFLAGS  += -Wall -W -std=gnu99 -g1 -O1 \
            -DHAVE_THREADS -I$(LIBRETRO_COMM_DIR)/include
 LDFLAGS += -lpthread
 # rthreads.c uses clock_gettime + CLOCK_REALTIME on Linux glibc; on
@@ -30,9 +34,14 @@ LDFLAGS += -lrt
 #   x86_64-w64-mingw32-gcc -o ec.exe retro_eventcount_test.c \
 #       ../../../rthreads/retro_eventcount.c \
 #       ../../../rthreads/rthreads.c \
+#       ../../../features/features_cpu.c ../../../time/rtime.c \
 #       -Wall -W -std=gnu99 -O1 -DHAVE_THREADS -I../../../include
-#   for t in alert keyed event none; do \
-#       RETRO_EVENTCOUNT_WIN32=$$t wine64 ./ec.exe; done
+#   for h in 1 0; do for t in alert keyed event none; do \
+#       RETRO_EVENTCOUNT_HIRES=$$h RETRO_EVENTCOUNT_WIN32=$$t \
+#       wine64 ./ec.exe; done; done
+#
+# RETRO_EVENTCOUNT_HIRES=0 bounds timed waits with the kernel timeout
+# alone rather than the high resolution timer, to compare against it.
 #
 # RETRO_EVENTCOUNT_WIN32 pins the sleep tier.  'none' pins the case
 # where no tier is available at all, which otherwise needs the process
@@ -42,8 +51,64 @@ ifneq ($(SCOND),)
    CFLAGS += -DRETRO_EVENTCOUNT_FORCE_SCOND
    TARGET := retro_eventcount_test_scond
 endif
+# SEM=1 builds the semaphore backend - the waiter list slept on with a
+# semaphore of the waiting thread's own, which Darwin and the BSDs
+# select - on this host, over a POSIX semaphore, so its list protocol
+# runs here under the sanitizers.  The Mach spelling on Darwin differs
+# in the three semaphore calls only.
+ifneq ($(SEM),)
+   CFLAGS += -DRETRO_EVENTCOUNT_FORCE_SEM
+   TARGET := retro_eventcount_test_sem
+endif
+# SEMPOOL=1 builds the pooled variant of the semaphore backend, the
+# one the Vita takes because its threads have no storage of their own
+# to keep a semaphore in: the same list, the semaphores drawn from a
+# lock-free pool per park.  Over POSIX semaphores here; the Vita
+# spelling differs in the three semaphore calls only.
+ifneq ($(SEMPOOL),)
+   CFLAGS += -DRETRO_EVENTCOUNT_FORCE_SEM_POOL
+   TARGET := retro_eventcount_test_sempool
+endif
+# Built for Linux, both take the semaphore past ThreadSanitizer's
+# interceptors, through sem_hidden_shim.c, so it sees no more order
+# than Darwin's Mach semaphore gives it.
+ifneq ($(SEM)$(SEMPOOL),)
+   ifneq ($(findstring linux,$(shell $(CC) -dumpmachine)),)
+      SOURCES += sem_hidden_shim.c
+      CFLAGS  += -Dsem_wait=hidden_sem_wait -Dsem_post=hidden_sem_post \
+                 -Dsem_timedwait=hidden_sem_timedwait
+      LDFLAGS += -ldl
+   endif
+endif
+# CTR=1 builds the 3DS address-arbiter backend on this host, against
+# hostctr/3ds - the slice of libctru it uses - with the two arbiter
+# wrappers stood in for over futex in ctr_arbiter_shim.c.
+ifneq ($(CTR),)
+   CFLAGS += -DRETRO_EVENTCOUNT_FORCE_3DS -Ihostctr
+   SOURCES += ctr_arbiter_shim.c
+   TARGET := retro_eventcount_test_ctr
+endif
+# SWITCH=1 builds the Horizon address-arbiter backend on this host,
+# against hostnx/switch.h - the slice of libnx it uses - with the two
+# system calls and the firmware query stood in for over futex in
+# switch_arbiter_shim.c.  check runs it as current firmware and as
+# firmware before 4.0.0, where it must fall back to scond.
+ifneq ($(SWITCH),)
+   CFLAGS += -DRETRO_EVENTCOUNT_FORCE_SWITCH -Ihostnx
+   SOURCES += switch_arbiter_shim.c
+   TARGET := retro_eventcount_test_switch
+endif
 
-OBJS := $(SOURCES:.c=.o)
+# GEKKO=1 builds the GameCube and Wii backend, os/gekko's futex, on
+# this host, against hostgekko/gekko - the slice of os/gekko it uses -
+# with the futex stood in for over Linux's in gekko_futex_shim.c.
+ifneq ($(GEKKO),)
+   CFLAGS += -DRETRO_EVENTCOUNT_FORCE_GEKKO -Ihostgekko
+   SOURCES += gekko_futex_shim.c
+   TARGET := retro_eventcount_test_gekko
+endif
+
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
 ifneq ($(SAN),)
    SANITIZER := $(SAN)
@@ -58,16 +123,57 @@ all: $(TARGET)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-check: all
+deadline_test: deadline_test.c $(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c
+	$(CC) $(CFLAGS) -o $@ deadline_test.c $(filter-out retro_eventcount_test.c $(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c,$(SOURCES)) $(LDFLAGS)
+
+win32_spin_test: win32_spin_test.c $(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c
+	$(CC) $(CFLAGS) -o $@ win32_spin_test.c $(filter-out retro_eventcount_test.c $(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c,$(SOURCES)) $(LDFLAGS)
+
+check: all deadline_test win32_spin_test
+	./deadline_test
+	./win32_spin_test
 	./$(TARGET)
 	@$(MAKE) -s clean
 	@$(MAKE) -s SCOND=1 $(if $(SANITIZER),SANITIZER=$(SANITIZER))
 	./retro_eventcount_test_scond
+	@$(MAKE) -s clean
+	@$(MAKE) -s SEM=1 $(if $(SANITIZER),SANITIZER=$(SANITIZER))
+	./retro_eventcount_test_sem
+	@$(MAKE) -s clean
+	@$(MAKE) -s SEMPOOL=1 $(if $(SANITIZER),SANITIZER=$(SANITIZER))
+	./retro_eventcount_test_sempool
+	@$(MAKE) -s clean
+	@$(MAKE) -s SWITCH=1 $(if $(SANITIZER),SANITIZER=$(SANITIZER))
+	./retro_eventcount_test_switch
+	HOSTNX_OLD_FIRMWARE=1 ./retro_eventcount_test_switch
+	@$(MAKE) -s clean
+	@$(MAKE) -s CTR=1 $(if $(SANITIZER),SANITIZER=$(SANITIZER))
+	./retro_eventcount_test_ctr
+	@$(MAKE) -s clean
+	@$(MAKE) -s GEKKO=1 $(if $(SANITIZER),SANITIZER=$(SANITIZER))
+	./retro_eventcount_test_gekko
+	@if HOSTGEKKO_LOSE_WAKES=1 timeout 20 ./retro_eventcount_test_gekko >/dev/null 2>&1; then \
+	   echo "FAIL: the gekko backend passed with its wakes lost"; exit 1; \
+	 else \
+	   echo "retro_eventcount_test_gekko: lost wakes caught, as they must be"; \
+	 fi
 
 clean:
-	rm -f $(OBJS) retro_eventcount_test retro_eventcount_test_scond
+	rm -rf $(SAMPLE_OBJDIR)
+	rm -f $(OBJS) switch_arbiter_shim.o ctr_arbiter_shim.o sem_hidden_shim.o \
+	      gekko_futex_shim.o retro_eventcount_test_gekko \
+	      retro_eventcount_test \
+	      retro_eventcount_test_scond retro_eventcount_test_sem \
+	      retro_eventcount_test_sempool retro_eventcount_test_switch \
+	      retro_eventcount_test_ctr
+	rm -f deadline_test deadline_test.exe
+	rm -f win32_spin_test win32_spin_test.exe
 
 .PHONY: all check clean

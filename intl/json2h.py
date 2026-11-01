@@ -7,9 +7,11 @@ import os
 import re
 import sys
 import json
+import subprocess
+import tempfile
 
-sys.path.insert(0, os.path.join(
-      os.path.dirname(os.path.abspath(__file__)), '..', 'tools'))
+CHECK_SH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        '..', 'tools', 'check.sh')
 
 p = re.compile(
     r'MSG_HASH\s*(?:\/\*(?:.|[\r\n])*?\*\/\s*)*\(\s*(?:\/\*(?:.|[\r\n])*?\*\/\s*)*[a-zA-Z0-9_]+\s*(?:\/\*(?:.|[\r\n])*?\*\/\s*)*,\s*(?:\/\*(?:.|[\r\n])*?\*\/\s*)*\".*\"\s*(?:\/\*(?:.|[\r\n])*?\*\/\s*)*\)')
@@ -208,11 +210,10 @@ def update(messages, template, source_messages):
 # Packed string-table emitter.
 #
 # Instead of MSG_HASH(ID, "...") switch-case rows, translation headers are
-# emitted as three constant objects consumed by msg_hash.c:
+# emitted as two constant objects consumed by msg_hash.c:
 #
 #   static const struct { char s0[N0]; ... } msg_hash_<lang>_blob = {...};
-#   static const uint32_t msg_hash_<lang>_ids[]  = { (uint32_t)ID, ... };
-#   static const uint32_t msg_hash_<lang>_offs[] = { 0, N0, ... };
+#   static const msg_hash_id_t msg_hash_<lang>_ids[] = { (msg_hash_id_t)ID, ... };
 #
 # Every struct member is a char array of exactly the row's decoded byte
 # length (+1 for the NUL, except non-final chunks of long rows), each
@@ -225,9 +226,9 @@ def update(messages, template, source_messages):
 # OS demand-pages them and languages that are never selected never become
 # resident.
 #
-# Rows inside preprocessor guards keep their guards on the ids[] and
-# offs[] entries; the blob members are unconditional (a handful of unused
-# strings when a feature is compiled out is cheaper than shifting offsets).
+# Rows inside preprocessor guards keep their guards on the ids[] entries;
+# the blob members are unconditional (a handful of unused strings when a
+# feature is compiled out is cheaper than shifting offsets).
 # ---------------------------------------------------------------------------
 
 CHUNK_MAX = 500
@@ -441,24 +442,36 @@ def drop_format_mismatches(rows, source, lang):
     falls back to the English row for anything absent from the table,
     which is the safe reading of a translation nobody here can fix, so
     the row is left out rather than emitted. See
-    tools/msg_hash_format_check.py for the rules.
+    tools/msg_hash_format_check.c for the rules.
     """
-    import msg_hash_format_check as fmt
-
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    formatted = fmt.format_site_keys(root)
+    asked = []
+    with tempfile.NamedTemporaryFile(suffix='.rows', delete=False) as f:
+        for key, val, guard in rows:
+            en = source.get(key)
+            if en is None:
+                continue
+            tl = decode_c_literal(val)
+            f.write(b'%s %d %d\n' % (key.encode('ascii'), len(en), len(tl)))
+            f.write(en)
+            f.write(tl)
+            asked.append(key)
+        path = f.name
+    try:
+        r = subprocess.run(['sh', CHECK_SH, 'msg_hash_format_check',
+                            '--rows', path],
+                           stdout=subprocess.PIPE, check=True)
+    finally:
+        os.remove(path)
+    why = {}
+    for line in r.stdout.decode('utf-8').splitlines():
+        key, _tab, reason = line.partition('\t')
+        why[key] = reason
     kept = []
     for key, val, guard in rows:
-        en = source.get(key)
-        if en is not None:
-            why = fmt.row_error(key, en.decode('utf-8', 'replace'),
-                                decode_c_literal(val).decode('utf-8',
-                                                             'replace'),
-                                formatted)
-            if why:
-                print('%s: dropping %s - it %s' % (lang, key, why),
-                      file=sys.stderr)
-                continue
+        if key in why:
+            print('%s: dropping %s - it %s' % (lang, key, why[key]),
+                  file=sys.stderr)
+            continue
         kept.append((key, val, guard))
     return kept
 
@@ -573,11 +586,11 @@ def pack(text, lang, source=None):
     out.append('      )) ? 1 : -1];')
     out.append('')
     prev = ()
-    out.append('static const uint32_t msg_hash_%s_ids[] =' % lang)
+    out.append('static const msg_hash_id_t msg_hash_%s_ids[] =' % lang)
     out.append('{')
     for (key, val, guard) in rows:
         emit_guard_transition(out, prev, guard); prev = guard
-        out.append('   (uint32_t)%s,' % key)
+        out.append('   (msg_hash_id_t)%s,' % key)
     emit_guard_transition(out, prev, ())
     out.append('};')
     out.append('')
@@ -587,16 +600,25 @@ def verify(text, lang, name):
     """Refuse to write a header whose blob and ids[] disagree.
 
     The two are paired by position at runtime and by nothing the
-    compiler can check, so tools/msg_hash_packed_check.py re-derives the
+    compiler can check, so tools/msg_hash_packed_check.c re-derives the
     pairing from the member names and the guards. Running it here means
     a header in the tree has passed it whatever route it arrived by.
     """
-    sys.path.insert(0, os.path.join(
-          os.path.dirname(os.path.abspath(__file__)), '..', 'tools'))
-    import msg_hash_packed_check
-    errors = msg_hash_packed_check.check_text(text, lang, name)
-    if errors:
-        for e in errors:
+    tmp = tempfile.mkdtemp()
+    path = os.path.join(tmp, 'msg_hash_%s.h' % lang)
+    try:
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(text)
+        r = subprocess.run(['sh', CHECK_SH, 'msg_hash_packed_check', path],
+                           stdout=subprocess.PIPE)
+    finally:
+        if os.path.exists(path):
+            os.remove(path)
+        os.rmdir(tmp)
+    if r.returncode:
+        for e in r.stdout.decode('utf-8').splitlines()[:-1]:
+            if e.startswith(path):
+                e = name + e[len(path):]
             print(e, file=sys.stderr)
         raise SystemExit('packed emitter: %s failed verification' % name)
     return text
@@ -623,8 +645,8 @@ if __name__ == '__main__':
     h_basename = os.path.basename(h_filename)
     json_basename = os.path.basename(json_filename) if json_filename else None
 
-    if h_basename in ('msg_hash_us.h', 'msg_hash_lbl.h') or (
-          json_basename in ('msg_hash_us.json', 'msg_hash_lbl.json')):
+    if h_basename in ('msg_hash_us.h', 'msg_hash_lbl.h', 'msg_hash_lbl_rows.h') or (
+          json_basename in ('msg_hash_us.json', 'msg_hash_lbl.json', 'msg_hash_lbl_rows.json')):
         print("Skip")
         sys.exit(0)
 
@@ -638,7 +660,7 @@ if __name__ == '__main__':
             # A header that has already been packed carries no MSG_HASH rows, so
             # the parser legitimately finds nothing; that is a no-op, not the
             # "no rows" failure below, which means the input is neither form.
-            if re.search(r'static const uint32_t msg_hash_\w+_ids\[\]', text):
+            if re.search(r'static const msg_hash_id_t msg_hash_\w+_ids\[\]', text):
                 print('%s is already packed; nothing to do' % h_filename)
                 sys.exit(0)
             raise SystemExit('packed emitter: no MSG_HASH rows in ' + h_filename)

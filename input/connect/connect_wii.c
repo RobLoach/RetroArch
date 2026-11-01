@@ -143,9 +143,14 @@ typedef struct connect_wii_wiimote_t
 {
    /* User specified ID. */
    int unid;
+   /* the player its lights show: from 1, -1 for none, 0 not yet told -
+    * then its slot's */
+   int player;
+   bool leds_due;
 
    struct pad_connection* connection;
    hid_driver_t *driver;
+   bool ids_first;      /* the driver wants no HIDP header: see wiimote_send */
 
    /* Various state flags. */
    uint32_t state;
@@ -162,6 +167,7 @@ typedef struct connect_wii_wiimote_t
    struct connect_wii_expansion_t exp;
    /* What buttons have just been pressed. */
    uint16_t btns;
+   input_pad_view_t view;
 } connect_wii_wiimote;
 
 /* Macro to manage states */
@@ -190,7 +196,10 @@ static int wiimote_send(struct connect_wii_wiimote_t* wm,
 
    memcpy(buf+2, msg, len);
 
-   wm->driver->send_control(wm->connection, buf, len + 2);
+   if (wm->ids_first)
+      wm->driver->send_control(wm->connection, buf + 1, len + 1);
+   else
+      wm->driver->send_control(wm->connection, buf, len + 2);
    return 1;
 }
 
@@ -244,6 +253,15 @@ static void wiimote_set_leds(struct connect_wii_wiimote_t* wm, int leds)
    buf      = wm->leds;
 
    wiimote_send(wm, WM_CMD_LED, &buf, 1);
+}
+
+/* One light for players 1 to 4, as the console lights them. */
+static void wiimote_player_leds(struct connect_wii_wiimote_t* wm)
+{
+   int player   = wm->player ? wm->player : wm->unid + 1;
+   wm->leds_due = false;
+   wiimote_set_leds(wm, player > 0
+         ? WIIMOTE_LED_1 << ((player - 1) % 4) : WIIMOTE_LED_NONE);
 }
 
 /* Find what buttons are pressed. */
@@ -587,25 +605,21 @@ static int wiimote_handshake(struct connect_wii_wiimote_t* wm,
             WIIMOTE_ENABLE_STATE(wm, WIIMOTE_STATE_HANDSHAKE_COMPLETE);
             wm->handshake_state = 1;
 
-            switch (wm->unid)
-            {
-               case 0:
-                  wiimote_set_leds(wm, WIIMOTE_LED_1);
-                  break;
-               case 1:
-                  wiimote_set_leds(wm, WIIMOTE_LED_2);
-                  break;
-               case 2:
-                  wiimote_set_leds(wm, WIIMOTE_LED_3);
-                  break;
-               case 3:
-                  wiimote_set_leds(wm, WIIMOTE_LED_4);
-                  break;
-            }
+            wiimote_player_leds(wm);
             return 1;
          default:
             break;
       }
+   }
+}
+
+static void hidpad_wii_set_player(void *data, unsigned player)
+{
+   struct connect_wii_wiimote_t* device = (struct connect_wii_wiimote_t*)data;
+   if (device)
+   {
+      device->player   = player ? (int)player : -1;
+      device->leds_due = true;
    }
 }
 
@@ -635,6 +649,7 @@ static void* hidpad_wii_init(void *data, uint32_t slot,
    device->state      = WIIMOTE_STATE_CONNECTED;
    device->exp.type   = EXP_NONE;
    device->driver     = driver;
+   device->ids_first  = PAD_CONNECTION_IDS_FIRST(driver);
 
    wiimote_handshake(device, -1, NULL, -1);
 
@@ -645,54 +660,68 @@ error:
    return NULL;
 }
 
+/* The remote's state into its view, at the end of each packet. */
+static void wiimote_view_update(struct connect_wii_wiimote_t* wm)
+{
+   const struct connect_wii_classic_ctrl_t *cc = &wm->exp.cc.classic;
+
+   /* TODO/FIXME - Broken? this doesn't match retropad! */
+   pad_view_set_buttons(&wm->view,
+         wm->btns | ((uint32_t)(uint16_t)cc->btns << 16), false);
+   if (wm->exp.type == EXP_CLASSIC)
+   {
+      wm->view.axes[0] = (int16_t)(cc->ljs.x.value * 0x7FFF);
+      wm->view.axes[1] = (int16_t)(cc->ljs.y.value * 0x7FFF);
+      wm->view.axes[2] = (int16_t)(cc->rjs.x.value * 0x7FFF);
+      wm->view.axes[3] = (int16_t)(cc->rjs.y.value * 0x7FFF);
+   }
+   else
+      wm->view.axes[0] = wm->view.axes[1] =
+      wm->view.axes[2] = wm->view.axes[3] = 0;
+}
+
 static int16_t hidpad_wii_get_axis(void *data, unsigned axis)
 {
    struct connect_wii_wiimote_t* device = (struct connect_wii_wiimote_t*)data;
 
-   if (device)
-   {
-      switch (device->exp.type)
-      {
-         case EXP_CLASSIC:
-            switch (axis)
-            {
-               case 0:
-                  return device->exp.cc.classic.ljs.x.value * 0x7FFF;
-               case 1:
-                  return device->exp.cc.classic.ljs.y.value * 0x7FFF;
-               case 2:
-                  return device->exp.cc.classic.rjs.x.value * 0x7FFF;
-               case 3:
-                  return device->exp.cc.classic.rjs.y.value * 0x7FFF;
-            }
-            break;
-         default:
-            break;
-      }
-   }
-
-   return 0;
+   if (!device || axis >= INPUT_PAD_VIEW_AXES)
+      return 0;
+   return device->view.axes[axis];
 }
 
 static void hidpad_wii_get_buttons(void *data, input_bits_t *state)
 {
    struct connect_wii_wiimote_t* device = (struct connect_wii_wiimote_t*)data;
-   if ( device )
-   {
-      /* TODO/FIXME - Broken? this doesn't match retropad! */
-      uint32_t b = device->btns | (device->exp.cc.classic.btns << 16);
-      BITS_COPY32_PTR(state, b);
-   }
+   if (device)
+      *state = device->view.buttons;
+}
+
+static const input_pad_view_t *hidpad_wii_view(void *data)
+{
+   return &((struct connect_wii_wiimote_t*)data)->view;
 }
 
 static void hidpad_wii_packet_handler(void *data,
       uint8_t *packet, uint16_t size)
 {
    struct connect_wii_wiimote_t* device = (struct connect_wii_wiimote_t*)data;
-   uint8_t             *msg = packet + 1;
+   uint8_t             *msg;
 
-   if (!device)
+   if (!device || !packet)
       return;
+   /* a Bluetooth stack's DATA | INPUT header */
+   if (size && packet[0] == 0xa1)
+   {
+      packet++;
+      size--;
+   }
+   if (!size)
+      return;
+   msg = packet + 1;
+
+   if (     device->leds_due
+         && WIIMOTE_IS_SET(device, WIIMOTE_STATE_HANDSHAKE_COMPLETE))
+      wiimote_player_leds(device);
 
    switch (packet[0])
    {
@@ -724,6 +753,7 @@ static void hidpad_wii_packet_handler(void *data,
          wiimote_handle_expansion(device, msg+2);
          break;
    }
+   wiimote_view_update(device);
 }
 
 static void hidpad_wii_set_rumble(void *data,
@@ -740,5 +770,12 @@ pad_connection_interface_t pad_connection_wii = {
    hidpad_wii_get_axis,
    NULL, /* get_name */
    NULL, /* button */
-   false,
+   false, /* multi_pad */
+   0,     /* max_pad */
+   NULL,  /* pad_init */
+   NULL,  /* pad_deinit */
+   NULL,  /* status */
+   NULL,  /* joypad */
+   hidpad_wii_set_player,
+   hidpad_wii_view
 };

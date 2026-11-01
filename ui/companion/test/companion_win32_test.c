@@ -38,6 +38,9 @@
 #include <boolean.h>
 #include <compat/strl.h>
 #include <string/stdstring.h>
+#include <encodings/utf.h>
+#include <formats/rpng.h>
+#include <file/file_path.h>
 #include <retro_miscellaneous.h>
 
 #include "../../../configuration.h"
@@ -55,8 +58,8 @@ static int stub_menu_loop_calls;
 LRESULT win32_menu_loop(HWND hwnd, WPARAM wparam) { (void)hwnd; (void)wparam; stub_menu_loop_calls++; return 0; }
 void win32_sizemove_enter(HWND h) { (void)h; }
 void win32_sizemove_exit(HWND h) { (void)h; }
-void win32_sizemove_tick(void) { }
-void win32_sizemove_abort(void) { }
+bool win32_message_paint(HWND h) { (void)h; return false; }
+void win32_sizemove_abort(HWND h) { (void)h; }
 
 extern settings_t test_settings;
 extern runloop_state_t test_runloop;
@@ -66,6 +69,99 @@ extern size_t stub_core_count;
 extern ui_companion_driver_t ui_companion_wimp_win32;
 extern void companion_test_setup_fixtures(char *root, size_t len);
 extern void companion_test_teardown_fixtures(const char *root);
+
+/* Allocation failures, armed by the test: tools/companion_win32_test.sh
+ * links with --wrap for these, so the driver's (and the core's) calls
+ * come here. Each fails the first call matching once armed, then
+ * disarms. */
+void *__real_realloc(void *ptr, size_t size);
+void *__real_calloc(size_t nmemb, size_t size);
+static size_t fail_realloc_size; /* a growth to this many bytes */
+static size_t fail_calloc_nmemb, fail_calloc_size;
+static int    failed_allocs;
+
+void *__wrap_realloc(void *ptr, size_t size)
+{
+   if (fail_realloc_size && ptr && size == fail_realloc_size)
+   {
+      fail_realloc_size = 0;
+      failed_allocs++;
+      return NULL;
+   }
+   return __real_realloc(ptr, size);
+}
+
+void *__wrap_calloc(size_t nmemb, size_t size)
+{
+   if (fail_calloc_nmemb && nmemb == fail_calloc_nmemb
+         && size == fail_calloc_size)
+   {
+      fail_calloc_nmemb = 0;
+      failed_allocs++;
+      return NULL;
+   }
+   return __real_calloc(nmemb, size);
+}
+
+/* Add Files: the modal file dialog, answered from a thread timer (the
+ * dialog's own loop dispatches it) with the names in add_files_names,
+ * picked in the current directory. */
+static const char *add_files_names;
+static HWND        add_files_owner;
+
+static BOOL CALLBACK add_files_find(HWND h, LPARAM lp)
+{
+   char cls[16];
+   if (     GetClassNameA(h, cls, sizeof(cls))
+         && !strcmp(cls, "#32770")
+         && GetWindow(h, GW_OWNER) == add_files_owner
+         && IsWindowVisible(h))
+   {
+      *(HWND*)lp = h;
+      return FALSE;
+   }
+   return TRUE;
+}
+
+static void CALLBACK add_files_answer(HWND h, UINT msg, UINT_PTR id, DWORD t)
+{
+   HWND dlg = NULL;
+   EnumWindows(add_files_find, (LPARAM)&dlg);
+   if (!dlg)
+      return;
+   KillTimer(NULL, id);
+   /* cmb13, the file name box of the Explorer-style dialog */
+   SetDlgItemTextA(dlg, 0x47c, add_files_names);
+   PostMessageA(dlg, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED),
+         (LPARAM)GetDlgItem(dlg, IDOK));
+}
+
+/* Makes @count empty files @prefix00.nes.. in @dir, their quoted names
+ * in @names */
+static void add_files_make(const char *dir, const char *prefix,
+      int count, char *names, size_t len)
+{
+   int i;
+   CreateDirectoryA(dir, NULL);
+   names[0] = '\0';
+   for (i = 0; i < count; i++)
+   {
+      char name[64], path[PATH_MAX_LENGTH];
+      HANDLE f;
+      snprintf(name, sizeof(name), "%s%02d.nes", prefix, i);
+      snprintf(path, sizeof(path), "%s\\%s", dir, name);
+      if ((f = CreateFileA(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+               FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE)
+      {
+         DWORD wr;
+         WriteFile(f, "NES\x1a", 4, &wr, NULL);
+         CloseHandle(f);
+      }
+      strlcat(names, "\"", len);
+      strlcat(names, name, len);
+      strlcat(names, "\" ", len);
+   }
+}
 
 /* The driver's private struct: its first two fields are stable. */
 struct wimp_peek { companion_core_t *core; HWND hwnd; };
@@ -92,15 +188,28 @@ static void pump(void *data, int ms)
    } while (GetTickCount() < end);
 }
 
+/* A row's text as the control shows it - read as UTF-16, so whatever
+ * the script it comes back exact - converted to UTF-8 */
+/* [AI Generated] magic, Korean, Thai - in UTF-8 */
+#define CW_TEST_CJK_NAME "[AI Generated] \xe9\xad\x94\xe6\xb3\x95 \xed\x95\x9c\xea\xb5\xad\xec\x96\xb4 \xe0\xb8\xa0\xe0\xb8\xb2\xe0\xb8\xa9\xe0\xb8\xb2.nes"
+
 static void lv_text(HWND lv, int item, int sub, char *buf, int len)
 {
-   LVITEMA it;
+   LVITEMW it;
+   wchar_t wide[512];
+   char   *u8;
    memset(&it, 0, sizeof(it));
    it.iSubItem   = sub;
-   it.pszText    = buf;
-   it.cchTextMax = len;
-   buf[0] = '\0';
-   SendMessageA(lv, LVM_GETITEMTEXTA, (WPARAM)item, (LPARAM)&it);
+   it.pszText    = wide;
+   it.cchTextMax = 512;
+   wide[0]       = 0;
+   buf[0]        = '\0';
+   SendMessageW(lv, LVM_GETITEMTEXTW, (WPARAM)item, (LPARAM)&it);
+   if ((u8 = utf16_to_utf8_string_alloc(wide)))
+   {
+      strlcpy(buf, u8, (size_t)len);
+      free(u8);
+   }
 }
 
 static void send_command(HWND hwnd, int id) { SendMessageA(hwnd, WM_COMMAND, MAKEWPARAM(id, 0), 0); }
@@ -172,6 +281,22 @@ int main(void)
    pump(data, 200);
    CHECK(SendMessageA(entries, LVM_GETITEMCOUNT, 0, 0) == 3, "clear restores 3");
 
+   /* A file named in CJK, Hangul and Thai, for the browser to list: on
+    * an ANSI path its row came out as the name's UTF-8 bytes in the
+    * local code page */
+   {
+      char     cjk[PATH_MAX_LENGTH];
+      wchar_t *wpath;
+      snprintf(cjk, sizeof(cjk), "%s/content/%s", root, CW_TEST_CJK_NAME);
+      if ((wpath = utf8_to_utf16_string_alloc(cjk)))
+      {
+         HANDLE h = CreateFileW(wpath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+               FILE_ATTRIBUTE_NORMAL, NULL);
+         if (h != INVALID_HANDLE_VALUE)
+            CloseHandle(h);
+         free(wpath);
+      }
+   }
    /* File Browser tab: the listing lands async; folders in the left list,
     * the whole listing in the content list with 4 columns */
    {
@@ -189,6 +314,16 @@ int main(void)
    CHECK(Header_GetItemCount(ListView_GetHeader(entries)) == 4, "Name / Size / Type / Date columns (%d)", Header_GetItemCount(ListView_GetHeader(entries)));
    lv_text(entries, 2, 2, buf, sizeof(buf));
    CHECK(strstr(buf, "File") != NULL, "Type column text for a file (%s)", buf);
+   {
+      int  row, rows = (int)SendMessageA(entries, LVM_GETITEMCOUNT, 0, 0);
+      bool found     = false;
+      for (row = 0; row < rows && !found; row++)
+      {
+         lv_text(entries, row, 0, buf, sizeof(buf));
+         found = string_is_equal(buf, CW_TEST_CJK_NAME);
+      }
+      CHECK(found, "a CJK / Hangul / Thai file name shows as itself");
+   }
    {
       HBITMAP bm = (HBITMAP)SendMessageA(GetDlgItem(hwnd, IDC_CW_BOXART), STM_GETIMAGE, IMAGE_BITMAP, 0);
       CHECK(bm == NULL, "boxart pane empty in the browser");
@@ -285,6 +420,43 @@ int main(void)
       ol = ow ? FindWindowExA(ow, NULL, "SysListView32", NULL) : NULL;
       CHECK(ol && SendMessageA(ol, LVM_GETITEMCOUNT, 0, 0) == 13, "13 settings listed");
       if (ow) ShowWindow(ow, SW_HIDE);
+      /* Controller Shortcuts: an empty row of each kind; a combination
+       * typed on the first and applied is set, and its row follows */
+      {
+         extern char stub_entry_text[256][64];
+         HWND edit;
+         memset(stub_entry_text, 0, sizeof(stub_entry_text));
+         send_command(hwnd, IDM_CW_SHORTCUTS);
+         pump(data, 300);
+         ow = find_class_window("RetroArchCompanionShortcuts");
+         CHECK(ow && IsWindowVisible(ow), "Controller Shortcuts window shown");
+         ol   = ow ? FindWindowExA(ow, NULL, "SysListView32", NULL) : NULL;
+         edit = ow ? GetDlgItem(ow, IDC_CW_SC_EDIT) : NULL;
+         CHECK(ol && SendMessageA(ol, LVM_GETITEMCOUNT, 0, 0) == 2,
+               "an empty combination and an empty macro row");
+         if (ol && edit)
+         {
+            lv_text(ol, 0, 0, buf, sizeof(buf));
+            CHECK(string_is_equal(buf, "New combination"), "first row (got %s)", buf);
+            SetWindowTextA(edit, "l3+r3 : menu_toggle");
+            send_command(ow, IDC_CW_SC_APPLY);
+            CHECK(string_is_equal(stub_entry_text[1], "l3+r3 : menu_toggle"),
+                  "Apply sets combination 1 (got %s)", stub_entry_text[1]);
+            CHECK(SendMessageA(ol, LVM_GETITEMCOUNT, 0, 0) == 3, "its row and a new empty one");
+            lv_text(ol, 0, 1, buf, sizeof(buf));
+            CHECK(string_is_equal(buf, "l3+r3 : menu_toggle"), "the row shows it (got %s)", buf);
+            SetWindowTextA(edit, "nonsense");
+            send_command(ow, IDC_CW_SC_APPLY);
+            CHECK(string_is_equal(stub_entry_text[1], "l3+r3 : menu_toggle"),
+                  "text that does not read leaves it");
+            ListView_SetItemState(ol, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+            SetWindowTextA(edit, "");
+            send_command(ow, IDC_CW_SC_APPLY);
+            CHECK(!stub_entry_text[1][0] && SendMessageA(ol, LVM_GETITEMCOUNT, 0, 0) == 2,
+                  "an empty field takes it out");
+         }
+         if (ow) ShowWindow(ow, SW_HIDE);
+      }
       core_option_manager_free(test_runloop.core_options);
       test_runloop.core_options = NULL;
    }
@@ -656,6 +828,97 @@ int main(void)
                   "Closed Docks shows it again (%s)", test_settings.arrays.desktop_menu_dock_title);
          }
          ui_companion_wimp_win32.deinit(d2);
+      }
+   }
+
+   /* Out of memory: the thumbnail slot table, then Add Files' path
+    * list (a fresh window, so the lanes above keep theirs) */
+   {
+      void *d3;
+      /* A boxart that decodes, where the grid looks for Metroid's, so
+       * icon view installs it in a slot */
+      {
+         static uint32_t px[8 * 8];
+         char png[PATH_MAX_LENGTH], dir[PATH_MAX_LENGTH];
+         int k;
+         for (k = 0; k < 8 * 8; k++)
+            px[k] = 0xff3060a0u;
+         snprintf(dir, sizeof(dir), "%s/thumbnails/playlists/Nintendo - "
+               "Nintendo Entertainment System/Named_Boxarts", root);
+         path_mkdir(dir);
+         snprintf(png, sizeof(png), "%s/Metroid (USA).png", dir);
+         CHECK(rpng_save_image_argb(png, px, 8, 8, 8 * sizeof(uint32_t)),
+               "a boxart for Metroid");
+      }
+      d3                = ui_companion_wimp_win32.init();
+      CHECK(d3 != NULL, "a second window");
+      if (d3)
+      {
+         struct wimp_peek *p3 = (struct wimp_peek*)d3;
+         HWND h3   = p3->hwnd;
+         HWND pl3  = GetDlgItem(h3, IDC_CW_PLAYLISTS);
+         HWND en3  = GetDlgItem(h3, IDC_CW_ENTRIES);
+         HWND vw3  = GetDlgItem(h3, IDC_CW_VIEW_COMBO);
+         char dir[PATH_MAX_LENGTH], names[1024], cwd[PATH_MAX_LENGTH];
+         size_t before;
+
+         /* The first playlist to land sizes the slot table (the
+          * engine's rings, the same size, came with init): it fails */
+         failed_allocs     = 0;
+         fail_calloc_nmemb = 1024;
+         fail_calloc_size  = sizeof(size_t);
+         ui_companion_wimp_win32.toggle(d3, true);
+         pump(d3, 300);
+         ListView_SetItemState(pl3, 2, LVIS_SELECTED | LVIS_FOCUSED,
+               LVIS_SELECTED | LVIS_FOCUSED);
+         pump(d3, 600);
+         CHECK(failed_allocs == 1, "the thumbnail slot table's calloc failed");
+         fail_calloc_nmemb = 0;
+         /* Icons view with no slot table: the rows show, without
+          * thumbnails, though Metroid's would decode */
+         SendMessageA(vw3, CB_SETCURSEL, 1, 0);
+         SendMessageA(h3, WM_COMMAND,
+               MAKEWPARAM(IDC_CW_VIEW_COMBO, CBN_SELCHANGE), (LPARAM)vw3);
+         pump(d3, 800);
+         CHECK(SendMessageA(en3, LVM_GETITEMCOUNT, 0, 0) == 3,
+               "icon view without a slot table shows the 3 entries");
+         send_command(h3, IDM_CW_VIEW_LIST);
+         pump(d3, 200);
+
+         /* Add Files, nine files: the path list grows from 8 to 16,
+          * and that growth fails. The eight gathered are added. */
+         GetCurrentDirectoryA(sizeof(cwd), cwd);
+         snprintf(dir, sizeof(dir), "%s\\add_a", root);
+         add_files_make(dir, "add_a", 9, names, sizeof(names));
+         SetCurrentDirectoryA(dir);
+         before            = companion_core_entry_count(p3->core);
+         add_files_names   = names;
+         add_files_owner   = h3;
+         failed_allocs     = 0;
+         fail_realloc_size = 16 * sizeof(char*);
+         SetTimer(NULL, 0, 50, add_files_answer);
+         send_command(h3, IDM_CW_ADD_FILES);
+         fail_realloc_size = 0;
+         pump(d3, 600);
+         CHECK(failed_allocs == 1
+               && companion_core_entry_count(p3->core) == before + 8,
+               "Add Files of 9 with the list's growth failing adds 8 "
+               "(%d failed, %u entries, was %u)", failed_allocs,
+               (unsigned)companion_core_entry_count(p3->core), (unsigned)before);
+
+         /* And with memory, all nine */
+         snprintf(dir, sizeof(dir), "%s\\add_b", root);
+         add_files_make(dir, "add_b", 9, names, sizeof(names));
+         SetCurrentDirectoryA(dir);
+         before = companion_core_entry_count(p3->core);
+         SetTimer(NULL, 0, 50, add_files_answer);
+         send_command(h3, IDM_CW_ADD_FILES);
+         pump(d3, 600);
+         CHECK(companion_core_entry_count(p3->core) == before + 9,
+               "Add Files of 9 adds 9 (%u entries, was %u)",
+               (unsigned)companion_core_entry_count(p3->core), (unsigned)before);
+         SetCurrentDirectoryA(cwd);
+         ui_companion_wimp_win32.deinit(d3);
       }
    }
 

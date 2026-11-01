@@ -111,7 +111,7 @@ def sources(roots):
                       if d not in ('.git', 'deps', 'pkg', 'media',
                                    'dxsdk', 'MESA', 'vulkan', 'GL',
                                    'GLES2', 'GLES3', 'EGL', 'KHR',
-                                   'vita_pib', 'libgo2', 'libogc',
+                                   'vita_pib', 'libogc',
                                    'lwbt', 'lwip', 'libwiikeyboard')]
             for fn in fns:
                 # embedded shader sources are not C
@@ -142,7 +142,7 @@ def main():
         return ('/samples/' in path or '/test/' in path
                 or os.path.basename(path).startswith('stubs_')
                 or os.path.basename(path).endswith('_test.c')
-                or '/platform_stubs/' in path or '/scripts/stubs/' in path)
+                or '/platform_stubs/' in path)
 
     arity, varargs, renamed = {}, set(), set()
     for p, t in masked.items():

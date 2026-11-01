@@ -26,9 +26,32 @@
 @property (assign) double latitude;
 @property (assign) double longitude;
 @property (assign) bool authorized;
+/* What the authorization callback does, for the request to call
+ * directly rather than through the deprecated delegate method. */
+- (void)applyAuthorizationStatus:(CLAuthorizationStatus)status;
 @end
 
+/* -locationManager:didChangeAuthorizationStatus:, which macOS 11 / iOS 14
+ * replaced with -locationManagerDidChangeAuthorization: and deprecated:
+ * installed by +initialize on the releases before, the only ones that
+ * call it. */
+static void corelocation_did_change_status(id self, SEL _cmd,
+      id manager, int status)
+{
+   [(CoreLocationManager*)self
+      applyAuthorizationStatus:(CLAuthorizationStatus)status];
+}
+
 @implementation CoreLocationManager
+
++ (void)initialize {
+    if (self != [CoreLocationManager class])
+        return;
+    if (!apple_runtime_available(APPLE_RUNTIME_VER(11, 0, 0), APPLE_RUNTIME_VER(14, 0, 0), APPLE_RUNTIME_VER(14, 0, 0)))
+        apple_rt_add_method(self,
+              "locationManager:didChangeAuthorizationStatus:",
+              corelocation_did_change_status, "v@:@i");
+}
 
 + (instancetype)sharedInstance {
     static CoreLocationManager *sharedInstance = nil;
@@ -53,15 +76,21 @@
 
 - (void)requestAuthorization {
     CLAuthorizationStatus status;
+    /* The instance property is macOS 11 / iOS 14, the class method it
+     * replaces deprecated there: both are sent by selector, so neither
+     * warns whichever floor the build has. */
     if (apple_runtime_available(APPLE_RUNTIME_VER(11, 0, 0), APPLE_RUNTIME_VER(14, 0, 0), APPLE_RUNTIME_VER(14, 0, 0)))
-        status = [_locationManager authorizationStatus];
+        status = (CLAuthorizationStatus)apple_rt_get_int(_locationManager,
+              @selector(authorizationStatus));
     else
-        status = [CLLocationManager authorizationStatus];
+        status = (CLAuthorizationStatus)apple_rt_get_int([CLLocationManager class],
+              @selector(authorizationStatus));
 
     if (status == kCLAuthorizationStatusNotDetermined)
     {
         if (apple_runtime_available(APPLE_RUNTIME_VER(10, 15, 0), 0, 0))
-            [_locationManager requestWhenInUseAuthorization];
+            apple_rt_send_void(_locationManager,
+                  sel_registerName("requestWhenInUseAuthorization"));
 #if TARGET_OS_OSX
         else
             /* Pre-10.15 macOS has no explicit when-in-use request API; starting
@@ -70,7 +99,7 @@
 #endif
     }
     else
-        [self locationManager:_locationManager didChangeAuthorizationStatus:status];
+        [self applyAuthorizationStatus:status];
 }
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray<CLLocation *> *)locations {
@@ -84,7 +113,12 @@
     NSLog(@"Location manager failed with error: %@", error);
 }
 
-- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status {
+- (void)locationManagerDidChangeAuthorization:(CLLocationManager *)manager {
+    [self applyAuthorizationStatus:(CLAuthorizationStatus)apple_rt_get_int(
+          manager, @selector(authorizationStatus))];
+}
+
+- (void)applyAuthorizationStatus:(CLAuthorizationStatus)status {
 #if TARGET_OS_OSX
     if (apple_runtime_available(APPLE_RUNTIME_VER(10, 12, 0), 0, 0))
         self.authorized = (status == kCLAuthorizationStatusAuthorizedAlways);

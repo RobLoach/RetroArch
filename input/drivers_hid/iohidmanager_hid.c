@@ -55,7 +55,7 @@ struct iohidmanager_hid_adapter
    /* pad_connection_pad_init() returns int32_t and can return -1 on
     * allocation failure.  Storing the return in uint32_t compiles
     * but makes the `slot == -1` check at the call site a signed/
-    * unsigned comparison GCC warns about.  Matches wiiusb_hid.c's
+    * unsigned comparison GCC warns about.  Matches wiiusb_hid_libogc.c's
     * adapter struct which got this right. */
    int32_t slot;
    IOHIDDeviceRef handle;
@@ -239,21 +239,18 @@ static int16_t iohidmanager_hid_joypad_axis(void *data,
 static int16_t iohidmanager_hid_joypad_state(
       void *data,
       rarch_joypad_info_t *joypad_info,
-      const void *binds_data,
+      const uint16_t *joykeys,
+      const uint32_t *joyaxes,
       unsigned port)
 {
    unsigned i;
    int16_t ret                          = 0;
-   const struct retro_keybind *binds    = (const struct retro_keybind*)binds_data;
    uint16_t port_idx                    = joypad_info->joy_idx;
 
    for (i = 0; i < RARCH_FIRST_CUSTOM_BIND; i++)
    {
-      /* Auto-binds are per joypad, not per user. */
-      const uint64_t joykey  = (binds[i].joykey != NO_BTN)
-         ? binds[i].joykey  : joypad_info->auto_binds[i].joykey;
-      const uint32_t joyaxis = (binds[i].joyaxis != AXIS_NONE)
-         ? binds[i].joyaxis : joypad_info->auto_binds[i].joyaxis;
+      const uint64_t joykey  = joykeys[i];
+      const uint32_t joyaxis = joyaxes[i];
       if (
                (uint16_t)joykey != NO_BTN
             && iohidmanager_hid_joypad_button(data, port_idx, (uint16_t)joykey))
@@ -274,6 +271,15 @@ static bool iohidmanager_hid_joypad_rumble(void *data, unsigned pad,
    if (!hid)
       return false;
    return pad_connection_rumble(&hid->slots[pad], pad, effect, strength);
+}
+
+static void iohidmanager_hid_set_player(void *data, unsigned pad,
+      unsigned player)
+{
+   iohidmanager_hid_t *hid = (iohidmanager_hid_t*)data;
+   if (!hid || pad >= MAX_USERS)
+      return;
+   pad_connection_set_player(&hid->slots[pad], player);
 }
 
 static void iohidmanager_hid_device_send_control(void *data,
@@ -1151,5 +1157,9 @@ hid_driver_t iohidmanager_hid = {
    iohidmanager_get_report,
    NULL, /* set_idle */
    NULL, /* set protocol */
-   NULL  /* read */
+   NULL, /* read */
+   NULL, /* get_bt_host */
+   NULL, /* set_bt_host */
+   NULL, /* is_bluetooth */
+   iohidmanager_hid_set_player
 };

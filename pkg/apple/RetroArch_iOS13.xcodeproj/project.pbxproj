@@ -63,8 +63,6 @@
 		9210C2F324B3A19100E6FE7C /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9210C2F124B3A19100E6FE7C /* Metal.framework */; };
 		9210C2F624B3A32D00E6FE7C /* griffin_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2F424B3A32D00E6FE7C /* griffin_cpp.cpp */; };
 		9210C2F724B3A32D00E6FE7C /* griffin_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2F424B3A32D00E6FE7C /* griffin_cpp.cpp */; };
-		9210C2F824B3A32D00E6FE7C /* griffin_glslang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2F524B3A32D00E6FE7C /* griffin_glslang.cpp */; };
-		9210C2F924B3A32D00E6FE7C /* griffin_glslang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2F524B3A32D00E6FE7C /* griffin_glslang.cpp */; };
 		9210C2FE24B4CB4900E6FE7C /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2FB24B4CB4900E6FE7C /* Shaders.metal */; };
 		9210C2FF24B4CB4900E6FE7C /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2FB24B4CB4900E6FE7C /* Shaders.metal */; };
 		9222F1FF2314BA7C0097C0FD /* assets.zip in Resources */ = {isa = PBXBuildFile; fileRef = 9222F1FE2314BA7C0097C0FD /* assets.zip */; };
@@ -199,7 +197,6 @@
 		9210C2F024B3A19100E6FE7C /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		9210C2F124B3A19100E6FE7C /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		9210C2F424B3A32D00E6FE7C /* griffin_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = griffin_cpp.cpp; path = ../../griffin/griffin_cpp.cpp; sourceTree = "<group>"; };
-		9210C2F524B3A32D00E6FE7C /* griffin_glslang.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = griffin_glslang.cpp; path = ../../griffin/griffin_glslang.cpp; sourceTree = "<group>"; };
 		9210C2FB24B4CB4900E6FE7C /* Shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Shaders.metal; path = ../../gfx/drivers/metal_shaders/Shaders.metal; sourceTree = "<group>"; };
 		9222F1FE2314BA7C0097C0FD /* assets.zip */ = {isa = PBXFileReference; lastKnownFileType = archive.zip; path = assets.zip; sourceTree = "<group>"; };
 		9222F2082315DAD50097C0FD /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
@@ -294,15 +291,6 @@
 		92B9EBB224E0518700E6CFB2 /* file_stream_transforms.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = file_stream_transforms.h; sourceTree = "<group>"; };
 		92B9EBB324E0518700E6CFB2 /* interface_stream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = interface_stream.h; sourceTree = "<group>"; };
 		92B9EBB424E0518700E6CFB2 /* fastcpy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fastcpy.h; sourceTree = "<group>"; };
-		92B9EBB624E0518700E6CFB2 /* lzma.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lzma.h; sourceTree = "<group>"; };
-		92B9EBB724E0518700E6CFB2 /* minmax.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = minmax.h; sourceTree = "<group>"; };
-		92B9EBB824E0518700E6CFB2 /* flac.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = flac.h; sourceTree = "<group>"; };
-		92B9EBB924E0518700E6CFB2 /* bitstream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bitstream.h; sourceTree = "<group>"; };
-		92B9EBBA24E0518700E6CFB2 /* cdrom.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cdrom.h; sourceTree = "<group>"; };
-		92B9EBBB24E0518700E6CFB2 /* chd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = chd.h; sourceTree = "<group>"; };
-		92B9EBBC24E0518700E6CFB2 /* libchdr_zlib.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = libchdr_zlib.h; sourceTree = "<group>"; };
-		92B9EBBD24E0518700E6CFB2 /* huffman.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = huffman.h; sourceTree = "<group>"; };
-		92B9EBBE24E0518700E6CFB2 /* coretypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = coretypes.h; sourceTree = "<group>"; };
 		92B9EBC024E0518700E6CFB2 /* features_cpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = features_cpu.h; sourceTree = "<group>"; };
 		92B9EBC224E0518700E6CFB2 /* md5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
 		92B9EBC324E0518700E6CFB2 /* retro_miscellaneous.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = retro_miscellaneous.h; sourceTree = "<group>"; };
@@ -377,7 +365,7 @@
 		92B9ECAA24E054B400E6CFB2 /* paths.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = paths.h; path = ../../paths.h; sourceTree = "<group>"; };
 		92B9ECAB24E054B400E6CFB2 /* manual_content_scan.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = manual_content_scan.c; path = ../../manual_content_scan.c; sourceTree = "<group>"; };
 		92B9ECAC24E054B400E6CFB2 /* verbosity.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = verbosity.c; path = ../../verbosity.c; sourceTree = "<group>"; };
-		92B9ECAD24E054B400E6CFB2 /* lakka.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = lakka.h; path = ../../lakka.h; sourceTree = "<group>"; };
+		92B9ECAD24E054B400E6CFB2 /* lakka.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = lakka.h; path = ../../os/lakka/lakka.h; sourceTree = "<group>"; };
 		92B9ECAE24E054B400E6CFB2 /* msg_hash.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = msg_hash.h; path = ../../msg_hash.h; sourceTree = "<group>"; };
 		92B9ECAF24E054B400E6CFB2 /* runtime_file.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = runtime_file.h; path = ../../runtime_file.h; sourceTree = "<group>"; };
 		92B9ECB024E054B400E6CFB2 /* core_updater_list.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = core_updater_list.c; path = ../../core_updater_list.c; sourceTree = "<group>"; };
@@ -387,7 +375,7 @@
 		92B9ECB424E054B400E6CFB2 /* setting_list.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = setting_list.h; path = ../../setting_list.h; sourceTree = "<group>"; };
 		92B9ECB524E054B400E6CFB2 /* disk_index_file.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = disk_index_file.c; path = ../../disk_index_file.c; sourceTree = "<group>"; };
 		92B9ECB624E054B500E6CFB2 /* core_updater_list.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = core_updater_list.h; path = ../../core_updater_list.h; sourceTree = "<group>"; };
-		92B9ECB724E054B500E6CFB2 /* switch_performance_profiles.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = switch_performance_profiles.h; path = ../../switch_performance_profiles.h; sourceTree = "<group>"; };
+		92B9ECB724E054B500E6CFB2 /* switch_performance_profiles.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = switch_performance_profiles.h; path = ../../os/libnx/switch_performance_profiles.h; sourceTree = "<group>"; };
 		92B9ECB824E054B500E6CFB2 /* driver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = driver.h; path = ../../driver.h; sourceTree = "<group>"; };
 		92B9ECB924E054B500E6CFB2 /* version.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = version.h; path = ../../version.h; sourceTree = "<group>"; };
 		92B9ECBB24E054B500E6CFB2 /* disk_index_file.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = disk_index_file.h; path = ../../disk_index_file.h; sourceTree = "<group>"; };
@@ -616,7 +604,6 @@
 				92B9EB8224E0518700E6CFB2 /* formats */,
 				92B9EBE824E0518700E6CFB2 /* gfx */,
 				92B9EB8F24E0518700E6CFB2 /* glsym */,
-				92B9EBB524E0518700E6CFB2 /* libchdr */,
 				92B9EB6324E0518700E6CFB2 /* libco.h */,
 				92B9EBE624E0518700E6CFB2 /* libretro_d3d.h */,
 				92B9EB5C24E0518700E6CFB2 /* libretro_dspfilter.h */,
@@ -830,22 +817,6 @@
 				92B9EBB324E0518700E6CFB2 /* interface_stream.h */,
 			);
 			path = streams;
-			sourceTree = "<group>";
-		};
-		92B9EBB524E0518700E6CFB2 /* libchdr */ = {
-			isa = PBXGroup;
-			children = (
-				92B9EBB624E0518700E6CFB2 /* lzma.h */,
-				92B9EBB724E0518700E6CFB2 /* minmax.h */,
-				92B9EBB824E0518700E6CFB2 /* flac.h */,
-				92B9EBB924E0518700E6CFB2 /* bitstream.h */,
-				92B9EBBA24E0518700E6CFB2 /* cdrom.h */,
-				92B9EBBB24E0518700E6CFB2 /* chd.h */,
-				92B9EBBC24E0518700E6CFB2 /* libchdr_zlib.h */,
-				92B9EBBD24E0518700E6CFB2 /* huffman.h */,
-				92B9EBBE24E0518700E6CFB2 /* coretypes.h */,
-			);
-			path = libchdr;
 			sourceTree = "<group>";
 		};
 		92B9EBBF24E0518700E6CFB2 /* features */ = {
@@ -1232,7 +1203,6 @@
 				50521A431AA23BF500185CC9 /* griffin_objc.m */,
 				501232C9192E5FC40063A359 /* griffin.c */,
 				9210C2F424B3A32D00E6FE7C /* griffin_cpp.cpp */,
-				9210C2F524B3A32D00E6FE7C /* griffin_glslang.cpp */,
 			);
 			name = griffin;
 			sourceTree = "<group>";
@@ -1534,7 +1504,6 @@
 				92CC05B621FE3C1700FF79F0 /* GCDWebServerMultiPartFormRequest.m in Sources */,
 				92CC05AC21FE3C1700FF79F0 /* GCDWebServerErrorResponse.m in Sources */,
 				92CC05A621FE3C1700FF79F0 /* GCDWebServerFunctions.m in Sources */,
-				9210C2F824B3A32D00E6FE7C /* griffin_glslang.cpp in Sources */,
 				9292D6EE28F549D200E47A75 /* RetroArchWidgetExtension.intentdefinition in Sources */,
 				92CC05A821FE3C1700FF79F0 /* GCDWebServer.m in Sources */,
 				9204BE0D1D319EF300BD49DB /* griffin_objc.m in Sources */,
@@ -1565,7 +1534,6 @@
 				92CC05B721FE3C1700FF79F0 /* GCDWebServerMultiPartFormRequest.m in Sources */,
 				92CC05AD21FE3C1700FF79F0 /* GCDWebServerErrorResponse.m in Sources */,
 				92CC05A721FE3C1700FF79F0 /* GCDWebServerFunctions.m in Sources */,
-				9210C2F924B3A32D00E6FE7C /* griffin_glslang.cpp in Sources */,
 				92CC05A921FE3C1700FF79F0 /* GCDWebServer.m in Sources */,
 				926C77EA21FD20C100103EDE /* griffin_objc.m in Sources */,
 				926C77EB21FD20C400103EDE /* griffin.c in Sources */,
@@ -1855,7 +1823,6 @@
 				DEVELOPMENT_TEAM = UK699V5ZS8;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_FAST_MATH = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -1915,7 +1882,6 @@
 				DEVELOPMENT_TEAM = UK699V5ZS8;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_FAST_MATH = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;

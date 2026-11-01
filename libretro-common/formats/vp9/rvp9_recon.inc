@@ -1010,6 +1010,11 @@ static void rvp9_d135_predictor(RVP9_PIXEL *dst, int stride, int bs,
   RVP9_PIXEL border[32 + 32 - 1];  /* outer border from bottom-left to top-right */
 #endif
 
+  /* Blocks are at most 32 wide, so the border's last write is
+   * border[2 * 32 - 2]; said here so the compiler can see it. */
+  if (bs > 32)
+    return;
+
 /* dst(bs, bs - 2)[0], i.e., border starting at bottom-left */
   for (i = 0; i < bs - 2; ++i) {
     border[i] = RVP9_AVG3(left[bs - 3 - i], left[bs - 2 - i], left[bs - 1 - i]);
@@ -1388,7 +1393,8 @@ static const RVP9_PIXEL rvp9_extend_modes[10] = {
    RVP9_NEED_LEFT | RVP9_NEED_ABOVE    /* TM   */
 };
 
-static void rvp9_build_intra(rvp9_dec *d, const RVP9_PIXEL *ref, int ref_stride,
+/* Inlined predictors inflate reconstruction register spills. */
+static RVP9_NOINLINE void rvp9_build_intra(rvp9_dec *d, const RVP9_PIXEL *ref, int ref_stride,
       RVP9_PIXEL *dst, int dst_stride, int mode, int tx_size,
       int up_available, int left_available, int right_available,
       int x, int y, int plane, int mi_col, int mi_row)
@@ -2501,11 +2507,7 @@ static void rvp9_tile_job_run(void *arg)
    {
       /* the last job to finish wakes the caller */
       if (retro_atomic_fetch_sub_int(&j->group->left, 1) == 1)
-      {
-         slock_lock(rvp9_tile_lock);
-         scond_broadcast(rvp9_tile_cond);
-         slock_unlock(rvp9_tile_lock);
-      }
+         retro_eventcount_notify(&rvp9_tile_ec);
    }
 }
 #endif
@@ -2569,9 +2571,9 @@ static int rvp9_decode_frame_impl(rvp9_dec *d, const uint8_t *data,
       uvsz = (size_t)d->uvs * (d->mi_rows * 4 + 32);
       for (i = 0; i < RVP9_FRAME_BUFS; i++)
       {
-         d->fbs[i].y = (uint8_t*)calloc(sizeof(RVP9_PIXEL), ysz);
-         d->fbs[i].u = (uint8_t*)calloc(sizeof(RVP9_PIXEL), uvsz);
-         d->fbs[i].v = (uint8_t*)calloc(sizeof(RVP9_PIXEL), uvsz);
+         d->fbs[i].y = (uint8_t*)calloc(ysz, sizeof(RVP9_PIXEL));
+         d->fbs[i].u = (uint8_t*)calloc(uvsz, sizeof(RVP9_PIXEL));
+         d->fbs[i].v = (uint8_t*)calloc(uvsz, sizeof(RVP9_PIXEL));
          d->fb_bit_depth = RVP9_RECON_HBD ? 10 : 8;
          if (!d->fbs[i].y || !d->fbs[i].u || !d->fbs[i].v) return -7;
       }
@@ -2767,7 +2769,9 @@ static int rvp9_decode_frame_impl(rvp9_dec *d, const uint8_t *data,
       const uint8_t *tp   = data + tile_off;
       const uint8_t *tend = data + len;
       int tile_cols       = 1 << hd->log2_tile_cols;
+#ifdef HAVE_THREADS
       int workers         = 1;
+#endif
       int rc;
 
 #ifdef HAVE_THREADS
@@ -2781,7 +2785,9 @@ static int rvp9_decode_frame_impl(rvp9_dec *d, const uint8_t *data,
       }
 #endif
 
+#ifdef HAVE_THREADS
       if (workers <= 1)
+#endif
          rc = rvp9_decode_tile_cols(d, tp, tend, 0, tile_cols - 1);
 #ifdef HAVE_THREADS
       else
@@ -2821,12 +2827,14 @@ static int rvp9_decode_frame_impl(rvp9_dec *d, const uint8_t *data,
           * queued work from the pool meanwhile rather than sit idle */
          while (retro_atomic_load_acquire_int(&group.left) > 0)
          {
+            int key;
             if (tpool_help((tpool_t*)d->tile_pool))
                continue;
-            slock_lock(rvp9_tile_lock);
+            key = retro_eventcount_prepare_wait(&rvp9_tile_ec);
             if (retro_atomic_load_acquire_int(&group.left) > 0)
-               scond_wait(rvp9_tile_cond, rvp9_tile_lock);
-            slock_unlock(rvp9_tile_lock);
+               retro_eventcount_commit_wait(&rvp9_tile_ec, key);
+            else
+               retro_eventcount_cancel_wait(&rvp9_tile_ec);
          }
 
          rc = jobs[0].rc;

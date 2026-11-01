@@ -24,6 +24,96 @@
 #include "../../verbosity.h"
 
 #include "joypad_connection.h"
+#include "../common/input_ignore_devices.h"
+
+#ifdef HAVE_THREADS
+#include <rthreads/rthreads.h>
+#include <rthreads/retro_eventcount.h>
+#endif
+
+#define CONNECTION_LIVE 1
+#define CONNECTION_USER 2
+
+#ifdef HAVE_THREADS
+/* Where a slot being retired waits for its last reader, who wakes it.
+ * One for every list: retiring is rare and the wait short. Made once,
+ * by the first list, and kept. */
+static retro_eventcount_t slot_left;
+static retro_atomic_int_t slot_left_state;   /* 0 none, 1 making, 2 made */
+
+static void slot_left_init(void)
+{
+   if (!retro_atomic_cas_int(&slot_left_state, 0, 1))
+      return;
+   retro_atomic_store_release_int(&slot_left_state,
+         retro_eventcount_init(&slot_left) ? 2 : 0);
+}
+
+/* A reader leaving: the last one out of a retired slot says so. */
+static void slot_leave(joypad_connection_t *joyconn)
+{
+   if (     retro_atomic_fetch_sub_int(&joyconn->gate, CONNECTION_USER)
+            == CONNECTION_USER
+         && retro_atomic_load_acquire_int(&slot_left_state) == 2)
+      retro_eventcount_notify(&slot_left);
+}
+#else
+#define slot_leave(joyconn) \
+   ((void)retro_atomic_fetch_sub_int(&(joyconn)->gate, CONNECTION_USER))
+#endif
+
+bool pad_connection_acquire(joypad_connection_t *joyconn)
+{
+   int state = retro_atomic_fetch_add_int(&joyconn->gate, CONNECTION_USER);
+   if (state & CONNECTION_LIVE)
+      return true;
+   slot_leave(joyconn);
+   return false;
+}
+
+void pad_connection_release(joypad_connection_t *joyconn)
+{
+   slot_leave(joyconn);
+}
+
+/* Preserve rejected readers still leaving a closed slot. */
+static void slot_publish(joypad_connection_t *joyconn)
+{
+   (void)retro_atomic_fetch_or_int(&joyconn->gate, CONNECTION_LIVE);
+}
+
+/* No new reader goes in; returns once none is inside. */
+static void slot_retire(joypad_connection_t *joyconn)
+{
+   (void)retro_atomic_fetch_and_int(&joyconn->gate, ~CONNECTION_LIVE);
+#ifdef HAVE_THREADS
+   while (retro_atomic_load_acquire_int(&joyconn->gate))
+   {
+      int key;
+      if (retro_atomic_load_acquire_int(&slot_left_state) != 2)
+      {
+         sthread_yield();
+         continue;
+      }
+      key = retro_eventcount_prepare_wait(&slot_left);
+      if (retro_atomic_load_acquire_int(&joyconn->gate))
+         retro_eventcount_commit_wait(&slot_left, key);
+      else
+         retro_eventcount_cancel_wait(&slot_left);
+   }
+#endif
+}
+
+/* Clears a retired slot for reuse, keeping its counters. */
+static void slot_clear(joypad_connection_t *joyconn)
+{
+   joyconn->iface        = NULL;
+   joyconn->input_driver = NULL;
+   joyconn->data         = NULL;
+   joyconn->connection   = NULL;
+   joyconn->connected    = false;
+   pad_connection_release_slot(joyconn);
+}
 
 static joypad_connection_entry_t pad_map[] = {
    { "Nintendo RVL-CNT-01",
@@ -36,6 +126,12 @@ static joypad_connection_entry_t pad_map[] = {
       PID_NINTENDO_PRO,
       &pad_connection_wiiupro
    },
+   /* the Wii Remote Plus, and the clones that give its name */
+   { "Nintendo RVL-CNT-01-TR",
+      VID_NINTENDO,
+      PID_NINTENDO_PRO,
+      &pad_connection_wii
+   },
    { "Wireless Controller",
       VID_SONY,
       PID_SONY_DS4,
@@ -46,10 +142,423 @@ static joypad_connection_entry_t pad_map[] = {
       PID_SONY_DS4_R2,
       &pad_connection_ps4
    },
+   { "DualSense Wireless Controller",
+      VID_SONY,
+      PID_SONY_DS5,
+      &pad_connection_ps5
+   },
+   { "DualSense Edge Wireless Controller",
+      VID_SONY,
+      PID_SONY_DS5_EDGE,
+      &pad_connection_ps5_edge
+   },
+   /* Sony's grip add-on, and its USB wireless adaptor */
+   { "STRIKEPAD PS4 Grip Add-on",
+      VID_SONY,
+      SWAP_IF_BIG(0x05c5),
+      &pad_connection_ps4
+   },
+   { "DUALSHOCK 4 USB Wireless Adaptor",
+      VID_SONY,
+      SWAP_IF_BIG(0x0ba0),
+      &pad_connection_ps4
+   },
+   /* pads that pass for a DualShock 4, as SDL lists them */
+   { "Venom Arcade Stick",
+      SWAP_IF_BIG(0x0079),
+      SWAP_IF_BIG(0x181b),
+      &pad_connection_ps4_third_party
+   },
+   { "Thrustmaster eSwap Pro",
+      SWAP_IF_BIG(0x044f),
+      SWAP_IF_BIG(0xd00e),
+      &pad_connection_ps4_third_party
+   },
+   { "Mad Catz FightPad Pro PS4",
+      SWAP_IF_BIG(0x0738),
+      SWAP_IF_BIG(0x8250),
+      &pad_connection_ps4_third_party
+   },
+   { "Mad Catz FightStick TE S+ PS4",
+      SWAP_IF_BIG(0x0738),
+      SWAP_IF_BIG(0x8384),
+      &pad_connection_ps4_third_party
+   },
+   { "Mad Catz FightStick TE 2 PS4",
+      SWAP_IF_BIG(0x0738),
+      SWAP_IF_BIG(0x8480),
+      &pad_connection_ps4_third_party
+   },
+   { "Mad Catz FightStick TE 2+ PS4",
+      SWAP_IF_BIG(0x0738),
+      SWAP_IF_BIG(0x8481),
+      &pad_connection_ps4_third_party
+   },
+   { "Armor 3 Pad PS4",
+      SWAP_IF_BIG(0x0c12),
+      SWAP_IF_BIG(0x0e10),
+      &pad_connection_ps4_third_party
+   },
+   { "ZEROPLUS P4 Wired Gamepad",
+      SWAP_IF_BIG(0x0c12),
+      SWAP_IF_BIG(0x0e13),
+      &pad_connection_ps4_third_party
+   },
+   { "Game:Pad 4",
+      SWAP_IF_BIG(0x0c12),
+      SWAP_IF_BIG(0x0e15),
+      &pad_connection_ps4_third_party
+   },
+   { "Brook Mars Controller",
+      SWAP_IF_BIG(0x0c12),
+      SWAP_IF_BIG(0x0e20),
+      &pad_connection_ps4_third_party
+   },
+   { "Hitbox Arcade Stick",
+      SWAP_IF_BIG(0x0c12),
+      SWAP_IF_BIG(0x0ef6),
+      &pad_connection_ps4_third_party
+   },
+   { "EMIO PS4 Elite Controller",
+      SWAP_IF_BIG(0x0c12),
+      SWAP_IF_BIG(0x1cf6),
+      &pad_connection_ps4_third_party
+   },
+   { "P4 Wired Gamepad",
+      SWAP_IF_BIG(0x0c12),
+      SWAP_IF_BIG(0x1e10),
+      &pad_connection_ps4_third_party
+   },
+   { "ZEROPLUS P4 Wired Gamepad",
+      SWAP_IF_BIG(0x0c12),
+      SWAP_IF_BIG(0x2e18),
+      &pad_connection_ps4_third_party
+   },
+   { "Victrix Pro FS",
+      SWAP_IF_BIG(0x0e6f),
+      SWAP_IF_BIG(0x0203),
+      &pad_connection_ps4_no_output
+   },
+   { "Victrix Pro FS V2",
+      SWAP_IF_BIG(0x0e6f),
+      SWAP_IF_BIG(0x0207),
+      &pad_connection_ps4_no_output
+   },
+   { "Victrix Pro FS PS4/PS5",
+      SWAP_IF_BIG(0x0e6f),
+      SWAP_IF_BIG(0x020a),
+      &pad_connection_ps4_third_party
+   },
+   { "HORIPAD 4 FPS",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x0055),
+      &pad_connection_ps4_third_party
+   },
+   { "HORI Fighting Commander 4",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x005e),
+      &pad_connection_ps4_third_party
+   },
+   { "HORIPAD 4 FPS Plus",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x0066),
+      &pad_connection_ps4_third_party
+   },
+   { "HORI Fighting Commander",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x0084),
+      &pad_connection_ps4_third_party
+   },
+   { "HORI Fighting Stick mini 4",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x0087),
+      &pad_connection_ps4_third_party
+   },
+   { "HORI Real Arcade Pro 4",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x008a),
+      &pad_connection_ps4_third_party
+   },
+   { "HORI TAC PRO",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x009c),
+      &pad_connection_ps4_third_party
+   },
+   { "HORI TAC4",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x00a0),
+      &pad_connection_ps4_third_party
+   },
+   { "HORI Fighting Stick alpha",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x011c),
+      &pad_connection_ps4_third_party
+   },
+   { "HORI Wireless Controller Light",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x0123),
+      &pad_connection_ps4_third_party
+   },
+   { "HORI Fighting Commander OCTA",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x0162),
+      &pad_connection_ps4_third_party
+   },
+   { "PS4 Fun Controller",
+      SWAP_IF_BIG(0x11c0),
+      SWAP_IF_BIG(0x4001),
+      &pad_connection_ps4_third_party
+   },
+   { "Nacon Revolution Pro Controller",
+      SWAP_IF_BIG(0x146b),
+      SWAP_IF_BIG(0x0d01),
+      &pad_connection_ps4_third_party
+   },
+   { "Nacon Revolution Pro Controller 2",
+      SWAP_IF_BIG(0x146b),
+      SWAP_IF_BIG(0x0d02),
+      &pad_connection_ps4_third_party
+   },
+   { "Nacon Asymmetric Wireless Dongle",
+      SWAP_IF_BIG(0x146b),
+      SWAP_IF_BIG(0x0d06),
+      &pad_connection_ps4_third_party
+   },
+   { "Nacon Revolution Unlimited Dongle",
+      SWAP_IF_BIG(0x146b),
+      SWAP_IF_BIG(0x0d08),
+      &pad_connection_ps4_third_party
+   },
+   { "Nacon Daija Fight Stick",
+      SWAP_IF_BIG(0x146b),
+      SWAP_IF_BIG(0x0d09),
+      &pad_connection_ps4_third_party
+   },
+   { "Nacon Revolution Infinite",
+      SWAP_IF_BIG(0x146b),
+      SWAP_IF_BIG(0x0d10),
+      &pad_connection_ps4_third_party
+   },
+   { "Nacon Revolution Pro Controller 3",
+      SWAP_IF_BIG(0x146b),
+      SWAP_IF_BIG(0x0d13),
+      &pad_connection_ps4_third_party
+   },
+   { "Nacon Asymmetric Controller",
+      SWAP_IF_BIG(0x146b),
+      SWAP_IF_BIG(0x1103),
+      &pad_connection_ps4_third_party
+   },
+   { "Razer Panthera",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x0401),
+      &pad_connection_ps4_razer
+   },
+   { "Razer Raiju",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x1000),
+      &pad_connection_ps4_razer
+   },
+   { "Razer Raiju 2 Ultimate",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x1004),
+      &pad_connection_ps4_razer
+   },
+   { "Razer Raiju 2 Tournament Edition",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x1007),
+      &pad_connection_ps4_razer
+   },
+   { "Razer Panthera Evo",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x1008),
+      &pad_connection_ps4_razer
+   },
+   { "Razer Raiju 2 Ultimate",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x1009),
+      &pad_connection_ps4_razer
+   },
+   { "Razer Raiju 2 Tournament Edition",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x100a),
+      &pad_connection_ps4_razer
+   },
+   { "Razer Raion",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x1100),
+      &pad_connection_ps4_razer
+   },
+   { "PowerA Fusion Fight Pad",
+      SWAP_IF_BIG(0x20d6),
+      SWAP_IF_BIG(0x792a),
+      &pad_connection_ps4_third_party
+   },
+   { "Qanba Drone",
+      SWAP_IF_BIG(0x2c22),
+      SWAP_IF_BIG(0x2000),
+      &pad_connection_ps4_third_party
+   },
+   { "Qanba Obsidian",
+      SWAP_IF_BIG(0x2c22),
+      SWAP_IF_BIG(0x2300),
+      &pad_connection_ps4_third_party
+   },
+   { "Qanba Dragon",
+      SWAP_IF_BIG(0x2c22),
+      SWAP_IF_BIG(0x2500),
+      &pad_connection_ps4_third_party
+   },
+   { "Nacon Revolution 5 Pro",
+      SWAP_IF_BIG(0x3285),
+      SWAP_IF_BIG(0x0d16),
+      &pad_connection_ps4_third_party
+   },
+   { "Nacon Revolution 5 Pro",
+      SWAP_IF_BIG(0x3285),
+      SWAP_IF_BIG(0x0d17),
+      &pad_connection_ps4_third_party
+   },
+   { "Armor 3",
+      SWAP_IF_BIG(0x7545),
+      SWAP_IF_BIG(0x0104),
+      &pad_connection_ps4_third_party
+   },
+   { "Astro C40",
+      SWAP_IF_BIG(0x9886),
+      SWAP_IF_BIG(0x0025),
+      &pad_connection_ps4_third_party
+   },
+   /* pads that pass for a DualSense, as SDL lists them */
+   { "Victrix Pro FS",
+      SWAP_IF_BIG(0x0e6f),
+      SWAP_IF_BIG(0x0209),
+      &pad_connection_ps5_third_party
+   },
+   { "HORI Fighting Commander OCTA",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x0163),
+      &pad_connection_ps5_third_party
+   },
+   { "HORI Fighting Stick alpha",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x0184),
+      &pad_connection_ps5_third_party
+   },
+   { "Razer Wolverine V2 Pro",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x100b),
+      &pad_connection_ps5_third_party
+   },
+   { "Razer Wolverine V2 Pro",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x100c),
+      &pad_connection_ps5_third_party
+   },
+   { "Razer Kitsune",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x1012),
+      &pad_connection_ps5_third_party
+   },
+   { "Razer Raiju V3 Pro",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x1024),
+      &pad_connection_ps5_third_party
+   },
+   { "Razer Raiju V3 Pro",
+      SWAP_IF_BIG(0x1532),
+      SWAP_IF_BIG(0x1026),
+      &pad_connection_ps5_third_party
+   },
+   { "NACON Revolution 5 Pro",
+      SWAP_IF_BIG(0x3285),
+      SWAP_IF_BIG(0x0d18),
+      &pad_connection_ps5_third_party
+   },
+   { "NACON Revolution 5 Pro",
+      SWAP_IF_BIG(0x3285),
+      SWAP_IF_BIG(0x0d19),
+      &pad_connection_ps5_third_party
+   },
+   { "Backbone One PlayStation Edition",
+      SWAP_IF_BIG(0x358a),
+      SWAP_IF_BIG(0x0104),
+      &pad_connection_ps5_third_party
+   },
+   { "Backbone One PlayStation Edition",
+      SWAP_IF_BIG(0x358a),
+      SWAP_IF_BIG(0x0304),
+      &pad_connection_ps5_third_party
+   },
+   { "Pro Controller",
+      VID_NINTENDO,
+      PID_NINTENDO_SWITCH_PRO,
+      &pad_connection_switch_pro
+   },
+   /* the Switch Online pads, which speak as the Pro Controller does and
+    * are read by its handler, as SDL reads them; on the right Joy-Con's
+    * id, only the NES and Famicom pads, by their names */
+   { "SNES Controller",
+      VID_NINTENDO,
+      SWAP_IF_BIG(0x2017),
+      &pad_connection_switch_pro
+   },
+   { "N64 Controller",
+      VID_NINTENDO,
+      SWAP_IF_BIG(0x2019),
+      &pad_connection_switch_pro_n64
+   },
+   { "MD/Gen Control Pad",
+      VID_NINTENDO,
+      SWAP_IF_BIG(0x201e),
+      &pad_connection_switch_pro
+   },
+   { "NES Controller",
+      VID_NINTENDO,
+      SWAP_IF_BIG(0x2007),
+      &pad_connection_switch_pro
+   },
+   { "HVC Controller",
+      VID_NINTENDO,
+      SWAP_IF_BIG(0x2007),
+      &pad_connection_switch_pro
+   },
+   /* pads that pass for a Pro Controller on their own ids */
+   { "Pro Controller",
+      SWAP_IF_BIG(0x0e6f),
+      SWAP_IF_BIG(0x0186),
+      &pad_connection_switch_pro
+   },
+   { "Pro Controller",
+      SWAP_IF_BIG(0x0e6f),
+      SWAP_IF_BIG(0x018c),
+      &pad_connection_switch_pro
+   },
+   { "Pro Controller",
+      SWAP_IF_BIG(0x0f0d),
+      SWAP_IF_BIG(0x00f6),
+      &pad_connection_switch_pro
+   },
+   { "Nintendo Switch 2 Pro Controller",
+      VID_NINTENDO,
+      PID_NINTENDO_SWITCH2_PRO,
+      &pad_connection_switch2_pro
+   },
+   /* a ShanWan pad that gives Sony's id, known by its name */
+   { "ShanWan",
+      VID_SONY,
+      PID_SONY_DS3,
+      &pad_connection_ps3_shanwan
+   },
    { "PLAYSTATION(R)3 Controller",
       VID_SONY,
       PID_SONY_DS3,
       &pad_connection_ps3
+   },
+   { "PLAYSTATION(R)3 Controller",
+      VID_SHANWAN,
+      PID_SHANWAN_DS3,
+      &pad_connection_ps3_shanwan
    },
    { "PLAYSTATION(R)3 Controller",
       VID_PS3_CLONE,
@@ -61,7 +570,7 @@ static joypad_connection_entry_t pad_map[] = {
       PID_SNES_CLONE,
       &pad_connection_snesusb
    },
-   { "Generic NES USB Controller",
+   { "USB Gamepad",
       VID_MICRONTEK,
       PID_MICRONTEK_NES,
       &pad_connection_nesusb
@@ -101,11 +610,81 @@ static joypad_connection_entry_t pad_map[] = {
       PID_KADE,
       &pad_connection_kade
    },
+   /* GameCube adapters in their PC mode, as SDL lists them */
+   { "GameCube Controller Adapter",
+      VID_DRAGONRISE,
+      SWAP_IF_BIG(0x1843),
+      &pad_connection_gamecube_pc
+   },
+   { "GameCube Controller Adapter",
+      VID_DRAGONRISE,
+      SWAP_IF_BIG(0x1844),
+      &pad_connection_gamecube_pc
+   },
+   { "GameCube Controller Adapter",
+      VID_DRAGONRISE,
+      SWAP_IF_BIG(0x1846),
+      &pad_connection_gamecube_pc
+   },
    { "DragonRise ZeroDelay Encoder",
       VID_DRAGONRISE,
       PID_DRAGONRISE,
       &pad_connection_dragonrise
    },
+#ifndef __APPLE__
+   /* macOS reads it from its report descriptor: its hat is the
+    * descriptor's there, which a handler's would not be */
+   { "8Bitdo SN30 Pro",
+      VID_8BITDO,
+      PID_8BITDO_SN30_PRO,
+      &pad_connection_8bitdo_sn30_pro
+   },
+   { "8Bitdo SN30 Pro",
+      VID_8BITDO,
+      PID_8BITDO_SN30_PRO_BT,
+      &pad_connection_8bitdo_sn30_pro
+   },
+   { "8Bitdo SF30 Pro",
+      VID_8BITDO,
+      PID_8BITDO_SF30_PRO,
+      &pad_connection_8bitdo_sf30_pro
+   },
+   { "8Bitdo SF30 Pro",
+      VID_8BITDO,
+      PID_8BITDO_SF30_PRO_BT,
+      &pad_connection_8bitdo_sf30_pro
+   },
+   { "8BitDo Pro 2",
+      VID_8BITDO,
+      PID_8BITDO_PRO_2,
+      &pad_connection_8bitdo_pro_2
+   },
+   { "8BitDo Pro 2",
+      VID_8BITDO,
+      PID_8BITDO_PRO_2_BT,
+      &pad_connection_8bitdo_pro_2
+   },
+   { "8BitDo Pro 3",
+      VID_8BITDO,
+      PID_8BITDO_PRO_3,
+      &pad_connection_8bitdo_pro_3
+   },
+   { "8BitDo Ultimate 2 Wireless",
+      VID_8BITDO,
+      PID_8BITDO_ULTIMATE_2,
+      &pad_connection_8bitdo_ultimate_2
+   },
+   { "8BitDo Ultimate 2C Wireless",
+      VID_8BITDO,
+      PID_8BITDO_ULTIMATE_2C,
+      &pad_connection_8bitdo_ultimate_2c
+   },
+   { "8BitDo Ultimate 3",
+      VID_8BITDO,
+      PID_8BITDO_ULTIMATE_3,
+      &pad_connection_8bitdo_ultimate_3
+   },
+#endif
    { 0, 0}
 };
 
@@ -117,14 +696,51 @@ static bool joypad_is_end_of_list(joypad_connection_t *pad)
       &&  (pad->data == (void *)0xdeadbeef);
 }
 
+/* claimed: free, taken, or the list's end marker */
+#define SLOT_FREE  0
+#define SLOT_TAKEN 1
+#define SLOT_END   2
+
+static bool slot_claim(joypad_connection_t *joyconn)
+{
+#ifdef RETRO_ATOMIC_HAS_CAS
+   return retro_atomic_cas_int(&joyconn->claimed, SLOT_FREE, SLOT_TAKEN) != 0;
+#else
+   if (retro_atomic_load_acquire_int(&joyconn->claimed) != SLOT_FREE)
+      return false;
+   retro_atomic_store_release_int(&joyconn->claimed, SLOT_TAKEN);
+   return true;
+#endif
+}
+
+void pad_connection_mark_end(joypad_connection_t *joyconn)
+{
+   joyconn->connected = false;
+   joyconn->iface     = NULL;
+   joyconn->data      = (void *)0xdeadbeef;
+   retro_atomic_int_init(&joyconn->gate, 0);
+   retro_atomic_int_init(&joyconn->claimed, SLOT_END);
+}
+
+void pad_connection_release_slot(joypad_connection_t *joyconn)
+{
+   if (joyconn)
+      retro_atomic_store_release_int(&joyconn->claimed, SLOT_FREE);
+}
+
+/* Reads nothing but the claims: the fields of a slot belong to the
+ * thread that holds it. */
 int pad_connection_find_vacant_pad(joypad_connection_t *joyconn)
 {
    if (joyconn)
    {
       int i;
-      for (i = 0; !joypad_is_end_of_list(&joyconn[i]); i++)
+      for (i = 0; ; i++)
       {
-         if (!joyconn[i].connected)
+         int state = retro_atomic_load_acquire_int(&joyconn[i].claimed);
+         if (state == SLOT_END)
+            break;
+         if (state == SLOT_FREE && slot_claim(&joyconn[i]))
             return i;
       }
    }
@@ -150,26 +766,43 @@ joypad_connection_t *pad_connection_init(unsigned pads)
 
    if (!(joyconn = (joypad_connection_t*)calloc(pads+1, sizeof(joypad_connection_t))))
       return NULL;
+#ifdef HAVE_THREADS
+   slot_left_init();
+#endif
 
    for (i = 0; i < (int)pads; i++)
    {
       joypad_connection_t *conn  = (joypad_connection_t*)&joyconn[i];
+      retro_atomic_int_init(&conn->gate, 0);
+      retro_atomic_int_init(&conn->claimed, 0);
+      retro_atomic_int_init(&conn->player, 0);
 
       conn->connected            = false;
       conn->iface                = NULL;
       conn->data                 = NULL;
    }
 
-   /* Set end of list */
-   {
-      joypad_connection_t *entry = (joypad_connection_t *)&joyconn[pads];
-      entry->connected           = false;
-      entry->iface               = NULL;
-      entry->data                = (void*)0xdeadbeef;
-   }
+   pad_connection_mark_end(&joyconn[pads]);
 
    return joyconn;
 }
+/* "USB Gamepad", as every pad on Microntek's chip calls itself; Linux
+ * puts the maker's name in front */
+static bool joypad_connection_is_nes_clone_name(const char *name)
+{
+   return strstr(name, "USB Gamepad") != NULL;
+}
+
+/* Whether some handler is for @vid and @pid, whatever its name. */
+bool pad_connection_has_ids(uint16_t vid, uint16_t pid)
+{
+   unsigned i;
+   for (i = 0; pad_map[i].name != NULL; i++)
+      if (pad_map[i].vid == vid && pad_map[i].pid == pid)
+         return true;
+   return false;
+}
+
 joypad_connection_entry_t *find_connection_entry(uint16_t vid, uint16_t pid, const char *name)
 {
    unsigned i;
@@ -199,6 +832,33 @@ joypad_connection_entry_t *find_connection_entry(uint16_t vid, uint16_t pid, con
          else if (!string_is_equal(pad_map[i].name, name))
             continue;
       }
+
+      /* Microntek's chip gives one id, and one name, to pads of every
+       * make - NES and SNES pads, Saturn pads - and reports them all
+       * the same way: four face buttons, four shoulder buttons, Select
+       * and Start. Its handler takes a pad that names itself as the
+       * chip does; any other on the id is read from its report
+       * descriptor. With no name to go by, it is taken as before. */
+      if (     pad_map[i].iface == &pad_connection_nesusb
+            && pad_map[i].vid == vid && pad_map[i].pid == pid
+            && has_name
+            && !string_is_equal(name, pad_map[i].name)
+            && !joypad_connection_is_nes_clone_name(name))
+         continue;
+
+      /* the right Joy-Con's id: a Switch Online pad by its name */
+      if (     pad_map[i].vid == VID_NINTENDO
+            && pad_map[i].pid == SWAP_IF_BIG(0x2007)
+            && (!has_name || !string_starts_with(name, pad_map[i].name)))
+         continue;
+
+      /* on Sony's id, ShanWan's own handler only for a pad that says
+       * it is ShanWan's, as SDL tells them */
+      if (     pad_map[i].iface == &pad_connection_ps3_shanwan
+            && pad_map[i].vid == VID_SONY
+            && (!has_name || !string_starts_with_case_insensitive(name,
+                  "ShanWan")))
+         continue;
 
       if (name_match || (pad_map[i].vid == vid && pad_map[i].pid == pid))
          return &pad_map[i];
@@ -230,8 +890,9 @@ void legacy_pad_connection_pad_deregister(joypad_connection_t *pad_list, pad_con
    {
       if (pad_list[i].connection == pad_data)
       {
+         slot_retire(&pad_list[i]);
          input_autoconfigure_disconnect(i, iface ? iface->get_name(pad_data) : NULL);
-         memset(&pad_list[i], 0, sizeof(joypad_connection_t));
+         slot_clear(&pad_list[i]);
          return;
       }
    }
@@ -253,9 +914,10 @@ void pad_connection_pad_deregister(joypad_connection_t *joyconn,
       int slot = joypad_to_slot(joyconn, iface->joypad(pad_data, i));
       if (slot >= 0)
       {
+         slot_retire(&joyconn[slot]);
          input_autoconfigure_disconnect(slot, iface->get_name(joyconn[slot].connection));
          iface->pad_deinit(joyconn[slot].connection);
-         memset(&joyconn[slot], 0, sizeof(joypad_connection_t));
+         slot_clear(&joyconn[slot]);
       }
    }
 }
@@ -284,11 +946,12 @@ void pad_connection_pad_refresh(joypad_connection_t *joyconn,
          case PAD_CONNECT_BOUND:
             joypad = iface->joypad(device_data, i);
             slot   = joypad_to_slot(joyconn, joypad);
+            slot_retire(joypad);
             input_autoconfigure_disconnect(slot,
                   iface->get_name(joypad->connection));
 
             iface->pad_deinit(joypad->connection);
-            memset(joypad, 0, sizeof(joypad_connection_t));
+            slot_clear(joypad);
             break;
             /* The joypad is connected but has not been bound */
          case PAD_CONNECT_READY:
@@ -301,6 +964,7 @@ void pad_connection_pad_refresh(joypad_connection_t *joyconn,
                joypad->iface        = iface;
                joypad->input_driver = input_driver;
                joypad->connected    = true;
+               slot_publish(joypad);
                input_pad_connect(slot, input_driver);
             }
             break;
@@ -356,6 +1020,7 @@ void pad_connection_pad_register(joypad_connection_t *joyconn,
          joyconn[found_slot].connection   = connection;
          joyconn[found_slot].input_driver = input_driver;
          joyconn[found_slot].connected    = true;
+         slot_publish(&joyconn[found_slot]);
 
          RARCH_LOG("[Joypad] Connecting pad to slot %d.\n", found_slot);
          input_pad_connect(found_slot, input_driver);
@@ -368,9 +1033,13 @@ int32_t pad_connection_pad_init_entry(joypad_connection_t *joyconn,
       void *data, hid_driver_t *driver)
 {
    joypad_connection_t *conn = NULL;
-   int pad = pad_connection_find_vacant_pad(joyconn);
+   int pad  = pad_connection_find_vacant_pad(joyconn);
+   int told = -1; /* the player its pad was given; -1 for none to give */
 
    if (pad < 0)
+      return -1;
+   /* Another program reads it and stands in for it (Steam Input) */
+   if (entry && input_device_ignored(entry->vid, entry->pid))
       return -1;
 
    if (!(conn = &joyconn[pad]))
@@ -380,6 +1049,10 @@ int32_t pad_connection_pad_init_entry(joypad_connection_t *joyconn,
    {
       conn->iface      = entry->iface;
       conn->connection = conn->iface->init(data, pad, driver);
+      if (conn->connection && conn->iface->set_player)
+         told = retro_atomic_load_acquire_int(&conn->player);
+      if (told > 0)
+         conn->iface->set_player(conn->connection, (unsigned)(told - 1));
    }
    else
    {
@@ -390,6 +1063,15 @@ int32_t pad_connection_pad_init_entry(joypad_connection_t *joyconn,
    }
    conn->data          = data;
    conn->connected     = true;
+   slot_publish(conn);
+   /* told while it started, before the frontend could reach it */
+   if (     told >= 0
+         && retro_atomic_load_acquire_int(&conn->player) != told)
+   {
+      told = retro_atomic_load_acquire_int(&conn->player);
+      if (told)
+         conn->iface->set_player(conn->connection, (unsigned)(told - 1));
+   }
 
    return pad;
 }
@@ -399,6 +1081,8 @@ int32_t pad_connection_pad_init(joypad_connection_t *joyconn,
    void *data, hid_driver_t *driver)
 {
    joypad_connection_entry_t *entry = find_connection_entry(vid, pid, name);
+   if (input_device_ignored(vid, pid))
+      return -1;
    return pad_connection_pad_init_entry(joyconn, entry, data, driver);
 }
 
@@ -407,6 +1091,8 @@ void pad_connection_pad_deinit(joypad_connection_t *joyconn,
 {
    if (!joyconn || !joyconn->connected)
        return;
+
+   slot_retire(joyconn);
 
    if (joyconn->iface)
    {
@@ -422,24 +1108,77 @@ void pad_connection_pad_deinit(joypad_connection_t *joyconn,
    joyconn->iface      = NULL;
    joyconn->connected  = false;
    joyconn->connection = NULL;
+   pad_connection_release_slot(joyconn);
 }
 
 void pad_connection_packet(joypad_connection_t *joyconn, uint32_t pad,
       uint8_t* data, uint32_t length)
 {
-   if (     joyconn
-         && joyconn->connected
-         && joyconn->connection
+   if (!joyconn || !pad_connection_acquire(joyconn))
+      return;
+   if (     joyconn->connection
          && joyconn->iface
          && joyconn->iface->packet_handler)
       joyconn->iface->packet_handler(joyconn->connection, data, length);
+   pad_connection_release(joyconn);
+}
+
+void pad_connection_idle(joypad_connection_t *joyconn)
+{
+   /* most handlers have none: no gate taken for them. The interface
+    * is static and checked again under the gate. */
+   const pad_connection_interface_t *iface;
+   if (     !joyconn
+         || !(iface = joyconn->iface)
+         || !iface->idle
+         || !pad_connection_acquire(joyconn))
+      return;
+   if (     joyconn->connection
+         && joyconn->iface
+         && joyconn->iface->idle)
+      joyconn->iface->idle(joyconn->connection);
+   pad_connection_release(joyconn);
+}
+
+bool pad_connection_set_sensor(joypad_connection_t *joyconn,
+      enum retro_sensor_action action)
+{
+   bool ret = false;
+   if (!joyconn || !pad_connection_acquire(joyconn))
+      return false;
+   if (     joyconn->connection
+         && joyconn->iface
+         && joyconn->iface->set_sensor)
+      ret = joyconn->iface->set_sensor(joyconn->connection, action);
+   pad_connection_release(joyconn);
+   return ret;
+}
+
+bool pad_connection_sensor(joypad_connection_t *joyconn, unsigned id,
+      float *value)
+{
+   bool ret = false;
+   if (!joyconn || !pad_connection_acquire(joyconn))
+      return false;
+   if (     joyconn->connection
+         && joyconn->iface
+         && joyconn->iface->sensor)
+      ret = joyconn->iface->sensor(joyconn->connection, id, value);
+   pad_connection_release(joyconn);
+   return ret;
 }
 
 void pad_connection_get_buttons(joypad_connection_t *joyconn,
       unsigned pad, input_bits_t *state)
 {
-   if (joyconn && joyconn->iface)
-      joyconn->iface->get_buttons(joyconn->connection, state);
+   if (joyconn && pad_connection_acquire(joyconn))
+   {
+      if (joyconn->iface)
+         joyconn->iface->get_buttons(joyconn->connection, state);
+      else
+         BIT256_CLEAR_ALL_PTR( state );
+      pad_connection_release(joyconn);
+   }
    else
       BIT256_CLEAR_ALL_PTR( state );
 }
@@ -447,17 +1186,26 @@ void pad_connection_get_buttons(joypad_connection_t *joyconn,
 int16_t pad_connection_get_axis(joypad_connection_t *joyconn,
    unsigned idx, unsigned i)
 {
-   if (joyconn && joyconn->iface)
-      return joyconn->iface->get_axis(joyconn->connection, i);
-   return 0;
+   int16_t val = 0;
+   if (joyconn && pad_connection_acquire(joyconn))
+   {
+      if (joyconn->iface)
+         val = joyconn->iface->get_axis(joyconn->connection, i);
+      pad_connection_release(joyconn);
+   }
+   return val;
 }
 
 bool pad_connection_has_interface(joypad_connection_t *joyconn,
       unsigned pad)
 {
-   return (     joyconn && pad < MAX_USERS
-             && joyconn[pad].connected
-             && joyconn[pad].iface);
+   bool ret = false;
+   if (joyconn && pad < MAX_USERS && pad_connection_acquire(&joyconn[pad]))
+   {
+      ret = joyconn[pad].iface != NULL;
+      pad_connection_release(&joyconn[pad]);
+   }
+   return ret;
 }
 
 void pad_connection_destroy(joypad_connection_t *joyconn)
@@ -473,17 +1221,57 @@ void pad_connection_destroy(joypad_connection_t *joyconn)
 bool pad_connection_rumble(joypad_connection_t *joyconn,
    unsigned pad, enum retro_rumble_effect effect, uint16_t strength)
 {
-   if (!joyconn->connected || !joyconn->iface || !joyconn->iface->set_rumble)
+   bool ret = false;
+   if (!pad_connection_acquire(joyconn))
       return false;
+   if (joyconn->iface && joyconn->iface->set_rumble)
+   {
+      joyconn->iface->set_rumble(joyconn->connection, effect, strength);
+      ret = true;
+   }
+   pad_connection_release(joyconn);
+   return ret;
+}
 
-   joyconn->iface->set_rumble(joyconn->connection, effect, strength);
-   return true;
+/* Kept for the slot, and told to its pad when it changes. */
+void pad_connection_set_player(joypad_connection_t *joyconn,
+      unsigned player)
+{
+   int told = (int)player + 1;
+   if (     !joyconn
+         || retro_atomic_load_acquire_int(&joyconn->player) == told)
+      return;
+   retro_atomic_store_release_int(&joyconn->player, told);
+   if (!pad_connection_acquire(joyconn))
+      return;
+   if (joyconn->iface && joyconn->iface->set_player && joyconn->connection)
+      joyconn->iface->set_player(joyconn->connection, player);
+   pad_connection_release(joyconn);
+}
+
+const input_pad_view_t *pad_connection_view(joypad_connection_t *joyconn)
+{
+   const input_pad_view_t *view = NULL;
+   if (joyconn && pad_connection_acquire(joyconn))
+   {
+      if (     joyconn->iface
+            && joyconn->iface->view
+            && joyconn->connection)
+         view = joyconn->iface->view(joyconn->connection);
+      pad_connection_release(joyconn);
+   }
+   return view;
 }
 
 const char* pad_connection_get_name(joypad_connection_t *joyconn,
       unsigned pad)
 {
-   if (joyconn && joyconn->iface && joyconn->iface->get_name)
-      return joyconn->iface->get_name(joyconn->connection);
-   return NULL;
+   const char *name = NULL;
+   if (joyconn && pad_connection_acquire(joyconn))
+   {
+      if (joyconn->iface && joyconn->iface->get_name)
+         name = joyconn->iface->get_name(joyconn->connection);
+      pad_connection_release(joyconn);
+   }
+   return name;
 }

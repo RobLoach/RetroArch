@@ -25,12 +25,11 @@ retro_atomic_int_t gfx_instrument_counters[GFX_INSTR_COUNT];
 /* Index-matched to enum gfx_instrument_counter. */
 static const char *gfx_instrument_names[GFX_INSTR_COUNT] = {
    "tex_load",
-   "tex_load_async",
    "tex_update",
    "tex_update_refused",
+   "tex_update_dropped",
    "tex_unload",
    "async_post",
-   "async_post_alloc",
    "async_done",
    "wrapper_cmd",
    "surface_new",
@@ -40,6 +39,7 @@ static const char *gfx_instrument_names[GFX_INSTR_COUNT] = {
    "submit_queued",
    "submit_busy",
    "submit_failed",
+   "submit_dropped",
    "submit_copy",
    "anim_frame",
    "anim_direct",
@@ -50,7 +50,14 @@ static const char *gfx_instrument_names[GFX_INSTR_COUNT] = {
    "overlay_page",
    "overlay_page_load",
    "overlay_draw",
-   "overlay_draw_alloc"
+   "overlay_draw_alloc",
+   "frame_tex_create",
+   "frame_copy_host",
+   "frame_lent_window",
+   "frame_mem",
+   "hw_drop",
+   "hw_drop_submit",
+   "upload_submit"
 };
 
 int gfx_instrument_get(enum gfx_instrument_counter c)

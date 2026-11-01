@@ -33,10 +33,12 @@
 #endif
 
 #include <boolean.h>
+#include <retro_atomic.h>
 #include <retro_common_api.h>
 
 #include "../font_driver.h"
 #include "../../retroarch.h"
+#include "d3d_driver_pacing.h"
 
 RETRO_BEGIN_DECLS
 
@@ -65,9 +67,6 @@ typedef struct
 } overlay_t;
 
 int32_t d3d_translate_filter(unsigned type);
-
-void d3d_input_driver(const char* input_name,
-   const char* joypad_name, input_driver_t** input, void** input_data);
 
 RETRO_END_DECLS
 

@@ -20,19 +20,22 @@ WLR_CODE := wlr-output-management-unstable-v1-protocol.c
 SOURCES := mutter_displayconfig_test.c \
            $(REPO_ROOT)/gfx/common/mutter_displayconfig.c \
            $(REPO_ROOT)/gfx/display_servers/dispserv_x11.c \
+           $(REPO_ROOT)/gfx/gfx_media_display.c \
            $(REPO_ROOT)/gfx/display_servers/dispserv_wl.c \
            $(REPO_ROOT)/gfx/common/xinerama_common.c \
            $(REPO_ROOT)/gfx/common/dbus_runtime.c \
            $(LRC)/rthreads/rthreads.c \
+           $(LRC)/rthreads/retro_eventcount.c \
            $(LRC)/dynamic/dylib.c \
            $(REPO_ROOT)/gfx/common/wayland_kwin_output.c \
+           $(REPO_ROOT)/gfx/common/video_mode_select.c \
            kde-output-device-v2-protocol.c \
            kde-output-management-v2-protocol.c \
            $(REPO_ROOT)/gfx/common/wayland_wlr_output.c \
            wlr-output-management-unstable-v1-protocol.c \
            $(LRC)/compat/compat_strl.c
 
-CFLAGS  += -Wall -std=gnu99 -g -O0 \
+CFLAGS  += -Wall -std=gnu99 -g1 -O0 \
            -D_GNU_SOURCE -DHAVE_THREADS -DHAVE_DYLIB -DHAVE_XRANDR -DHAVE_XINERAMA -DHAVE_WAYLAND \
            -DTEST_X11 -DTEST_WL \
            -I$(REPO_ROOT) -I$(LRC)/include \

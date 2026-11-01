@@ -31,12 +31,18 @@ on:
   push:
     paths:
       - 'menu/drivers/rgui.c'
-      - 'tools/rgui_pixfmt_check.py'
+      - 'tools/rgui_pixfmt_check.c'
+      - 'tools/rgui_pixfmt_harness.inc'
+      - 'tools/check_common.h'
+      - 'tools/check.sh'
       - '.github/workflows/RGUI-Pixel-Format-Check.yml'
   pull_request:
     paths:
       - 'menu/drivers/rgui.c'
-      - 'tools/rgui_pixfmt_check.py'
+      - 'tools/rgui_pixfmt_check.c'
+      - 'tools/rgui_pixfmt_harness.inc'
+      - 'tools/check_common.h'
+      - 'tools/check.sh'
       - '.github/workflows/RGUI-Pixel-Format-Check.yml'
   workflow_dispatch:
 
@@ -57,6 +63,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Link with lld
+        run: sh .github/workflows/scripts/use-lld.sh
+
       - name: Checker self-test
         shell: bash
         run: |
@@ -70,7 +79,7 @@ jobs:
           # either way, so the self-test reports the same thing
           # whether or not the tree is currently fixed - it is
           # measuring the checker, not the tree.
-          python3 tools/rgui_pixfmt_check.py --selftest --cc gcc
+          tools/check.sh tools/rgui_pixfmt_check.c --selftest --cc gcc
 
       - name: Tree check
         shell: bash
@@ -82,4 +91,4 @@ jobs:
           # an empty and a full field; the field must be monotonic in
           # the input; and the dithered twin must cover the same bits
           # and stay within one level of the plain converter.
-          python3 tools/rgui_pixfmt_check.py --cc gcc
+          tools/check.sh tools/rgui_pixfmt_check.c --cc gcc

@@ -42,6 +42,7 @@
 #endif
 
 #include "../../configuration.h"
+#include "../../driver.h"
 #include "../../dynamic.h"
 #include "../../retroarch.h"
 #include "../../verbosity.h"
@@ -50,6 +51,9 @@
 #include "../common/win32_common.h"
 
 #include "../common/vulkan_common.h"
+#ifndef __WINRT__
+#include "../common/win_vulkan_dxgi.h"
+#endif
 
 typedef struct gfx_ctx_w_vk_data
 {
@@ -58,7 +62,6 @@ typedef struct gfx_ctx_w_vk_data
 
 /* TODO/FIXME - static globals */
 gfx_ctx_vulkan_data_t win32_vk;
-static void      *dinput_vk        = NULL;
 int              win32_vk_interval = 0;
 
 /* FORWARD DECLARATIONS */
@@ -69,7 +72,7 @@ static void gfx_ctx_w_vk_swap_interval(void *data, int interval)
    if (win32_vk_interval != interval)
    {
       win32_vk_interval = interval;
-      if (win32_vk.swapchain)
+      if (vulkan_has_swapchain(&win32_vk))
          win32_vk.flags |= VK_DATA_FLAG_NEED_NEW_SWAPCHAIN;
    }
 }
@@ -101,8 +104,13 @@ static void gfx_ctx_w_vk_check_window(void *data, bool *quit,
          && (g_win32_resize_width  == VIDEO_SCALE_W(*dims))
          && (g_win32_resize_height == VIDEO_SCALE_H(*dims)))
    {
+      /* Asked for, not done: with threaded video this runs on the
+       * video thread, and the restart takes the input driver down
+       * while the main thread polls it. Unthreaded, it runs inside the
+       * driver's own call. */
+      int reinit_flags = DRIVER_VIDEO_AND_INPUT_MASK;
       g_win32_refresh_rate = settings->floats.video_refresh_rate;
-      command_event(CMD_EVENT_REINIT, NULL);
+      command_event_later(CMD_EVENT_REINIT, &reinit_flags);
    }
 }
 
@@ -114,10 +122,12 @@ static bool gfx_ctx_w_vk_presentable(void *data)
     * has neither IsIconic nor an HWND - see the wgl context for the
     * detail; the swapchain check below still applies there. */
 #ifndef __WINRT__
-   if (IsIconic(win32_get_window()))
+   if (IsIconic(win32_get_window())
+         || (win32_vk.dxgi_presenter && !ra_vulkan_dxgi_presentable(
+               (ra_vulkan_dxgi_t *)win32_vk.dxgi_presenter)))
       return false;
 #endif
-   return win32_vk.swapchain != VK_NULL_HANDLE;
+   return vulkan_has_swapchain(&win32_vk);
 }
 
 static void gfx_ctx_w_vk_swap_buffers(void *data)
@@ -129,7 +139,7 @@ static void gfx_ctx_w_vk_swap_buffers(void *data)
        * create is retried in vulkan_acquire_next_image() below, which
        * throttles that path itself. Nothing to present and nothing to
        * wait for here. */
-      if (win32_vk.swapchain != VK_NULL_HANDLE)
+      if (vulkan_has_swapchain(&win32_vk))
          vulkan_present(&win32_vk, win32_vk.context.current_swapchain_index);
    }
    vulkan_acquire_next_image(&win32_vk);
@@ -163,7 +173,8 @@ static void gfx_ctx_w_vk_destroy(void *data)
       slock_free(win32_vk.context.queue_lock);
    memset(&win32_vk, 0, sizeof(win32_vk));
 
-   if (window)
+   /* left up for the driver that comes next, where it can be */
+   if (window && !win32_window_keep())
    {
       win32_monitor_from_window();
       win32_destroy_window();
@@ -196,18 +207,11 @@ static void *gfx_ctx_w_vk_init(void *video_driver)
    win32_window_reset();
    win32_monitor_init();
 
-   {
-      settings_t *settings     = config_get_ptr();
-      wndclass.lpfnWndProc     = wnd_proc_vk_common;
-#ifdef HAVE_DINPUT
-      if (string_is_equal(settings->arrays.input_driver, "dinput"))
-         wndclass.lpfnWndProc   = wnd_proc_vk_dinput;
-#endif
-#ifdef HAVE_WINRAWINPUT
-      if (string_is_equal(settings->arrays.input_driver, "raw"))
-         wndclass.lpfnWndProc   = wnd_proc_vk_winraw;
-#endif
-   }
+   /* one window procedure for every video and input driver; the
+    * family says what creating the window sets up */
+   wndclass.lpfnWndProc = win32_window_proc;
+   win32_window_proc_setup(WIN32_WINDOW_VULKAN);
+   win32_window_tag_presentation(config_get_ptr()->bools.video_dxgi_present);
    if (!win32_window_init(&wndclass, true, NULL))
       goto error;
 
@@ -226,6 +230,47 @@ static bool gfx_ctx_w_vk_set_video_mode(void *data,
       unsigned dims,
       bool fullscreen)
 {
+   if (win32_get_window() && win32_vk.vk_surface != VK_NULL_HANDLE)
+   {
+      settings_t *settings = config_get_ptr();
+      bool exclusive      = !settings->bools.video_windowed_fullscreen;
+      bool fullscreen_changed = fullscreen
+         != ((win32_vk.flags & VK_DATA_FLAG_FULLSCREEN) != 0);
+      bool recreate       = (exclusive && fullscreen_changed
+            && !win32_vk.context.swapchain_external)
+         || win32_vk.fse_acquired;
+      if (recreate && win32_vk.mailbox.swapchain != VK_NULL_HANDLE)
+         return false;
+      if (win32_vk.fse_acquired)
+      {
+         VkResult res;
+         if (!win32_vk.fse_release)
+            return false;
+         res = ((PFN_vkReleaseFullScreenExclusiveModeEXT)win32_vk.fse_release)(
+               win32_vk.context.device, win32_vk.swapchain);
+         if (res != VK_SUCCESS && res != VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT)
+            return false;
+         win32_vk.fse_acquired = false;
+      }
+      if (exclusive)
+      {
+         if (!win32_window_set_fullscreen_exclusive(dims, fullscreen))
+            return false;
+      }
+      else if (!win32_window_set_fullscreen(dims, fullscreen))
+         return false;
+      if (recreate)
+      {
+         win32_vk.context.flags |= VK_CTX_FLAG_INVALID_SWAPCHAIN;
+         win32_vk.flags |= VK_DATA_FLAG_NEED_NEW_SWAPCHAIN;
+      }
+      if (fullscreen)
+         win32_vk.flags |=  VK_DATA_FLAG_FULLSCREEN;
+      else
+         win32_vk.flags &= ~VK_DATA_FLAG_FULLSCREEN;
+      return true;
+   }
+
    if (fullscreen)
       win32_vk.flags |=  VK_DATA_FLAG_FULLSCREEN;
    else
@@ -254,33 +299,11 @@ static bool gfx_ctx_w_vk_set_video_mode(void *data,
 }
 
 static void gfx_ctx_w_vk_input_driver(void *data,
-      const char *joypad_name,
-      input_driver_t **input, void **input_data)
+      const char *joypad_name)
 {
-#if _WIN32_WINNT >= 0x0501
-#ifdef HAVE_WINRAWINPUT
-   settings_t *settings     = config_get_ptr();
-   const char *input_driver = settings->arrays.input_driver;
-
-   /* winraw only available since XP */
-   if (string_is_equal(input_driver, "raw"))
-   {
-      *input_data = input_driver_init_wrap(&input_winraw, joypad_name);
-      if (*input_data)
-      {
-         *input        = &input_winraw;
-         dinput_vk     = NULL;
-         return;
-      }
-   }
-#endif
-#endif
-
-#ifdef HAVE_DINPUT
-   dinput_vk      = input_driver_init_wrap(&input_dinput, joypad_name);
-   *input         = dinput_vk ? &input_dinput : NULL;
-   *input_data    = dinput_vk;
-#endif
+   /* no input driver of this driver's own: the frontend starts the
+    * one that goes with a Windows window */
+   input_driver_video_window(INPUT_WINDOW_WINDOWS, NULL);
 }
 
 static enum gfx_ctx_api gfx_ctx_w_vk_get_api(void *data) { return GFX_CTX_VULKAN_API; }
@@ -302,7 +325,24 @@ static uint32_t gfx_ctx_w_vk_get_flags(void *data)
             &win32_vk.context.supports_adaptive_vsync))
       BIT32_SET(flags, GFX_CTX_FLAGS_ADAPTIVE_VSYNC);
 
-#if defined(HAVE_SLANG) && defined(HAVE_SPIRV_CROSS)
+   /* A borderless fullscreen toggle restyles the window it has; the
+    * driver sees a resize (win32_window_set_fullscreen()). It was held
+    * back while a swapchain rebuilt at another size ended in a lost
+    * device with HDR on; that was the HDR off-screen buffers keeping
+    * the old size (vulkan_hdr_buffers_init()), and with that fixed the
+    * toggle has been seen to hold on the setup that showed it.
+    * RETROARCH_FULLSCREEN_IN_PLACE=0 in the environment turns it off,
+    * so that a toggle restarts the drivers as it used to, should it
+    * need telling apart from something else. */
+   if (win32_fullscreen_in_place())
+   {
+      BIT32_SET(flags, GFX_CTX_FLAGS_FULLSCREEN_IN_PLACE);
+      BIT32_SET(flags, GFX_CTX_FLAGS_WINDOW_RESIZE_IN_PLACE);
+      if (win32_vk.mailbox.swapchain == VK_NULL_HANDLE)
+         BIT32_SET(flags, GFX_CTX_FLAGS_FULLSCREEN_EXCLUSIVE_IN_PLACE);
+   }
+
+#if defined(HAVE_SLANG) && (defined(HAVE_SPIRV_CROSS) || defined(HAVE_RSLC))
    BIT32_SET(flags, GFX_CTX_FLAGS_SHADERS_SLANG);
 #endif
 

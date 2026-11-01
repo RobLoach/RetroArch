@@ -35,6 +35,11 @@
 #define REPLAY_HEADER_LEN                10
 #define REPLAY_HEADER_LEN_BYTES          (REPLAY_HEADER_LEN*4)
 
+/* Largest block (bytes) and superblock (blocks) a replay header may
+ * name.  The recorder writes 128 or 16384 and 16. */
+#define REPLAY_MAX_BLOCK_SIZE            (1 << 20)
+#define REPLAY_MAX_SUPERBLOCK_SIZE       (1 << 12)
+
 #define REPLAY_HEADER_V0V1_LEN           6
 #define REPLAY_HEADER_V0V1_LEN_BYTES     (REPLAY_HEADER_V0V1_LEN*4)
 
@@ -57,6 +62,13 @@ bool bsv_movie_load_checkpoint(bsv_movie_t *movie,
       replay_checkpoint_behavior cpbehavior);
 int64_t bsv_movie_write_checkpoint(bsv_movie_t *movie,
       uint8_t compression, uint8_t encoding);
+
+/* The supplied state must be a normal, portable core serialization,
+ * not a fast/rollback state. No core callback is made by these writers. */
+bool bsv_movie_reset_recording_from_state(bsv_movie_t *movie,
+      const void *state, size_t size);
+void bsv_movie_next_frame_from_state(input_driver_state_t *input_st,
+      const void *state, size_t size);
 
 RETRO_END_DECLS
 

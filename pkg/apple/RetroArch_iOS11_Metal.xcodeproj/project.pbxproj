@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		EA2026102000000000000001 /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EA2026102000000000000002 /* VideoToolbox.framework */; };
 		0714E7182983A7F400E6B45B /* libMoltenVK.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0714E7172983A7F400E6B45B /* libMoltenVK.dylib */; };
 		0714E7192983A7FB00E6B45B /* libMoltenVK.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 0714E7172983A7F400E6B45B /* libMoltenVK.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		072DA119299B307500619B75 /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 072DA118299B307500619B75 /* CoreHaptics.framework */; };
@@ -35,8 +36,6 @@
 		9210C2F324B3A19100E6FE7C /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9210C2F124B3A19100E6FE7C /* Metal.framework */; };
 		9210C2F624B3A32D00E6FE7C /* griffin_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2F424B3A32D00E6FE7C /* griffin_cpp.cpp */; };
 		9210C2F724B3A32D00E6FE7C /* griffin_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2F424B3A32D00E6FE7C /* griffin_cpp.cpp */; };
-		9210C2F824B3A32D00E6FE7C /* griffin_glslang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2F524B3A32D00E6FE7C /* griffin_glslang.cpp */; };
-		9210C2F924B3A32D00E6FE7C /* griffin_glslang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2F524B3A32D00E6FE7C /* griffin_glslang.cpp */; };
 		9210C2FE24B4CB4900E6FE7C /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2FB24B4CB4900E6FE7C /* Shaders.metal */; };
 		9210C2FF24B4CB4900E6FE7C /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 9210C2FB24B4CB4900E6FE7C /* Shaders.metal */; };
 		9222F1FF2314BA7C0097C0FD /* assets.zip in Resources */ = {isa = PBXBuildFile; fileRef = 9222F1FE2314BA7C0097C0FD /* assets.zip */; };
@@ -113,6 +112,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		EA2026102000000000000002 /* VideoToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoToolbox.framework; path = System/Library/Frameworks/VideoToolbox.framework; sourceTree = SDKROOT; };
 		0714E7172983A7F400E6B45B /* libMoltenVK.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libMoltenVK.dylib; path = tvOS/modules/libMoltenVK.dylib; sourceTree = "<group>"; };
 		072DA118299B307500619B75 /* CoreHaptics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreHaptics.framework; path = System/Library/Frameworks/CoreHaptics.framework; sourceTree = SDKROOT; };
 		073EEE04296A189800224668 /* libMoltenVK.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libMoltenVK.dylib; path = Frameworks/MoltenVK/dylib/iOS/libMoltenVK.dylib; sourceTree = "<group>"; };
@@ -133,7 +133,6 @@
 		9210C2F024B3A19100E6FE7C /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		9210C2F124B3A19100E6FE7C /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		9210C2F424B3A32D00E6FE7C /* griffin_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = griffin_cpp.cpp; path = ../../griffin/griffin_cpp.cpp; sourceTree = "<group>"; };
-		9210C2F524B3A32D00E6FE7C /* griffin_glslang.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = griffin_glslang.cpp; path = ../../griffin/griffin_glslang.cpp; sourceTree = "<group>"; };
 		9210C2FB24B4CB4900E6FE7C /* Shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = Shaders.metal; path = ../../gfx/drivers/metal_shaders/Shaders.metal; sourceTree = "<group>"; };
 		9222F1FE2314BA7C0097C0FD /* assets.zip */ = {isa = PBXFileReference; lastKnownFileType = archive.zip; path = assets.zip; sourceTree = "<group>"; };
 		9222F2082315DAD50097C0FD /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
@@ -301,7 +300,7 @@
 		92B9ECAA24E054B400E6CFB2 /* paths.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = paths.h; path = ../../paths.h; sourceTree = "<group>"; };
 		92B9ECAB24E054B400E6CFB2 /* manual_content_scan.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = manual_content_scan.c; path = ../../manual_content_scan.c; sourceTree = "<group>"; };
 		92B9ECAC24E054B400E6CFB2 /* verbosity.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = verbosity.c; path = ../../verbosity.c; sourceTree = "<group>"; };
-		92B9ECAD24E054B400E6CFB2 /* lakka.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = lakka.h; path = ../../lakka.h; sourceTree = "<group>"; };
+		92B9ECAD24E054B400E6CFB2 /* lakka.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = lakka.h; path = ../../os/lakka/lakka.h; sourceTree = "<group>"; };
 		92B9ECAE24E054B400E6CFB2 /* msg_hash.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = msg_hash.h; path = ../../msg_hash.h; sourceTree = "<group>"; };
 		92B9ECAF24E054B400E6CFB2 /* runtime_file.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = runtime_file.h; path = ../../runtime_file.h; sourceTree = "<group>"; };
 		92B9ECB024E054B400E6CFB2 /* core_updater_list.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = core_updater_list.c; path = ../../core_updater_list.c; sourceTree = "<group>"; };
@@ -311,7 +310,7 @@
 		92B9ECB424E054B400E6CFB2 /* setting_list.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = setting_list.h; path = ../../setting_list.h; sourceTree = "<group>"; };
 		92B9ECB524E054B400E6CFB2 /* disk_index_file.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = disk_index_file.c; path = ../../disk_index_file.c; sourceTree = "<group>"; };
 		92B9ECB624E054B500E6CFB2 /* core_updater_list.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = core_updater_list.h; path = ../../core_updater_list.h; sourceTree = "<group>"; };
-		92B9ECB724E054B500E6CFB2 /* switch_performance_profiles.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = switch_performance_profiles.h; path = ../../switch_performance_profiles.h; sourceTree = "<group>"; };
+		92B9ECB724E054B500E6CFB2 /* switch_performance_profiles.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = switch_performance_profiles.h; path = ../../os/libnx/switch_performance_profiles.h; sourceTree = "<group>"; };
 		92B9ECB824E054B500E6CFB2 /* driver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = driver.h; path = ../../driver.h; sourceTree = "<group>"; };
 		92B9ECB924E054B500E6CFB2 /* version.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = version.h; path = ../../version.h; sourceTree = "<group>"; };
 		92B9ECBB24E054B500E6CFB2 /* disk_index_file.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = disk_index_file.h; path = ../../disk_index_file.h; sourceTree = "<group>"; };
@@ -393,6 +392,7 @@
 				9204BE151D319EF300BD49DB /* CoreText.framework in Frameworks */,
 				9204BE161D319EF300BD49DB /* CoreLocation.framework in Frameworks */,
 				9204BE171D319EF300BD49DB /* CoreMedia.framework in Frameworks */,
+				EA2026102000000000000001 /* VideoToolbox.framework in Frameworks */,
 				9204BE181D319EF300BD49DB /* AVFoundation.framework in Frameworks */,
 				9204BE191D319EF300BD49DB /* CoreVideo.framework in Frameworks */,
 				9204BE1A1D319EF300BD49DB /* AudioToolbox.framework in Frameworks */,
@@ -1048,6 +1048,7 @@
 				963C3C33186E3DED00A6EB1E /* GameController.framework */,
 				50CCC827185E0E7D001F5BC8 /* CoreLocation.framework */,
 				501881ED184BB54C006F665D /* CoreMedia.framework */,
+				EA2026102000000000000002 /* VideoToolbox.framework */,
 				501881EB184BAD6D006F665D /* AVFoundation.framework */,
 				50E7189E184B88AA001956CE /* CoreVideo.framework */,
 				96366C5816C9ACF500D64A22 /* AudioToolbox.framework */,
@@ -1084,7 +1085,6 @@
 				50521A431AA23BF500185CC9 /* griffin_objc.m */,
 				501232C9192E5FC40063A359 /* griffin.c */,
 				9210C2F424B3A32D00E6FE7C /* griffin_cpp.cpp */,
-				9210C2F524B3A32D00E6FE7C /* griffin_glslang.cpp */,
 			);
 			name = griffin;
 			sourceTree = "<group>";
@@ -1243,7 +1243,6 @@
 				92CC05B621FE3C1700FF79F0 /* GCDWebServerMultiPartFormRequest.m in Sources */,
 				92CC05AC21FE3C1700FF79F0 /* GCDWebServerErrorResponse.m in Sources */,
 				92CC05A621FE3C1700FF79F0 /* GCDWebServerFunctions.m in Sources */,
-				9210C2F824B3A32D00E6FE7C /* griffin_glslang.cpp in Sources */,
 				92CC05A821FE3C1700FF79F0 /* GCDWebServer.m in Sources */,
 				9204BE0D1D319EF300BD49DB /* griffin_objc.m in Sources */,
 				9204BE101D319EF300BD49DB /* griffin.c in Sources */,
@@ -1271,7 +1270,6 @@
 				92CC05B721FE3C1700FF79F0 /* GCDWebServerMultiPartFormRequest.m in Sources */,
 				92CC05AD21FE3C1700FF79F0 /* GCDWebServerErrorResponse.m in Sources */,
 				92CC05A721FE3C1700FF79F0 /* GCDWebServerFunctions.m in Sources */,
-				9210C2F924B3A32D00E6FE7C /* griffin_glslang.cpp in Sources */,
 				92CC05A921FE3C1700FF79F0 /* GCDWebServer.m in Sources */,
 				926C77EA21FD20C100103EDE /* griffin_objc.m in Sources */,
 				926C77EB21FD20C400103EDE /* griffin.c in Sources */,
@@ -1323,12 +1321,6 @@
 					../../deps/stb,
 					../../deps/rcheevos/include,
 					../../deps,
-					"$(DEPS_DIR)/glslang",
-					"$(DEPS_DIR)/SPIRV-Cross",
-					"$(DEPS_DIR)/glslang/glslang/glslang/Public",
-					"$(DEPS_DIR)/glslang/glslang/glslang/OSDependent/Unix",
-					"$(DEPS_DIR)/glslang/glslang/SPIRV",
-					"$(DEPS_DIR)/glslang/glslang/glslang/MachineIndependent",
 					../../gfx/include,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/iOS/Info.plist";
@@ -1347,6 +1339,9 @@
 					"-DHAVE_STB_FONT",
 					"-DHAVE_HID",
 					"-DHAVE_NETWORKING",
+					"-DHAVE_SSL",
+					"-DHAVE_CRYPTO",
+					"-DHAVE_RETROSSL",
 					"-DHAVE_IFINFO",
 					"-DHAVE_NETPLAYDISCOVERY",
 					"-DHAVE_BSV_MOVIE",
@@ -1359,7 +1354,6 @@
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
 					"-DRC_DISABLE_LUA",
-					"-DHAVE_IMAGEVIEWER",
 					"-DHAVE_RGUI",
 					"-DHAVE_CONFIGFILE",
 					"-DHAVE_MENU",
@@ -1398,11 +1392,8 @@
 					"-DHAVE_KEYMAPPER",
 					"-DHAVE_METAL",
 					"-DHAVE_SLANG",
-					"-DHAVE_SPIRV_CROSS",
-					"-DHAVE_GLSLANG",
-					"-DWANT_GLSLANG",
-					"-DGLSLANG_OSINCLUDE_UNIX",
-					"-DHAVE_BUILTINGLSLANG",
+					"-DHAVE_RSLC",
+					"-DHAVE_RSLC_GRIFFIN",
 					"-DHAVE_CHEATS",
 					"-DHAVE_CORE_INFO_CACHE",
 					"-DHAVE_BTSTACK",
@@ -1446,12 +1437,6 @@
 					../../deps/stb,
 					../../deps/rcheevos/include,
 					../../deps,
-					"$(DEPS_DIR)/glslang",
-					"$(DEPS_DIR)/SPIRV-Cross",
-					"$(DEPS_DIR)/glslang/glslang/glslang/Public",
-					"$(DEPS_DIR)/glslang/glslang/glslang/OSDependent/Unix",
-					"$(DEPS_DIR)/glslang/glslang/SPIRV",
-					"$(DEPS_DIR)/glslang/glslang/glslang/MachineIndependent",
 					../../gfx/include,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/iOS/Info.plist";
@@ -1471,6 +1456,9 @@
 					"-DHAVE_STB_FONT",
 					"-DHAVE_HID",
 					"-DHAVE_NETWORKING",
+					"-DHAVE_SSL",
+					"-DHAVE_CRYPTO",
+					"-DHAVE_RETROSSL",
 					"-DHAVE_IFINFO",
 					"-DHAVE_NETPLAYDISCOVERY",
 					"-DHAVE_BSV_MOVIE",
@@ -1483,7 +1471,6 @@
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
 					"-DRC_DISABLE_LUA",
-					"-DHAVE_IMAGEVIEWER",
 					"-DHAVE_RGUI",
 					"-DHAVE_CONFIGFILE",
 					"-DHAVE_MENU",
@@ -1530,6 +1517,9 @@
 					"-DHAVE_STB_FONT",
 					"-DHAVE_HID",
 					"-DHAVE_NETWORKING",
+					"-DHAVE_SSL",
+					"-DHAVE_CRYPTO",
+					"-DHAVE_RETROSSL",
 					"-DHAVE_IFINFO",
 					"-DHAVE_NETPLAYDISCOVERY",
 					"-DHAVE_BSV_MOVIE",
@@ -1542,7 +1532,6 @@
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
 					"-DRC_DISABLE_LUA",
-					"-DHAVE_IMAGEVIEWER",
 					"-DHAVE_RGUI",
 					"-DHAVE_CONFIGFILE",
 					"-DHAVE_MENU",
@@ -1582,11 +1571,8 @@
 					"-DHAVE_KEYMAPPER",
 					"-DHAVE_METAL",
 					"-DHAVE_SLANG",
-					"-DHAVE_SPIRV_CROSS",
-					"-DHAVE_GLSLANG",
-					"-DWANT_GLSLANG",
-					"-DGLSLANG_OSINCLUDE_UNIX",
-					"-DHAVE_BUILTINGLSLANG",
+					"-DHAVE_RSLC",
+					"-DHAVE_RSLC_GRIFFIN",
 					"-DHAVE_CHEATS",
 					"-DHAVE_CORE_INFO_CACHE",
 					"-DHAVE_SCREENSHOTS",
@@ -1657,12 +1643,6 @@
 					../../deps/stb,
 					../../deps/rcheevos/include,
 					../../deps,
-					"$(DEPS_DIR)/glslang",
-					"$(DEPS_DIR)/SPIRV-Cross",
-					"$(DEPS_DIR)/glslang/glslang/glslang/Public",
-					"$(DEPS_DIR)/glslang/glslang/glslang/OSDependent/Unix",
-					"$(DEPS_DIR)/glslang/glslang/SPIRV",
-					"$(DEPS_DIR)/glslang/glslang/glslang/MachineIndependent",
 					../../gfx/include,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/tvOS/Info.plist";
@@ -1680,6 +1660,9 @@
 					"-DHAVE_STB_FONT",
 					"-DHAVE_HID",
 					"-DHAVE_NETWORKING",
+					"-DHAVE_SSL",
+					"-DHAVE_CRYPTO",
+					"-DHAVE_RETROSSL",
 					"-DHAVE_IFINFO",
 					"-DHAVE_NETPLAYDISCOVERY",
 					"-DHAVE_BSV_MOVIE",
@@ -1692,7 +1675,6 @@
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
 					"-DRC_DISABLE_LUA",
-					"-DHAVE_IMAGEVIEWER",
 					"-DHAVE_RGUI",
 					"-DHAVE_CONFIGFILE",
 					"-DHAVE_MENU",
@@ -1729,11 +1711,8 @@
 					"-DHAVE_KEYMAPPER",
 					"-DHAVE_METAL",
 					"-DHAVE_SLANG",
-					"-DHAVE_SPIRV_CROSS",
-					"-DHAVE_GLSLANG",
-					"-DWANT_GLSLANG",
-					"-DGLSLANG_OSINCLUDE_UNIX",
-					"-DHAVE_BUILTINGLSLANG",
+					"-DHAVE_RSLC",
+					"-DHAVE_RSLC_GRIFFIN",
 					"-DHAVE_UPDATE_CORE_INFO",
 					"-DHAVE_VULKAN",
 				);
@@ -1797,12 +1776,6 @@
 					../../deps/stb,
 					../../deps/rcheevos/include,
 					../../deps,
-					"$(DEPS_DIR)/glslang",
-					"$(DEPS_DIR)/SPIRV-Cross",
-					"$(DEPS_DIR)/glslang/glslang/glslang/Public",
-					"$(DEPS_DIR)/glslang/glslang/glslang/OSDependent/Unix",
-					"$(DEPS_DIR)/glslang/glslang/SPIRV",
-					"$(DEPS_DIR)/glslang/glslang/glslang/MachineIndependent",
 					../../gfx/include,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/tvOS/Info.plist";
@@ -1821,6 +1794,9 @@
 					"-DHAVE_STB_FONT",
 					"-DHAVE_HID",
 					"-DHAVE_NETWORKING",
+					"-DHAVE_SSL",
+					"-DHAVE_CRYPTO",
+					"-DHAVE_RETROSSL",
 					"-DHAVE_IFINFO",
 					"-DHAVE_NETPLAYDISCOVERY",
 					"-DHAVE_BSV_MOVIE",
@@ -1833,7 +1809,6 @@
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
 					"-DRC_DISABLE_LUA",
-					"-DHAVE_IMAGEVIEWER",
 					"-DHAVE_RGUI",
 					"-DHAVE_CONFIGFILE",
 					"-DHAVE_MENU",
@@ -1871,11 +1846,8 @@
 					"-DHAVE_KEYMAPPER",
 					"-DHAVE_METAL",
 					"-DHAVE_SLANG",
-					"-DHAVE_SPIRV_CROSS",
-					"-DHAVE_GLSLANG",
-					"-DWANT_GLSLANG",
-					"-DGLSLANG_OSINCLUDE_UNIX",
-					"-DHAVE_BUILTINGLSLANG",
+					"-DHAVE_RSLC",
+					"-DHAVE_RSLC_GRIFFIN",
 					"-DHAVE_CHEATS",
 					"-DHAVE_CORE_INFO_CACHE",
 					"-DHAVE_SCREENSHOTS",
@@ -1928,6 +1900,9 @@
 					"-DHAVE_STB_FONT",
 					"-DHAVE_HID",
 					"-DHAVE_NETWORKING",
+					"-DHAVE_SSL",
+					"-DHAVE_CRYPTO",
+					"-DHAVE_RETROSSL",
 					"-DHAVE_IFINFO",
 					"-DHAVE_NETPLAYDISCOVERY",
 					"-DHAVE_BSV_MOVIE",
@@ -1940,7 +1915,6 @@
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
 					"-DRC_DISABLE_LUA",
-					"-DHAVE_IMAGEVIEWER",
 					"-DHAVE_RGUI",
 					"-DHAVE_CONFIGFILE",
 					"-DHAVE_MENU",
@@ -2004,6 +1978,9 @@
 					"-DHAVE_STB_FONT",
 					"-DHAVE_HID",
 					"-DHAVE_NETWORKING",
+					"-DHAVE_SSL",
+					"-DHAVE_CRYPTO",
+					"-DHAVE_RETROSSL",
 					"-DHAVE_IFINFO",
 					"-DHAVE_NETPLAYDISCOVERY",
 					"-DHAVE_BSV_MOVIE",
@@ -2016,7 +1993,6 @@
 					"-DHAVE_LANGEXTRA",
 					"-DHAVE_CHEEVOS",
 					"-DRC_DISABLE_LUA",
-					"-DHAVE_IMAGEVIEWER",
 					"-DHAVE_RGUI",
 					"-DHAVE_CONFIGFILE",
 					"-DHAVE_MENU",

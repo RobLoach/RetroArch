@@ -1,8 +1,8 @@
+include ../../sample_objdir.mk
+
 TARGET := gfx_animation_sanitize_test
 
-# Path back to the repo root from this sample dir.  Links the real
-# gfx/gfx_animation.c, which reaches for only sixteen symbols outside
-# itself -- fourteen from libc and libretro-common, two stubbed here.
+# Links the real gfx/gfx_animation.c with minimal frontend stubs.
 REPO_ROOT         := ../../..
 LIBRETRO_COMM_DIR := $(REPO_ROOT)/libretro-common
 
@@ -10,10 +10,11 @@ SOURCES := gfx_animation_sanitize_test.c \
            stubs_retroarch.c \
            $(REPO_ROOT)/gfx/gfx_animation.c \
            $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
+           $(LIBRETRO_COMM_DIR)/encodings/encoding_xxh64.c \
            $(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
            $(LIBRETRO_COMM_DIR)/string/stdstring.c
 
-CFLAGS  += -Wall -std=gnu99 -g -O1 \
+CFLAGS  += -Wall -std=gnu99 -g1 -O1 \
            -I$(REPO_ROOT) \
            -I$(LIBRETRO_COMM_DIR)/include
 
@@ -23,7 +24,12 @@ LDFLAGS += -lm
 # everything set above instead of adding to it.
 CFLAGS += $(EXTRA_CFLAGS)
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
+ANIMATION_OBJ := $(call sample_objs,$(REPO_ROOT)/gfx/gfx_animation.o)
+
+$(ANIMATION_OBJ): CFLAGS += -Dword_wrap=animation_test_word_wrap \
+   -Dword_wrap_wideglyph=animation_test_word_wrap_wideglyph \
+   -Dmalloc=animation_test_malloc -Drealloc=animation_test_realloc
 
 ifneq ($(SANITIZER),)
    CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer $(CFLAGS)
@@ -33,6 +39,10 @@ endif
 all: $(TARGET)
 
 %.o: %.c
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(TARGET): $(OBJS)
@@ -49,6 +59,7 @@ sweep:
 	@echo "sweep clean"
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJS)
 
 .PHONY: all sweep clean

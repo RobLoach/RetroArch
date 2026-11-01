@@ -2,6 +2,8 @@
 # its three Windows include lines, against a fake device on a
 # real-time clock, under the reporter's settings.
 
+include ../../sample_objdir.mk
+
 CORE_DIR          := ../../..
 LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
 
@@ -20,22 +22,23 @@ SOURCES_C := wasapi_exclusive_pacing_test.c fake_wasapi.c stubs_retroarch.c $(GE
 	$(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c \
 	$(LIBRETRO_COMM_DIR)/queues/retro_spsc.c \
 	$(LIBRETRO_COMM_DIR)/features/features_cpu.c \
+	$(LIBRETRO_COMM_DIR)/time/rtime.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
 	$(LIBRETRO_COMM_DIR)/string/stdstring.c \
 	$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c
-OBJS      := $(SOURCES_C:.c=.o)
+OBJS      := $(call sample_objs,$(SOURCES_C:.c=.o))
 
 INCDIRS   := -I. -I$(LIBRETRO_COMM_DIR)/include -I$(CORE_DIR) -I$(CORE_DIR)/deps
 CFLAGS   += -Wall $(INCDIRS) -DRARCH_INTERNAL -DHAVE_THREADS -DHAVE_WASAPI -D_GNU_SOURCE
 
 ifneq ($(SANITIZER),)
-CFLAGS  += -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g
+CFLAGS  += -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g1
 LDFLAGS += -fsanitize=$(SANITIZER)
 else
-CFLAGS  += -g -O1
+CFLAGS  += -g1 -O1
 endif
 
-all: $(TARGET)
+all: $(TARGET) threadless-check
 
 # The driver with its Windows includes swapped for the fake's.
 WASAPI_SRC ?= $(CORE_DIR)/audio/drivers/wasapi.c
@@ -48,13 +51,21 @@ $(GEN): $(WASAPI_SRC)
 	    -e 's|#include "../../configuration.h"|#include "$(CORE_DIR)/configuration.h"|' \
 	    $< > $@
 
+threadless-check: $(GEN)
+	$(CC) $(CFLAGS) -UHAVE_THREADS -std=gnu99 -Werror=implicit-function-declaration -fsyntax-only $(GEN)
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS) -lm -lpthread
 
 %.o: %.c
 	$(CC) $(CFLAGS) -std=gnu99 -c -o $@ $<
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -std=gnu99 -c -o $@ $<
+
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(OBJS) $(TARGET) $(GEN)
 
-.PHONY: all clean
+.PHONY: all clean threadless-check

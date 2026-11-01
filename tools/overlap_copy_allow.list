@@ -1,6 +1,6 @@
 # tools/overlap_copy_allow.list
 #
-# Allowlist for tools/overlap_copy_check.py: same-buffer copy calls
+# Allowlist for tools/overlap_copy_check.c: same-buffer copy calls
 # that were audited by hand and are safe by construction. One entry
 # per line: file|function|dst-base|src-base (bases as normalized by
 # the checker). An entry allows that combination anywhere in the
@@ -24,10 +24,8 @@
 # fix those with memmove, a staging buffer, or an alias-guarded
 # helper instead.
 audio/drivers/wiiu_audio.c|memcpy|offsets|offsets
-cheevos/cheevos_rvz.c|memcpy|block_hashes|block_hashes
-ctr/ctr_svchax.c|memcpy|flush_buffer|flush_buffer
-frontend/drivers/platform_gx.c|strlcpy|g_defaults.dirs|g_defaults.dirs
-frontend/drivers/platform_ps3.c|strlcpy|g_defaults.dirs|g_defaults.dirs
+os/ctr/ctr_svchax.c|memcpy|flush_buffer|flush_buffer
+frontend/drivers/platform_gx_libogc.c|strlcpy|g_defaults.dirs|g_defaults.dirs
 gfx/drivers/sdl_rs90_gfx.c|memcpy|target|target
 gfx/video_filters/ntsc_crt.c|memcpy|v->out|v->out
 libretro-common/encodings/encoding_rlz4.c|memcpy|to|to
@@ -45,14 +43,12 @@ libretro-common/formats/aac/raac.c|memcpy|q->q_temp|q->q_temp
 libretro-common/formats/aac/raac.c|memcpy|s->d|s->d
 libretro-common/formats/aac/raac.c|raac_decode_cpe|a->ch|a->ch
 libretro-common/formats/aac/raac.c|raac_sbr_copy_grid|s->d|s->d
+libretro-common/formats/atrac3/ratrac3.c|memcpy|d->js_sel|d->js_sel
 libretro-common/formats/mp3/rmp3.c|memcpy|dst|dst
 libretro-common/formats/opus/ropus.c|memcpy|buf|buf
 libretro-common/formats/opus/ropus.c|memcpy|ctrl->PredCoef_Q12|ctrl->PredCoef_Q12
 libretro-common/formats/opus/ropus.c|memcpy|oldBandE|oldBandE
 libretro-common/formats/opus/ropus.c|memcpy|sLPC_Q14|sLPC_Q14
-libretro-common/formats/vp8/rvp8.c|memcpy|v->ru|v->ru
-libretro-common/formats/vp8/rvp8.c|memcpy|v->rv|v->rv
-libretro-common/formats/vp8/rvp8.c|memcpy|v->ry|v->ry
 libretro-common/include/array/rhmap.h|memcpy|((char*)(hdr + 1))|((char*)(hdr + 1))
 menu/cbs/menu_cbs_ok.c|memcpy|cheat_manager_state.cheats|cheat_manager_state.cheats
 network/netplay/netplay_frontend.c|memcpy|chat->messages|chat->messages

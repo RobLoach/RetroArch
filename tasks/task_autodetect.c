@@ -24,6 +24,8 @@
 #include <file/file_path.h>
 #include <retro_dirent.h>
 #include <string/stdstring.h>
+#include <lrc_hash.h>
+#include <retro_atomic.h>
 #include <file/config_file.h>
 #include <streams/file_stream.h>
 
@@ -35,6 +37,7 @@
 #include "../input/input_remapping.h"
 
 #include "tasks_internal.h"
+#include "../input/drivers_hid/winusb_bind.h"
 #ifdef HAVE_BLISSBOX
 #include "../input/include/blissbox.h"
 #endif
@@ -70,6 +73,13 @@ typedef struct
    unsigned       scan_max_affinity;
    unsigned       scan_dir_idx;
    unsigned       port;
+   /* Place of this connect or disconnect in its port's sequence (see
+    * autoconfig_port_seq), and a hash of the name the driver
+    * reported.  Both are fixed before the task is queued, so a finder
+    * can read them while the handler is running: the handler
+    * rewrites device_info.name during the fallback-name scan. */
+   unsigned       seq;
+   uint32_t       name_hash;
    input_device_info_t device_info; /* unsigned alignment */
    uint8_t flags;
    uint8_t scan_done;
@@ -84,6 +94,38 @@ typedef struct
     * every connect of an unrecognised device would be waste. */
    uint8_t index_fresh_no_candidate;
 } autoconfig_handle_t;
+
+/* Every connect and disconnect queued for a port takes the next
+ * number in that port's sequence.  A connect scan takes as many
+ * passes as the profile directory needs, so a disconnect or a second
+ * connect queued behind it on the same port can finish first; only
+ * the operation holding the port's newest number writes the port's
+ * state when it completes, and anything older stands down.  Bumped
+ * from whichever thread the driver reports a hotplug on, read on the
+ * main thread by the callbacks. */
+static retro_atomic_int_t autoconfig_port_seq[MAX_INPUT_DEVICES];
+
+/* What is still pending on one port, as seen by
+ * autoconfigure_port_finder: the newest queued connect or disconnect
+ * and, for a connect, the device it names. */
+typedef struct
+{
+   unsigned port;
+   unsigned seq;
+   unsigned vid;
+   unsigned pid;
+   uint32_t name_hash;
+   uint8_t  found;
+   uint8_t  is_connect;
+} autoconfig_port_pending_t;
+
+/* Whether @handle's operation is still the newest on its port */
+static bool autoconfig_handle_is_current(
+      const autoconfig_handle_t *autoconfig_handle)
+{
+   return autoconfig_handle->seq == (unsigned)retro_atomic_load_acquire_int(
+         &autoconfig_port_seq[autoconfig_handle->port]);
+}
 
 /*********************/
 /* Utility functions */
@@ -321,6 +363,22 @@ static void input_autoconfigure_set_config_file(
       strlcpy(autoconfig_handle->device_info.display_name,
             entry->value,
             sizeof(autoconfig_handle->device_info.display_name));
+
+   /* The controller's own deadzones, if the profile has them: the
+    * same keys as the global settings */
+   {
+      static const char *const dz_keys[2] = {
+         "input_analog_deadzone", "input_analog_trigger_deadzone" };
+      unsigned k;
+      for (k = 0; k < 2; k++)
+      {
+         float v;
+         autoconfig_handle->device_info.deadzone[k] = 0;
+         if (config_get_float(config, dz_keys[k], &v) && v >= 0.0f)
+            autoconfig_handle->device_info.deadzone[k] =
+               (uint8_t)((v > 0.95f ? 0.95f : v) * 100.0f + 0.5f) + 1;
+      }
+   }
 
    /* Set auto-configured status to 'true' */
    autoconfig_handle->device_info.autoconfigured = true;
@@ -1127,7 +1185,8 @@ static bool input_autoconfigure_scan_config_files_internal(
  * - if there is no reservation, do not change anything
  *      (not even the assignment to first free player port)
  */
-static void reallocate_port_if_needed(
+static void reallocate_leading_ports(
+      const uint8_t *leader,
       unsigned detected_port,
       unsigned int vendor_id,
       unsigned int product_id,
@@ -1138,6 +1197,7 @@ static void reallocate_port_if_needed(
    char settings_value[NAME_MAX_LENGTH];
    char settings_value_device_name[NAME_MAX_LENGTH];
    unsigned prev_assigned_player_slots[MAX_USERS];
+   unsigned holder;
    unsigned int settings_value_vendor_id  = 0;
    unsigned int settings_value_product_id = 0;
    unsigned first_free_player_slot        = MAX_USERS + 1;
@@ -1148,14 +1208,6 @@ static void reallocate_port_if_needed(
    if (detected_port >= MAX_USERS)
       return;
 
-   /* The swaps below are transpositions of input_joypad_index[]: they
-    * preserve a one player <-> one pad mapping but cannot restore one,
-    * so a mapping that arrives with two players on the same pad keeps
-    * both of them there on every subsequent hotplug, and a single
-    * controller drives two libretro ports. Assert the invariant before
-    * relying on it. */
-   input_config_sanitize_joypad_indices();
-
    /* MAX_USERS marks a pad index that no player is mapped to. Zero
     * initialising this would instead claim such pads for player 1,
     * making the reassignment below write to an unrelated slot. */
@@ -1164,6 +1216,9 @@ static void reallocate_port_if_needed(
 
    for (player = 0; player < MAX_USERS; player++)
    {
+      /* a port sharing a lower port's pad goes where that one goes */
+      if (leader[player] != player)
+         continue;
       if (     first_free_player_slot > MAX_USERS
             && (detected_port == settings->uints.input_joypad_index[player]
             || !input_config_get_device_name(settings->uints.input_joypad_index[player]))
@@ -1194,16 +1249,15 @@ static void reallocate_port_if_needed(
       return;
    }
 
-   /* Both reassignment branches below write through
-    * prev_assigned_player_slots[detected_port]. The sanitisation above
-    * makes the mapping total, so this cannot trigger; it keeps the
-    * writes in bounds if that ever stops holding. */
-   if (prev_assigned_player_slots[detected_port] >= MAX_USERS)
-      return;
+   /* With ports sharing a pad, a pad can arrive where no port is.
+    * Then nobody is displaced: the port taking it just takes it. */
+   holder = prev_assigned_player_slots[detected_port];
 
    for (player = 0; player < MAX_USERS; player++)
    {
-      if (settings->uints.input_device_reservation_type[player] != INPUT_DEVICE_RESERVATION_NONE)
+      if (leader[player] != player)
+         settings_value[0] = '\0';
+      else if (settings->uints.input_device_reservation_type[player] != INPUT_DEVICE_RESERVATION_NONE)
          strlcpy(settings_value, settings->arrays.input_reserved_devices[player],
                  sizeof(settings_value));
       else
@@ -1287,20 +1341,23 @@ static void reallocate_port_if_needed(
          /* todo: fix the pushed info message */
          settings->uints.input_joypad_index[player] = detected_port;
 
-         RARCH_LOG("[Autoconf] Preferred slot was taken earlier by "
-                   "\"%s\", reassigning that to %d.\n",
-                    input_config_get_device_name(prev_assigned_port),
-                    prev_assigned_player_slots[detected_port]+1);
-         settings->uints.input_joypad_index[prev_assigned_player_slots[detected_port]] = prev_assigned_port;
-         if (input_config_get_device_name(prev_assigned_port))
+         if (holder < MAX_USERS)
          {
-            unsigned prev_assigned_port_l2 = settings->uints.input_joypad_index[first_free_player_slot];
+            RARCH_LOG("[Autoconf] Preferred slot was taken earlier by "
+                      "\"%s\", reassigning that to %d.\n",
+                       input_config_get_device_name(prev_assigned_port),
+                       holder+1);
+            settings->uints.input_joypad_index[holder] = prev_assigned_port;
+            if (input_config_get_device_name(prev_assigned_port))
+            {
+               unsigned prev_assigned_port_l2 = settings->uints.input_joypad_index[first_free_player_slot];
 
-            RARCH_LOG("[Autoconf] 2nd level reassignment, moving "
-                      "previously assigned port %d to first free player %d.\n",
-                      prev_assigned_port_l2, first_free_player_slot+1);
-            settings->uints.input_joypad_index[prev_assigned_player_slots[detected_port]] = prev_assigned_port_l2;
-            settings->uints.input_joypad_index[first_free_player_slot]                    = prev_assigned_port;
+               RARCH_LOG("[Autoconf] 2nd level reassignment, moving "
+                         "previously assigned port %d to first free player %d.\n",
+                         prev_assigned_port_l2, first_free_player_slot+1);
+               settings->uints.input_joypad_index[holder]                 = prev_assigned_port_l2;
+               settings->uints.input_joypad_index[first_free_player_slot] = prev_assigned_port;
+            }
          }
       }
       else
@@ -1318,17 +1375,35 @@ static void reallocate_port_if_needed(
             "any player slot.\n",
             device_name, vendor_id, product_id);
       if (   no_reservation_at_all
-            || prev_assigned_player_slots[detected_port] == first_free_player_slot)
+            || holder == first_free_player_slot)
          return;
 
       prev_assigned_port = settings->uints.input_joypad_index[first_free_player_slot];
       settings->uints.input_joypad_index[first_free_player_slot] = detected_port;
-      settings->uints.input_joypad_index[prev_assigned_player_slots[detected_port]] =
-         prev_assigned_port;
+      if (holder < MAX_USERS)
+         settings->uints.input_joypad_index[holder] = prev_assigned_port;
       RARCH_DBG("[Autoconf] Earlier free player slot found, "
             "reassigning to player %d.\n",
             first_free_player_slot+1);
    }
+}
+
+static void reallocate_port_if_needed(
+      unsigned detected_port,
+      unsigned int vendor_id,
+      unsigned int product_id,
+      const char *device_name,
+      const char *device_display_name)
+{
+   uint8_t leader[MAX_USERS];
+
+   if (detected_port >= MAX_USERS)
+      return;
+   input_config_sanitize_joypad_indices();
+   input_config_shared_ports(leader);
+   reallocate_leading_ports(leader, detected_port, vendor_id, product_id,
+         device_name, device_display_name);
+   input_config_follow_shared_ports(leader);
 }
 
 /*************************/
@@ -1346,6 +1421,11 @@ static void cb_input_autoconfigure_connect(
       return;
 
    if (!(autoconfig_handle = (autoconfig_handle_t*)task->state))
+      return;
+
+   /* A newer connect or disconnect was queued for this port while
+    * this one ran; that one owns the port's state */
+   if (!autoconfig_handle_is_current(autoconfig_handle))
       return;
 
    /* Use local copy of port index for brevity... */
@@ -1391,6 +1471,13 @@ static void cb_input_autoconfigure_connect(
    input_config_set_device_vid(port, autoconfig_handle->device_info.vid);
    input_config_set_device_pid(port, autoconfig_handle->device_info.pid);
 
+   /* > The controller's own deadzones: none where its profile has none */
+   input_config_set_device_deadzones(port,
+         autoconfig_handle->device_info.deadzone[0]
+            ? (float)(autoconfig_handle->device_info.deadzone[0] - 1) * 0.01f : -1.0f,
+         autoconfig_handle->device_info.deadzone[1]
+            ? (float)(autoconfig_handle->device_info.deadzone[1] - 1) * 0.01f : -1.0f);
+
    if (*autoconfig_handle->device_info.config_name)
       input_config_set_device_config_name(port,
             autoconfig_handle->device_info.config_name);
@@ -1433,6 +1520,18 @@ static void cb_input_autoconfigure_connect(
          autoconfig_handle->device_info.pid,
          autoconfig_handle->device_info.name,
          autoconfig_handle->device_info.display_name);
+   /* the ports may have changed controllers: their deadzones with them */
+   input_driver_deadzones_refresh();
+
+   /* The registry learns of the controller here, where the connect
+    * is applied, so it changes with the device table and on the main
+    * thread. */
+   input_driver_registry_connect(port,
+         autoconfig_handle->device_info.joypad_driver,
+         autoconfig_handle->device_info.name,
+         autoconfig_handle->device_info.phys,
+         autoconfig_handle->device_info.vid,
+         autoconfig_handle->device_info.pid);
 }
 
 static void input_autoconfigure_connect_handler(retro_task_t *task)
@@ -1501,7 +1600,14 @@ static void input_autoconfigure_connect_handler(retro_task_t *task)
          fallback_device_name = "Standard Gamepad";
       else if (string_is_equal(autoconfig_handle->device_info.joypad_driver,
             "sdl3"))
-         fallback_device_name = "Gamepad";
+      {
+         /* a PS3 controller: the same, and its pressure axes */
+         if (     autoconfig_handle->device_info.vid == 0x054c
+               && autoconfig_handle->device_info.pid == 0x0268)
+            fallback_device_name = "SDL3 PS3 Gamepad";
+         else
+            fallback_device_name = "Gamepad";
+      }
 #ifdef HAVE_TEST_DRIVERS
       else if (string_is_equal(autoconfig_handle->device_info.joypad_driver,
             "test"))
@@ -1584,6 +1690,21 @@ static void input_autoconfigure_connect_handler(retro_task_t *task)
                   autoconfig_handle->device_info.vid,
                   autoconfig_handle->device_info.pid);
 
+#ifdef HAVE_WINUSB_BIND
+   /* A DualShock 3 that Windows' own driver has: it cannot be started
+    * there, whatever its profile says, until it is moved to WinUSB */
+   if (     winusb_bind_is_ds3(autoconfig_handle->device_info.vid,
+               autoconfig_handle->device_info.pid)
+         && !string_is_equal(autoconfig_handle->device_info.joypad_driver,
+               "hid"))
+   {
+      task->style = TASK_STYLE_NEGATIVE;
+      snprintf(task_title, sizeof(task_title),
+            msg_hash_to_str(MSG_INPUT_DS3_NEEDS_ENABLING),
+            device_display_name, autoconfig_handle->port + 1);
+   }
+#endif
+
    /* Update task title */
    task_free_title(task);
    if (*task_title)
@@ -1595,24 +1716,174 @@ static void input_autoconfigure_connect_handler(retro_task_t *task)
    task_set_flags(task, RETRO_TASK_FLG_FINISHED, true);
 }
 
-static bool autoconfigure_connect_finder(retro_task_t *task, void *user_data)
+/* A connect or disconnect reported on another thread, copied for the
+ * main thread.  There the queue is searched exactly, which another
+ * thread's task_queue_find() is not, and settings and the port's
+ * state are read where they are written. */
+typedef struct
+{
+   char    *name;
+   char    *display_name;
+   char    *phys;
+   char    *driver;
+   unsigned port;
+   unsigned vid;
+   unsigned pid;
+   uint8_t  flags;
+   uint8_t  is_connect;
+} autoconfig_handoff_t;
+
+static bool input_autoconfigure_connect_main(const char *name,
+      const char *display_name, const char *phys, const char *driver,
+      unsigned port, unsigned vid, unsigned pid, uint8_t flags);
+static bool input_autoconfigure_disconnect_main(unsigned port,
+      const char *name);
+
+static void free_autoconfig_handoff(autoconfig_handoff_t *handoff)
+{
+   free(handoff->name);
+   free(handoff->display_name);
+   free(handoff->phys);
+   free(handoff->driver);
+   free(handoff);
+}
+
+static void input_autoconfigure_handoff_free(retro_task_t *task)
+{
+   autoconfig_handoff_t *handoff = (autoconfig_handoff_t*)task->state;
+
+   if (!handoff)
+      return;
+   free_autoconfig_handoff(handoff);
+   task->state = NULL;
+}
+
+static void input_autoconfigure_handoff_handler(retro_task_t *task)
+{
+   task_set_flags(task, RETRO_TASK_FLG_FINISHED, true);
+}
+
+/* In the callback, not the handler: the unthreaded queue's find does
+ * not see the tasks its gather has taken off to run.  A main-thread
+ * task's callbacks come in push order. */
+static void cb_input_autoconfigure_handoff(retro_task_t *task,
+      void *task_data, void *user_data, const char *err)
+{
+   autoconfig_handoff_t *handoff = (autoconfig_handoff_t*)task->state;
+
+   if (!handoff || (task_get_flags(task) & RETRO_TASK_FLG_CANCELLED))
+      return;
+   if (handoff->is_connect)
+      input_autoconfigure_connect_main(handoff->name,
+            handoff->display_name, handoff->phys, handoff->driver,
+            handoff->port, handoff->vid, handoff->pid, handoff->flags);
+   else
+      input_autoconfigure_disconnect_main(handoff->port, handoff->name);
+}
+
+static bool input_autoconfigure_handoff_dup(char **dst, const char *s)
+{
+   if (s && *s && !(*dst = strdup(s)))
+      return false;
+   return true;
+}
+
+/* True once queued; the main thread decides what it does. */
+static bool input_autoconfigure_handoff(bool is_connect,
+      const char *name, const char *display_name, const char *phys,
+      const char *driver, unsigned port, unsigned vid, unsigned pid,
+      uint8_t flags)
+{
+   retro_task_t *task;
+   autoconfig_handoff_t *handoff = (autoconfig_handoff_t*)
+      calloc(1, sizeof(*handoff));
+
+   if (!handoff)
+      return false;
+   handoff->port       = port;
+   handoff->vid        = vid;
+   handoff->pid        = pid;
+   handoff->flags      = flags;
+   handoff->is_connect = is_connect ? 1 : 0;
+
+   if (     !input_autoconfigure_handoff_dup(&handoff->name, name)
+         || !input_autoconfigure_handoff_dup(&handoff->display_name,
+               display_name)
+         || !input_autoconfigure_handoff_dup(&handoff->phys, phys)
+         || !input_autoconfigure_handoff_dup(&handoff->driver, driver)
+         || !(task = task_init()))
+   {
+      free_autoconfig_handoff(handoff);
+      return false;
+   }
+   task->handler  = input_autoconfigure_handoff_handler;
+   task->callback = cb_input_autoconfigure_handoff;
+   task->cleanup  = input_autoconfigure_handoff_free;
+   task->state    = handoff;
+   task_set_flags(task, RETRO_TASK_FLG_MAIN_THREAD, true);
+   task_queue_push(task);
+   return true;
+}
+
+static void input_autoconfigure_disconnect_handler(retro_task_t *task);
+
+/* Records the newest connect or disconnect still queued for a port.
+ * Never reports a match, so task_queue_find() walks every task; the
+ * fields it reads are all fixed before the task is queued. */
+static bool autoconfigure_port_finder(retro_task_t *task, void *user_data)
 {
    autoconfig_handle_t *autoconfig_handle = NULL;
-   unsigned *port                         = NULL;
+   autoconfig_port_pending_t *pending     = (autoconfig_port_pending_t*)user_data;
+   bool is_connect;
 
-   if (!task || !user_data)
+   if (!task || !pending)
       return false;
 
-   if (task->handler != input_autoconfigure_connect_handler)
+   is_connect = (task->handler == input_autoconfigure_connect_handler);
+   if (!is_connect && task->handler != input_autoconfigure_disconnect_handler)
       return false;
 
-   autoconfig_handle = (autoconfig_handle_t*)task->state;
-   if (!autoconfig_handle)
+   if (!(autoconfig_handle = (autoconfig_handle_t*)task->state))
       return false;
 
-   port = (unsigned*)user_data;
-   return (*port == autoconfig_handle->port);
+   if (autoconfig_handle->port != pending->port)
+      return false;
+
+   if (pending->found && autoconfig_handle->seq <= pending->seq)
+      return false;
+
+   pending->found      = 1;
+   pending->is_connect = is_connect ? 1 : 0;
+   pending->seq        = autoconfig_handle->seq;
+   pending->vid        = autoconfig_handle->device_info.vid;
+   pending->pid        = autoconfig_handle->device_info.pid;
+   pending->name_hash  = autoconfig_handle->name_hash;
+   return false;
 }
+
+#if defined(HAVE_TEST_DRIVERS) || defined(HAVE_OPENXR)
+static bool autoconfigure_any_finder(retro_task_t *task, void *user_data)
+{
+   return task
+      && (   task->handler == input_autoconfigure_connect_handler
+          || task->handler == input_autoconfigure_disconnect_handler
+          || task->handler == input_autoconfigure_handoff_handler);
+}
+
+/* Whether a connect or disconnect on any port has yet to be applied.
+ * task_queue_find() reports a task until its callback has run, so
+ * 'false' means every port's device table is what the driver last
+ * reported.  For the test joypad driver, whose scripted steps run on
+ * a frame count that the task queue does not follow, and the headset's
+ * controllers, which take a slot no driver has reported. */
+bool input_autoconfigure_pending(void)
+{
+   task_finder_data_t find_data;
+   find_data.func     = autoconfigure_any_finder;
+   find_data.userdata = NULL;
+   return task_queue_find(&find_data);
+}
+#endif
 
 bool input_autoconfigure_connect(
       const char *name,
@@ -1652,7 +1923,29 @@ bool input_autoconfigure_connect_ex(
       unsigned pid,
       uint8_t flags)
 {
+   if (port >= MAX_INPUT_DEVICES)
+      return false;
+   /* Reported on a driver's own thread. */
+   if (!task_is_on_main_thread())
+      return input_autoconfigure_handoff(true, name, display_name, phys,
+            driver, port, vid, pid, flags);
+   return input_autoconfigure_connect_main(name, display_name, phys,
+         driver, port, vid, pid, flags);
+}
+
+static bool input_autoconfigure_connect_main(
+      const char *name,
+      const char *display_name,
+      const char *phys,
+      const char *driver,
+      unsigned port,
+      unsigned vid,
+      unsigned pid,
+      uint8_t flags)
+{
    task_finder_data_t find_data;
+   autoconfig_port_pending_t pending;
+   uint32_t name_hash;
    retro_task_t *task                     = NULL;
    autoconfig_handle_t *autoconfig_handle = NULL;
    bool driver_valid                      = false;
@@ -1669,12 +1962,23 @@ bool input_autoconfigure_connect_ex(
    if (port >= MAX_INPUT_DEVICES)
       return false;
 
-   /* Cannot connect a device that is currently
-    * being connected */
-   find_data.func     = autoconfigure_connect_finder;
-   find_data.userdata = (void*)&port;
+   /* The same device reported again while its connect is still the
+    * newest thing queued for the port changes nothing.  Anything
+    * else is queued behind what is pending - a different device, or
+    * this one again after a disconnect - and wins when it completes,
+    * however long the earlier scan takes. */
+   name_hash          = djb2_calculate((name && *name) ? name : "");
+   memset(&pending, 0, sizeof(pending));
+   pending.port       = port;
+   find_data.func     = autoconfigure_port_finder;
+   find_data.userdata = (void*)&pending;
+   task_queue_find(&find_data);
 
-   if (task_queue_find(&find_data))
+   if (     pending.found
+         && pending.is_connect
+         && pending.vid       == vid
+         && pending.pid       == pid
+         && pending.name_hash == name_hash)
       return false;
 
    /* Configure handle */
@@ -1683,6 +1987,7 @@ bool input_autoconfigure_connect_ex(
       return false;
 
    autoconfig_handle->port                         = port;
+   autoconfig_handle->name_hash                    = name_hash;
    autoconfig_handle->device_info.vid              = vid;
    autoconfig_handle->device_info.pid              = pid;
    autoconfig_handle->device_info.name[0]          = '\0';
@@ -1792,6 +2097,8 @@ bool input_autoconfigure_connect_ex(
    task->cleanup  = input_autoconfigure_free;
    task->flags   &= ~RETRO_TASK_FLG_MUTE;
 
+   autoconfig_handle->seq = (unsigned)retro_atomic_fetch_add_int(
+         &autoconfig_port_seq[port], 1) + 1;
    task_queue_push(task);
 
    return true;
@@ -1849,6 +2156,11 @@ static void cb_input_autoconfigure_disconnect(
    if (!(autoconfig_handle = (autoconfig_handle_t*)task->state))
       return;
 
+   /* A newer connect or disconnect was queued for this port while
+    * this one waited; that one owns the port's state */
+   if (!autoconfig_handle_is_current(autoconfig_handle))
+      return;
+
    /* Use local copy of port index for brevity... */
    port = autoconfig_handle->port;
 
@@ -1856,6 +2168,7 @@ static void cb_input_autoconfigure_disconnect(
     * callback, to ensure it occurs on the main thread */
    input_config_clear_device_name(port);
    input_config_clear_device_display_name(port);
+   input_config_set_device_deadzones(port, -1.0f, -1.0f);
    input_config_clear_device_config_name(port);
    input_config_clear_device_joypad_driver(port);
    input_config_set_device_phys(port, NULL);
@@ -1863,6 +2176,8 @@ static void cb_input_autoconfigure_disconnect(
    input_config_set_device_pid(port, 0);
    input_config_set_device_autoconfigured(port, false);
    input_config_reset_autoconfig_binds(port);
+
+   input_driver_registry_disconnect(port);
 }
 
 static void input_autoconfigure_disconnect_handler(retro_task_t *task)
@@ -1902,24 +2217,6 @@ static void input_autoconfigure_disconnect_handler(retro_task_t *task)
    task_set_flags(task, RETRO_TASK_FLG_FINISHED, true);
 }
 
-static bool autoconfigure_disconnect_finder(retro_task_t *task, void *user_data)
-{
-   autoconfig_handle_t *autoconfig_handle = NULL;
-   unsigned *port                         = NULL;
-
-   if (!task || !user_data)
-      return false;
-
-   if (task->handler != input_autoconfigure_disconnect_handler)
-      return false;
-
-   if (!(autoconfig_handle = (autoconfig_handle_t*)task->state))
-      return false;
-
-   port = (unsigned*)user_data;
-   return (*port == autoconfig_handle->port);
-}
-
 /* Note: There is no real need for autoconfigure
  * 'disconnect' to be a task - we are merely setting
  * a handful of variables. However:
@@ -1931,11 +2228,22 @@ static bool autoconfigure_disconnect_finder(retro_task_t *task, void *user_data)
  *   we ensure uniformity of OSD status messages */
 bool input_autoconfigure_disconnect(unsigned port, const char *name)
 {
+   if (port >= MAX_INPUT_DEVICES)
+      return false;
+   if (!task_is_on_main_thread())
+      return input_autoconfigure_handoff(false, name, NULL, NULL, NULL,
+            port, 0, 0, 0);
+   return input_autoconfigure_disconnect_main(port, name);
+}
+
+static bool input_autoconfigure_disconnect_main(unsigned port,
+      const char *name)
+{
    task_finder_data_t find_data;
+   autoconfig_port_pending_t pending;
    retro_task_t *task                     = NULL;
    autoconfig_handle_t *autoconfig_handle = NULL;
    settings_t *settings                   = config_get_ptr();
-   input_driver_state_t *input_st         = input_state_get_ptr();
    bool notification_show_autoconfig      = settings ? settings->bools.notification_show_autoconfig : true;
    bool pause_on_disconnect               = settings ? settings->bools.pause_on_disconnect : true;
    bool menu_pause_libretro               = settings ? settings->bools.menu_pause_libretro : false;
@@ -1944,12 +2252,16 @@ bool input_autoconfigure_disconnect(unsigned port, const char *name)
    if (port >= MAX_INPUT_DEVICES)
       return false;
 
-   /* Cannot disconnect a device that is currently
-    * being disconnected */
-   find_data.func     = autoconfigure_disconnect_finder;
-   find_data.userdata = (void*)&port;
+   /* A disconnect that is already the newest thing queued for the
+    * port changes nothing.  One behind a pending connect is queued,
+    * and wins when it completes. */
+   memset(&pending, 0, sizeof(pending));
+   pending.port       = port;
+   find_data.func     = autoconfigure_port_finder;
+   find_data.userdata = (void*)&pending;
+   task_queue_find(&find_data);
 
-   if (task_queue_find(&find_data))
+   if (pending.found && !pending.is_connect)
       return false;
 
    /* Configure handle */
@@ -1964,9 +2276,9 @@ bool input_autoconfigure_disconnect(unsigned port, const char *name)
 
    /* Use display_name as name instead since autoconfig display_name
     * is destroyed already, and real name does not matter at this point */
-   if (input_st && *input_st->input_device_info[port].display_name)
+   if (input_config_get_device_display_name(port))
       strlcpy(autoconfig_handle->device_info.name,
-            input_st->input_device_info[port].display_name,
+            input_config_get_device_display_name(port),
             sizeof(autoconfig_handle->device_info.name));
    else if (name && *name)
       strlcpy(autoconfig_handle->device_info.name,
@@ -1985,6 +2297,8 @@ bool input_autoconfigure_disconnect(unsigned port, const char *name)
    task->callback = cb_input_autoconfigure_disconnect;
    task->cleanup  = input_autoconfigure_free;
 
+   autoconfig_handle->seq = (unsigned)retro_atomic_fetch_add_int(
+         &autoconfig_port_seq[port], 1) + 1;
    task_queue_push(task);
 
    if (pause_on_disconnect && core_is_running)

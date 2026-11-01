@@ -57,36 +57,15 @@ typedef struct gfx_ctx_x_vk_data
    xcb_connection_t *wsi_conn;
 } gfx_ctx_x_vk_data_t;
 
-typedef struct Hints
+typedef struct x_vk_hints
 {
    unsigned long flags;
    unsigned long functions;
    unsigned long decorations;
    long          inputMode;
    unsigned long status;
-} Hints;
+} x_vk_hints_t;
 
-/* We use long because X11 wants 32-bit pixels for 32-bit systems and 64 for 64... */
-/* ARGB*/
-static const unsigned long retroarch_icon_vk_data[] = {
-   16, 16,
-0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-0x00000000,0x00000000,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0x00000000,0x00000000,0x00000000,
-0x00000000,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0x00000000,0x00000000,
-0x00000000,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0x00000000,0x00000000,
-0x00000000,0xff333333,0xff333333,0xff333333,0xfff2f2f2,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xfff2f2f2,0xff333333,0xff333333,0xff333333,0x00000000,0x00000000,
-0x00000000,0xff333333,0xfff2f2f2,0xff333333,0xff333333,0xfff2f2f2,0xff333333,0xff333333,0xff333333,0xfff2f2f2,0xff333333,0xff333333,0xfff2f2f2,0xff333333,0x00000000,0x00000000,
-0x00000000,0xff333333,0xfff2f2f2,0xff333333,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xff333333,0xfff2f2f2,0xff333333,0x00000000,0x00000000,
-0x00000000,0xff333333,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xff333333,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xff333333,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xff333333,0x00000000,0x00000000,
-0x00000000,0xff333333,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xff333333,0x00000000,0x00000000,
-0x00000000,0xff333333,0xff333333,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xfff2f2f2,0xff333333,0xff333333,0x00000000,0x00000000,
-0x00000000,0xff333333,0xff333333,0xff333333,0xfff2f2f2,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xfff2f2f2,0xff333333,0xff333333,0xff333333,0x00000000,0x00000000,
-0x00000000,0xff333333,0xff333333,0xfff2f2f2,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xfff2f2f2,0xff333333,0xff333333,0x00000000,0x00000000,
-0x00000000,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0x00000000,0x00000000,
-0x00000000,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0x00000000,0x00000000,
-0x00000000,0x00000000,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0xff333333,0x00000000,0x00000000,0x00000000,
-0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
-};
 
 static int x_vk_nul_handler(Display *dpy, XErrorEvent *event) { return 0; }
 
@@ -410,7 +389,7 @@ static bool gfx_ctx_x_vk_set_video_mode(void *data,
          &swa);
    XSetWindowBackground(g_x11_dpy, g_x11_win, 0);
 
-   XChangeProperty(g_x11_dpy, g_x11_win, net_wm_icon, cardinal, 32, PropModeReplace, (const unsigned char*)retroarch_icon_vk_data, sizeof(retroarch_icon_vk_data) / sizeof(*retroarch_icon_vk_data));
+   XChangeProperty(g_x11_dpy, g_x11_win, net_wm_icon, cardinal, 32, PropModeReplace, (const unsigned char*)x11_retroarch_icon, (int)x11_retroarch_icon_len);
 
    if (fullscreen && disable_composition)
    {
@@ -432,7 +411,7 @@ static bool gfx_ctx_x_vk_set_video_mode(void *data,
       /* We could have just set _NET_WM_WINDOW_TYPE_DOCK instead, 
        * but that removes the window from any taskbar/panel,
        * so we are forced to use the old motif hints method. */
-      Hints hints;
+      x_vk_hints_t hints;
       Atom property     = XInternAtom(g_x11_dpy, "_MOTIF_WM_HINTS", False);
 
       hints.flags       = 2;
@@ -560,28 +539,11 @@ error:
 }
 
 static void gfx_ctx_x_vk_input_driver(void *data,
-      const char *joypad_name,
-      input_driver_t **input, void **input_data)
+      const char *joypad_name)
 {
-   void *x_input            = NULL;
-#ifdef HAVE_UDEV
-   settings_t *settings     = config_get_ptr();
-   const char *input_driver = settings->arrays.input_driver;
-
-   if (string_is_equal(input_driver, "udev"))
-   {
-      *input_data = input_driver_init_wrap(&input_udev, joypad_name);
-      if (*input_data)
-      {
-         *input = &input_udev;
-         return;
-      }
-   }
-#endif
-
-   x_input      = input_driver_init_wrap(&input_x, joypad_name);
-   *input       = x_input ? &input_x : NULL;
-   *input_data  = x_input;
+   /* no input driver of this context's own: the frontend starts the
+    * one that goes with an X11 window */
+   input_driver_video_window(INPUT_WINDOW_X11, NULL);
 }
 
 static enum gfx_ctx_api gfx_ctx_x_vk_get_api(void *data)
@@ -611,7 +573,7 @@ static uint32_t gfx_ctx_x_vk_get_flags(void *data)
             &x->vk.context.supports_adaptive_vsync))
       BIT32_SET(flags, GFX_CTX_FLAGS_ADAPTIVE_VSYNC);
 
-#if defined(HAVE_SLANG) && defined(HAVE_SPIRV_CROSS)
+#if defined(HAVE_SLANG) && (defined(HAVE_SPIRV_CROSS) || defined(HAVE_RSLC))
    BIT32_SET(flags, GFX_CTX_FLAGS_SHADERS_SLANG);
 #endif
 

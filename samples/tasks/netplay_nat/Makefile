@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := nat_task_serialisation_test
 
 # The unit under test is compiled from the tree - the shipping
@@ -24,6 +26,7 @@ SOURCES := nat_task_serialisation_test.c \
            $(REPO_ROOT)/tasks/task_netplay_nat_traversal.c \
            $(LIBRETRO_COMM_DIR)/queues/task_queue.c \
            $(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
+           $(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c \
            $(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
            $(LIBRETRO_COMM_DIR)/string/stdstring.c \
            $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
@@ -31,13 +34,14 @@ SOURCES := nat_task_serialisation_test.c \
            $(LIBRETRO_COMM_DIR)/net/net_socket.c \
            $(LIBRETRO_COMM_DIR)/features/features_cpu.c
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
 DEFINES := -DHAVE_NETWORKING -DHAVE_NETPLAY -DHAVE_THREADS
 
-CFLAGS  += -Wall -std=gnu99 -g $(DEFINES) \
+CFLAGS  += -Wall -std=gnu99 -g1 $(DEFINES) \
            -I$(LIBRETRO_COMM_DIR)/include -I$(REPO_ROOT)
-LDFLAGS += -lpthread -lm
+# --wrap=task_queue_park so the threaded lane can count the task's parks.
+LDFLAGS += -Wl,--wrap=task_queue_park -lpthread -lm
 
 # The samples workflow passes SANITIZER=address,undefined; honour it.
 ifneq ($(SANITIZER),)
@@ -50,10 +54,15 @@ all: $(TARGET)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJS)
 
 .PHONY: clean all

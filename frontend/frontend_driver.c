@@ -110,7 +110,7 @@ static frontend_ctx_driver_t *frontend_ctx_drivers[] = {
 #if defined(_3DS)
    &frontend_ctx_ctr,
 #endif
-#if defined(SWITCH) && defined(HAVE_LIBNX)
+#if defined(SWITCH)
    &frontend_ctx_switch,
 #endif
 #if defined(_WIN32) && !defined(_XBOX) && !defined(__WINRT__)
@@ -124,9 +124,6 @@ static frontend_ctx_driver_t *frontend_ctx_drivers[] = {
 #endif
 #ifdef DJGPP
    &frontend_ctx_dos,
-#endif
-#ifdef SWITCH
-   &frontend_ctx_switch,
 #endif
 #if defined(ORBIS)
    &frontend_ctx_orbis,
@@ -285,6 +282,15 @@ int frontend_driver_parse_drive_list(void *data, bool load_content)
    return -1;
 }
 
+bool frontend_driver_root_in_drive_list(void)
+{
+   frontend_state_t *frontend_st   = &frontend_driver_st;
+   frontend_ctx_driver_t *frontend = frontend_st->current_frontend_ctx;
+   if (frontend && frontend->root_in_drive_list)
+      return frontend->root_in_drive_list();
+   return true;
+}
+
 void frontend_driver_content_loaded(void)
 {
    frontend_state_t *frontend_st   = &frontend_driver_st;
@@ -306,7 +312,15 @@ bool frontend_driver_set_fork(enum frontend_fork fork_mode)
    frontend_ctx_driver_t *frontend = frontend_st->current_frontend_ctx;
    if (!frontend || !frontend_driver_has_fork())
       return false;
-   return frontend->set_fork(fork_mode);
+   if (!frontend->set_fork(fork_mode))
+      return false;
+   frontend_st->fork_mode = fork_mode;
+   return true;
+}
+
+enum frontend_fork frontend_driver_get_fork(void)
+{
+   return frontend_driver_st.fork_mode;
 }
 
 void frontend_driver_process_args(int *argc, char *argv[])
@@ -581,5 +595,14 @@ bool frontend_driver_set_gamemode(bool on)
    frontend_ctx_driver_t *frontend = frontend_st->current_frontend_ctx;
    if (frontend && frontend->set_gamemode)
       return frontend->set_gamemode(on);
+   return false;
+}
+
+bool frontend_driver_set_power_plan(bool on, bool idle_disable)
+{
+   frontend_state_t *frontend_st   = &frontend_driver_st;
+   frontend_ctx_driver_t *frontend = frontend_st->current_frontend_ctx;
+   if (frontend && frontend->set_power_plan)
+      return frontend->set_power_plan(on, idle_disable);
    return false;
 }

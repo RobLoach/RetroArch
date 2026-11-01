@@ -23,32 +23,41 @@ jobs:
   samples-audio:
     name: Build and run samples/audio
     runs-on: ubuntu-latest
+    env:
+      APT_PKGS: build-essential libasound2-dev libsdl2-dev libopenal-dev libpipewire-0.3-dev libpulse-dev pulseaudio ffmpeg gcc-mingw-w64-x86-64 wine64 ccache
     timeout-minutes: 25
 
     steps:
-      - name: Install dependencies
-        timeout-minutes: 5
-        run: |
-          pkgs="build-essential libasound2-dev libsdl2-dev libopenal-dev"
-          if dpkg -s $pkgs >/dev/null 2>&1; then
-            echo "All packages already present on runner image; skipping apt."
-            exit 0
-          fi
-          for i in 1 2 3; do
-            sudo timeout 90 apt-get update -y \
-              -o Acquire::Retries=3 -o Acquire::http::Timeout=30 && break
-            echo "apt-get update failed (attempt $i); retrying in 10s"
-            sleep 10
-          done
-          sudo apt-get install -y \
-            -o Acquire::Retries=3 -o Acquire::http::Timeout=30 \
-            $pkgs
-
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Apt cache key
+        id: apt
+        run: sh .github/workflows/scripts/apt-cache-key.sh "$APT_PKGS"
+
+      - name: Restore apt cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.apt-cache
+          key: ${{ steps.apt.outputs.key }}
+          restore-keys: ${{ steps.apt.outputs.prefix }}
+
+      - name: Install dependencies
+        timeout-minutes: 20
+        run: sh .github/workflows/scripts/apt-install.sh $APT_PKGS
+
+      - name: Save apt cache
+        if: env.APT_CACHE_SAVE == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.apt-cache
+          key: ${{ steps.apt.outputs.key }}
+
+      - name: Link with lld
+        run: sh .github/workflows/scripts/use-lld.sh
+
       - name: Restore ccache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ~/.ccache
           key: ccache-${{ github.workflow }}-${{ github.job }}-${{ github.sha }}
@@ -58,11 +67,10 @@ jobs:
       - name: Enable ccache
         run: |
           set -eu
-          command -v ccache >/dev/null 2>&1 || sudo apt-get install -y -qq ccache
           export CCACHE_DIR="$HOME/.ccache"
           echo "CCACHE_DIR=$CCACHE_DIR" >> "$GITHUB_ENV"
           echo "/usr/lib/ccache" >> "$GITHUB_PATH"
-          ccache -M 500M
+          ccache -M 250M
           ccache -z
 
       - name: Build and run mixer_lock_test (ASan + UBSan, TSan)
@@ -115,6 +123,21 @@ jobs:
           make clean && make -j$(nproc) all SANITIZER=thread
           TSAN_OPTIONS=halt_on_error=1 timeout 600 ./thread_handshake_test
           echo "[pass] thread_handshake_test (TSan)"
+
+      - name: Build and run mmdevice_active_test (ASan + UBSan, TSan)
+        shell: bash
+        working-directory: samples/audio/mmdevice_active
+        run: |
+          set -eu
+          # The open-endpoint table the WASAPI notifications consult,
+          # set from two threads and matched from a third, none of
+          # which has touched it before.
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          timeout 300 ./mmdevice_active_test
+          echo "[pass] mmdevice_active_test (ASan)"
+          make clean && make -j$(nproc) all SANITIZER=thread
+          TSAN_OPTIONS=halt_on_error=1 timeout 300 ./mmdevice_active_test
+          echo "[pass] mmdevice_active_test (TSan)"
 
       - name: Build and run graph_clock_test (ASan + UBSan)
         shell: bash
@@ -224,6 +247,24 @@ jobs:
           make clean && make -j$(nproc) all SANITIZER=thread
           TSAN_OPTIONS=halt_on_error=1 timeout 300 ./alsa_lifecycle_test
           echo "[pass] alsa_lifecycle_test (TSan)"
+
+      - name: Build and run alsa_chmap_test (ASan + UBSan)
+        shell: bash
+        working-directory: samples/audio/alsa_chmap
+        run: |
+          set -eu
+          # The shipping ALSA driver against the null PCM, with the
+          # channel map, the channel counts the card takes and writei
+          # scripted via -Wl,--wrap: a card is handed the frontend's
+          # channels in its own order - its map's, or ALSA's FL FR RL
+          # RR FC LFE SL SR without one - by write() and through a lent
+          # mmap span, reports the layout it has, and steps 7.1 down to
+          # 5.1 or quad before stereo. A short writei must not lose the
+          # frame stride.
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 \
+             timeout 120 ./alsa_chmap_test
+          echo "[pass] alsa_chmap_test (ASan)"
 
       - name: Build and run pipeline_stall_test (ASan + UBSan, TSan)
         shell: bash
@@ -340,8 +381,6 @@ jobs:
         working-directory: samples/audio/bitstream
         run: |
           set -eu
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg
           # audio/audio_bitstream.c: a coded stream on its way to a
           # receiver, which the PCM pipeline has no place for. Real
           # DTS and AC-3 from ffmpeg, handed over frame by frame:
@@ -398,22 +437,197 @@ jobs:
           ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./qsa_test
           echo "[pass] qsa_test (ASan)"
 
+      - name: Build and run ctr_audio_test (the 3DS CSND and NDSP drivers against a scripted device)
+        shell: bash
+        working-directory: samples/audio/ctr_audio
+        run: |
+          set -eu
+          # audio/drivers/ctr_csnd_audio.c and ctr_dsp_audio.c against a
+          # stand-in <3ds.h> whose system tick and channel position are
+          # the device: buffer_size() and write_avail() in bytes of what
+          # write() takes, and a write longer than the ring taking half
+          # of it - ASan is what sees a copy run past the ring.
+          make clean && make -j$(nproc) all
+          ./ctr_audio_test
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./ctr_audio_test
+          echo "[pass] ctr_audio_test (ASan)"
+
+      - name: Build and run switch_audio_test (the Switch audout driver against a scripted service)
+        shell: bash
+        working-directory: samples/audio/switch_audio
+        run: |
+          set -eu
+          # audio/drivers/switch_audio.c's libnx build against a
+          # stand-in <switch.h> whose audout service queues buffers and
+          # plays them out on the test's word: write_avail() must be
+          # what a write takes, across the released buffers, and
+          # buffer_size() every buffer carrying its share of the
+          # latency setting.
+          make clean && make -j$(nproc) all
+          ./switch_audio_test
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./switch_audio_test
+          echo "[pass] switch_audio_test (ASan)"
+
+      - name: Build and run switch_audren_test (the Switch audren driver's renderer ownership, ASan + UBSan, TSan)
+        shell: bash
+        working-directory: samples/audio/switch_audren
+        run: |
+          set -eu
+          # audio/drivers/switch_libnx_audren_audio.c's libnx build
+          # against a stand-in <switch.h> whose renderer thread plays a
+          # wave buffer a frame. libnx's audrv is not thread-safe and
+          # the driver takes no lock: every renderer call must come from
+          # the writer's thread while another reads write_avail(), a
+          # write_avail() on the writer's own thread must see what the
+          # renderer played, non-blocking writes must keep taking audio,
+          # and stop and start must pause and resume the voice. TSan
+          # reports two threads in the renderer as a race on the
+          # stand-in's wave buffer list.
+          make clean && make -j$(nproc) all
+          ./switch_audren_test
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./switch_audren_test
+          echo "[pass] switch_audren_test (ASan)"
+          make clean && make -j$(nproc) all SANITIZER=thread
+          TSAN_OPTIONS=halt_on_error=1 ./switch_audren_test
+          echo "[pass] switch_audren_test (TSan)"
+
+      - name: Build and run wiiu_ax_test (the Wii U AX driver's callback against its writer)
+        shell: bash
+        working-directory: samples/audio/wiiu_ax
+        run: |
+          set -eu
+          # audio/drivers/wiiu_audio.c against the tree's own Wii U
+          # headers, with stand-in AX and OS functions behind them: the
+          # frame callback on one thread and the writer on another keep
+          # the count of buffered frames in one atomic word, and every
+          # frame accepted must be buffered or counted played. TSan is
+          # what sees a field the two share without ordering.
+          make clean && make -j$(nproc) all
+          ./wiiu_ax_test
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./wiiu_ax_test
+          echo "[pass] wiiu_ax_test (ASan)"
+          make clean && make -j$(nproc) all SANITIZER=thread
+          TSAN_OPTIONS=halt_on_error=1 timeout 300 ./wiiu_ax_test
+          echo "[pass] wiiu_ax_test (TSan)"
+          make clean
+
+      - name: Build and run xenon360_test (the libxenon driver against a scripted sound queue)
+        shell: bash
+        working-directory: samples/audio/xenon360
+        run: |
+          set -eu
+          # audio/drivers/xenon360_audio.c against stand-in libxenon
+          # headers: buffer_size() is the latency setting, write_avail()
+          # what a write takes, the queue never past it, and a write
+          # longer than the staging buffer goes in passes - ASan is what
+          # sees a pass overrun it.
+          make clean && make -j$(nproc) all
+          ./xenon360_test
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./xenon360_test
+          echo "[pass] xenon360_test (ASan)"
+
+      - name: Build and run audioworklet_test (the web driver's write against its own ring)
+        shell: bash
+        working-directory: samples/audio/audioworklet
+        run: |
+          set -eu
+          # audio/drivers/audioworklet.c, #included by the test and
+          # built against the tree's emscripten stand-ins: write()
+          # returns the bytes it took, the ring holds exactly that, and
+          # frames a write gives up on are counted, not logged.
+          make clean && make -j$(nproc) all
+          ./audioworklet_test
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./audioworklet_test
+          echo "[pass] audioworklet_test (ASan)"
+
+      - name: Build and run rwebaudio_test (the web driver's channels, C and JavaScript halves)
+        shell: bash
+        working-directory: samples/audio/rwebaudio
+        run: |
+          set -eu
+          # audio/drivers/rwebaudio.c against a stand-in for its
+          # JavaScript half: frames of the layout the page took go out
+          # one plane per channel, and every byte count is in frames of
+          # that layout. Then os/emscripten/library_rwebaudio.js itself
+          # under Node with a mock AudioContext: the destination is
+          # widened only past stereo and only as far as its
+          # maxChannelCount allows, and a stereo one is left as it was.
+          make clean && make -j$(nproc) check
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./rwebaudio_test
+          echo "[pass] rwebaudio_test (ASan)"
+
+      - name: Build and run pipewire_write_test (the PipeWire driver's write against its own ring)
+        shell: bash
+        working-directory: samples/audio/pipewire_write
+        run: |
+          set -eu
+          # audio/drivers/pipewire.c, #included by the test and built
+          # against the system's PipeWire headers, with the graph as a
+          # loop wait that plays a quantum: a write longer than the
+          # ring's mark takes what fits, or blocking goes in parts, in
+          # whole frames, and the write path logs nothing.
+          make clean && make -j$(nproc) all
+          ./pipewire_write_test
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./pipewire_write_test
+          echo "[pass] pipewire_write_test (ASan)"
+
+      - name: Build and run wasapi_mic_test (the WASAPI microphone's fetch against a scripted capture client)
+        shell: bash
+        working-directory: samples/audio/wasapi_mic
+        run: |
+          set -eu
+          # audio/drivers/wasapi.c's text against the shared fake WASAPI
+          # with a capture client added: a shared-mode FIFO set shorter
+          # than one engine packet still takes every packet, and a
+          # packet with no room waits for the FIFO to be read.
+          make clean && make -j$(nproc) all
+          ./wasapi_mic_test
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./wasapi_mic_test
+          echo "[pass] wasapi_mic_test (ASan)"
+
+      - name: Build and run oss_report_test (the OSS driver's reports on a device that cannot answer)
+        shell: bash
+        working-directory: samples/audio/oss_report
+        run: |
+          set -eu
+          # audio/drivers/oss.c, #included by the test, over Linux's
+          # soundcard.h: a device that has gone away reports no room and
+          # no size, and a second of frames asking logs nothing.
+          make clean && make -j$(nproc) all
+          ./oss_report_test
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./oss_report_test
+          echo "[pass] oss_report_test (ASan)"
+
       - name: Build and run live_drivers_test (a live PulseAudio server, a null ALSA PCM)
         shell: bash
         working-directory: samples/audio/live_drivers
         run: |
           set -eu
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libasound2-dev libpulse-dev pulseaudio
           # A server with a null sink, and an ALSA config naming a null
           # PCM: the real drivers against the real libraries, no
           # hardware. Pulse's telemetry is cached from the server
-          # thread's callbacks; ALSA is run once as the device reports
+          # thread's callbacks and its writer takes no mainloop lock;
+          # ALSA is run once as the device reports
           # itself and once told it cannot pause, the fallback from
-          # snd_pcm_pause to snd_pcm_drop.
+          # snd_pcm_pause to snd_pcm_drop. With the threaded pipeline a
+          # plug PCM opens for mmap and lends its buffer; a plug over a
+          # file plugin reads the lent bytes back.
           export XDG_RUNTIME_DIR=/tmp/xdg
           mkdir -p "$XDG_RUNTIME_DIR/pulse"
-          printf 'pcm.nullpcm { type null }\n' > "$HOME/.asoundrc"
+          printf '%s\n' 'pcm.nullpcm { type null }' \
+            'pcm.plugnull { type plug slave.pcm "nullpcm" }' \
+            'pcm.filenull { type file slave.pcm "nullpcm" file "/tmp/ra_live_drivers_lend.raw" format raw }' \
+            'pcm.plugfile { type plug slave.pcm "filenull" }' > "$HOME/.asoundrc"
           pulseaudio --daemonize=no --exit-idle-time=-1 --disallow-exit -n \
             -L "module-null-sink sink_name=nullsink rate=48000 channels=2" \
             -L "module-native-protocol-unix auth-anonymous=1 socket=$XDG_RUNTIME_DIR/pulse/native" \
@@ -426,6 +640,11 @@ jobs:
           make clean && make -j$(nproc) all SANITIZER=address,undefined
           ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./live_drivers_test
           echo "[pass] live_drivers_test (ASan)"
+          # Pulse's writer hands audio to the server's thread through a
+          # ring and an eventcount, which is what TSan is for.
+          make clean && make -j$(nproc) all SANITIZER=thread
+          TSAN_OPTIONS=halt_on_error=1:suppressions=$PWD/tsan.supp ./live_drivers_test
+          echo "[pass] live_drivers_test (TSan)"
           kill $PA_PID || true
 
       - name: Build and run binaural_test (plain, ASan + UBSan)
@@ -555,6 +774,24 @@ jobs:
              ./device_list_driver_test
           echo "[pass] device_list_driver_test (ASan)"
 
+      - name: Build and run device_label_path_test (ASan + UBSan)
+        shell: bash
+        working-directory: samples/audio/device_label_path
+        run: |
+          set -eu
+          # A device list entry with the hardware's name after the path,
+          # "/dev/dsp0 (HDA Intel)", is stored by the menu as shown and
+          # comes back to init as the device string; oss opened it as a
+          # path and failed, so a device picked from the list could not
+          # be used. Compiles oss and audioio whole with open() redirected
+          # to a recorder, and checks each reaches it with the path.
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          test -x device_label_path_test
+          ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1 \
+             UBSAN_OPTIONS=print_stacktrace=1 timeout 60 \
+             ./device_label_path_test
+          echo "[pass] device_label_path_test (ASan)"
+
       - name: Build and run rate_control_bounds_test (ASan + UBSan)
         shell: bash
         working-directory: samples/audio/rate_control_bounds
@@ -668,6 +905,30 @@ jobs:
              ./coreaudio_ring_test
           echo "[pass] coreaudio_ring_test (ASan)"
 
+      - name: Build and run sdl_lost_wakeup_test (the SDL2 driver against SDL's dummy device)
+        shell: bash
+        working-directory: samples/audio/sdl_lost_wakeup
+        run: |
+          set -eu
+          # The producer's waits and the capture parks are measured; the
+          # lend pair is asserted: whole-frame spans, published to a
+          # device that pulls them, refused while stopped.
+          make clean && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 \
+             SDL_AUDIODRIVER=dummy timeout 300 ./sdl_lost_wakeup_test 1
+          echo "[pass] sdl_lost_wakeup_test (ASan)"
+
+      - name: Build and run coreaudio_write_test (the shipping writer, lend included, on stubs)
+        shell: bash
+        working-directory: samples/audio/coreaudio_write
+        run: |
+          set -eu
+          # run.py lifts the writer, the render callback and the lend
+          # pair out of audio/drivers/coreaudio.c and drives them on a
+          # simulated device clock; no Apple framework is involved.
+          python3 run.py
+          echo "[pass] coreaudio_write_test"
+
       - name: Build and run asio_clock_test (ASan + UBSan)
         shell: bash
         working-directory: samples/audio/asio_clock
@@ -720,11 +981,36 @@ jobs:
              ./asio_ring_test
           echo "[pass] asio_ring_test (ASan)"
 
+      - name: Build and run asio_teardown_test (TSan, ASan, MinGW under wine)
+        shell: bash
+        working-directory: samples/audio/asio_teardown
+        run: |
+          set -eu
+          . "$GITHUB_WORKSPACE/.github/workflows/scripts/wine-server.sh"
+          # The ASIO teardown's wait for a callback still inside after
+          # ASIOStop, the driver's code pulled out of asio.c: it ends as
+          # the last callback leaves, never while one is inside, and at
+          # 200 ms for one that never leaves. A build whose last callback
+          # out does not notify must fail.
+          for san in thread address,undefined; do
+             make clean && make -j$(nproc) all SANITIZER=$san
+             timeout 60 ./asio_teardown_test
+          done
+          make clean && make -j$(nproc) all TEST_DEFINES=-DASIO_TEST_NO_OUT_NOTIFY
+          if timeout 60 ./asio_teardown_test; then
+             echo "negative build passed"; exit 1
+          fi
+          make clean && make -j$(nproc) all CC=x86_64-w64-mingw32-gcc LDFLAGS=-static
+          WINEDEBUG=-all timeout 120 make check CC=x86_64-w64-mingw32-gcc LDFLAGS=-static
+          make clean
+          echo "[pass] asio_teardown_test"
+
       - name: Build and run dsound_pump_test (MinGW, under wine)
         shell: bash
         working-directory: samples/audio/dsound_pump
         run: |
           set -eu
+          . "$GITHUB_WORKSPACE/.github/workflows/scripts/wine-server.sh"
           # audio/drivers/dsound.c end to end on wine's DirectSound, fed
           # by an ALSA null PCM, which plays at real-time pace on a
           # runner with no sound card. Pins that the pump - which now
@@ -733,13 +1019,8 @@ jobs:
           # millisecond - still moves audio through blocking writes,
           # fills silence when the writer stops, and lets free() return
           # at once while it waits.
-          if ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1 \
-                || ! command -v wine >/dev/null 2>&1; then
-             sudo apt-get install -y -qq gcc-mingw-w64-x86-64 wine64 \
-                -o Acquire::Retries=3 -o Acquire::http::Timeout=30
-          fi
           printf 'pcm.!default { type null }\nctl.!default { type hw card 0 }\n' > ~/.asoundrc
-          make clean all
+          make clean && make -j$(nproc) all
           WINEDEBUG=-all timeout 300 make check
           echo "[pass] dsound_pump_test (wine)"
 
@@ -748,6 +1029,7 @@ jobs:
         working-directory: samples/audio/wdmks_loop
         run: |
           set -eu
+          . "$GITHUB_WORKSPACE/.github/workflows/scripts/wine-server.sh"
           # audio/drivers/wdmks.c compiled whole, its WaveRT loop driven
           # by hand: the test owns the driver's state, points the
           # position register at a word of its own and moves the
@@ -764,14 +1046,22 @@ jobs:
           # milliseconds where it reports none; and that gaps in the
           # audio are counted once each, neither a start nor every
           # sample of a pause.
-          if ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1 \
-                || ! command -v wine >/dev/null 2>&1; then
-             sudo apt-get install -y -qq gcc-mingw-w64-x86-64 wine64 \
-                -o Acquire::Retries=3 -o Acquire::http::Timeout=30
-          fi
-          make clean all
+          make clean && make -j$(nproc) all
           WINEDEBUG=-all timeout 120 make check
           echo "[pass] wdmks_loop_test (wine)"
+
+      - name: Check MMDevice notification targets on both thread backends
+        shell: bash
+        working-directory: samples/audio/mmdevice_notification
+        run: |
+          set -eu
+          . "$GITHUB_WORKSPACE/.github/workflows/scripts/wine-server.sh"
+          for threads in 0 1; do
+            make clean check THREADS=$threads SANITIZER=address,undefined
+            make clean THREADS=$threads CC=x86_64-w64-mingw32-gcc LDFLAGS=-static && make -j$(nproc) all THREADS=$threads CC=x86_64-w64-mingw32-gcc LDFLAGS=-static
+            WINEDEBUG=-all wine ./mmdevice_notification_test.exe
+          done
+          make clean
 
       - name: Build and run wasapi_exclusive_pacing_test (ASan + UBSan, then TSan)
         shell: bash
@@ -910,6 +1200,94 @@ jobs:
             echo "AVX unavailable on this runner; scalar/SSE tests ran above."
           fi
 
+      - name: Build and run sinc kernel dispatch test (C89, ASan + UBSan)
+        working-directory: samples/audio/sinc_dispatch
+        run: |
+          # A baseline build carries the AVX and AVX-512 kernels through
+          # per-function targets and runs each one the runner supports
+          # against the scalar kernel; the -mavx build must agree.
+          make -j$(nproc) check SANITIZER=address,undefined
+          if grep -qw avx /proc/cpuinfo; then
+            make clean
+            make -j$(nproc) check CC="gcc -mavx" SANITIZER=address,undefined
+          fi
+
+      - name: Build and run sinc fast-forward test (C89, ASan + UBSan, MinGW)
+        working-directory: samples/audio/sinc_fastforward
+        run: |
+          . "$GITHUB_WORKSPACE/.github/workflows/scripts/wine-server.sh"
+          # Live ratios under the table's design are decimated first:
+          # rejection as a table built for that ratio, the nominal path
+          # untouched, the output bound, crossfaded stage changes.
+          make -j$(nproc) check SANITIZER=address,undefined
+          if grep -qw avx /proc/cpuinfo; then
+            make clean
+            make -j$(nproc) check CC="gcc -mavx" SANITIZER=address,undefined
+          fi
+          make clean
+          WINEDEBUG=-all timeout 300 make check CC=x86_64-w64-mingw32-gcc \
+            RUN="wine ./sinc_fastforward_test.exe"
+
+      - name: Build and run sinc sibling test (C89, ASan + UBSan, MinGW)
+        working-directory: samples/audio/sinc_sibling
+        run: |
+          . "$GITHUB_WORKSPACE/.github/workflows/scripts/wine-server.sh"
+          # Siblings share their parent's tables: a fresh stream either
+          # way, own state only, either free order.
+          make -j$(nproc) check SANITIZER=address,undefined
+          make clean
+          WINEDEBUG=-all timeout 300 make check CC=x86_64-w64-mingw32-gcc \
+            RUN="wine ./sinc_sibling_test.exe"
+
+      - name: Build and run mic_handshake_test (ASan + UBSan)
+        working-directory: samples/audio/mic_handshake
+        run: |
+          # The shipping capture worker against a clocked fake device, and
+          # only the resampler the microphone flush uses being built.
+          make clean
+          make -j$(nproc) SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 \
+            timeout 300 ./mic_handshake_test 1
+
+      - name: Build and run pipeline_format_test (ASan + UBSan)
+        working-directory: samples/audio/pipeline_format
+        run: |
+          # Real init and one batch through each format and transport;
+          # the integer front pair exists only behind its hint.
+          make -j$(nproc) check SANITIZER=address,undefined
+
+      - name: Build and run pipeline_rate_change_test (ASan + UBSan, mingw)
+        working-directory: samples/audio/pipeline_rate_change
+        run: |
+          . "$GITHUB_WORKSPACE/.github/workflows/scripts/wine-server.sh"
+          # A core rate change taken by the running driver: one device
+          # open, the tone at its pitch on both sides, the ring grown
+          # where the new rate needs it, time stretch refused.
+          make -j$(nproc) check SANITIZER=address,undefined
+          make clean
+          WINEDEBUG=-all timeout 300 make check CC=x86_64-w64-mingw32-gcc \
+            LDFLAGS="-lm -static" RUN="wine ./pipeline_rate_change_test.exe"
+
+      - name: Build and run unity_identity_test (plain, ASan + UBSan)
+        working-directory: samples/audio/unity_identity
+        run: |
+          # The unity passthrough end to end: an s16 batch at a pinned
+          # ratio of 1.0 reaches an s16 device with zero conversions,
+          # counted through linker wraps; the fallbacks still convert.
+          make -j$(nproc) check
+          make clean
+          make -j$(nproc) check SANITIZER=address,undefined
+
+      - name: Build and run lend_write_test (plain, ASan + UBSan)
+        working-directory: samples/audio/lend_write
+        run: |
+          # The driver lend pair: the pipeline produces its output in
+          # the driver's own buffer, bit-identical to the written
+          # stream, with write() never called while a lend is live.
+          make -j$(nproc) check
+          make clean
+          make -j$(nproc) check SANITIZER=address,undefined
+
       - name: Build and run extra-channel capacity test (ASan + UBSan)
         working-directory: samples/audio/extra_capacity
         run: |
@@ -917,7 +1295,62 @@ jobs:
           make clean
           make -j$(nproc) check SIMD_MASK=RESAMPLER_SIMD_SSE SANITIZER=address,undefined
 
+      - name: Build and run the pipeline fill cap lane (plain)
+        shell: bash
+        working-directory: samples/audio/pipeline_clocked
+        run: |
+          set -eu
+          # The threaded pipeline against a device that drains on a
+          # clock, with Audio Sync the only thing pacing the core: the
+          # ring sits full and every publish waits behind it. With
+          # audio_pipeline_fill_cap the queue has to come down to the
+          # device's buffer and no more than a publish past it, where a
+          # blocking inline write leaves it, without the device running
+          # dry. With Audio Sync off it has to take the queue down too,
+          # with a core up to a frame late not reaching the device as
+          # silence. And display-paced with Audio Sync on, rate control
+          # has to hold the queue where the frame-synchronous path
+          # holds it. With audio the only clock, rate control has to
+          # leave the ratio alone, inline and threaded, and still hold
+          # the fill when a present blocks behind the runloop's back.
+          # And neither leaving fast-forward nor resuming from a pause
+          # may hold the core while a queue plays out, threaded or
+          # inline (#19940).
+          # Plain, not sanitized: it is the clock that is measured,
+          # and a sanitizer's slowdown is a host that starves the
+          # consumer whatever the cap does. Underruns with the cap are
+          # retried, since a host that takes the consumer off its core
+          # shows the same with the cap off; only a cap that never runs
+          # clean fails.
+          make clean && make -j$(nproc)
+          test -x pipeline_clocked_test
+          PACED_ONLY=1 timeout 600 ./pipeline_clocked_test 3
+          echo "[pass] pipeline_clocked_test (fill cap)"
+
       - name: Build and run resampler option tests (C89, ASan + UBSan)
         working-directory: samples/audio/resampler_options
         run: |
           make -j$(nproc) check SANITIZER=address,undefined
+
+      - name: Build and run CoreMIDI input queue test (ASan + UBSan, TSan)
+        working-directory: samples/midi/coremidi_queue
+        run: |
+          # midi/drivers/coremidi_queue.h is the macOS driver's lock-free
+          # input queue; it builds and runs anywhere.
+          make check SANITIZER=address,undefined
+          make clean
+          make check SANITIZER=thread
+
+      - name: ccache statistics
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: ccache -sv
+
+      - name: Save ccache
+        # Only master's pushes keep a cache: pull requests restore
+        # master's, so one push does not evict the next one's.
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ github.workflow }}-${{ github.job }}-${{ github.sha }}

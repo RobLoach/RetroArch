@@ -60,6 +60,7 @@
 #include "../../../gfx/gfx_widgets.h"
 #include "../../../gfx/gfx_display.h"
 #include "../../../gfx/gfx_animation.h"
+#include "../../../gfx/video_driver.h"
 
 static int failures;
 static int pushes;
@@ -272,13 +273,120 @@ static void test_icon_draw_size(void)
    gfx_widgets_deinit(false);
 }
 
+/* Under the threaded video wrapper the widgets' fonts are the video
+ * thread's. Deinit takes the worker away and hands the fonts back to
+ * that thread rather than freeing them here or waiting on it. */
+extern unsigned stub_fonts_freed;
+extern unsigned stub_fonts_retired;
+
+static void test_worker_deinit(void)
+{
+   static int fonts[3];
+   dispgfx_widget_t *p_dispwidget = dispwidget_get_ptr();
+
+   video_state_get_ptr()->thread_wrapper_active = true;
+   if (!widgets_up())
+   {
+      CHECK(0, "gfx_widgets_init() refused under the worker");
+      video_state_get_ptr()->thread_wrapper_active = false;
+      return;
+   }
+   CHECK(retro_atomic_load_acquire_int(&p_dispwidget->worker),
+         "the widgets did not go to the worker");
+
+   /* What the worker's layout would have built */
+   p_dispwidget->gfx_widget_fonts.regular.font   = (font_data_t*)&fonts[0];
+   p_dispwidget->gfx_widget_fonts.bold.font      = (font_data_t*)&fonts[1];
+   p_dispwidget->gfx_widget_fonts.msg_queue.font = (font_data_t*)&fonts[2];
+   stub_fonts_freed   = 0;
+   stub_fonts_retired = 0;
+
+   gfx_widgets_deinit(false);
+
+   CHECK(!retro_atomic_load_acquire_int(&p_dispwidget->worker),
+         "the worker kept the widgets");
+   CHECK(stub_fonts_retired == 3,
+         "the worker's fonts were not handed back to it");
+   CHECK(stub_fonts_freed == 0,
+         "the worker's fonts were freed off its thread");
+   CHECK(!p_dispwidget->gfx_widget_fonts.regular.font
+         && !p_dispwidget->gfx_widget_fonts.bold.font
+         && !p_dispwidget->gfx_widget_fonts.msg_queue.font,
+         "a handed-back font is still referenced");
+
+   video_state_get_ptr()->thread_wrapper_active = false;
+}
+
+#if defined(_WIN32) && !defined(_XBOX) && !defined(__WINRT__)
+extern bool stub_win32_modal_active;
+
+static void test_modal_scale(void)
+{
+   static video_frame_info_t frame;
+   dispgfx_widget_t *widgets = dispwidget_get_ptr();
+
+   video_state_get_ptr()->thread_wrapper_active = true;
+   CHECK(widgets_up(), "modal widgets initialize");
+   memset(&frame, 0, sizeof(frame));
+   frame.dims                = VIDEO_SCALE_PACK(960, 540);
+   frame.widget_scale_factor = 1.0f;
+   frame.widget_dir_assets   = "/tmp/nonexistent-assets";
+   frame.widget_path_font    = "";
+   frame.menu_ticker_speed   = 1.0f;
+   stub_win32_modal_active   = true;
+   gfx_widgets_worker_step(&frame, "", 0);
+   CHECK(widgets->last_scale_factor == 1.0f,
+         "first modal frame initializes its scale");
+
+   frame.dims                = VIDEO_SCALE_PACK(1280, 720);
+   frame.widget_scale_factor = 1.5f;
+   gfx_widgets_worker_step(&frame, "", 0);
+   CHECK(widgets->last_video_dims == frame.dims,
+         "modal layout follows the window dimensions");
+   CHECK(widgets->last_scale_factor == 1.0f,
+         "modal resize preserves the initialized scale");
+
+   stub_win32_modal_active = false;
+   gfx_widgets_worker_step(&frame, "", 0);
+   CHECK(widgets->last_scale_factor == 1.5f,
+         "modal release applies the final scale");
+   gfx_widgets_deinit(false);
+   video_state_get_ptr()->thread_wrapper_active = false;
+}
+#endif
+
+extern int stub_media_startup_token;
+extern unsigned stub_widget_flushes;
+
+static void test_media_startup(void)
+{
+   unsigned before;
+   CHECK(widgets_up(), "startup widgets initialize");
+   before = stub_widget_flushes;
+   stub_media_startup_token = 2;
+   pump(1);
+   stub_media_startup_token = 3;
+   pump(1);
+   CHECK(stub_widget_flushes == before, "startup widgets remain hidden");
+   stub_media_startup_token = 0;
+   pump(1);
+   CHECK(stub_widget_flushes > before, "widgets resume after startup");
+   gfx_widgets_deinit(false);
+}
+
 int main(void)
 {
+   task_queue_init(false, NULL);
    test_push_and_expire();
    test_titles();
    test_queue_overflow();
    test_init_deinit_cycles();
    test_icon_draw_size();
+   test_worker_deinit();
+#if defined(_WIN32) && !defined(_XBOX) && !defined(__WINRT__)
+   test_modal_scale();
+#endif
+   test_media_startup();
 
    printf("pushes=%d frames=%d\n", pushes, iterations);
 
@@ -286,6 +394,8 @@ int main(void)
     * sweep nothing and report success. */
    CHECK(pushes > 0,     "no message was ever pushed");
    CHECK(iterations > 0, "no frame was ever iterated");
+
+   task_queue_deinit();
 
    if (failures)
    {

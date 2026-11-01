@@ -156,44 +156,11 @@ static bool gfx_ctx_khr_display_set_video_mode(void *data,
 }
 
 static void gfx_ctx_khr_display_input_driver(void *data,
-      const char *joypad_name,
-      input_driver_t **input, void **input_data)
+      const char *joypad_name)
 {
-#ifdef HAVE_X11
-   settings_t *settings = config_get_ptr();
-
-   /* We cannot use the X11 input driver for DRM/KMS */
-   if (string_is_equal(settings->arrays.input_driver, "x"))
-   {
-#ifdef HAVE_UDEV
-      {
-         /* Try to set it to udev instead */
-         void *udev = input_driver_init_wrap(&input_udev, joypad_name);
-         if (udev)
-         {
-            *input       = &input_udev;
-            *input_data  = udev;
-            return;
-         }
-      }
-#endif
-#if defined(__linux__) && !defined(ANDROID)
-      {
-         /* Try to set it to linuxraw instead */
-         void *linuxraw = input_driver_init_wrap(&input_linuxraw, joypad_name);
-         if (linuxraw)
-         {
-            *input       = &input_linuxraw;
-            *input_data  = linuxraw;
-            return;
-         }
-      }
-#endif
-   }
-#endif
-
-   *input      = NULL;
-   *input_data = NULL;
+   /* no input driver of this context's own: the frontend starts the
+    * one that goes with a display that has no window system */
+   input_driver_video_window(INPUT_WINDOW_KMS, NULL);
 }
 
 static enum gfx_ctx_api gfx_ctx_khr_display_get_api(void *data)
@@ -251,7 +218,7 @@ static uint32_t gfx_ctx_khr_display_get_flags(void *data)
 {
    uint32_t flags = 0;
 
-#if defined(HAVE_SLANG) && defined(HAVE_SPIRV_CROSS)
+#if defined(HAVE_SLANG) && (defined(HAVE_SPIRV_CROSS) || defined(HAVE_RSLC))
    BIT32_SET(flags, GFX_CTX_FLAGS_SHADERS_SLANG);
 #endif
 

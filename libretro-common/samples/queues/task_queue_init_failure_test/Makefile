@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := task_queue_init_failure_test
 
 LIBRETRO_COMM_DIR := ../../..
@@ -9,14 +11,26 @@ SOURCES := \
 	task_queue_init_failure_test.c \
 	$(LIBRETRO_COMM_DIR)/queues/task_queue.c \
 	$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
-	$(LIBRETRO_COMM_DIR)/features/features_cpu.c
+	$(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c \
+	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+	$(LIBRETRO_COMM_DIR)/features/features_cpu.c \
+	$(LIBRETRO_COMM_DIR)/time/rtime.c
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
-CFLAGS  += -Wall -pedantic -std=gnu99 -g -O1 -fno-omit-frame-pointer \
+CFLAGS  += -Wall -pedantic -std=gnu99 -g1 -O1 -fno-omit-frame-pointer \
            -DHAVE_THREADS -I$(LIBRETRO_COMM_DIR)/include
-LDFLAGS += -Wl,--wrap=sthread_create
 LIBS    += -lpthread
+
+# Apple's linker has no --wrap: there task_queue.c calls the wrapper by
+# name, and the test's __real_ call names the real function.
+ifneq ($(shell uname -s),Darwin)
+   LDFLAGS += -Wl,--wrap=sthread_create
+else
+   TASK_QUEUE_O := $(call sample_objs,$(LIBRETRO_COMM_DIR)/queues/task_queue.o)
+   $(TASK_QUEUE_O): CFLAGS += -Dsthread_create=__wrap_sthread_create
+   $(TARGET).o: CFLAGS += -D__real_sthread_create=sthread_create
+endif
 
 ifneq ($(SANITIZER),)
    CFLAGS  := -fsanitize=$(SANITIZER) $(CFLAGS)
@@ -28,6 +42,10 @@ all: $(TARGET)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
@@ -35,6 +53,7 @@ check: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -f $(TARGET) $(OBJS)
+	rm -rf $(SAMPLE_OBJDIR)
+	rm -f $(TARGET) $(TARGET).exe $(OBJS)
 
 .PHONY: all check clean

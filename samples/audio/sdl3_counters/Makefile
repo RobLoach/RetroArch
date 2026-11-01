@@ -1,6 +1,8 @@
 # The SDL3 audio driver's underruns() accounting, and the callback it
 # has to be counted in. Builds audio/drivers/sdl3_audio.c itself.
 
+include ../../sample_objdir.mk
+
 CORE_DIR          := ../../..
 LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
 
@@ -12,8 +14,10 @@ SOURCES_C := sdl3_counters_test.c \
 	$(LIBRETRO_COMM_DIR)/lists/string_list.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strldup.c \
-	$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c
-OBJS      := $(SOURCES_C:.c=.o)
+	$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
+	$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
+	$(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c
+OBJS      := $(call sample_objs,$(SOURCES_C:.c=.o))
 
 SDL_CFLAGS ?= $(shell pkg-config --cflags sdl3)
 SDL_LIBS   ?= $(shell pkg-config --libs sdl3)
@@ -26,10 +30,10 @@ ifneq ($(SAN),)
    SANITIZER := $(SAN)
 endif
 ifneq ($(SANITIZER),)
-   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g $(CFLAGS)
+   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g1 $(CFLAGS)
    LDFLAGS := -fsanitize=$(SANITIZER) $(LDFLAGS)
 else
-   CFLAGS += -g -O1
+   CFLAGS += -g1 -O1
 endif
 
 all: $(TARGET)
@@ -40,10 +44,15 @@ $(TARGET): $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 check: $(TARGET)
 	./$(TARGET)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(OBJS) $(TARGET)
 
 .PHONY: all check clean

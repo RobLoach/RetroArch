@@ -384,9 +384,41 @@ static INLINE HRESULT DXGIMakeWindowAssociation(DXGIFactory1 factory, HWND windo
    return factory->lpVtbl->MakeWindowAssociation(factory, window_handle, flags);
 }
 
+static const GUID libretro_IID_IDXGIFactory2 = { 0x50c83a1c,0xe072,0x4c48, { 0x87,0xb0,0x36,0x30,0xfa,0x36,0xa6,0xd0 } };
+
+/* Flip model: allows setting scaling to DXGI_SCALING_NONE, preventing the frame stretching
+ * that the legacy CreateSwapChain() causes when switching screen modes. */
 static INLINE HRESULT DXGICreateSwapChain(
       DXGIFactory1 factory, void* device, DXGI_SWAP_CHAIN_DESC* desc, DXGISwapChain* swap_chain)
 {
+   IDXGIFactory2 *factory2 = NULL;
+#ifdef __cplusplus
+   REFIID factory2_iid = libretro_IID_IDXGIFactory2;
+#else
+   REFIID factory2_iid = &libretro_IID_IDXGIFactory2;
+#endif
+   if (     desc->SwapEffect >= DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+         && SUCCEEDED(factory->lpVtbl->QueryInterface(factory,
+               factory2_iid, (void**)&factory2)))
+   {
+      HRESULT hr;
+      DXGI_SWAP_CHAIN_DESC1 desc1 = {0};
+      desc1.Width       = desc->BufferDesc.Width;
+      desc1.Height      = desc->BufferDesc.Height;
+      desc1.Format      = desc->BufferDesc.Format;
+      desc1.SampleDesc  = desc->SampleDesc;
+      desc1.BufferUsage = desc->BufferUsage;
+      desc1.BufferCount = desc->BufferCount;
+      desc1.Scaling     = DXGI_SCALING_NONE;
+      desc1.SwapEffect  = desc->SwapEffect;
+      desc1.Flags       = desc->Flags;
+      hr = factory2->lpVtbl->CreateSwapChainForHwnd(factory2,
+            (IUnknown*)device, desc->OutputWindow, &desc1, NULL, NULL,
+            (IDXGISwapChain1**)swap_chain);
+      factory2->lpVtbl->Release(factory2);
+      if (SUCCEEDED(hr))
+         return hr;
+   }
    return factory->lpVtbl->CreateSwapChain(
          factory, (IUnknown*)device, desc, (IDXGISwapChain**)swap_chain);
 }
@@ -484,6 +516,10 @@ void dxgi_copy(
       int         dst_pitch,
       void*       dst_data);
 
+/* Whether @chain has a frame latency waitable object to ask for: an
+ * IDXGISwapChain2, which Windows 7's and Wine's are not */
+bool dxgi_swapchain_waitable(DXGISwapChain chain);
+
 #ifdef HAVE_DXGI_HDR
 #ifdef __WINRT__
 bool dxgi_check_display_hdr_support(DXGIFactory2 factory, HWND hwnd);
@@ -508,7 +544,8 @@ void dxgi_set_hdr_metadata(
       float                         max_output_nits,
       float                         min_output_nits,
       float                         max_cll,
-      float                         max_fall
+      float                         max_fall,
+      float                         display_peak
 );
 
 /* Convert an HDR swapchain-format pixel buffer into SDR BGR24 bottom-up,

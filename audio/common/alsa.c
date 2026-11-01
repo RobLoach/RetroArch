@@ -24,53 +24,55 @@
 #include "../../configuration.h"
 #include "../../verbosity.h"
 
+/* ALSA's own order for a count, which a PCM without a channel map
+ * follows: the surround40, surround51 and surround71 devices'. */
+static const uint32_t *alsa_default_positions(unsigned channels)
+{
+   static const uint32_t pos[8] = {
+      AUDIO_SPEAKER_FRONT_LEFT, AUDIO_SPEAKER_FRONT_RIGHT,
+      AUDIO_SPEAKER_BACK_LEFT,  AUDIO_SPEAKER_BACK_RIGHT,
+      AUDIO_SPEAKER_FRONT_CENTER, AUDIO_SPEAKER_LOW_FREQUENCY,
+      AUDIO_SPEAKER_SIDE_LEFT,  AUDIO_SPEAKER_SIDE_RIGHT };
+   return (channels == 4 || channels == 6 || channels == 8) ? pos : NULL;
+}
+
 /* The device's channel map as AUDIO_SPEAKER_ positions, in the order
- * the device takes them. 0 when the map is unknown or has a position
- * the frontend has no bit for. A map whose positions are not in the
- * frontend's ascending-bit order is reported as 0 too: the frontend
- * lays frames out in that order and does not permute. */
-static uint32_t alsa_layout_of_chmap(snd_pcm_t *pcm, unsigned channels)
+ * the device takes them. False when the map is unknown, the wrong
+ * length, or has a position the frontend has no bit for. */
+static bool alsa_positions_of_chmap(snd_pcm_t *pcm, unsigned channels,
+      uint32_t *pos)
 {
    snd_pcm_chmap_t *map = snd_pcm_get_chmap(pcm);
-   uint32_t layout = 0, last = 0;
    unsigned i;
    if (!map)
-      return 0;
-   if (map->channels != channels)
+      return false;
+   if (map->channels != channels || channels > AUDIO_LAYOUT_ORDER_MAX)
    {
       free(map);
-      return 0;
+      return false;
    }
    for (i = 0; i < map->channels; i++)
    {
-      uint32_t bit;
       switch (map->pos[i])
       {
-         case SND_CHMAP_FL:  bit = AUDIO_SPEAKER_FRONT_LEFT;    break;
-         case SND_CHMAP_FR:  bit = AUDIO_SPEAKER_FRONT_RIGHT;   break;
-         case SND_CHMAP_FC:  bit = AUDIO_SPEAKER_FRONT_CENTER;  break;
-         case SND_CHMAP_LFE: bit = AUDIO_SPEAKER_LOW_FREQUENCY; break;
-         case SND_CHMAP_RL:  bit = AUDIO_SPEAKER_BACK_LEFT;     break;
-         case SND_CHMAP_RR:  bit = AUDIO_SPEAKER_BACK_RIGHT;    break;
-         case SND_CHMAP_RC:  bit = AUDIO_SPEAKER_BACK_CENTER;   break;
-         case SND_CHMAP_SL:  bit = AUDIO_SPEAKER_SIDE_LEFT;     break;
-         case SND_CHMAP_SR:  bit = AUDIO_SPEAKER_SIDE_RIGHT;    break;
-         case SND_CHMAP_FLC: bit = AUDIO_SPEAKER_FRONT_LEFT_OF_CENTER;  break;
-         case SND_CHMAP_FRC: bit = AUDIO_SPEAKER_FRONT_RIGHT_OF_CENTER; break;
+         case SND_CHMAP_FL:  pos[i] = AUDIO_SPEAKER_FRONT_LEFT;    break;
+         case SND_CHMAP_FR:  pos[i] = AUDIO_SPEAKER_FRONT_RIGHT;   break;
+         case SND_CHMAP_FC:  pos[i] = AUDIO_SPEAKER_FRONT_CENTER;  break;
+         case SND_CHMAP_LFE: pos[i] = AUDIO_SPEAKER_LOW_FREQUENCY; break;
+         case SND_CHMAP_RL:  pos[i] = AUDIO_SPEAKER_BACK_LEFT;     break;
+         case SND_CHMAP_RR:  pos[i] = AUDIO_SPEAKER_BACK_RIGHT;    break;
+         case SND_CHMAP_RC:  pos[i] = AUDIO_SPEAKER_BACK_CENTER;   break;
+         case SND_CHMAP_SL:  pos[i] = AUDIO_SPEAKER_SIDE_LEFT;     break;
+         case SND_CHMAP_SR:  pos[i] = AUDIO_SPEAKER_SIDE_RIGHT;    break;
+         case SND_CHMAP_FLC: pos[i] = AUDIO_SPEAKER_FRONT_LEFT_OF_CENTER;  break;
+         case SND_CHMAP_FRC: pos[i] = AUDIO_SPEAKER_FRONT_RIGHT_OF_CENTER; break;
          default:
             free(map);
-            return 0;
+            return false;
       }
-      if (bit <= last)
-      {
-         free(map);
-         return 0;
-      }
-      layout |= bit;
-      last    = bit;
    }
    free(map);
-   return layout;
+   return true;
 }
 
 int alsa_init_pcm(snd_pcm_t **pcm,
@@ -84,6 +86,7 @@ int alsa_init_pcm(snd_pcm_t **pcm,
    int mode)
 {
    snd_pcm_format_t format;
+   snd_pcm_access_t access;
    snd_pcm_uframes_t buffer_size;
    snd_pcm_hw_params_t *params    = NULL;
    snd_pcm_sw_params_t *sw_params = NULL;
@@ -142,10 +145,26 @@ int alsa_init_pcm(snd_pcm_t **pcm,
          snd_pcm_name(*pcm)
    );
 
-   if ((errnum = snd_pcm_hw_params_set_access(*pcm, params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
+   /* Playback for the threaded pipeline opens hw and plug PCMs for
+    * mmap, so the driver can lend their buffer. An ioplug or extplug
+    * PCM - PulseAudio's or PipeWire's - only emulates mmap, and
+    * lending it adds the copy it was meant to remove. */
+   access            = SND_PCM_ACCESS_RW_INTERLEAVED;
+   stream_info->mmap = false;
+#ifdef HAVE_THREADS
+   if (     stream == SND_PCM_STREAM_PLAYBACK
+         && config_get_ptr()->bools.audio_threaded_pipeline
+         && (   snd_pcm_type(*pcm) == SND_PCM_TYPE_HW
+             || snd_pcm_type(*pcm) == SND_PCM_TYPE_PLUG)
+         && snd_pcm_hw_params_test_access(*pcm, params,
+               SND_PCM_ACCESS_MMAP_INTERLEAVED) == 0)
+      access = SND_PCM_ACCESS_MMAP_INTERLEAVED;
+#endif
+
+   if ((errnum = snd_pcm_hw_params_set_access(*pcm, params, access)) < 0)
    {
       RARCH_ERR("[ALSA] Failed to set %s access for %s device \"%s\": %s.\n",
-            snd_pcm_access_name(SND_PCM_ACCESS_RW_INTERLEAVED),
+            snd_pcm_access_name(access),
             snd_pcm_stream_name(stream),
             snd_pcm_name(*pcm),
             snd_strerror(errnum));
@@ -165,17 +184,24 @@ int alsa_init_pcm(snd_pcm_t **pcm,
    }
 
    /* A wider count than stereo is a request: a device that will not
-    * take it gets stereo, and the caller learns the count from
+    * take it gets the next narrower of 6 and 4 it does take, else
+    * stereo, and the caller learns the count from
     * stream_info->channels. Stereo itself is required. */
-   if (channels > 2
-         && (errnum = snd_pcm_hw_params_set_channels(*pcm, params, channels)) < 0)
+   if (channels > 2)
    {
-      RARCH_WARN("[ALSA] %s device \"%s\" would not open with %u channels (%s); opening stereo.\n",
-            snd_pcm_stream_name(stream),
-            snd_pcm_name(*pcm),
-            channels,
-            snd_strerror(errnum));
-      channels = 2;
+      unsigned want = channels;
+      while (channels > 2
+            && snd_pcm_hw_params_test_channels(*pcm, params, channels) < 0)
+         channels = (channels > 6) ? 6 : (channels > 4) ? 4 : 2;
+      if (     channels > 2
+            && (errnum = snd_pcm_hw_params_set_channels(*pcm, params, channels)) < 0)
+         channels = 2;
+      if (channels != want)
+         RARCH_WARN("[ALSA] %s device \"%s\" would not open with %u channels; opening %u.\n",
+               snd_pcm_stream_name(stream),
+               snd_pcm_name(*pcm),
+               want,
+               channels);
    }
    if (channels <= 2
          && (errnum = snd_pcm_hw_params_set_channels(*pcm, params, channels)) < 0)
@@ -191,6 +217,7 @@ int alsa_init_pcm(snd_pcm_t **pcm,
    stream_info->frame_bits = snd_pcm_format_physical_width(format) * channels;
    stream_info->channels   = channels;
    stream_info->layout     = 0;
+   stream_info->permute    = false;
 
    /* Don't allow rate resampling when probing for the default rate (but ignore if this call fails) */
    if ((errnum = snd_pcm_hw_params_set_rate_resample(*pcm, params, false)) < 0)
@@ -250,16 +277,33 @@ int alsa_init_pcm(snd_pcm_t **pcm,
       goto error;
    }
 
-   /* Wider than stereo: what the device says its channels are. */
+   /* Wider than stereo: what the device says its channels are, in
+    * its order, or ALSA's order for the count where it says nothing.
+    * The driver permutes the frontend's frames into that order. */
    if (channels > 2)
    {
-      stream_info->layout = alsa_layout_of_chmap(*pcm, channels);
-      if (stream_info->layout)
-         RARCH_LOG("[ALSA] %s device \"%s\" opened with %u channels, layout 0x%03x from its channel map.\n",
-               snd_pcm_stream_name(stream), snd_pcm_name(*pcm), channels, stream_info->layout);
+      uint32_t        map[AUDIO_LAYOUT_ORDER_MAX];
+      const uint32_t *pos      = map;
+      bool            from_map = alsa_positions_of_chmap(*pcm, channels, map);
+      bool            identity = true;
+      if (!from_map)
+         pos = alsa_default_positions(channels);
+      if (pos && audio_layout_order(pos, channels, &stream_info->layout,
+               stream_info->order, &identity))
+      {
+         stream_info->permute = !identity;
+         RARCH_LOG("[ALSA] %s device \"%s\" opened with %u channels, layout 0x%03x from %s%s.\n",
+               snd_pcm_stream_name(stream), snd_pcm_name(*pcm), channels,
+               stream_info->layout,
+               from_map ? "its channel map" : "ALSA's default order",
+               identity ? "" : ", permuted from the frontend's order");
+      }
       else
+      {
+         stream_info->layout = 0;
          RARCH_LOG("[ALSA] %s device \"%s\" opened with %u channels; no usable channel map, the requested layout is assumed.\n",
                snd_pcm_stream_name(stream), snd_pcm_name(*pcm), channels);
+      }
    }
 
    /* Shouldn't have to bother with this,
@@ -333,7 +377,8 @@ int alsa_init_pcm(snd_pcm_t **pcm,
                snd_strerror((int)bytes));
          goto error;
       }
-      stream_info->buffer_size = (size_t)bytes;
+      stream_info->buffer_size   = (size_t)bytes;
+      stream_info->buffer_frames = buffer_size;
    }
    RARCH_LOG("[ALSA] Buffer size: %lu frames (%lu bytes).\n",
          (unsigned long)buffer_size, (unsigned long)stream_info->buffer_size);
@@ -341,6 +386,9 @@ int alsa_init_pcm(snd_pcm_t **pcm,
    stream_info->can_pause = snd_pcm_hw_params_can_pause(params);
 
    RARCH_LOG("[ALSA] Can pause: %s.\n", stream_info->can_pause ? "yes" : "no");
+   stream_info->mmap = (access == SND_PCM_ACCESS_MMAP_INTERLEAVED);
+   if (stream_info->mmap)
+      RARCH_LOG("[ALSA] Opened for mmap: the threaded pipeline writes into the device's buffer.\n");
 
    if ((errnum = snd_pcm_sw_params_malloc(&sw_params)) < 0)
    {
@@ -370,6 +418,8 @@ int alsa_init_pcm(snd_pcm_t **pcm,
 
       goto error;
    }
+
+   stream_info->start_frames = buffer_size / 2;
 
    if ((errnum = snd_pcm_sw_params(*pcm, sw_params)) < 0)
    {

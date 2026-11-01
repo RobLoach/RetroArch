@@ -24,9 +24,7 @@
 #include "../../config.def.h"
 
 #include "../input_driver.h"
-#include "../input_keymaps.h"
 #include "../../tasks/tasks_internal.h"
-#include "../drivers_keyboard/keyboard_event_dos.h"
 
 static const char *dos_joypad_name(unsigned pad)
 {
@@ -37,23 +35,14 @@ static const char *dos_joypad_name(unsigned pad)
  * Actual joystick/gamepad input may be added later. */
 static void *dos_joypad_init(void *data) { return (void*)-1; }
 
-static int32_t dos_joypad_button_state(
-      uint16_t *buf, uint16_t joykey) { return 0; }
-
-static int32_t dos_joypad_button(unsigned port_num, uint16_t joykey)
-{
-   uint16_t *buf = dos_keyboard_state_get();
-
-   if (port_num >= DEFAULT_MAX_PADS)
-      return 0;
-   return dos_joypad_button_state(buf, joykey);
-}
+static int32_t dos_joypad_button(unsigned port_num, uint16_t joykey) { return 0; }
 
 static int16_t dos_joypad_axis(unsigned port_num, uint32_t joyaxis) { return 0; }
 
 static int16_t dos_joypad_state(
       rarch_joypad_info_t *joypad_info,
-      const struct retro_keybind *binds,
+      const uint16_t *joykeys,
+      const uint32_t *joyaxes,
       unsigned port)
 {
    int16_t ret       = 0;
@@ -65,10 +54,7 @@ static void dos_joypad_poll(void)
 {
 }
 
-static bool dos_joypad_query_pad(unsigned pad)
-{
-   return (pad < MAX_USERS);
-}
+static bool dos_joypad_query_pad(unsigned pad) { return false; }
 
 static void dos_joypad_destroy(void)
 {

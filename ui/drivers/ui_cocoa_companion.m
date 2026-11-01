@@ -25,7 +25,7 @@
  * every object stored past the current autorelease pool is created with
  * alloc/init and released with RELEASE(). */
 
-#include <objc/objc-runtime.h>
+#import <objc/objc-runtime.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -45,6 +45,98 @@
 #include <defines/cocoa_defines.h>
 #include "cocoa/cocoa_common.h"
 #include "cocoa/apple_platform.h"
+#ifndef GNUSTEP
+#include "../../apple_runtime.h"
+#endif
+
+/* AppKit names this file uses that GNUstep's AppKit has only under
+ * their older spelling; on Apple, cocoa_defines.h maps the current
+ * spelling back for SDKs that predate it. */
+#ifdef GNUSTEP
+#define COMPANION_EVT_LEFT_DOWN     NSLeftMouseDown
+#define COMPANION_EVT_LEFT_UP       NSLeftMouseUp
+#define COMPANION_MASK_LEFT_DRAGGED NSLeftMouseDraggedMask
+#define COMPANION_MASK_LEFT_UP      NSLeftMouseUpMask
+#define COMPANION_BEZEL_ROUNDED     NSRoundedBezelStyle
+#else
+#define COMPANION_EVT_LEFT_DOWN     NSEventTypeLeftMouseDown
+#define COMPANION_EVT_LEFT_UP       NSEventTypeLeftMouseUp
+#define COMPANION_MASK_LEFT_DRAGGED NSEventMaskLeftMouseDragged
+#define COMPANION_MASK_LEFT_UP      NSEventMaskLeftMouseUp
+#define COMPANION_BEZEL_ROUNDED     NSBezelStyleRounded
+#endif
+
+/* Window base coordinates to screen coordinates and back: the offset is
+ * the window frame's origin, which is all -convertBaseToScreen: (10.0,
+ * deprecated in 10.7) and -convertPointToScreen: (10.12) compute, so
+ * the arithmetic serves every release. */
+/* +[NSSortDescriptor sortDescriptorWithKey:ascending:] is 10.6; the
+ * initialiser it wraps is 10.3, autoreleased the same way. */
+#define COMPANION_SORT(key, asc) \
+   [[[NSSortDescriptor alloc] initWithKey:(key) ascending:(asc)] autorelease_compat]
+
+static NSPoint companion_window_to_screen(NSWindow *w, NSPoint p)
+{
+   NSRect f = [w frame];
+   p.x     += f.origin.x;
+   p.y     += f.origin.y;
+   return p;
+}
+
+static NSPoint companion_screen_to_window(NSWindow *w, NSPoint p)
+{
+   NSRect f = [w frame];
+   p.x     -= f.origin.x;
+   p.y     -= f.origin.y;
+   return p;
+}
+
+/* The list-of-paths pasteboard type every drag source here writes and
+ * every drop handler reads. Its name is deprecated (10.14) for per-item
+ * file URLs but the type itself still serves, so it is looked up by
+ * name, once; the string is the fallback where the symbol is gone. */
+static NSString *companion_filenames_type(void)
+{
+#ifdef GNUSTEP
+   return NSFilenamesPboardType;
+#else
+   static NSString *type;
+   if (!type)
+   {
+      void **p = apple_rt_constant_addr("NSFilenamesPboardType");
+      type     = p ? apple_rt_obj_at(p) : @"NSFilenamesPboardType";
+   }
+   return type;
+#endif
+}
+
+/* The generic folder icon. -iconForFileType: (10.0) is deprecated in
+ * 12.0 for -iconForContentType: and a UTType (11.0), so 11 on asks by
+ * content type and earlier releases by the 'fldr' HFS type (the named
+ * constant is in Carbon's Icons.h, not pulled in here; spelled as its
+ * value, as GCC warns on a multi-character constant); both by
+ * selector. Autoreleased, as both methods return it. */
+#define COMPANION_HFS_FOLDER 0x666C6472u /* 'fldr' */
+static NSImage *companion_folder_icon(void)
+{
+   NSWorkspace *ws = [NSWorkspace sharedWorkspace];
+#ifdef GNUSTEP
+   return [ws iconForFileType:NSFileTypeForHFSTypeCode(COMPANION_HFS_FOLDER)];
+#else
+   id utt;
+   if (     apple_runtime_available(APPLE_RUNTIME_VER(11, 0, 0), 0, 0)
+         && (utt = apple_rt_class("UTType")))
+   {
+      id folder = apple_rt_get_id_arg(utt,
+            sel_registerName("typeWithIdentifier:"), @"public.folder");
+      if (folder)
+         return apple_rt_get_id_arg(ws,
+               sel_registerName("iconForContentType:"), folder);
+   }
+   return apple_rt_get_id_arg(ws, sel_registerName("iconForFileType:"),
+         NSFileTypeForHFSTypeCode(COMPANION_HFS_FOLDER));
+#endif
+}
 
 #include "../../command.h"
 #include "../../configuration.h"
@@ -249,6 +341,7 @@ typedef struct ui_companion_cocoa_wimp ui_companion_cocoa_wimp_t;
    NSWindow *optsWindow;  NSTableView *optsTable;   /* View > Core Options */
    NSWindow *shpWindow;   NSTableView *shpTable;    /* View > Shader Parameters */
    NSWindow *setWindow;   NSTableView *setTable;    /* View > Options */
+   NSWindow *scWindow;    NSTableView *scTable;     /* View > Controller Shortcuts */
    NSTabView *browserTabs;            /* Playlists | File Browser */
    NSButton *brUp, *brStart, *brDownloads; /* Qt's browser toolbar */
    NSScrollView *playlistsScroll;
@@ -338,6 +431,7 @@ typedef struct ui_companion_cocoa_wimp ui_companion_cocoa_wimp_t;
 - (void)openDocs:(id)sender;
 - (void)showCoreOptions:(id)sender;
 - (void)showOptions:(id)sender;
+- (void)showShortcuts:(id)sender;
 - (void)settingActivate:(id)sender;
 - (void)applyTheme;
 - (void)optionCycle:(id)sender;
@@ -477,13 +571,13 @@ static const companion_callbacks_t cc_callbacks = {
 - (NSDragOperation)draggingEntered:(id)sender
 {
    NSPasteboard *pb = [sender draggingPasteboard];
-   if ([[pb types] containsObject:NSFilenamesPboardType])
+   if ([[pb types] containsObject:companion_filenames_type()])
       return NSDragOperationCopy;
    return NSDragOperationNone;
 }
 - (BOOL)performDragOperation:(id)sender
 {
-   NSArray *files = [[sender draggingPasteboard] propertyListForType:NSFilenamesPboardType];
+   NSArray *files = [[sender draggingPasteboard] propertyListForType:companion_filenames_type()];
    if (![files count] || !owner)
       return NO;
    return [owner installThumbnailFromPath:[[files objectAtIndex:0] UTF8String] pane:pane];
@@ -518,7 +612,7 @@ static const companion_callbacks_t cc_callbacks = {
    /* A press above the content area is on the title bar: a double-
     * click docks the pane back, a drag moves the window and docks it
     * where a strip drag would if it is let go over the companion. */
-   if ([e type] == NSLeftMouseDown && owner)
+   if ([e type] == COMPANION_EVT_LEFT_DOWN && owner)
    {
       NSPoint p = [e locationInWindow];
       if (p.y >= [[self contentView] frame].size.height)
@@ -830,10 +924,7 @@ static const companion_callbacks_t cc_callbacks = {
    if (wimp && playlistIcons)
    {
       size_t i, n = companion_core_playlist_count(wimp->core);
-      /* 'fldr' is the generic folder HFS type; the named constant lives
-       * in Carbon's Icons.h, which is not pulled in here. */
-      NSImage *folder = [[NSWorkspace sharedWorkspace] iconForFileType:
-         NSFileTypeForHFSTypeCode('fldr')];
+      NSImage *folder = companion_folder_icon();
       [playlistIcons removeAllObjects];
       for (i = 0; i < n; i++)
       {
@@ -1236,7 +1327,7 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
 {
    NSButton *b = [[[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 60, CC_CTRL_H)] autorelease_compat];
    [b setTitle:BOXSTRING(title ? title : "")];
-   [b setBezelStyle:NSRoundedBezelStyle];
+   [b setBezelStyle:COMPANION_BEZEL_ROUNDED];
    [b setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
    [b setTarget:self];
    [b setAction:sel];
@@ -1363,8 +1454,7 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
       if (companion_core_folder_icon_path(wimp->core, icon, sizeof(icon)))
          folderIcon = [[NSImage alloc] initWithContentsOfFile:BOXSTRING(icon)];
       if (!folderIcon)
-         folderIcon = RETAIN_COMPAT([[NSWorkspace sharedWorkspace]
-               iconForFileType:NSFileTypeForHFSTypeCode('fldr')]);
+         folderIcon = RETAIN_COMPAT(companion_folder_icon());
    }
 
    browserTabs = [[NSTabView alloc] initWithFrame:NSMakeRect(0, 0, CC_PANE_W, 300)];
@@ -1436,11 +1526,11 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
       [sz setHidden:YES];
       [dt setHidden:YES];
       [[[entries tableColumns] objectAtIndex:0] setSortDescriptorPrototype:
-         [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES]];
+         COMPANION_SORT(@"name", YES)];
       [[[entries tableColumns] objectAtIndex:1] setSortDescriptorPrototype:
-         [NSSortDescriptor sortDescriptorWithKey:@"type" ascending:YES]];
-      [sz setSortDescriptorPrototype:[NSSortDescriptor sortDescriptorWithKey:@"size" ascending:YES]];
-      [dt setSortDescriptorPrototype:[NSSortDescriptor sortDescriptorWithKey:@"date" ascending:YES]];
+         COMPANION_SORT(@"type", YES)];
+      [sz setSortDescriptorPrototype:COMPANION_SORT(@"size", YES)];
+      [dt setSortDescriptorPrototype:COMPANION_SORT(@"date", YES)];
    }
    entriesScroll = RETAIN_COMPAT(sr);
    [content addSubview:sr];
@@ -1491,7 +1581,7 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
          RACompanionBoxart *bv = [[RACompanionBoxart alloc] initWithFrame:NSMakeRect(0, 0, CC_PANE_W, 300)];
          bv->owner = self;
          bv->pane  = t;
-         [bv registerForDraggedTypes:[NSArray arrayWithObject:NSFilenamesPboardType]];
+         [bv registerForDraggedTypes:[NSArray arrayWithObject:companion_filenames_type()]];
          [bv setImageScaling:NSImageScaleProportionallyUpOrDown];
          [bv setImageFrameStyle:NSImageFrameGrayBezel];
          [content addSubview:bv];
@@ -1573,6 +1663,9 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
    item = [menu addItemWithTitle:BOXSTRING(msg_hash_to_str(MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS))
       action:@selector(showOptions:) keyEquivalent:@","];
    [item setTarget:self];
+   item = [menu addItemWithTitle:BOXSTRING(msg_hash_to_str(MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_CONTROLLER_SHORTCUTS))
+      action:@selector(showShortcuts:) keyEquivalent:@""];
+   [item setTarget:self];
    [menu addItem:[NSMenuItem separatorItem]];
    item = [menu addItemWithTitle:BOXSTRING(msg_hash_to_str(MENU_ENUM_LABEL_VALUE_QT_MENU_HELP_DOCUMENTATION))
       action:@selector(openDocs:) keyEquivalent:@""];
@@ -1593,7 +1686,7 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
    item = [entriesMenu addItemWithTitle:@"Delete Entry" action:@selector(deleteEntry:) keyEquivalent:@""];
    [item setTarget:self];
    [entries setMenu:entriesMenu];
-   [entries registerForDraggedTypes:[NSArray arrayWithObject:NSFilenamesPboardType]];
+   [entries registerForDraggedTypes:[NSArray arrayWithObject:companion_filenames_type()]];
    item = [entriesMenu addItemWithTitle:BOXSTRING(msg_hash_to_str(MENU_ENUM_LABEL_VALUE_QT_ADD_FILES))
       action:@selector(addFiles:) keyEquivalent:@""];
    [item setTarget:self];
@@ -1798,7 +1891,7 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
       return floats[pane];
    fw = [[RACompanionFloatWindow alloc]
       initWithContentRect:NSMakeRect(100, 100, 300, 240)
-      styleMask:NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask
+      styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
       backing:NSBackingStoreBuffered defer:NO];
    fw->owner = self;
    fw->pane  = pane;
@@ -1978,7 +2071,7 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
    lastSide[pane] = side;
    p   = [dockView convertPoint:NSMakePoint(VIDEO_POS_X(geom.strip[pane].pos),
          VIDEO_POS_Y(geom.strip[pane].pos)) toView:nil];
-   p   = [window convertBaseToScreen:p];
+   p   = companion_window_to_screen(window, p);
    rw  = (int)VIDEO_SCALE_W(geom.strip[pane].dims);
    rh  = VIDEO_POS_Y(geom.pane[pane].pos) + (int)VIDEO_SCALE_H(geom.pane[pane].dims)
        + (int)VIDEO_SCALE_H(geom.tabbar[pane].dims) - VIDEO_POS_Y(geom.strip[pane].pos);
@@ -2005,7 +2098,7 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
  * where the pane would dock); nothing while it is off the docks. */
 - (void)floatDragUpdate:(int)pane screenPoint:(NSPoint)sp
 {
-   NSPoint p = [dockView convertPoint:[window convertScreenToBase:sp] fromView:nil];
+   NSPoint p = [dockView convertPoint:companion_screen_to_window(window, sp) fromView:nil];
    companion_rect_t client = [self dockClient];
    dragPane  = pane;
    dragMoved = YES;
@@ -2039,17 +2132,17 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
    NSRect f0;
    if (!fw)
       return;
-   start = [fw convertBaseToScreen:[e locationInWindow]];
+   start = companion_window_to_screen(fw, [e locationInWindow]);
    f0    = [fw frame];
    for (;;)
    {
-      NSEvent *ev = [fw nextEventMatchingMask:NSLeftMouseDraggedMask | NSLeftMouseUpMask
+      NSEvent *ev = [fw nextEventMatchingMask:COMPANION_MASK_LEFT_DRAGGED | COMPANION_MASK_LEFT_UP
          untilDate:[NSDate distantFuture] inMode:NSEventTrackingRunLoopMode dequeue:YES];
       NSPoint sp;
       if (!ev)
          break;
-      sp = [fw convertBaseToScreen:[ev locationInWindow]];
-      if ([ev type] == NSLeftMouseUp)
+      sp = companion_window_to_screen(fw, [ev locationInWindow]);
+      if ([ev type] == COMPANION_EVT_LEFT_UP)
          break;
       [fw setFrameOrigin:NSMakePoint(f0.origin.x + sp.x - start.x, f0.origin.y + sp.y - start.y)];
       [self floatDragUpdate:pane screenPoint:sp];
@@ -2163,7 +2256,7 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
          companion_rect_t r;
          enum companion_dock_area side;
          int idx, rw, rh;
-         NSPoint sp = [window convertBaseToScreen:[dockView convertPoint:pt toView:nil]];
+         NSPoint sp = companion_window_to_screen(window, [dockView convertPoint:pt toView:nil]);
          CGFloat sh = [[NSScreen mainScreen] frame].size.height;
          /* A float lands with its strip under the pointer, at its
           * docked size. */
@@ -2277,7 +2370,7 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
             VIDEO_SCALE_W(drop.indicator.dims),
             VIDEO_SCALE_H(drop.indicator.dims));
       [[[NSColor selectedControlColor] colorWithAlphaComponent:0.35] set];
-      NSRectFillUsingOperation(r, NSCompositeSourceOver);
+      NSRectFillUsingOperation(r, NSCompositingOperationSourceOver);
       [[NSColor selectedControlColor] set];
       NSFrameRectWithWidth(r, 3.0);
    }
@@ -2468,7 +2561,8 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
    if (optsWindow) { [optsWindow orderOut:nil]; RELEASE(optsWindow); }
    if (shpWindow)  { [shpWindow orderOut:nil];  RELEASE(shpWindow); }
    if (setWindow)  { [setWindow orderOut:nil];  RELEASE(setWindow); }
-   RELEASE(optsTable); RELEASE(shpTable); RELEASE(setTable);
+   if (scWindow)   { [scWindow orderOut:nil];   RELEASE(scWindow); }
+   RELEASE(optsTable); RELEASE(shpTable); RELEASE(setTable); RELEASE(scTable);
    free(rowMap);
    rowMap = NULL;
    string_list_free(infoKeys);
@@ -2573,6 +2667,13 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
       return nil;
    if (tv == setTable)
       help = companion_core_setting_sublabel(wimp->core, (size_t)row);
+   else if (tv == scTable)
+   {
+      static char sc_help[2048];
+      help = companion_core_shortcut_help(wimp->core,
+            companion_core_shortcut_is_macro(wimp->core, (size_t)row),
+            sc_help, sizeof(sc_help));
+   }
    else if (tv == optsTable)
       help = companion_core_option_info(wimp->core, (size_t)row);
    return (help && *help) ? [NSString stringWithUTF8String:help] : nil;
@@ -2588,6 +2689,8 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
       return (NSInteger)companion_core_shader_param_count(wimp->core);
    if (tv == setTable)
       return (NSInteger)companion_core_setting_count(wimp->core);
+   if (tv == scTable)
+      return (NSInteger)companion_core_shortcut_count(wimp->core);
    if (tv == playlists)
       return browseMode
          ? (NSInteger)companion_core_browse_dir_count(wimp->core)
@@ -2675,6 +2778,13 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
       }
       else
          s = companion_core_setting_label(wimp->core, (size_t)row);
+   }
+   else if (tv == scTable)
+   {
+      static char scbuf[512];
+      s = [[col identifier] isEqualToString:@"sctext"]
+         ? companion_core_shortcut_get(wimp->core, (size_t)row, scbuf, sizeof(scbuf))
+         : companion_core_shortcut_label(wimp->core, (size_t)row, scbuf, sizeof(scbuf));
    }
    else if (tv == coresTable)
       s = [[col identifier] isEqualToString:@"core"]
@@ -2771,7 +2881,8 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
    {
       [NSApp activateIgnoringOtherApps:YES];
       [host makeKeyAndOrderFront:nil];
-      [host makeMainWindow];
+      if ([host canBecomeMainWindow])
+         [host makeMainWindow];
       if (rv && [rv isKindOfClass:[NSView class]])
          [host makeFirstResponder:(NSView*)rv];
    }
@@ -2798,7 +2909,8 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
       return;
    }
    [host makeKeyAndOrderFront:nil];
-   [host makeMainWindow];
+   if ([host canBecomeMainWindow])
+      [host makeMainWindow];
    if (rv && [rv isKindOfClass:[NSView class]])
       [host makeFirstResponder:(NSView*)rv];
    RARCH_LOG("[Companion] focus hand-back: host key=%d main=%d appKey=%s\n",
@@ -2990,8 +3102,8 @@ static void cc_thumb_done(void *ud, const char *path, unsigned dims,
       case COMPANION_BROWSE_SORT_DATE: key = @"date"; break;
       default:                         key = @"name"; break;
    }
-   d = [NSSortDescriptor sortDescriptorWithKey:key
-         ascending:companion_core_browse_sort_ascending(wimp->core) ? YES : NO];
+   d = COMPANION_SORT(key,
+         companion_core_browse_sort_ascending(wimp->core) ? YES : NO);
    syncingSort = YES;
    [entries setSortDescriptors:[NSArray arrayWithObject:d]];
    syncingSort = NO;
@@ -3821,7 +3933,7 @@ static const char *cc_thumb_subdir(int t)
    (void)row; (void)op;
    if (tv != entries || browseMode)
       return NO;
-   files = [[info draggingPasteboard] propertyListForType:NSFilenamesPboardType];
+   files = [[info draggingPasteboard] propertyListForType:companion_filenames_type()];
    return [self addPaths:files] > 0;
 }
 
@@ -3835,7 +3947,7 @@ static const char *cc_thumb_subdir(int t)
 {
    NSRect fr = NSMakeRect(0, 0, 600, 420);
    NSWindow *win = [[NSWindow alloc] initWithContentRect:fr
-      styleMask:(NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask)
+      styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable)
       backing:NSBackingStoreBuffered defer:NO];
    NSScrollView *sv = [[[NSScrollView alloc] initWithFrame:NSMakeRect(0, 40, 600, 380)] autorelease_compat];
    NSTableView *tv  = [[[NSTableView alloc] initWithFrame:[[sv contentView] bounds]] autorelease_compat];
@@ -3962,6 +4074,13 @@ static const char *cc_thumb_subdir(int t)
 {
    if (tv == shpTable && wimp && [[col identifier] isEqualToString:@"pval"])
       companion_core_shader_param_set(wimp->core, (size_t)row, [[obj description] floatValue]);
+   else if (tv == scTable && wimp && [[col identifier] isEqualToString:@"sctext"])
+   {
+      /* the rows follow what there is: the empty row moves on */
+      if (!companion_core_shortcut_set(wimp->core, (size_t)row, [[obj description] UTF8String]))
+         NSBeep();
+      [scTable reloadData];
+   }
    else if (tv == setTable && wimp && [[col identifier] isEqualToString:@"sval"])
    {
       if (!companion_core_setting_set(wimp->core, (size_t)row, [[obj description] UTF8String]))
@@ -3991,6 +4110,28 @@ static const char *cc_thumb_subdir(int t)
    }
    [setTable reloadData];
    [setWindow makeKeyAndOrderFront:nil];
+}
+
+/* --- Controller Shortcuts window ----------------------------------------
+ * The hotkeys list's combinations and macros as rows of text, the text
+ * editable; how a row is written is its tooltip. An empty text takes
+ * the row out. */
+- (void)showShortcuts:(id)sender
+{
+   if (!scWindow)
+   {
+      NSTableView *tv = nil;
+      scWindow = [self makeTableWindow:msg_hash_to_str(MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_CONTROLLER_SHORTCUTS)
+         columns:[NSArray arrayWithObjects:@"Shortcut", @"As written", nil]
+         ids:[NSArray arrayWithObjects:@"sclabel", @"sctext", nil]
+         widths:[NSArray arrayWithObjects:[NSNumber numberWithDouble:160.0], [NSNumber numberWithDouble:450.0], nil]
+         table:&tv
+         buttons:[NSArray array] actions:[NSArray array]];
+      scTable = tv;
+      [[scTable tableColumnWithIdentifier:@"sctext"] setEditable:YES];
+   }
+   [scTable reloadData];
+   [scWindow makeKeyAndOrderFront:nil];
 }
 
 - (void)settingActivate:(id)sender
@@ -4083,8 +4224,7 @@ static const char *cc_thumb_subdir(int t)
    if (response != 1 || !path)
       return;
 
-   if (companion_core_request_scan(wimp->core, [path UTF8String], true,
-            companion_core_pref_show_hidden_files(wimp->core)))
+   if (companion_core_request_scan(wimp->core, [path UTF8String]))
       [self setStatus:"Scanning..."];
    else
       [self setStatus:"Scanning is not available in this build."];
@@ -4135,7 +4275,7 @@ static const char *cc_thumb_subdir(int t)
        * and a key-equivalent button need not be visible, only present. */
       load = [[[NSButton alloc] initWithFrame:NSMakeRect(8, 8, 150, 24)] autorelease_compat];
       [load setTitle:BOXSTRING(msg_hash_to_str(MENU_ENUM_LABEL_VALUE_QT_LOAD_CUSTOM_CORE))];
-      [load setBezelStyle:NSRoundedBezelStyle];
+      [load setBezelStyle:COMPANION_BEZEL_ROUNDED];
       [load setTarget:self];
       [load setAction:@selector(loadCustomCore:)];
       [load setAutoresizingMask:NSViewMaxXMargin | NSViewMaxYMargin];
@@ -4263,7 +4403,7 @@ static const char *cc_thumb_subdir(int t)
    owner   = [window frame];
    nameCol = [[coresTable tableColumns] objectAtIndex:0];
    verCol  = [[coresTable tableColumns] objectAtIndex:1];
-   font    = [[nameCol dataCell] font];
+   font    = [(NSCell *)[nameCol dataCell] font];
    if (!font)
       font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
    rows    = [coresTable numberOfRows];

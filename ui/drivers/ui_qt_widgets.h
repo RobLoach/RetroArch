@@ -448,6 +448,7 @@ private slots:
 private:
    rarch_setting_t *m_setting;
    float *m_value;
+   float m_synced;
    static const QRegularExpression DECIMALS_REGEX;
 };
 
@@ -521,6 +522,7 @@ private:
    float *m_value;
    QRegularExpression m_decimalsRegEx;
    unsigned int m_precision;
+   float m_synced;
 };
 
 class FloatSliderAndSpinBox : public QHBoxLayout
@@ -705,6 +707,29 @@ public slots:
 private:
    QFormLayout *m_formLayout;
    MainWindow *m_mainwindow;
+};
+
+/* Controller Shortcuts: the hotkeys list's combinations and macros as
+ * rows of text, from the shared companion core
+ * (companion_core_shortcut_*). */
+class QTableWidget;
+class QLineEdit;
+class QLabel;
+class ShortcutsDialog : public QDialog
+{
+   Q_OBJECT
+public:
+   ShortcutsDialog(QWidget *parent = 0);
+public slots:
+   void showDialog();
+private slots:
+   void onRowChanged();
+   void onApply();
+private:
+   void fill(int keep);
+   QTableWidget *m_table;
+   QLabel *m_help;
+   QLineEdit *m_edit;
 };
 
 class CoreOptionsDialog : public QDialog

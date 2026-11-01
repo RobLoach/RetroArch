@@ -20,7 +20,7 @@ WEBOS_LIB_DIR         ?= $(STAGING_DIR)/lib
 ADD_SDL2_LIB          ?= 0
 ADD_SDL3_LIB          ?= 0
 SDL2_PREBUILT_ARCHIVE ?= https://github.com/webosbrew/SDL-webOS/releases/download/release-2.30.12-webos.5/SDL2-2.30.12-webos-abi.tar.gz
-SDL3_PREBUILT_ARCHIVE ?= https://github.com/webosbrew/SDL-webOS/releases/download/release-3.4.16-webos.2/SDL3-3.4.16-webos.2.tar.gz
+SDL3_PREBUILT_ARCHIVE ?= https://github.com/webosbrew/SDL-webOS/releases/download/release-3.4.16-webos.5/SDL3-3.4.16-webos.5.tar.gz
 64TO32_BRIDGE_DIR     ?= /media/developer/apps/usr/palm/applications/org.webosbrew.bridge-64to32
 ELF_INTERPRETER_BIN   ?= /lib/ld-linux-aarch64.so.1
 SET_ELF_INTERPRETER   ?= 0
@@ -49,15 +49,20 @@ HAVE_AUDIOIO = 0
 HAVE_AUDIOMIXER = 1
 HAVE_BLISSBOX = 0
 HAVE_BSV_MOVIE = 1
-HAVE_BUILTINBEARSSL = 0
 HAVE_RFLAC = 1
 HAVE_DSP_FILTER = 1
 HAVE_VIDEO_FILTER = 1
 HAVE_STATIC_VIDEO_FILTERS = 1
 HAVE_STATIC_AUDIO_FILTERS = 1
 HAVE_FILTERS_BUILTIN	= 1
-HAVE_BUILTINMBEDTLS = 1
-HAVE_BUILTINSMBCLIENT := 1
+# The cleanroom network stack, as on the desktop builds: the crypto,
+# the encrypted keychain, the TLS 1.2/1.3 client and the SMB2/3 client
+# with Kerberos; plus the NFSv3/v4 client. Needs nothing but sockets.
+HAVE_CRYPTO = 1
+HAVE_KEYCHAIN = 1
+HAVE_RETROSSL = 1
+HAVE_RETROSMB = 1
+HAVE_RETRONFS = 1
 HAVE_C99 = 1
 HAVE_CC = 1
 HAVE_CC_RESAMPLER = 1
@@ -79,16 +84,9 @@ HAVE_GDI = 0
 HAVE_GETADDRINFO = 1
 HAVE_GETOPT_LONG = 1
 HAVE_GLSL ?= 1
-HAVE_GLSLANG = 0
-HAVE_GLSLANG_HLSL = 0
-HAVE_GLSLANG_OGLCOMPILER = 0
-HAVE_GLSLANG_OSDEPENDENT = 0
-HAVE_GLSLANG_SPIRV = 0
-HAVE_GLSLANG_SPIRV_TOOLS = 0
-HAVE_GLSLANG_SPIRV_TOOLS_OPT = 0
 HAVE_HID = 1
 HAVE_RMODTRACKER = 1
-HAVE_IMAGEVIEWER = 1
+HAVE_IMAGEVIEWER = 0
 HAVE_XKBCOMMON ?= 0
 HAVE_LANGEXTRA = 1
 HAVE_LIBRETRODB = 1
@@ -145,7 +143,6 @@ HAVE_CONFIGFILE = 1
 HAVE_PATCH = 1
 HAVE_CHEATS = 1
 HAVE_CHEEVOS = 1
-HAVE_LIBSHAKE = 1
 HAVE_UPDATE_ASSETS = 1
 HAVE_UPDATE_CORES = 1
 HAVE_UPDATE_CORE_INFO = 1
@@ -278,6 +275,13 @@ endif
 
 include Makefile.common
 
+# Only version_git.c reads the commit hash: on every other command
+# line it would make a new commit miss ccache's direct mode.
+ifneq ($(GIT_VERSION),)
+   DEFINES := $(filter-out -DGIT_VERSION=%,$(DEFINES))
+   $(OBJDIR)/version_git.o: DEFINES += -DGIT_VERSION=$(GIT_VERSION)
+endif
+
 DEF_FLAGS += $(INCLUDE_DIRS)
 LDFLAGS += $(CFLAGS) $(CXXFLAGS) $(DEF_FLAGS)
 CFLAGS += $(DEF_FLAGS)
@@ -384,8 +388,8 @@ clean:
 	$(Q)rm -rf SDL3
 	$(Q)rm -rf SDL3.tmp
 	$(Q)rm -f SDL3-prebuilt.tar.gz.tmp
-	$(Q)rm -rf webos/*.ipk
-	$(Q)rm -rf webos/dist
+	$(Q)rm -rf pkg/webos/*.ipk
+	$(Q)rm -rf pkg/webos/dist
 
 sdl2: $(TARGET)
 ifeq ($(ADD_SDL2_LIB), 1)
@@ -428,37 +432,37 @@ ifeq ($(ADD_SDL3_LIB), 1)
 endif
 
 ipk: prebuild $(TARGET) sdl2 sdl3
-	rm -rf webos/dist
-	mkdir -p webos/dist/lib
+	rm -rf pkg/webos/dist
+	mkdir -p pkg/webos/dist/lib
 ifeq ($(SET_ELF_INTERPRETER), 1)
 	patchelf --set-interpreter $(ELF_INTERPRETER) $(TARGET)
 endif
-	echo "$$APPINFO" > webos/dist/appinfo.json
+	echo "$$APPINFO" > pkg/webos/dist/appinfo.json
 	# BSD cp (macOS) has no -t; put the destination last.
-	cp -vf $(TARGET) webos/icon160.png webos/dist/
-	cp -vf $(WEBOS_USR_LIB_DIR)/libstdc++.so.6 webos/dist/lib/
+	cp -vf $(TARGET) pkg/webos/icon160.png pkg/webos/dist/
+	cp -vf $(WEBOS_USR_LIB_DIR)/libstdc++.so.6 pkg/webos/dist/lib/
 ifeq ($(HAVE_XKBCOMMON), 1)
-	cp -vf $(WEBOS_USR_LIB_DIR)/libxkbcommon.so.0 webos/dist/lib/
+	cp -vf $(WEBOS_USR_LIB_DIR)/libxkbcommon.so.0 pkg/webos/dist/lib/
 endif
-	cp -vf $(WEBOS_LIB_DIR)/libatomic.so.1 webos/dist/lib/
+	cp -vf $(WEBOS_LIB_DIR)/libatomic.so.1 pkg/webos/dist/lib/
 ifeq ($(ADD_SDL2_LIB), 1)
-	cp -vf SDL/lib/libSDL2-2.0.so.0 webos/dist/lib/
+	cp -vf SDL/lib/libSDL2-2.0.so.0 pkg/webos/dist/lib/
 endif
 ifeq ($(ADD_SDL3_LIB), 1)
-	cp -vf SDL3/lib/libSDL3.so.0 webos/dist/lib/
+	cp -vf SDL3/lib/libSDL3.so.0 pkg/webos/dist/lib/
 endif
 ifneq ($(DEBUG), 1)
-	$(STRIP) webos/dist/$(TARGET)
+	$(STRIP) pkg/webos/dist/$(TARGET)
 endif
-	cd webos && ares-package dist $(ARES_PACKAGE_ARGS)
+	cd pkg/webos && ares-package dist $(ARES_PACKAGE_ARGS)
 ifeq ($(REPACK_64_IPK_FOR_MENU), 1)
-	./webos/patch-aarch64-in-ipk.sh webos/$(APP_PACKAGE_NAME)_$(IPK_VERSION)_$(IPK_ARCH).ipk
-	rm webos/$(APP_PACKAGE_NAME)_$(IPK_VERSION)_$(IPK_ARCH).ipk
-	mv webos/$(APP_PACKAGE_NAME)_$(IPK_VERSION)_$(IPK_ARCH)-patched.ipk webos/$(APP_PACKAGE_NAME)_$(IPK_VERSION)_$(IPK_ARCH).ipk
+	./pkg/webos/patch-aarch64-in-ipk.sh pkg/webos/$(APP_PACKAGE_NAME)_$(IPK_VERSION)_$(IPK_ARCH).ipk
+	rm pkg/webos/$(APP_PACKAGE_NAME)_$(IPK_VERSION)_$(IPK_ARCH).ipk
+	mv pkg/webos/$(APP_PACKAGE_NAME)_$(IPK_VERSION)_$(IPK_ARCH)-patched.ipk pkg/webos/$(APP_PACKAGE_NAME)_$(IPK_VERSION)_$(IPK_ARCH).ipk
 endif
 
 install: ipk
-	ares-install webos/$(APP_PACKAGE_NAME)_$(IPK_VERSION)_$(ARCH).ipk
+	ares-install pkg/webos/$(APP_PACKAGE_NAME)_$(IPK_VERSION)_$(ARCH).ipk
 
 launch: install
 	ares-launch $(APP_PACKAGE_NAME)

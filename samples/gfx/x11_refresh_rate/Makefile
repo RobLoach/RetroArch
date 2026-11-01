@@ -11,6 +11,7 @@ REPO_ROOT := ../../..
 SOURCES := x11_refresh_rate_test.c \
            $(REPO_ROOT)/gfx/common/x11_common.c \
            $(REPO_ROOT)/gfx/display_servers/dispserv_x11.c \
+           $(REPO_ROOT)/gfx/gfx_media_display.c \
            $(REPO_ROOT)/gfx/common/xinerama_common.c \
            $(REPO_ROOT)/gfx/modeline/modeline_core.c \
            $(REPO_ROOT)/gfx/modeline/modeline_monitor.c \
@@ -21,7 +22,7 @@ SOURCES := x11_refresh_rate_test.c \
            $(REPO_ROOT)/libretro-common/encodings/encoding_utf.c \
            $(REPO_ROOT)/libretro-common/rthreads/rthreads.c
 
-CFLAGS  += -Wall -g -O0 -DHAVE_XRANDR -DHAVE_XINERAMA -DHAVE_THREADS \
+CFLAGS  += -Wall -g1 -O0 -DHAVE_XRANDR -DHAVE_XINERAMA -DHAVE_THREADS \
            -I$(REPO_ROOT) \
            -I$(REPO_ROOT)/libretro-common/include
 

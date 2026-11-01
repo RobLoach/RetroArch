@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := mixer_wfeed_test
 
 LIBRETRO_COMM_DIR := ../../../libretro-common
@@ -12,18 +14,18 @@ CFLAGS  += -std=gnu99 -Wall $(INCDIRS) -DRARCH_INTERNAL -DHAVE_THREADS \
 LDFLAGS += -lm -lpthread
 
 ifneq ($(SANITIZER),)
-   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g $(CFLAGS)
+   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g1 $(CFLAGS)
    LDFLAGS := -fsanitize=$(SANITIZER) $(LDFLAGS)
 endif
 
-OBJS := mixer_wfeed_test.o stubs.o \
+OBJS := $(call sample_objs,mixer_wfeed_test.o stubs.o \
 	$(LIBRETRO_COMM_DIR)/rthreads/rthreads.o \
 	$(LIBRETRO_COMM_DIR)/file/file_path.o \
 	$(LIBRETRO_COMM_DIR)/string/stdstring.o \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strl.o \
 	$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.o \
 	$(LIBRETRO_COMM_DIR)/lists/string_list.o \
-	$(LIBRETRO_COMM_DIR)/time/rtime.o
+	$(LIBRETRO_COMM_DIR)/time/rtime.o)
 
 all: $(TARGET)
 
@@ -33,10 +35,15 @@ $(TARGET): $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 check: all
 	./$(TARGET)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(OBJS) $(TARGET)
 
 .PHONY: all check clean

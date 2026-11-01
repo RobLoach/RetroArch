@@ -10,6 +10,12 @@ endif
 
 include config.mk
 
+# The absolute include paths configure found on the system
+# (/usr/local/include on the BSDs, /opt/vc/include, ...) are searched after
+# the tree's own; the relative ones (gfx/include/ANGLE) are the tree's.
+SYSTEM_INCLUDE_DIRS := $(filter -I/%,$(INCLUDE_DIRS))
+INCLUDE_DIRS        := $(filter-out -I/%,$(INCLUDE_DIRS))
+
 # Put your favorite compile flags in this file, if you want different defaults than upstream.
 # Do not attempt to create that file upstream.
 # (It'd be better to put this comment in that file, but .gitignore doesn't work on files that exist in the repo.)
@@ -72,6 +78,13 @@ endif
 
 include Makefile.common
 
+# Only version_git.c reads the commit hash: on every other command
+# line it would make a new commit miss ccache's direct mode.
+ifneq ($(GIT_VERSION),)
+   DEFINES := $(filter-out -DGIT_VERSION=%,$(DEFINES))
+   $(OBJDIR)/version_git.o: DEFINES += -DGIT_VERSION=$(GIT_VERSION)
+endif
+
 ifeq ($(shell $(CC) -v 2>&1 | grep -c "clang"),1)
    DEF_FLAGS += -Wno-invalid-source-encoding -Wno-incompatible-ms-struct
 endif
@@ -118,6 +131,24 @@ ifneq ($(CXX_BUILD), 1)
       # string literal, which no declaration of ours can help: this lane
       # is here for declarations, comments and C99 syntax.
       CFLAGS += -std=c89 -ansi -pedantic -Werror=pedantic -Wno-long-long -Werror=declaration-after-statement -Wno-variadic-macros -Wno-overlength-strings
+      ifeq ($(OS), Darwin)
+         # Keep the SDK's long-long declarations visible in C89 mode.
+         CFLAGS += -U__STRICT_ANSI__
+         ifeq ($(shell $(CC) --version 2>&1 | head -n 1 | grep -c "clang"),1)
+            CFLAGS += -Wno-c99-extensions
+         endif
+      endif
+      ifneq ($(findstring Win32,$(OS)),)
+         CFLAGS += -include libretro-common/include/compat/mingw_math.h
+      endif
+      ifeq ($(HAVE_PIPEWIRE), 1)
+         # The SPA headers are C99: read them as system headers, which
+         # takes them out of -pedantic, and give them __inline__.
+         PIPEWIRE_C89_OBJ := $(addprefix $(OBJDIR)/,audio/drivers/pipewire.o \
+               audio/common/pipewire.o camera/drivers/pipewire.o)
+         $(PIPEWIRE_C89_OBJ): DEFINES += -Dinline=__inline__ \
+               $(patsubst -I%,-isystem %,$(filter -I%,$(PIPEWIRE_CFLAGS)))
+      endif
    else ifeq ($(HAVE_C99), 1)
       CFLAGS += $(C99_CFLAGS)
    endif
@@ -125,11 +156,18 @@ ifneq ($(CXX_BUILD), 1)
    CFLAGS += -D_GNU_SOURCE
 endif
 
-DEF_FLAGS += $(INCLUDE_DIRS) -Ideps
+# The tree's own headers come before any system or pkg-config path, so a
+# same-named header installed on the system cannot stand in for one of
+# ours.
+DEF_FLAGS := -I. $(INCLUDE_DIRS) -Ideps $(filter-out -I.,$(DEF_FLAGS)) \
+             $(SYSTEM_INCLUDE_DIRS)
 
 CFLAGS += $(DEF_FLAGS)
 CXXFLAGS += $(DEF_FLAGS) -D__STDC_CONSTANT_MACROS
 OBJCFLAGS :=  $(CFLAGS) -D__STDC_CONSTANT_MACROS
+ifneq ($(C89_BUILD),)
+   OBJCFLAGS := $(filter-out -std=c89 -ansi -pedantic -Werror=pedantic -Werror=declaration-after-statement,$(OBJCFLAGS)) $(C99_CFLAGS)
+endif
 
 ifeq ($(HAVE_CXX), 1)
    ifeq ($(CXX_BUILD), 1)

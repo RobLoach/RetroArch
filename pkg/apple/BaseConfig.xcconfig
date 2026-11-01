@@ -4,14 +4,12 @@
 //
 //
 
-// Define builtin glslang by default (overridden by deps.xcconfig when present)
-GLSLANG_BUILTIN_FLAG = -DGLSLANG_OSINCLUDE_UNIX -DHAVE_BUILTINGLSLANG -DWANT_GLSLANG
-GLSLANG_BUILTIN_HEADER_SEARCH_PATHS = $(DEPS_DIR)/glslang $(DEPS_DIR)/glslang/glslang/SPIRV $(DEPS_DIR)/glslang/glslang/glslang/MachineIndependent $(DEPS_DIR)/glslang/glslang/glslang/OSDependent/Unix $(DEPS_DIR)/glslang/glslang/glslang/Public
-// Define HAVE_BUILTINMBEDTLS by default (overridden by deps.xcconfig when present)
-MBEDTLS_BUILTIN_FLAG = -DHAVE_BUILTINMBEDTLS
+// The cleanroom network stack, as on the other platforms: the crypto,
+// the encrypted keychain, the TLS 1.2/1.3 client and the SMB2/3 client
+// with Kerberos, plus the NFSv3/v4 client.
+NETWORK_STACK_FLAGS = -DHAVE_CRYPTO -DHAVE_KEYCHAIN -DHAVE_RETROSSL -DHAVE_SMBCLIENT -DHAVE_RETROSMB -DHAVE_NFSCLIENT -DHAVE_RETRONFS
 
-OTHER_CFLAGS = $(inherited) $(GLSLANG_BUILTIN_FLAG)
-OTHER_CFLAGS = $(inherited) $(MBEDTLS_BUILTIN_FLAG)
+OTHER_CFLAGS = $(inherited) $(NETWORK_STACK_FLAGS)
 
 OTHER_CFLAGS = $(inherited) -DHAVE_7ZIP
 OTHER_CFLAGS = $(inherited) -DHAVE_ACCESSIBILITY
@@ -20,6 +18,7 @@ OTHER_CFLAGS = $(inherited) -DHAVE_AUDIOMIXER
 OTHER_CFLAGS = $(inherited) -DHAVE_BSV_MOVIE
 OTHER_CFLAGS = $(inherited) -DHAVE_CC_RESAMPLER
 OTHER_CFLAGS = $(inherited) -DHAVE_CHD
+OTHER_CFLAGS = $(inherited) -DHAVE_RCHD
 OTHER_CFLAGS = $(inherited) -DHAVE_CHEATS
 OTHER_CFLAGS = $(inherited) -DHAVE_CHEEVOS
 OTHER_CFLAGS = $(inherited) -DHAVE_CHEEVOS_RVZ
@@ -39,15 +38,15 @@ OTHER_CFLAGS = $(inherited) -DHAVE_GCD
 OTHER_CFLAGS = $(inherited) -DHAVE_GFX_WIDGETS
 OTHER_CFLAGS = $(inherited) -DHAVE_GIT_VERSION
 OTHER_CFLAGS = $(inherited) -DHAVE_GLSL
-OTHER_CFLAGS = $(inherited) -DHAVE_GLSLANG
 OTHER_CFLAGS = $(inherited) -DHAVE_GRIFFIN
 OTHER_CFLAGS = $(inherited) -DHAVE_IFINFO
-OTHER_CFLAGS = $(inherited) -DHAVE_IMAGEVIEWER
 OTHER_CFLAGS = $(inherited) -DHAVE_LANGEXTRA
 OTHER_CFLAGS = $(inherited) -DHAVE_LIBRETRODB
 OTHER_CFLAGS = $(inherited) -DHAVE_LROUND
 OTHER_CFLAGS = $(inherited) -DHAVE_MENU
 OTHER_CFLAGS = $(inherited) -DHAVE_METAL
+// Metal's optional builtin HEVC backend uses these framework APIs.
+OTHER_LDFLAGS = $(inherited) -framework CoreMedia -framework VideoToolbox
 OTHER_CFLAGS = $(inherited) -DHAVE_MFI
 OTHER_CFLAGS = $(inherited) -DHAVE_MMAP
 OTHER_CFLAGS = $(inherited) -DHAVE_MICROPHONE
@@ -75,7 +74,8 @@ OTHER_CFLAGS = $(inherited) -DHAVE_S3
 OTHER_CFLAGS = $(inherited) -DHAVE_SCREENSHOTS
 OTHER_CFLAGS = $(inherited) -DHAVE_SHADERPIPELINE
 OTHER_CFLAGS = $(inherited) -DHAVE_SLANG
-OTHER_CFLAGS = $(inherited) -DHAVE_SPIRV_CROSS
+// slang shaders are compiled by rslc, which griffin.c takes in here
+OTHER_CFLAGS = $(inherited) -DHAVE_RSLC -DHAVE_RSLC_GRIFFIN
 OTHER_CFLAGS = $(inherited) -DHAVE_SSL
 OTHER_CFLAGS = $(inherited) -DHAVE_STB_FONT
 OTHER_CFLAGS = $(inherited) -DHAVE_RVORBIS
@@ -129,7 +129,6 @@ OTHER_CFLAGS_IOS_TVOS_SHARE = $(inherited) -DHAVE_MINIUPNPC
 OTHER_CFLAGS_IOS_TVOS_SHARE = $(inherited) -DHAVE_ONLINE_UPDATER
 OTHER_CFLAGS_IOS_TVOS_SHARE = $(inherited) -DHAVE_OPENGLES
 OTHER_CFLAGS_IOS_TVOS_SHARE = $(inherited) -DHAVE_OPENGLES3
-OTHER_CFLAGS_IOS_TVOS_SHARE = $(inherited) -DPACKAGE_VERSION=\"$(MARKETING_VERSION)\"
 OTHER_CFLAGS_IOS_TVOS_SHARE = $(inherited) -DRARCH_MOBILE
 
 OTHER_CFLAGS_SIMULATORS = $(inherited) -DZSTD_DISABLE_ASM
@@ -168,8 +167,6 @@ DEPS_DIR = $(SRCBASE)/deps
 
 HEADER_SEARCH_PATHS = $(inherited) $(DEPS_DIR)
 HEADER_SEARCH_PATHS = $(inherited) $(DEPS_DIR)/7zip
-HEADER_SEARCH_PATHS = $(inherited) $(DEPS_DIR)/SPIRV-Cross
-HEADER_SEARCH_PATHS = $(inherited) $(GLSLANG_BUILTIN_HEADER_SEARCH_PATHS)
 HEADER_SEARCH_PATHS = $(inherited) $(DEPS_DIR)/rcheevos/include
 HEADER_SEARCH_PATHS = $(inherited) $(DEPS_DIR)/stb
 HEADER_SEARCH_PATHS = $(inherited) $(SRCBASE)

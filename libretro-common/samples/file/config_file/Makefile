@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := config_file_test
 
 LIBRETRO_COMM_DIR := ../../..
@@ -19,12 +21,12 @@ SOURCES := \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
 	$(LIBRETRO_COMM_DIR)/time/rtime.c
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
 # CONFIG_FILE_TEST_HOOKS exposes config_file_force_linked_sort, which
 # lets the suite reach config_file.c's zero-allocation sort fallback
 # without having to make malloc() fail.  Test builds only.
-CFLAGS += -Wall -pedantic -std=gnu99 -g -DCONFIG_FILE_TEST_HOOKS -I$(LIBRETRO_COMM_DIR)/include
+CFLAGS += -Wall -pedantic -std=gnu99 -g1 -DCONFIG_FILE_TEST_HOOKS -I$(LIBRETRO_COMM_DIR)/include
 
 ifneq ($(SANITIZER),)
    CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer $(CFLAGS)
@@ -36,10 +38,15 @@ all: $(TARGET)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJS)
 
 .PHONY: clean

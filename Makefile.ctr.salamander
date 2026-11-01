@@ -20,9 +20,9 @@ APP_RSF              = pkg/ctr/tools/template.rsf
 APP_SYSTEM_MODE      = 64MB
 APP_SYSTEM_MODE_EXT  = 124MB
 
-OBJ := ctr/ctr_system.o \
-		 ctr/ctr_memory.o \
-		 ctr/ctr_linear.o \
+OBJ := os/ctr/ctr_system.o \
+		 os/ctr/ctr_memory.o \
+		 os/ctr/ctr_linear.o \
 		 frontend/frontend_salamander.o \
 		 frontend/frontend_driver.o \
 		 frontend/drivers/platform_ctr.o \
@@ -42,15 +42,14 @@ OBJ := ctr/ctr_system.o \
 		 libretro-common/file/config_file_io.o \
 		 libretro-common/streams/file_stream.o \
 		 libretro-common/vfs/vfs_implementation.o \
-		 libretro-common/hash/lrc_hash.o \
 		 libretro-common/time/rtime.o \
 		 verbosity.o
 
-OBJ += ctr/exec-3dsx/exec_cia.o \
-	ctr/exec-3dsx/exec_3dsx.o \
-	ctr/exec-3dsx/mini-hb-menu/launch.o \
-	ctr/exec-3dsx/mini-hb-menu/loaders/rosalina.o \
-	ctr/exec-3dsx/mini-hb-menu/loaders/hax2.o
+OBJ += os/ctr/exec-3dsx/exec_cia.o \
+	os/ctr/exec-3dsx/exec_3dsx.o \
+	os/ctr/exec-3dsx/mini-hb-menu/launch.o \
+	os/ctr/exec-3dsx/mini-hb-menu/loaders/rosalina.o \
+	os/ctr/exec-3dsx/mini-hb-menu/loaders/hax2.o
 
 ifeq ($(strip $(DEVKITPRO)),)
 	$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>devkitpro")
@@ -107,11 +106,10 @@ CFLAGS += -I. -Ilibretro-common/include
 #CFLAGS += -DRARCH_INTERNAL
 CFLAGS += -DRARCH_CONSOLE -DIS_SALAMANDER
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 CFLAGS += -Werror=implicit-function-declaration
 
 ASFLAGS	:=	-g $(ARCH) -O3
-LDFLAGS  +=	-specs=ctr/3dsx_custom.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+LDFLAGS  +=	-specs=os/ctr/3dsx_custom.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 CFLAGS   += -std=gnu99
 
@@ -140,13 +138,12 @@ $(TARGET).elf: $(OBJ)
 PREFIX		:=	$(DEVKITARM)/bin/arm-none-eabi-
 
 CC      := $(PREFIX)gcc
-CXX     := $(PREFIX)g++
 AS      := $(PREFIX)as
 AR      := $(PREFIX)ar
 OBJCOPY := $(PREFIX)objcopy
 STRIP   := $(PREFIX)strip
 NM      := $(PREFIX)nm
-LD      := $(CXX)
+LD      := $(CC)
 
 ifeq ($(strip $(CTRBANNERTOOL)),)
 	ifneq ($(findstring Linux,$(shell uname)),)
@@ -172,19 +169,6 @@ else
 	MAKEROM = $(CTRMAKEROM)
 endif
 
-%.o: %.vsh %.gsh
-	$(DEVKITTOOLS)/bin/picasso $^ -o $*.shbin
-	$(DEVKITTOOLS)/bin/bin2s $*.shbin | $(PREFIX)as -o $@
-	rm $*.shbin
-
-%.o: %.vsh
-	$(DEVKITTOOLS)/bin/picasso $^ -o $*.shbin
-	$(DEVKITTOOLS)/bin/bin2s $*.shbin | $(PREFIX)as -o $@
-	rm $*.shbin
-
-%.o: %.cpp
-	$(CXX) -c -o $@ $< $(CXXFLAGS) $(INCDIRS)
-
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS) $(INCDIRS)
 
@@ -197,8 +181,6 @@ endif
 %.a:
 	$(AR) -rc $@ $^
 
-%.vsh:
-
 $(TARGET).smdh: $(APP_ICON)
 	$(DEVKITTOOLS)/bin/smdhtool --create "$(APP_TITLE)" "$(APP_DESCRIPTION)" "$(APP_AUTHOR)" $(APP_ICON) $@
 
@@ -210,7 +192,7 @@ else
 endif
 	$(DEVKITTOOLS)/bin/3dsxtool $< $@ $(_3DSXFLAGS)
 
-$(TARGET).elf: ctr/3dsx_custom_crt0.o
+$(TARGET).elf: os/ctr/3dsx_custom_crt0.o
 	$(LD) $(LDFLAGS) $(OBJ) $(LIBDIRS) $(LIBS) -o $@
 	$(NM) -CSn $@ > $(notdir $*.lst)
 
@@ -235,7 +217,6 @@ clean:
 	rm -f $(TARGET).smdh
 	rm -f $(TARGET).bnr
 	rm -f $(TARGET).icn
-	rm -f ctr/ctr_config_*.o
-	rm -f ctr/3dsx_custom_crt0.o
+	rm -f os/ctr/3dsx_custom_crt0.o
 
 .PHONY: clean

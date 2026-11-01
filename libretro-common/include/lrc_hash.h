@@ -95,6 +95,27 @@ void sha256_stream_block(struct sha256_state *p, const uint8_t *data);
 
 void sha256_hash(char *s, const uint8_t *in, size_t len);
 
+/* SHA-512 and SHA-384 (FIPS 180-4), for the signature digests CA
+ * bundles use. */
+
+#define SHA512_DIGEST_SIZE 64
+#define SHA384_DIGEST_SIZE 48
+
+struct sha512_state
+{
+   uint64_t h[8];
+   uint64_t len;
+   uint8_t  buf[128];
+   unsigned buflen;
+   unsigned is384;
+};
+
+void sha512_stream_init(struct sha512_state *p, unsigned is384);
+void sha512_stream_update(struct sha512_state *p,
+      const uint8_t *data, size_t len);
+/* 64 octets for SHA-512, 48 for SHA-384. */
+void sha512_stream_final(struct sha512_state *p, uint8_t *digest);
+
 /**
  * SHA1Digest:
  * @data              : Input.
@@ -104,6 +125,22 @@ void sha256_hash(char *s, const uint8_t *in, size_t len);
  * Hashes SHA1
  **/
 void SHA1Digest(const uint8_t* data, size_t len, uint8_t digest[20]);
+
+/**
+ * SHA1DigestMany:
+ * @data    : the first message
+ * @stride  : from each message to the next
+ * @len     : each message's length
+ * @n       : the messages
+ * @digests : 20 octets for each, one after another
+ *
+ * SHA1Digest() of @n messages of the same length, the i-th at
+ * @data + i * @stride. Where the hardware does the rounds, two run
+ * side by side, which is close to twice as fast as one after the
+ * other.
+ **/
+void SHA1DigestMany(const uint8_t *data, size_t stride, size_t len,
+      unsigned n, uint8_t *digests);
 
 /**
  * Streaming SHA-1, alongside the one-shot SHA1Digest() above.

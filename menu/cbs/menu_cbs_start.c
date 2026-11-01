@@ -151,9 +151,12 @@ static int action_start_video_filter_file_load(
    if (*settings->paths.path_softfilter_plugin)
    {
       struct menu_state *menu_st      = menu_state_get_ptr();
-      /* Unload video filter */
+      /* Unload video filter; the driver gets the core's frames */
       settings->paths.path_softfilter_plugin[0] = '\0';
-      command_event(CMD_EVENT_REINIT, NULL);
+#ifdef HAVE_VIDEO_FILTER
+      video_driver_filter_free();
+      video_driver_filter_apply();
+#endif
 
       /* Refresh menu */
       menu_st->flags                 |=  MENU_ST_FLAG_ENTRIES_NEED_REFRESH
@@ -239,11 +242,10 @@ static int action_start_input_desc(
       /* Check whether core has defined this input */
       if (sys_info->input_desc_btn[mapped_port][btn_idx] && *sys_info->input_desc_btn[mapped_port][btn_idx])
       {
-         const struct retro_keybind *keyptr = &input_config_binds[user_idx][btn_idx];
-         settings->uints.input_remap_ids[user_idx][btn_idx] = keyptr->id;
+         input_config_set_remap_id(user_idx, btn_idx, btn_idx);
       }
       else
-         settings->uints.input_remap_ids[user_idx][btn_idx] = RARCH_UNMAPPED;
+         input_config_set_remap_id(user_idx, btn_idx, RARCH_UNMAPPED);
    }
 
    return 0;
@@ -283,7 +285,7 @@ static int action_start_shader_action_parameter_generic(
    if (!shader_info.data)
       return 0;
 
-   /* Reset to initial via the owning-thread setter; initial and the
+   /* Reset to initial via the driver-level setter; initial and the
     * range are stable outside set_shader's blocking window. */
    param          = &shader_info.data->parameters
       [parameter];
@@ -535,14 +537,11 @@ static int action_start_menu_wallpaper(
       unsigned type, size_t idx, size_t entry_idx)
 {
    settings_t *settings       = config_get_ptr();
-   struct menu_state *menu_st = menu_state_get_ptr();
 
    settings->paths.path_menu_wallpaper[0] = '\0';
 
-   /* Reset wallpaper by menu context reset */
-   if (menu_st->driver_ctx && menu_st->driver_ctx->context_reset)
-      menu_st->driver_ctx->context_reset(menu_st->userdata,
-            video_driver_is_threaded());
+   /* Reset wallpaper by menu context rebuild */
+   menu_driver_context_rebuild();
 
    return 0;
 }
@@ -630,10 +629,15 @@ static int action_start_video_resolution(
 {
    unsigned dims = 0;
    char desc[64] = {0};
-   global_t *global = global_get_ptr();
+#if defined(PS2)
+   config_get_ptr()->uints.video_ps2_mode = 0;
+#else
+   settings_t *settings = config_get_ptr();
 
-   /*  Reset the resolution id to zero */
-   global->console.screen.resolutions.current.id = 0;
+   /* The display's own mode */
+   settings->uints.video_fullscreen_x = 0;
+   settings->uints.video_fullscreen_y = 0;
+#endif
 
    if (video_driver_get_video_output_size(&dims, desc, sizeof(desc)))
    {

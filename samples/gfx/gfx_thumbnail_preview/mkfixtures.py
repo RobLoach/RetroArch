@@ -14,9 +14,11 @@ the pad pushes them past 4 GiB.
 Needs ffmpeg for the seed clip; everything after that is box surgery.
 """
 import os
+import json
 import struct
 import subprocess
 import sys
+from webm_audio_padding import pad as pad_webm_audio, insert_void
 
 CONTAINERS = {b'moov', b'trak', b'mdia', b'minf', b'stbl', b'edts', b'udta'}
 
@@ -64,6 +66,56 @@ def rewrite(buf, start, end, shift):
 def boxes(path):
     buf = open(path, 'rb').read()
     return buf, {t: (p, s, h) for (p, s, t, h) in parse(buf, 0, len(buf))}
+
+
+def audio_large_packet(src, dst, packet_bytes=3 * 1024 * 1024):
+    """Audio-only test: a video sample larger than the old audio window."""
+    buf, bx = boxes(src)
+    mp, ms, mh = bx[b'mdat']
+    vp, vs, vh = bx[b'moov']
+    first = [None, None]
+
+    def find(start, end, video=False):
+        for pos, sz, typ, hdr in parse(buf, start, end):
+            body = buf[pos + hdr:pos + sz]
+            if typ in CONTAINERS:
+                find(pos + hdr, pos + sz,
+                     b'vide' in body if typ == b'trak' else video)
+            elif video and typ == b'stco':
+                first[0] = struct.unpack_from('>I', body, 8)[0]
+            elif video and typ == b'stsz':
+                first[1] = struct.unpack_from('>I', body, 12)[0]
+
+    find(vp + vh, vp + vs)
+    cut = first[0] + first[1]
+    pad = packet_bytes - first[1]
+
+    def grow(start, end, video=False):
+        parts = []
+        for pos, sz, typ, hdr in parse(buf, start, end):
+            body = bytearray(buf[pos + hdr:pos + sz])
+            if typ in CONTAINERS:
+                body = grow(pos + hdr, pos + sz,
+                            b'vide' in body if typ == b'trak' else video)
+            elif typ == b'stco':
+                count = struct.unpack_from('>I', body, 4)[0]
+                for i in range(count):
+                    off = struct.unpack_from('>I', body, 8 + i * 4)[0]
+                    if off >= cut:
+                        struct.pack_into('>I', body, 8 + i * 4, off + pad)
+            elif video and typ == b'stsz':
+                struct.pack_into('>I', body, 12, first[1] + pad)
+            parts.append(struct.pack('>I', len(body) + 8) + typ + body)
+        return b''.join(parts)
+
+    # Unreferenced media padding keeps the fixture's bitrate-sized window
+    # above the large sample; the AAC track itself is unchanged.
+    tail = 4 * 1024 * 1024
+    moov = grow(vp + vh, vp + vs)
+    with open(dst, 'wb') as out:
+        out.write(buf[:mp] + struct.pack('>I', ms + pad + tail) + b'mdat')
+        out.write(buf[mp + mh:cut] + bytes(pad) + buf[cut:mp + ms])
+        out.write(bytes(tail) + struct.pack('>I', len(moov) + 8) + b'moov' + moov)
 
 
 def seed(dst, secs, w, h, vbr):
@@ -182,14 +234,44 @@ def still_webp(dst, w, h):
         '-compression_level', '0', dst])
 
 
-def apng(dst, secs, w, h, fps):
-    """APNG: the same shape as the WebP - large lossless frames, many of
-    them, well past the window the feeder may keep."""
-    subprocess.check_call([
-        'ffmpeg', '-v', 'error', '-y',
-        '-f', 'lavfi', '-i', 'testsrc2=s=%dx%d:r=%d' % (w, h, fps),
-        '-t', str(secs), '-c:v', 'apng', '-pred', 'none', '-plays', '0',
-        '-f', 'apng', dst])
+def apng(dst, w, h, frames, fps):
+    """APNG: the same shape as the WebP - large lossless frames, past the
+    window the feeder may keep. Written here rather than by ffmpeg, whose
+    APNG encoder (6.1) keeps only the rectangles that change between
+    frames: from 30 s of testsrc2 it made 33 frames and 3.4 MiB, inside
+    the window, and the windowed test had nothing to window. The frames
+    are seeded noise, which no encoder shrinks, so the size is the frame
+    count times the frame and the same on every host."""
+    import random
+    import zlib
+
+    def chunk(t, body):
+        return (struct.pack('>I', len(body)) + t + body
+                + struct.pack('>I', zlib.crc32(t + body) & 0xffffffff))
+
+    rng   = random.Random(0x5eed)
+    row   = w * 3
+    delay = struct.pack('>HH', 1, fps)
+    seq   = 0
+    out   = [b'\x89PNG\r\n\x1a\n',
+             chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0)),
+             chunk(b'acTL', struct.pack('>II', frames, 0))]
+    for f in range(frames):
+        noise = rng.getrandbits(8 * row * h).to_bytes(row * h, 'little')
+        raw   = b''.join(b'\x00' + noise[y * row:(y + 1) * row]
+                         for y in range(h))
+        data  = zlib.compress(raw, 1)
+        out.append(chunk(b'fcTL', struct.pack('>IIIII', seq, w, h, 0, 0)
+                         + delay + b'\x00\x00'))
+        seq += 1
+        if f == 0:
+            out.append(chunk(b'IDAT', data))
+        else:
+            out.append(chunk(b'fdAT', struct.pack('>I', seq) + data))
+            seq += 1
+    out.append(chunk(b'IEND', b''))
+    with open(dst, 'wb') as fp:
+        fp.write(b''.join(out))
 
 
 def apng_dispose_previous(dst):
@@ -244,11 +326,30 @@ def apng_dispose_previous(dst):
     open(dst, 'wb').write(out)
 
 
+def make_aac_group(out):
+    """Small AAC case can be refreshed without the large image fixtures."""
+    os.makedirs(out, exist_ok=True)
+    j = lambda n: os.path.join(out, n)
+    # Add the small new container case independently of the cached large
+    # fixture set. AAC in Matroska has CodecDelay but no Opus pre-skip.
+    if not os.path.exists(j('audio_group_aac.mkv')):
+        seed = j('audio_group_aac_seed.mkv')
+        subprocess.check_call([
+            'ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i',
+            'testsrc2=size=64x48:rate=12:duration=4', '-f', 'lavfi', '-i',
+            'sine=frequency=440:sample_rate=48000:duration=4',
+            '-ac', '2', '-c:v', 'libvpx-vp9', '-g', '12', '-auto-alt-ref', '0',
+            '-c:a', 'aac', seed])
+        insert_void(seed, j('audio_group_aac.mkv'), after_picture=13, in_group=True)
+        os.unlink(seed)
+
+
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else '.'
     os.makedirs(out, exist_ok=True)
     j = lambda n: os.path.join(out, n)
     BIG = 7817178301          # the size that started all of this
+    make_aac_group(out)
 
     # The workflow rebuilds the fixtures before each sanitizer pass so
     # a clean cannot leave the run globbing nothing; the outputs are
@@ -257,7 +358,10 @@ def main():
     if all(os.path.exists(j(n)) for n in ('long_video.mp4', 'anim_lossless.webp',
             'still_lossless.webp', 'anim_lossless.png',
             'anim_dispose_prev.png', 'trailing_large.mp4',
-            'trailing_huge.mp4', 'leading_huge.mp4', 'trailing_small.mp4',
+              'trailing_huge.mp4', 'leading_huge.mp4', 'trailing_small.mp4',
+              'audio_large_packet.m4a', 'audio_seek_gap.m4a',
+              'audio_group_opus.webm', 'audio_group_vorbis.webm', 'audio_group_aac.mkv',
+              'video_gap_head.webm', 'video_gap_pin.webm', 'video_group.webm',
             'vp9_tiles.webm', 'hevc_wpp.mp4', 'bframes_h264.mp4',
             'bframes_hevc.mp4', 'hevc_nowpp.mp4', 'mbaff_h264.mp4')):
         print('fixtures present, not rebuilt')
@@ -275,7 +379,7 @@ def main():
                         j('anim_lossless.webp'), 12 * 1024 * 1024)
     os.unlink(j('anim_lossless_base.webp'))
     still_webp(j('still_lossless.webp'), 1920, 1080)
-    apng(j('anim_lossless.png'), 30, 1280, 720, 10)
+    apng(j('anim_lossless.png'), 1280, 720, 14, 10)
     apng_dispose_previous(j('anim_dispose_prev.png'))
 
     # A video longer than the feeder's fixed window span (4+8+8 MiB),
@@ -345,11 +449,60 @@ def main():
         '-x264-params', 'tff=1:b-adapt=0',
         '-pix_fmt', 'yuv420p', '-an',
         j('mbaff_h264.mp4')])
+    # Prepared WebM audio: both codecs, including pause-before-adoption.
+    for codec, name in [('libopus', 'audio_seek_opus.weba'),
+                        ('libvorbis', 'audio_seek_vorbis.weba')]:
+        subprocess.check_call([
+            'ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i',
+            'sine=frequency=440:sample_rate=48000:duration=16',
+            '-ac', '2', '-c:a', codec, '-f', 'webm',
+            '-cluster_time_limit', '1000', j(name)])
+
+    # Interleaved blocks beyond the audio window's permanent head. The
+    # padded video payload is only for demux/audio residency acceptance.
+    for codec in ['opus', 'vorbis']:
+        seed_path = j('audio_seek_' + codec + '_seed.webm')
+        subprocess.check_call([
+            'ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i',
+            'testsrc2=size=64x48:rate=12:duration=4',
+            '-f', 'lavfi', '-i',
+            'sine=frequency=440:sample_rate=48000:duration=4',
+            '-ac', '2', '-c:v', 'libvpx-vp9', '-g', '12', '-auto-alt-ref', '0',
+            '-c:a', 'lib' + codec, seed_path])
+        pad_webm_audio(seed_path, j('audio_seek_' + codec + '_window.webm'))
+        insert_void(seed_path, j('audio_group_' + codec + '.webm'),
+                    after_picture=13, in_group=True)
+        os.unlink(seed_path)
+
+    # Legal padding gaps both inside and beyond the permanent head. Noise
+    # keeps picture forty's coded input outside that head, so the second
+    # fixture exercises an actual moving-window packet pin.
+    noise_seed = j('video_gap_seed.webm')
+    subprocess.check_call([
+        'ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i',
+        'testsrc2=size=640x360:rate=30:duration=3',
+        '-vf', 'noise=alls=100:allf=t+u', '-c:v', 'libvpx',
+        '-deadline', 'realtime', '-cpu-used', '8', '-qmin', '1', '-qmax', '1',
+        '-b:v', '100M', '-g', '30', '-auto-alt-ref', '0', '-an', noise_seed])
+    packets = json.loads(subprocess.check_output([
+        'ffprobe', '-v', 'error', '-select_streams', 'v:0',
+        '-show_entries', 'packet=pos,size', '-of', 'json', noise_seed],
+        text=True))['packets']
+    assert int(packets[39]['pos']) > 4 * 1024 * 1024
+    assert max(int(packet['size']) for packet in packets) <= 640 * 360 * 4
+    insert_void(noise_seed, j('video_gap_head.webm'), after_picture=2)
+    insert_void(noise_seed, j('video_gap_pin.webm'), after_picture=40)
+    insert_void(noise_seed, j('video_group.webm'), after_picture=31, in_group=True)
+    os.unlink(noise_seed)
+
     seed(j('seed_small.mp4'), 3, 640, 360, '300k')
     seed(j('seed_4k.mp4'), 3, 3840, 2160, '400k')
 
     # trailing moov, small and fully resident
     os.replace(j('seed_small.mp4'), j('trailing_small.mp4'))
+    audio_large_packet(j('trailing_small.mp4'), j('audio_large_packet.m4a'))
+    audio_large_packet(j('trailing_small.mp4'), j('audio_seek_gap.m4a'),
+                       32 * 1024 * 1024)
     # trailing moov well past any plausible head
     subprocess.check_call(['ffmpeg', '-v', 'error', '-y', '-stream_loop',
                            '60', '-i', j('seed_4k.mp4'), '-c', 'copy',

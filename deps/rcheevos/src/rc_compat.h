@@ -97,11 +97,16 @@ RC_BEGIN_C_DECLS
      CRITICAL_SECTION critical_section;
    #endif
    } rc_mutex_t;
- #elif defined(GEKKO)
+ #elif defined(GEKKO) && !defined(GEKKO_NATIVE)
   #include <ogcsys.h>
   typedef struct rc_mutex_t {
     mutex_t handle;
   } rc_mutex_t;
+ #elif defined(GEKKO_NATIVE)
+  /* RetroArch-local: os/gekko's recursive mutex, which every devkitPPC
+   * can build; newlib's pthreads only came with r49. */
+  #include <gekko/thread.h>
+  typedef gk_rmutex_t rc_mutex_t;
  #elif defined(WIIU)
   /* RetroArch-local: rthreads drives Cafe OS threads natively here, so
    * rcheevos cannot use the pthread backend -- devkitPPC ships
@@ -125,6 +130,10 @@ RC_BEGIN_C_DECLS
  #elif defined(__SWITCH__)
   #include <switch.h>
   typedef RMutex rc_mutex_t;
+ #elif defined(__PSL1GHT__)
+  /* RetroArch-local: PSL1GHT ships no pthreads. */
+  #include <lv2/mutex.h>
+  typedef sys_lwmutex_t rc_mutex_t;
  #else
   #include <pthread.h>
   typedef pthread_mutex_t rc_mutex_t;

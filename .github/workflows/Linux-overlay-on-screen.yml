@@ -24,12 +24,19 @@ on:
       - 'tasks/task_overlay.c'
       - 'led/drivers/led_overlay.c'
       - 'gfx/gfx_surface.*'
+      - 'gfx/gfx_surface_player.*'
+      - 'libretro-common/formats/video_player.c'
       - 'gfx/video_driver.c'
       - 'gfx/video_thread_wrapper.*'
       - 'gfx/drivers/gl2.c'
       - 'menu/menu_driver.c'
       - 'input/drivers/x11_input.c'
       - 'samples/input/overlay_on_screen/**'
+      - 'input/input_driver_choice.c'
+      - 'gfx/drivers_context/x_ctx.c'
+      - 'gfx/common/x11_common.c'
+      - 'samples/input/x11_smoke/**'
+      - 'samples/input/windows_wine_smoke/smoke_core.c'
       - '.github/workflows/Linux-overlay-on-screen.yml'
   pull_request:
     paths:
@@ -38,12 +45,19 @@ on:
       - 'tasks/task_overlay.c'
       - 'led/drivers/led_overlay.c'
       - 'gfx/gfx_surface.*'
+      - 'gfx/gfx_surface_player.*'
+      - 'libretro-common/formats/video_player.c'
       - 'gfx/video_driver.c'
       - 'gfx/video_thread_wrapper.*'
       - 'gfx/drivers/gl2.c'
       - 'menu/menu_driver.c'
       - 'input/drivers/x11_input.c'
       - 'samples/input/overlay_on_screen/**'
+      - 'input/input_driver_choice.c'
+      - 'gfx/drivers_context/x_ctx.c'
+      - 'gfx/common/x11_common.c'
+      - 'samples/input/x11_smoke/**'
+      - 'samples/input/windows_wine_smoke/smoke_core.c'
       - '.github/workflows/Linux-overlay-on-screen.yml'
   workflow_dispatch:
 
@@ -61,31 +75,41 @@ jobs:
   overlay-on-screen:
     name: Run retroarch under Xvfb and look at the overlay
     runs-on: ubuntu-latest
+    env:
+      APT_PKGS: build-essential zlib1g-dev ccache python3 xvfb x11-apps xdotool libgl1-mesa-dri libx11-dev libx11-xcb-dev libxcb1-dev libxext-dev libxtst6 libxxf86vm-dev libxrandr-dev libxinerama-dev libgl-dev libegl-dev
     timeout-minutes: 25
 
     steps:
-      - name: Install dependencies
-        timeout-minutes: 5
-        run: |
-          for i in 1 2 3; do
-            sudo timeout 90 apt-get update -y \
-              -o Acquire::Retries=3 -o Acquire::http::Timeout=30 && break
-            echo "apt-get update failed (attempt $i); retrying in 10s"
-            sleep 10
-          done
-          sudo apt-get install -y \
-            -o Acquire::Retries=3 -o Acquire::http::Timeout=30 \
-            build-essential zlib1g-dev ccache python3 \
-            xvfb x11-apps libgl1-mesa-dri \
-            libx11-dev libx11-xcb-dev libxcb1-dev libxext-dev libxtst6 \
-            libxxf86vm-dev libxrandr-dev libxinerama-dev \
-            libgl-dev libegl-dev
-
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Apt cache key
+        id: apt
+        run: sh .github/workflows/scripts/apt-cache-key.sh "$APT_PKGS"
+
+      - name: Restore apt cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.apt-cache
+          key: ${{ steps.apt.outputs.key }}
+          restore-keys: ${{ steps.apt.outputs.prefix }}
+
+      - name: Install dependencies
+        timeout-minutes: 20
+        run: sh .github/workflows/scripts/apt-install.sh $APT_PKGS
+
+      - name: Save apt cache
+        if: env.APT_CACHE_SAVE == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.apt-cache
+          key: ${{ steps.apt.outputs.key }}
+
+      - name: Link with lld
+        run: sh .github/workflows/scripts/use-lld.sh
+
       - name: Restore ccache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ~/.ccache
           key: ccache-${{ github.workflow }}-${{ github.job }}-${{ github.sha }}
@@ -98,7 +122,7 @@ jobs:
           export CCACHE_DIR="$HOME/.ccache"
           echo "CCACHE_DIR=$CCACHE_DIR" >> "$GITHUB_ENV"
           echo "/usr/lib/ccache" >> "$GITHUB_PATH"
-          ccache -M 500M
+          ccache -M 250M
           ccache -z
 
       - name: Build RetroArch (X11 + OpenGL, the rest off)
@@ -135,6 +159,36 @@ jobs:
           # modes.
           timeout 180 python3 samples/input/overlay_on_screen/overlay_on_screen_test.py ./retroarch
 
+      - name: Run overlay_apng_on_screen_test (an animated image plays and loops, threaded off and on)
+        shell: bash
+        run: |
+          set -eu
+          timeout 180 python3 samples/input/overlay_on_screen/overlay_apng_on_screen_test.py ./retroarch
+
+      - name: Run overlay_apng_press_on_screen_test (a two-frame image shows its pressed frame, threaded off and on)
+        shell: bash
+        run: |
+          set -eu
+          timeout 180 python3 samples/input/overlay_on_screen/overlay_apng_press_on_screen_test.py ./retroarch
+
+      - name: Run overlay_stick_on_screen_test (a movable stick follows the finger and returns, threaded off and on)
+        shell: bash
+        run: |
+          set -eu
+          # A movable stick's geometry is sent only when it moves; the
+          # picture shows nothing a move needed was left out.
+          timeout 180 python3 samples/input/overlay_on_screen/overlay_stick_on_screen_test.py ./retroarch
+
+      - name: Run statistics_on_screen_test (threaded video off, then on)
+        shell: bash
+        run: |
+          set -eu
+          # This build has no video filters, and the statistics have
+          # to show all the same: they are drawn with the OSD font,
+          # which reaches the video state through a binding video init
+          # makes whatever the build leaves out.
+          timeout 180 python3 samples/gfx/statistics_on_screen/statistics_on_screen_test.py ./retroarch
+
       - name: Run overlay_menu_mouse_test (display and input packs, threaded off and on)
         shell: bash
         run: |
@@ -155,3 +209,23 @@ jobs:
           # as does one named with _led, and a pack that names its LEDs
           # is not mapped.
           timeout 300 python3 samples/input/overlay_on_screen/overlay_led_hidden_test.py ./retroarch
+
+      - name: Run the X11 input scenarios (keys pressed in the window)
+        shell: bash
+        run: |
+          set -eu
+          # The same build, on a virtual display of its own, with the
+          # X11 input driver: keys are pressed in the window and a small
+          # core says in the log what reached it - before and after a
+          # fullscreen toggle restarts the video driver, with threaded
+          # video and without. See samples/input/x11_smoke/run.sh.
+          timeout 600 samples/input/x11_smoke/run.sh
+
+      - name: Save ccache
+        # Only master's pushes keep a cache: pull requests restore
+        # master's, so one push does not evict the next one's.
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ github.workflow }}-${{ github.job }}-${{ github.sha }}

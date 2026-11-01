@@ -16,7 +16,10 @@
  * The test drives the real task end to end against a loopback server
  * serving an .index-extended body and asserts, for both values of
  * refresh_menu, that the corresponding flag is cleared once the task
- * has retired and that the fetched list parsed. */
+ * has retired and that the fetched list parsed.
+ *
+ * The parked threaded lane also pins when the updater may read its
+ * HTTP task against the queue freeing that task; see run_lane. */
 
 #include <stdio.h>
 #include <string.h>
@@ -148,9 +151,72 @@ static void server_stop(void)
    }
 }
 
+/* ---------------- parking the worker behind the HTTP task -------- */
+
+/* The threaded queue frees a finished task on the main thread, in
+ * task_queue_check(), right after running its callback.  The
+ * updater's handler runs on the worker.  With one worker the HTTP
+ * task and the updater alternate, so the free can only land between
+ * the HTTP task's last tick and the updater's next one - a window
+ * the test cannot hit by timing.  It is made deterministic instead:
+ * task_set_flags() is wrapped at link time (-Wl,--wrap), and when
+ * the HTTP task marks itself finished - on the worker, inside its
+ * own last tick - the wrapper pushes the updater's 'when' into the
+ * future.  The worker only ever looks at the task at the front of
+ * the running list, which is now the updater, so it sleeps; the
+ * main thread retires and frees the HTTP task meanwhile; then the
+ * updater ticks with a pointer to freed memory in hand.  'when' is
+ * read by the worker under running_lock and written here on that
+ * same thread, so no lock is needed.  An updater that reads the
+ * task there is a heap-use-after-free under ASan; one that checks
+ * the callback's complete flag first never touches it. */
+enum { PARK_OFF = 0, PARK_ARMED, PARK_PARKED };
+static retro_atomic_int_t park_state;
+static retro_task_t *park_updater = NULL;
+#define PARK_USEC (2 * 1000 * 1000)
+
+void __real_task_set_flags(retro_task_t *task, uint8_t flags, bool set);
+void __wrap_task_set_flags(retro_task_t *task, uint8_t flags, bool set)
+{
+   __real_task_set_flags(task, flags, set);
+
+   /* park_state first: its release store publishes park_updater. */
+   if (     set
+         && (flags & RETRO_TASK_FLG_FINISHED)
+         && retro_atomic_load_acquire_int(&park_state) == PARK_ARMED
+         && task != park_updater)
+   {
+      park_updater->when = cpu_features_get_time_usec() + PARK_USEC;
+      retro_atomic_store_release_int(&park_state, PARK_PARKED);
+   }
+}
+
+/* The HTTP callback wakes the updater, which would end the hold.  While
+ * the updater is held the wake is kept back - it is issued and read on
+ * the main thread - and the lane issues it once the HTTP task is gone. */
+static bool     wake_held  = false;
+void __real_task_queue_wake(uint32_t ident);
+void __wrap_task_queue_wake(uint32_t ident)
+{
+   if (     retro_atomic_load_acquire_int(&park_state) == PARK_PARKED
+         && ident == park_updater->ident)
+   {
+      wake_held = true;
+      return;
+   }
+   __real_task_queue_wake(ident);
+}
+
+static bool find_other_than_updater(retro_task_t *task, void *user_data)
+{
+   return task != (retro_task_t*)user_data;
+}
+
 /* ---------------- one lane: push, retire, inspect flags ---------- */
 
-static void run_lane(bool refresh_menu)
+/* park: threaded queue only - hold the updater as described above so
+ * the HTTP task is certainly freed before the updater's next tick. */
+static void run_lane(bool refresh_menu, bool park)
 {
    char url[128];
    core_updater_list_t *list  = core_updater_list_init();
@@ -158,7 +224,7 @@ static void run_lane(bool refresh_menu)
    void *task;
    int i;
 
-   printf("[lane refresh_menu=%d]\n", (int)refresh_menu);
+   printf("[lane refresh_menu=%d park=%d]\n", (int)refresh_menu, (int)park);
 
    /* The caller's side of the contract, as in
     * action_ok_core_updater_list. */
@@ -169,6 +235,9 @@ static void run_lane(bool refresh_menu)
    get_list_test_set_buildbot_url(url);
    task = task_push_get_core_updater_list(list, true, refresh_menu);
    CHECK(task != NULL, "task pushed");
+
+   park_updater = (retro_task_t*)task;
+   retro_atomic_store_release_int(&park_state, park ? PARK_ARMED : PARK_OFF);
 
    /* Pump retrieval on this (the main) thread, as the runloop does
     * once a frame, until the task's retirement callback has cleared
@@ -184,6 +253,37 @@ static void run_lane(bool refresh_menu)
             : MENU_ST_FLAG_ENTRIES_NEED_REFRESH;
       for (i = 0; i < 1000 && (menu_st->flags & flag); i++)
       {
+         if (retro_atomic_load_acquire_int(&park_state) == PARK_PARKED)
+         {
+            /* The worker is asleep behind the updater's 'when'.
+             * Retire the HTTP task now: check until nothing but the
+             * updater is findable, which is the point at which the
+             * queue has freed it (find() stays truthful until the
+             * free).  That must happen before the updater's tick
+             * comes due, or the lane proves nothing. */
+            task_finder_data_t find_data;
+            int j;
+
+            find_data.func     = find_other_than_updater;
+            find_data.userdata = task;
+            for (j = 0; j < 1000; j++)
+            {
+               task_queue_check();
+               if (!task_queue_find(&find_data))
+                  break;
+               retro_sleep(1);
+            }
+            CHECK(j < 1000, "HTTP task retired while the updater was parked");
+            CHECK(cpu_features_get_time_usec() < park_updater->when,
+                  "HTTP task freed before the updater's next tick");
+            retro_atomic_store_release_int(&park_state, PARK_OFF);
+            CHECK(wake_held, "the HTTP callback woke the updater");
+            if (wake_held)
+            {
+               wake_held = false;
+               __real_task_queue_wake(park_updater->ident);
+            }
+         }
          task_queue_check();
          retro_sleep(10);
       }
@@ -214,6 +314,8 @@ static void run_lane(bool refresh_menu)
             "refresh gate live again after retire");
    }
 
+   retro_atomic_store_release_int(&park_state, PARK_OFF);
+   park_updater   = NULL;
    menu_st->flags = 0;
    core_updater_list_free(list);
 }
@@ -234,8 +336,20 @@ int main(void)
 
    task_queue_init(true, NULL); /* threaded, as in the app */
 
-   run_lane(true);
-   run_lane(false);
+   run_lane(true, false);
+   run_lane(false, false);
+   run_lane(true, true);
+
+   task_queue_deinit();
+
+   /* The unthreaded queue runs the HTTP task ahead of the updater
+    * every pass and retires it only after the pass, so the updater
+    * reads it directly there; run that path under the sanitizers
+    * too. */
+   task_queue_unset_threaded();
+   task_queue_init(false, NULL);
+
+   run_lane(true, false);
 
    task_queue_deinit();
    server_stop();

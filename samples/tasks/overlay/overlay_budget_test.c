@@ -24,6 +24,13 @@
  *                  count must not double what one invocation does.
  *   one-item     - a window that is already exhausted still makes
  *                  progress, so the loader cannot stall.
+ *   one read     - a still is read once, by its decode; only a file
+ *                  the decode found animated is read for its bytes.
+ *   error        - a load that fails retires, once, with no overlay.
+ *   predecode    - with a threaded task queue a pack's distinct
+ *                  images are decoded together across the cores before
+ *                  the first overlay is parsed, each exactly once, and
+ *                  the load produces the same overlays and descriptors.
  *
  * Time is a virtual clock advancing a fixed step per observation, so
  * the assertions are exact rather than scheduler-dependent.  Image
@@ -40,6 +47,11 @@
 #include <queues/task_queue.h>
 #include <string/stdstring.h>
 #include <lists/string_list.h>
+
+#include <retro_timers.h>
+#include <rthreads/rthreads.h>
+#include <streams/file_stream.h>
+#include <vfs/vfs_implementation.h>
 
 #include "../../../input/input_overlay.h"
 #include "../../../tasks/tasks_internal.h"
@@ -71,6 +83,10 @@ retro_time_t cpu_features_get_time_usec(void)
 }
 
 uint64_t cpu_features_get(void) { return 0; }
+unsigned cpu_features_get_core_amount(void) { return 4; }
+
+/* The set's own threads let their read pools go; nothing pooled here */
+void data_transfer_pool_flush(void) { }
 
 /* NBIO_XFER_TICK_USEC is 4000; a third of it per observation
  * exhausts the window after a couple of budget checks. */
@@ -81,6 +97,11 @@ uint64_t cpu_features_get(void) { return 0; }
 /* ------------------------------------------------------------------ */
 
 static unsigned images_loaded;
+/* Threads the decodes ran on, for the predecode lane */
+#define MAX_DECODE_THREADS 8
+static uintptr_t decode_thread[MAX_DECODE_THREADS];
+static unsigned  decode_threads;
+static slock_t  *decode_lock;
 
 /* The loader deduplicates images by path and then COPIES the
  * texture_image into each consumer, so one allocation is reachable
@@ -93,9 +114,32 @@ static unsigned images_loaded;
 static uint32_t *tracked_pixels[MAX_TRACKED_IMAGES];
 static unsigned  tracked_count;
 
-bool image_texture_load(struct texture_image *img, const char *path)
+/* The decode, which also says whether the file is an animated PNG:
+ * here, any file named for one */
+bool image_texture_load_request_ex(struct texture_image *img,
+      const char *path, const image_texture_request_t *req,
+      bool (*should_abort)(void *ud), void *ud, int *png_probe)
 {
-   images_loaded++;
+   (void)req; (void)should_abort; (void)ud;
+   if (png_probe)
+      *png_probe = strstr(path, "anim") ? 1 : 0;
+   if (decode_lock)
+   {
+      uintptr_t id = sthread_get_current_thread_id();
+      unsigned i;
+      slock_lock(decode_lock);
+      for (i = 0; i < decode_threads; i++)
+         if (decode_thread[i] == id)
+            break;
+      if (i == decode_threads && i < MAX_DECODE_THREADS)
+         decode_thread[decode_threads++] = id;
+      images_loaded++;
+      slock_unlock(decode_lock);
+      /* long enough that the set's other threads get a share */
+      retro_sleep(2);
+   }
+   else
+      images_loaded++;
    if (img)
    {
       img->width  = 4;
@@ -103,10 +147,23 @@ bool image_texture_load(struct texture_image *img, const char *path)
       img->pixels = (uint32_t*)calloc(16, sizeof(uint32_t));
       if (!img->pixels)
          return false;
+      if (decode_lock)
+         slock_lock(decode_lock);
       if (tracked_count < MAX_TRACKED_IMAGES)
          tracked_pixels[tracked_count++] = img->pixels;
+      if (decode_lock)
+         slock_unlock(decode_lock);
    }
    return true;
+}
+
+/* image_texture_set.c's own file set, which the loader does not use */
+bool image_texture_load_request(struct texture_image *img,
+      const char *path, const image_texture_request_t *req,
+      bool (*should_abort)(void *ud), void *ud)
+{
+   return image_texture_load_request_ex(img, path, req, should_abort,
+         ud, NULL);
 }
 
 /* Deliberately a no-op on pixels: see above. */
@@ -163,12 +220,12 @@ void input_overlay_free_overlay(struct overlay *overlay)
    overlay->descs       = NULL;
 }
 
-/* The loader reads input_st only for eightway bind defaults; an
- * all-zero state is a valid one for that purpose. */
-void *input_state_get_ptr(void)
+/* The loader asks the frontend where an eight-way area's slopes are
+ * kept; zeroes are valid slopes for this test. */
+float *input_driver_overlay_eightway_slopes(bool abxy)
 {
-   static char st[4096];
-   return st;
+   static float slopes[2][2];
+   return slopes[abxy ? 1 : 0];
 }
 
 void ui_companion_driver_notify_refresh(void) { }
@@ -332,9 +389,172 @@ static unsigned run_load(unsigned overlays, unsigned descs,
    return ticks;
 }
 
+/* Opens of the pack's image files, counted through the VFS: the decode
+ * is faked, so any open of one is a read beyond it */
+static unsigned still_opens, anim_opens;
+static struct retro_vfs_file_handle *counting_open(const char *path,
+      unsigned mode, unsigned hints)
+{
+   if (strstr(path, "still.png"))
+      still_opens++;
+   if (strstr(path, "anim.png"))
+      anim_opens++;
+   return (struct retro_vfs_file_handle*)
+      retro_vfs_file_open_impl(path, mode, hints);
+}
+
+static unsigned anim_kept, anim_null;
+static void anim_cb(retro_task_t *task, void *task_data,
+      void *user_data, const char *err)
+{
+   overlay_task_data_t *data = (overlay_task_data_t*)task_data;
+   unsigned i;
+   if (data && data->anim_list && data->image_list)
+      for (i = 0; i < data->anim_list->size; i++)
+      {
+         overlay_anim_src_t *src =
+            (overlay_anim_src_t*)data->anim_list->elems[i].attr.p;
+         bool anim = strstr(data->image_list->elems[i].data, "anim") != NULL;
+         if (anim && src && src->len == 4)
+            anim_kept++;
+         if (!anim && !src)
+            anim_null++;
+      }
+   overlay_cb(task, task_data, user_data, err);
+}
+
 /* ------------------------------------------------------------------ */
 /* Lanes                                                               */
 /* ------------------------------------------------------------------ */
+
+static void lane_still_read_once(void)
+{
+   static struct retro_vfs_interface iface;
+   struct retro_vfs_interface_info info;
+   char cfg[512], path[512];
+   unsigned had = failures, ticks = 0;
+   FILE *f;
+   const char *names[2] = { "still.png", "anim.png" };
+   unsigned i;
+
+   for (i = 0; i < 2; i++)
+   {
+      snprintf(path, sizeof(path), "%s/%s", fixture_dir, names[i]);
+      if ((f = fopen(path, "wb")))
+      {
+         fwrite("\x89PNG", 1, 4, f);
+         fclose(f);
+      }
+   }
+   snprintf(cfg, sizeof(cfg), "%s/anim.cfg", fixture_dir);
+   if (!(f = fopen(cfg, "wb")))
+   {
+      CHECK(false, "fixture write failed");
+      return;
+   }
+   fprintf(f, "overlays = 1\n");
+   fprintf(f, "overlay0_name = ol0\n");
+   fprintf(f, "overlay0_full_screen = true\n");
+   fprintf(f, "overlay0_rect = \"0.0,0.0,1.0,1.0\"\n");
+   fprintf(f, "overlay0_overlay = still.png\n");
+   fprintf(f, "overlay0_descs = 2\n");
+   fprintf(f, "overlay0_desc0 = \"a,0.5,0.5,rect,0.1,0.1\"\n");
+   fprintf(f, "overlay0_desc0_overlay = anim.png\n");
+   fprintf(f, "overlay0_desc1 = \"b,0.2,0.2,rect,0.1,0.1\"\n");
+   fprintf(f, "overlay0_desc1_overlay = still.png\n");
+   fclose(f);
+
+   memset(&iface, 0, sizeof(iface));
+   iface.open                       = counting_open;
+   info.required_interface_version  = FILESTREAM_REQUIRED_VFS_VERSION;
+   info.iface                       = &iface;
+   filestream_vfs_init(&info);
+   still_opens = anim_opens = anim_kept = anim_null = 0;
+
+   task_queue_init(false, NULL);
+   clock_now  = 0;
+   clock_step = 0;
+   if (task_push_overlay_load_default(anim_cb, cfg, false, NULL))
+      while (queue_busy() && ticks < 100000)
+      {
+         task_queue_check();
+         ticks++;
+      }
+   task_queue_deinit();
+   release_tracked_images();
+   info.iface = NULL;
+   filestream_vfs_init(&info);
+
+   CHECK(still_opens == 0, "a still was read %u times beyond its decode",
+         still_opens);
+   CHECK(anim_opens == 1, "an animated file was read %u times for its "
+         "bytes, wanted 1", anim_opens);
+   CHECK(anim_kept == 1 && anim_null == 1,
+         "the pack kept %u animations and %u stills as stills, wanted 1 "
+         "and 1", anim_kept, anim_null);
+
+   if (failures == had)
+      fprintf(stderr, "[pass] one-read lane\n");
+}
+
+/* A load that fails retires: its callback runs once, with no overlay. */
+static unsigned error_cb_calls;
+static void error_cb(retro_task_t *task, void *task_data,
+      void *user_data, const char *err)
+{
+   error_cb_calls++;
+   overlay_cb(task, task_data, user_data, err);
+}
+
+static void lane_error_retires(void)
+{
+   char     cfg[512];
+   unsigned had   = failures;
+   unsigned ticks = 0;
+   FILE    *f;
+
+   snprintf(cfg, sizeof(cfg), "%s/bad.cfg", fixture_dir);
+   if (!(f = fopen(cfg, "wb")))
+   {
+      CHECK(false, "fixture write failed");
+      return;
+   }
+   /* One descriptor with two of its six fields. */
+   fprintf(f, "overlays = 1\n");
+   fprintf(f, "overlay0_name = ol0\n");
+   fprintf(f, "overlay0_full_screen = true\n");
+   fprintf(f, "overlay0_rect = \"0.0,0.0,1.0,1.0\"\n");
+   fprintf(f, "overlay0_overlay = img.png\n");
+   fprintf(f, "overlay0_descs = 1\n");
+   fprintf(f, "overlay0_desc0 = \"a,0.5\"\n");
+   fclose(f);
+
+   error_cb_calls  = 0;
+   loaded_overlays = 0;
+   task_queue_init(false, NULL);
+   clock_now  = 0;
+   clock_step = 0;
+   CHECK(task_push_overlay_load_default(error_cb, cfg, false, NULL),
+         "overlay task push failed");
+   while (queue_busy() && ticks < 100000)
+   {
+      task_queue_check();
+      ticks++;
+   }
+   /* The retire runs on the check after the handler finished. */
+   task_queue_check();
+   task_queue_deinit();
+   release_tracked_images();
+
+   CHECK(ticks < 100000, "a failed load never retired (%u checks)", ticks);
+   CHECK(error_cb_calls == 1, "callback ran %u times, wanted 1",
+         error_cb_calls);
+   CHECK(loaded_overlays == 0, "a failed load handed over %u overlays",
+         loaded_overlays);
+   if (failures == had)
+      fprintf(stderr, "[pass] error lane: a failed load retires (%u checks)\n",
+            ticks);
+}
 
 static void lane_completeness(void)
 {
@@ -438,6 +658,88 @@ static void lane_exhausted_window_progresses(void)
             "[pass] exhausted-window lane (%u ticks)\n", ticks);
 }
 
+/* A pack of @distinct images over @overlays overlays: each overlay's
+ * base and its descs cycle through them, so every image is named more
+ * than once */
+static void lane_predecode(void)
+{
+   char cfg[512], path[512];
+   unsigned had = failures, ticks = 0, o, d, i;
+   unsigned distinct = 6, overlays = 2, descs = 8, unthreaded_loaded;
+   FILE *f;
+
+   for (i = 0; i < distinct; i++)
+   {
+      snprintf(path, sizeof(path), "%s/p%u.png", fixture_dir, i);
+      if ((f = fopen(path, "wb")))
+      {
+         fputc(0, f);
+         fclose(f);
+      }
+   }
+   snprintf(cfg, sizeof(cfg), "%s/pre.cfg", fixture_dir);
+   if (!(f = fopen(cfg, "wb")))
+   {
+      CHECK(false, "fixture write failed");
+      return;
+   }
+   fprintf(f, "overlays = %u\n", overlays);
+   for (o = 0; o < overlays; o++)
+   {
+      fprintf(f, "overlay%u_name = ol%u\n", o, o);
+      fprintf(f, "overlay%u_full_screen = true\n", o);
+      fprintf(f, "overlay%u_rect = \"0.0,0.0,1.0,1.0\"\n", o);
+      fprintf(f, "overlay%u_overlay = p%u.png\n", o, o % distinct);
+      fprintf(f, "overlay%u_descs = %u\n", o, descs);
+      for (d = 0; d < descs; d++)
+      {
+         fprintf(f, "overlay%u_desc%u = \"a,0.5,0.5,rect,0.1,0.1\"\n",
+               o, d);
+         fprintf(f, "overlay%u_desc%u_overlay = p%u.png\n", o, d,
+               (o + d) % distinct);
+      }
+   }
+   fclose(f);
+
+   for (i = 0; i < 2; i++)
+   {
+      bool threaded = i == 1;
+      loaded_overlays = loaded_descs = images_loaded = 0;
+      decode_threads  = 0;
+      ticks           = 0;
+      task_queue_init(threaded, NULL);
+      clock_now  = 0;
+      clock_step = 0;
+      if (task_push_overlay_load_default(overlay_cb, cfg, false, NULL))
+         while (queue_busy() && ticks < 1000000)
+         {
+            task_queue_check();
+            ticks++;
+         }
+      task_queue_deinit();
+      release_tracked_images();
+      CHECK(loaded_overlays == overlays && loaded_descs == overlays * descs,
+            "%s load produced %u overlays and %u descs",
+            threaded ? "a threaded" : "an unthreaded",
+            loaded_overlays, loaded_descs);
+      CHECK(images_loaded == distinct,
+            "%s load decoded %u images for %u distinct",
+            threaded ? "a threaded" : "an unthreaded",
+            images_loaded, distinct);
+      if (!threaded)
+         unthreaded_loaded = images_loaded;
+      else
+         CHECK(decode_threads > 1,
+               "a threaded load decoded its pack on %u thread(s)",
+               decode_threads);
+   }
+   (void)unthreaded_loaded;
+
+   if (failures == had)
+      fprintf(stderr, "[pass] predecode lane (%u threads)\n",
+            decode_threads);
+}
+
 int main(void)
 {
    char cmd[600];
@@ -460,6 +762,12 @@ int main(void)
    lane_paced_matches_unpaced();
    lane_work_per_tick_does_not_scale();
    lane_exhausted_window_progresses();
+   lane_still_read_once();
+   lane_error_retires();
+   decode_lock = slock_new();
+   lane_predecode();
+   slock_free(decode_lock);
+   decode_lock = NULL;
 
    snprintf(cmd, sizeof(cmd), "rm -rf %s", fixture_dir);
    if (system(cmd) != 0) { }

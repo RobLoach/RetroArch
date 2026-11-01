@@ -109,7 +109,24 @@ enum driver_lifetime_flags
     * are reinitialized with valid resources
     * before the core notices that anything's wrong.
     */
-   DRIVER_LIFETIME_RESET = 1 << 0
+   DRIVER_LIFETIME_RESET = 1 << 0,
+
+   /**
+    * Passed to \c driver_uninit when the drivers are freed to be
+    * started again at once for another session: content loaded or
+    * closed, one core for another. It is not a reset - what a core's
+    * unloading ends still ends - but a driver that can outlive the
+    * video driver may be left running across it, as across a reset.
+    */
+   DRIVER_LIFETIME_SESSION_SWITCH = 1 << 1,
+
+   /**
+    * Passed to \c drivers_init along a content switch that left the
+    * audio driver out of the teardown: the running audio is carried
+    * into the new session - its rate set in place once the video
+    * driver has settled the rates - instead of opened again.
+    */
+   DRIVER_LIFETIME_AUDIO_CARRIED = 1 << 2
 };
 
 enum driver_ctl_state
@@ -156,6 +173,10 @@ int driver_find_index(const char *label, const char *drv);
  * If nonblock state is false, sets blocking state for both
  * audio and video drivers instead. */
 void driver_set_nonblock_state(void);
+
+/* Carries a new core audio rate to the running audio driver, keeping the
+ * device open. Returns false when the drivers need the reinit for it. */
+bool driver_set_audio_input_rate(void);
 
 /**
  * drivers_init:

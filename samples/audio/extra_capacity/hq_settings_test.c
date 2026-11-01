@@ -2,6 +2,7 @@
 
 /* Runtime defaults unrelated to the HQ setting. */
 struct defaults g_defaults;
+void RARCH_ERR(const char *fmt, ...) { (void)fmt; }
 bool *audio_get_bool_ptr(enum audio_action action)
 {
    static bool values[2];
@@ -12,6 +13,13 @@ bool *video_driver_get_threaded(void)
 {
    static bool value;
    return &value;
+}
+bool retroarch_override_setting_is_set(
+      enum rarch_override_setting enum_idx, void *data)
+{
+   (void)enum_idx;
+   (void)data;
+   return false;
 }
 
 struct hq_setting_row
@@ -35,6 +43,7 @@ int main(void)
    int i, count, found = 0, transport_found = 0;
    unsigned transport_menu = 0;
    unsigned menu_found = 0;
+   unsigned fastpath_menu = 0;
    struct config_bool_setting *rows = populate_settings_bool(&settings, &count);
    if (!rows || count > SETTINGS_BOOL_COUNT_MAX) return 2;
    for (i = 0; i < count; i++)
@@ -74,5 +83,16 @@ int main(void)
       }
    printf("Transport settings: default off, audio reinit, %d config rows, %u descriptor rows\n",
          transport_found, transport_menu);
-   return found != 1 || menu_found != 1 || transport_found != 2 || transport_menu != 2;
+   /* Init builds the integer front pair only behind this hint. */
+   for (i = 0; i < (int)ARRAY_SIZE(bool_rows); i++)
+      if (!strcmp(bool_rows[i].key, "audio_fastpath_s16"))
+      {
+         if (bool_rows[i].default_value || bool_rows[i].command != CMD_EVENT_AUDIO_REINIT)
+            return 7;
+         fastpath_menu++;
+      }
+   printf("Fixed-integer hint: default off, audio reinit, %u descriptor row\n",
+         fastpath_menu);
+   return found != 1 || menu_found != 1 || transport_found != 2 || transport_menu != 2
+      || fastpath_menu != 1;
 }

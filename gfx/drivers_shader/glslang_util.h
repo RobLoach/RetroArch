@@ -68,6 +68,36 @@ typedef enum glslang_format
    SLANG_FORMAT_MAX
 } glslang_format;
 
+static INLINE enum glslang_format glslang_hdr_output_format(
+      const struct video_shader *shader, unsigned pass,
+      enum glslang_format format)
+{
+   if (shader && pass + 1 == shader->passes)
+   {
+      int mode = video_shader_get_hdr_mode(shader);
+      if (mode == 0 && format == SLANG_FORMAT_R8G8B8A8_SRGB)
+         return SLANG_FORMAT_R8G8B8A8_UNORM;
+      if (mode == 1)
+         return SLANG_FORMAT_A2B10G10R10_UNORM_PACK32;
+      if (mode == 2)
+         return SLANG_FORMAT_R16G16B16A16_SFLOAT;
+   }
+   return format;
+}
+
+static INLINE enum glslang_format glslang_hdr_output_encoding(
+      const struct video_shader *shader, enum glslang_format legacy)
+{
+   int mode = video_shader_get_hdr_mode(shader);
+   if (mode == 0)
+      return SLANG_FORMAT_UNKNOWN;
+   if (mode == 1)
+      return SLANG_FORMAT_A2B10G10R10_UNORM_PACK32;
+   if (mode == 2)
+      return SLANG_FORMAT_R16G16B16A16_SFLOAT;
+   return legacy;
+}
+
 /* Textures with built-in meaning. */
 typedef enum slang_texture_semantic
 {
@@ -123,7 +153,13 @@ typedef enum glslang_filter_chain_address
    GLSLANG_FILTER_CHAIN_ADDRESS_MIRRORED_REPEAT      = 1,
    GLSLANG_FILTER_CHAIN_ADDRESS_CLAMP_TO_EDGE        = 2,
    GLSLANG_FILTER_CHAIN_ADDRESS_CLAMP_TO_BORDER      = 3,
-   GLSLANG_FILTER_CHAIN_ADDRESS_MIRROR_CLAMP_TO_EDGE = 4,
+   /* One entry per wrap mode a preset can name (rarch_wrap_to_address
+    * below), and no more: the Vulkan filter chain creates a sampler for
+    * every entry. A fifth, mirror-clamp-to-edge, stood here with no
+    * wrap mode mapping to it; its samplers were never bound, and
+    * creating them is invalid on a device without
+    * VK_KHR_sampler_mirror_clamp_to_edge - which is every device a
+    * core creates for itself through create_device. */
    GLSLANG_FILTER_CHAIN_ADDRESS_COUNT
 } glslang_filter_chain_address;
 
@@ -207,10 +243,33 @@ void glslang_include_cache_free(void *cache);
 bool glslang_read_shader_pragmas_cached(const char *path,
       struct shader_line_buf *output, void *cache);
 
+struct glslang_last_pass
+{
+   unsigned index;
+   char name[64];
+   bool needs_target;
+   bool inspect_feedback;
+};
+
+/* Scale and format requirements are known before compilation. Reserve
+ * an optional final copy until compiled feedback usage is known, for a
+ * last pass with no scale as for one at the viewport. */
+void glslang_last_pass_init(const struct video_shader *shader,
+      void *cache, struct glslang_last_pass *state);
+
 /* As glslang_read_shader_file(), but reads through @cache. */
 bool glslang_read_shader_file_cached(const char *path,
       struct shader_line_buf *output, bool root_file, bool is_optional,
       void *cache);
+
+/* Assemble the source for one stage ("vertex" / "fragment") from the
+ * include-expanded line buffer: line 0 is the #version line, '#pragma
+ * stage' selects, '#pragma name' and '#pragma format' are dropped,
+ * every other line of the active stage is kept.  Returns a malloc'd
+ * NUL-terminated string the caller frees, NULL on allocation failure;
+ * an empty line buffer yields an empty string. */
+char *glslang_build_stage_source(const struct shader_line_buf *lines,
+      const char *stage);
 
 bool shader_line_buf_init(struct shader_line_buf *buf);
 

@@ -63,6 +63,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <compat/strl.h>
 #include <boolean.h>
 #include <features/features_cpu.h>
 
@@ -72,6 +73,11 @@
 #include "../../../retroarch.h"
 #include "../../../configuration.h"
 #include "../../../msg_hash.h"
+
+#if defined(_WIN32) && !defined(_XBOX) && !defined(__WINRT__)
+bool stub_win32_modal_active;
+bool win32_message_modal_active(void) { return stub_win32_modal_active; }
+#endif
 
 /* --- singletons --- */
 static char s_video_state[1 << 16];
@@ -137,6 +143,7 @@ bool font_driver_matches(const font_data_t *font,
  * send its batch out at the end of their frame. Nothing draws here. */
 static gfx_display_t stub_disp;
 gfx_display_t *disp_get_ptr(void) { return &stub_disp; }
+int menu_driver_media_startup_token(void) { return 0; }
 void gfx_display_flush_batch(gfx_display_t *p_disp) { (void)p_disp; }
 void gfx_display_blend_begin(gfx_display_ctx_driver_t *dispctx, void *data)
 { (void)dispctx; (void)data; }
@@ -226,23 +233,19 @@ float gfx_display_get_dpi_scale(gfx_display_t *p_disp, void *settings_data,
 { (void)p_disp; (void)settings_data; (void)dims;
   (void)fullscreen; (void)is_widget; return 1.0f; }
 
-bool gfx_display_reset_textures_list_buffer(uintptr_t *item,
-      enum texture_filter_type filter_type, void *buffer,
-      unsigned buffer_len, enum image_type_enum image_type,
-      unsigned *dims)
-{
-   (void)item; (void)filter_type; (void)buffer; (void)buffer_len;
-   (void)image_type;
-   if (dims)
-      *dims = 0;
-   return false;
-}
-
-bool gfx_display_load_icon(const char *fullpath, bool supports_rgba,
-      uintptr_t *target_texture, uint64_t generation,
-      uint64_t *generation_ptr)
-{ (void)fullpath; (void)supports_rgba; (void)target_texture;
-  (void)generation; (void)generation_ptr; return false; }
+/* --- gfx_surface: no texture is ever made here --- */
+gfx_surface_t *gfx_surface_still(gfx_surface_t **slot,
+      enum texture_filter_type filter)
+{ (void)slot; (void)filter; return NULL; }
+bool gfx_surface_submit_path(gfx_surface_t *s, const char *path,
+      bool supports_rgba)
+{ (void)s; (void)path; (void)supports_rgba; return false; }
+bool gfx_surface_submit_buffer(gfx_surface_t *s,
+      enum image_type_enum type, const void *buf, size_t len,
+      bool supports_rgba)
+{ (void)s; (void)type; (void)buf; (void)len; (void)supports_rgba;
+  return false; }
+void gfx_surface_free(gfx_surface_t *s) { (void)s; }
 
 font_data_t *gfx_display_font_file(gfx_display_t *p_disp, char *fontpath,
       float font_size, bool is_threaded)
@@ -252,7 +255,9 @@ font_data_t *gfx_display_font_file(gfx_display_t *p_disp, char *fontpath,
 /* --- animation --- */
 bool gfx_animation_push_widget(gfx_animation_ctx_entry_t *entry)
 { (void)entry; return true; }
-bool gfx_animation_kill_widget_by_tag(uintptr_t *tag) { (void)tag; return true; }
+uintptr_t stub_last_killed_animation_tag;
+bool gfx_animation_kill_widget_by_tag(uintptr_t *tag)
+{ stub_last_killed_animation_tag = *tag; return true; }
 void gfx_animation_timer_start_widget(float *timer,
       gfx_timer_ctx_entry_t *timer_entry)
 { (void)timer_entry; if (timer) *timer = 0.0f; }
@@ -267,6 +272,9 @@ static settings_t s_settings;
 settings_t *config_get_ptr(void) { return &s_settings; }
 retro_time_t cpu_features_get_time_usec(void) { return 0; }
 void video_thread_status_text(const char *s) { (void)s; }
+bool video_driver_thread_wrapper_active(void) { return false; }
+bool video_thread_run_queued(custom_command_method_t func, void *data)
+{ (void)func; (void)data; return false; }
 
 /* --- video driver --- */
 uint32_t video_driver_get_disp_flags(void) { return 0; }
@@ -296,4 +304,13 @@ STUB_WIDGET(gfx_widget_netplay_ping);
 bool gfx_surface_wants_rgba(void)
 {
    return false;
+}
+
+/* No frame here carries a core's views, so widgets lay out at the
+ * output size. */
+unsigned video_views_ui_dims(const video_views_layout_t *layout,
+      unsigned dims)
+{
+   (void)layout;
+   return dims;
 }

@@ -191,6 +191,11 @@ static void *gfx_ctx_xegl_init(void *video_driver)
       void *device         = NULL;
       settings_t *settings = config_get_ptr();
       xegl->gl_gpu_list    = egl_gpu_list_new();
+      /* The device the index was chosen as, wherever the list now
+       * puts it */
+      if (xegl->gl_gpu_list && settings)
+         settings->ints.gl_gpu_index = video_driver_gpu_index_resolve(
+               xegl_api, settings->ints.gl_gpu_index, xegl->gl_gpu_list);
       if (xegl->gl_gpu_list && settings && settings->ints.gl_gpu_index > 0)
       {
          if ((device = egl_gpu_device_at(settings->ints.gl_gpu_index)))
@@ -535,13 +540,11 @@ error:
 }
 
 static void gfx_ctx_xegl_input_driver(void *data,
-      const char *joypad_name,
-      input_driver_t **input, void **input_data)
+      const char *joypad_name)
 {
-   void *xinput = input_driver_init_wrap(&input_x, joypad_name);
-
-   *input       = xinput ? &input_x : NULL;
-   *input_data  = xinput;
+   /* no input driver of this context's own: the frontend starts the
+    * one that goes with an X11 window */
+   input_driver_video_window(INPUT_WINDOW_X11, NULL);
 }
 
 static enum gfx_ctx_api gfx_ctx_xegl_get_api(void *data) { return xegl_api; }
@@ -598,6 +601,18 @@ static void gfx_ctx_xegl_release_current(void *data)
 #endif
 }
 
+#ifdef HAVE_EGL
+static bool gfx_ctx_xegl_shared_context_new(void *data,
+      gfx_ctx_shared_context_t *out)
+{
+   xegl_ctx_data_t *xegl = (xegl_ctx_data_t*)data;
+   memset(out, 0, sizeof(*out));
+   if (!xegl || xegl_api != GFX_CTX_OPENGL_API)
+      return false;
+   return egl_shared_context_new(&xegl->egl, EGL_OPENGL_API, out);
+}
+#endif
+
 static void gfx_ctx_xegl_bind_hw_render(void *data, bool enable)
 {
 #ifdef HAVE_EGL
@@ -637,10 +652,15 @@ static gfx_ctx_proc_t gfx_ctx_xegl_get_proc_address(const char *symbol)
 static uint32_t gfx_ctx_xegl_get_flags(void *data)
 {
    uint32_t flags = 0;
+#ifdef HAVE_EGL
+   xegl_ctx_data_t *xegl = (xegl_ctx_data_t*)data;
+   if (xegl && egl_no_shared_context(&xegl->egl))
+      BIT32_SET(flags, GFX_CTX_FLAGS_NO_SHARED_CONTEXT);
+#endif
 
    if (string_is_equal(video_driver_get_ident(), "glcore"))
    {
-#if defined(HAVE_SLANG) && defined(HAVE_SPIRV_CROSS)
+#if defined(HAVE_SLANG) && (defined(HAVE_SPIRV_CROSS) || defined(HAVE_RSLC))
       BIT32_SET(flags, GFX_CTX_FLAGS_SHADERS_SLANG);
 #endif
    }
@@ -717,5 +737,14 @@ const gfx_ctx_driver_t gfx_ctx_x_egl =
    gfx_ctx_xegl_destroy_surface,
    x11_presentable,
    NULL, /* last_present_time */
-   gfx_ctx_xegl_release_current
+   gfx_ctx_xegl_release_current,
+#ifdef HAVE_EGL
+   gfx_ctx_xegl_shared_context_new,
+   egl_shared_context_bind,
+   egl_shared_context_free
+#else
+   NULL, /* shared_context_new */
+   NULL, /* shared_context_bind */
+   NULL  /* shared_context_free */
+#endif
 };

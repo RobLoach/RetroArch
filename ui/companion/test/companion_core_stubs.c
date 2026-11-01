@@ -58,6 +58,7 @@ char stub_last_scan_dir[PATH_MAX_LENGTH];
 settings_t *config_get_ptr(void) { return &test_settings; }
 runloop_state_t *runloop_state_get_ptr(void) { return &test_runloop; }
 input_driver_state_t *input_state_get_ptr(void) { return &test_input; }
+bool input_driver_mouse_grabbed(void) { return (test_input.flags & INP_FLAG_GRAB_MOUSE_STATE) != 0; }
 video_driver_state_t *video_state_get_ptr(void) { return &test_video; }
 struct menu_state *menu_state_get_ptr(void) { return &test_menu; }
 bool menu_driver_ctl(enum rarch_menu_ctl_state state, void *data) { (void)state; (void)data; return true; }
@@ -163,12 +164,12 @@ struct video_shader *menu_shader_get(void)
       strlcpy(test_shader.parameters[0].desc, "Scanline strength", 64);
       test_shader.parameters[0].minimum = 0.0f; test_shader.parameters[0].maximum = 1.0f;
       test_shader.parameters[0].step = 0.05f; test_shader.parameters[0].initial = 0.5f;
-      test_shader.parameters[0].current = 0.5f;
+      video_shader_param_set(&test_shader.parameters[0], 0.5f);
       strlcpy(test_shader.parameters[1].id, "CURV", 64);
       test_shader.parameters[1].desc[0] = '\0';   /* no desc: id shows */
       test_shader.parameters[1].minimum = 0.0f; test_shader.parameters[1].maximum = 10.0f;
       test_shader.parameters[1].step = 1.0f; test_shader.parameters[1].initial = 2.0f;
-      test_shader.parameters[1].current = 2.0f;
+      video_shader_param_set(&test_shader.parameters[1], 2.0f);
    }
    return &test_shader;
 }
@@ -208,11 +209,67 @@ bool task_push_load_content_with_current_core_from_companion_ui(
 
 bool task_push_start_current_core(content_ctx_info_t *ci) { (void)ci; stub_calls_start_core++; return true; }
 
-bool task_push_dbscan(const char *playlist_dir, const char *content_db,
-      const char *path, bool directory, bool show_hidden, retro_task_callback_t cb)
+bool task_push_dbscan(const char *path, retro_task_callback_t cb)
 {
-   (void)playlist_dir; (void)content_db; (void)directory; (void)show_hidden; (void)cb;
+   (void)cb;
    stub_calls_dbscan++;
    strlcpy(stub_last_scan_dir, path ? path : "", sizeof(stub_last_scan_dir));
    return true;
+}
+
+/* Entries and macros (input_driver.c): kept by number as their text. An
+ * entry reads when it has a colon, a macro when it has a digit, as a
+ * stand-in for the real parsers; sixteen of each at most. */
+char stub_entry_text[256][64];
+char stub_macro_text[256][64];
+
+static bool stub_shortcut_put(char (*t)[64], unsigned n, const char *spec,
+      bool (*reads)(const char *))
+{
+   unsigned i, had = 0;
+   if (!n || n > 255 || !reads(spec))
+      return false;
+   for (i = 1; i < 256; i++)
+      if (t[i][0] && i != n)
+         had++;
+   if (!t[n][0] && had >= 16)
+      return false;
+   strlcpy(t[n], spec, sizeof(t[n]));
+   return true;
+}
+
+static bool stub_entry_reads(const char *s) { return strchr(s, ':') != NULL; }
+static bool stub_macro_reads(const char *s) { return strpbrk(s, "0123456789") != NULL; }
+
+bool input_entry_add(unsigned number, const char *spec)
+{ return stub_shortcut_put(stub_entry_text, number, spec, stub_entry_reads); }
+bool input_entry_remove(unsigned number)
+{
+   if (!number || number > 255 || !stub_entry_text[number][0])
+      return false;
+   stub_entry_text[number][0] = '\0';
+   return true;
+}
+size_t input_entry_spec(unsigned number, char *s, size_t len)
+{
+   if (!number || number > 255 || !stub_entry_text[number][0])
+      return 0;
+   return strlcpy(s, stub_entry_text[number], len);
+}
+size_t input_entry_targets(char *s, size_t len)
+{ return strlcpy(s, "menu_toggle|quit|macro_1", len); }
+bool input_macro_set(unsigned number, const char *spec)
+{ return stub_shortcut_put(stub_macro_text, number, spec, stub_macro_reads); }
+bool input_macro_remove(unsigned number)
+{
+   if (!number || number > 255 || !stub_macro_text[number][0])
+      return false;
+   stub_macro_text[number][0] = '\0';
+   return true;
+}
+size_t input_macro_spec(unsigned number, char *s, size_t len)
+{
+   if (!number || number > 255 || !stub_macro_text[number][0])
+      return 0;
+   return strlcpy(s, stub_macro_text[number], len);
 }

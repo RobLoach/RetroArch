@@ -10,7 +10,7 @@ static int16_t source_i[FRAMES * 2];
 static float captured[FRAMES * 2];
 static size_t captured_samples, device_bytes;
 static unsigned failures;
-extern unsigned pipeline_control_calls;
+extern bool pipeline_consumer_running;
 
 static void *test_init(const char *device, unsigned rate, unsigned latency,
       unsigned *new_rate)
@@ -147,14 +147,49 @@ static void wide_then_float_case(void)
       return;
    }
 
-   /* And the float entry lands afterwards, on an empty ring. */
+   /* And the float entry lands afterwards, on an empty ring, with the
+    * wrapper's consumer running: decided at once, and installed by the
+    * consumer before its next pass, the producer writing nothing until
+    * it has. A populated ring keeps its native format there too. */
    {
       audio_driver_t wrapper = *st->current_audio;
       const audio_driver_t *saved = st->current_audio;
+      float frame[AUDIO_PIPE_CANON_CHANNELS];
+      size_t head;
       wrapper.ident = "audio-thread";
       st->current_audio = &wrapper;
+      pipeline_consumer_running = true;
       audio_driver_set_core_float(true);
-      if (pipeline_control_calls != 1) failures++;
+      head = retro_atomic_load_relaxed_size(&st->pipe_ring.head);
+      memset(source_f, 0, sizeof(source_f));
+      audio_driver_sample_batch_float(source_f, 1);
+      if (     !audio_driver_format_pending(st) || st->pipe_float
+            || retro_atomic_load_relaxed_size(&st->pipe_ring.head) != head)
+      {
+         printf("wide+float: the format changed, or the producer wrote,"
+               " before the consumer's pass\n");
+         failures++;
+      }
+      audio_driver_pipeline_pause_apply(st, true);
+      if (audio_driver_format_pending(st) || !st->pipe_float)
+      {
+         printf("wide+float: the consumer's pass did not install the format\n");
+         failures++;
+      }
+      memset(frame, 0, sizeof(frame));
+      if (retro_spsc_write(&st->pipe_ring, frame, st->pipe_frame_bytes)
+            != st->pipe_frame_bytes) abort();
+      audio_driver_set_core_float(false);
+      audio_driver_pipeline_pause_apply(st, true);
+      if (!st->pipe_float)
+      {
+         printf("wide+float: the handed-over change reinterpreted queued samples\n");
+         failures++;
+      }
+      retro_spsc_skip(&st->pipe_ring, st->pipe_frame_bytes);
+      audio_driver_set_core_float(true);
+      audio_driver_pipeline_pause_apply(st, true);
+      pipeline_consumer_running = false;
       st->current_audio = saved;
    }
 
@@ -248,6 +283,67 @@ static void control_gate_case(void)
    printf("control gate: a driver without write_avail does not take rate control\n");
 }
 
+/* The integer front pair exists only behind the Resample to Fixed
+ * Integer hint, which reinits audio; nothing else reads it, so with the
+ * hint off no integer tables are built. A batch goes through either
+ * way. */
+static size_t counted_bytes;
+static ssize_t count_write(void *data, const void *buf, size_t len)
+{
+   (void)data; (void)buf;
+   counted_bytes += len;
+   return len;
+}
+
+static void fastpath_gate_case(void)
+{
+   audio_driver_state_t *st = &audio_driver_st;
+   settings_t *settings     = config_get_ptr();
+   ssize_t (*saved_write)(void*, const void*, size_t) = audio_null.write;
+   unsigned pass;
+   audio_null.write = count_write;
+   for (pass = 0; pass < 2; pass++)
+   {
+      memset(settings, 0, sizeof(*settings));
+      settings->bools.audio_enable             = true;
+      settings->bools.audio_sync               = true;
+      settings->bools.audio_fastpath_s16       = pass != 0;
+      settings->uints.audio_output_sample_rate = 48000;
+      settings->uints.audio_latency            = 64;
+      settings->floats.slowmotion_ratio        = 1.0f;
+      strcpy(settings->arrays.audio_resampler, "sinc");
+      settings->uints.audio_resampler_quality  = RESAMPLER_QUALITY_HIGHEST;
+
+      st->input       = 48000;
+      st->volume_gain = 1.0f;
+      audio_driver_set_core_float(false);
+      video_state_get_ptr()->av_info.timing.fps         = 60.0;
+      video_state_get_ptr()->av_info.timing.sample_rate = 48000;
+      if (!audio_driver_init_internal(settings, false))
+         abort();
+      if ((st->resampler_data_int16 != NULL) != (pass != 0)
+            || (st->input_data_int16 != NULL) != (pass != 0))
+      {
+         printf("fastpath gate: hint %s, integer front pair %s\n",
+               pass ? "on" : "off",
+               st->resampler_data_int16 ? "built" : "absent");
+         failures++;
+      }
+      counted_bytes = 0;
+      audio_driver_publish_runloop();
+      audio_driver_sample_batch(source_i, FRAMES);
+      if (!counted_bytes)
+      {
+         printf("fastpath gate: hint %s, nothing reached the device\n",
+               pass ? "on" : "off");
+         failures++;
+      }
+      audio_driver_deinit();
+   }
+   audio_null.write = saved_write;
+   printf("fastpath gate: the integer front pair follows the hint\n");
+}
+
 int main(void)
 {
    static const unsigned latencies[] = {0, 8, 16, 32, 64, 66, 67, 68, 80};
@@ -271,7 +367,9 @@ int main(void)
             run_case(format != 0, threaded != 0, latencies[i]);
    wide_then_float_case();
    control_gate_case();
-   printf("36 cases plus the wide-then-float and control-gate ones, %u failures\n",
+   fastpath_gate_case();
+   printf("36 cases plus the wide-then-float, control-gate and fastpath-gate"
+         " ones, %u failures\n",
          failures);
    return failures ? 1 : 0;
 }

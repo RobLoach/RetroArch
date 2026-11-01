@@ -86,13 +86,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <windows.h>
+#include <direct.h>
+#else
 #include <unistd.h>
+#endif
 
 #include <streams/interface_stream.h>
 #include <streams/file_stream.h>
 #include <retro_common_api.h>
 
-/* Mirrors task_core_updater.c */
+/* Mirrors task_core_updater.c and the window in task_nbio_slice.c */
 #define CORE_CRC_CHUNK           (256 * 1024)
 #define CORE_CRC_TICK_BUDGET_US  4000
 
@@ -137,7 +142,50 @@ static void clock_reset(int64_t step)
 /* Fixtures                                                          */
 /* ================================================================= */
 
+#ifdef _WIN32
+static char g_dir[512];
+#else
 static char g_dir[] = "/tmp/core_crc_test_XXXXXX";
+#endif
+static char g_fixture_paths[32][512];
+static unsigned g_fixture_count;
+
+static int make_temp_dir(void)
+{
+#ifdef _WIN32
+   char base[MAX_PATH];
+   DWORD len = GetTempPathA(sizeof(base), base);
+   unsigned attempt;
+   if (!len || len >= sizeof(base))
+      return 0;
+   for (attempt = 0; attempt < 100; attempt++)
+   {
+      int count = snprintf(g_dir, sizeof(g_dir), "%score_crc_test_%lu_%u",
+            base, (unsigned long)GetCurrentProcessId(), attempt);
+      if (count < 0 || (size_t)count >= sizeof(g_dir))
+         return 0;
+      if (CreateDirectoryA(g_dir, NULL))
+         return 1;
+      if (GetLastError() != ERROR_ALREADY_EXISTS)
+         return 0;
+   }
+   return 0;
+#else
+   return mkdtemp(g_dir) != NULL;
+#endif
+}
+
+static void remove_fixtures(void)
+{
+   unsigned i;
+   for (i = 0; i < g_fixture_count; i++)
+      remove(g_fixture_paths[i]);
+#ifdef _WIN32
+   _rmdir(g_dir);
+#else
+   rmdir(g_dir);
+#endif
+}
 
 /* Non-uniform content, so a slicing bug that drops or double-counts a
  * span is caught rather than masked by a run of identical bytes. */
@@ -149,6 +197,8 @@ static char *make_file(const char *name, size_t len)
    RFILE *f;
    uint8_t *buf = NULL;
 
+   if (g_fixture_count >= 32)
+      return NULL;
    snprintf(path, sizeof(path), "%s/%s", g_dir, name);
 
    if (len && !(buf = (uint8_t*)malloc(len)))
@@ -166,15 +216,12 @@ static char *make_file(const char *name, size_t len)
       free(buf);
       return NULL;
    }
+   strcpy(g_fixture_paths[g_fixture_count++], path);
    if (len)
       filestream_write(f, buf, (int64_t)len);
-   /* filestream_close() frees the RFILE on success, so the caller
-    * frees only when it fails -- same idiom as
-    * filestream_write_file().  intfstream_close() is the opposite:
-    * it closes the inner file but leaves the intfstream to the
-    * caller, which is why close_stream() below does free it. */
-   if (filestream_close(f) != 0)
-      free(f);
+   /* filestream_close consumes the RFILE even on failure.
+    * intfstream_close leaves the outer intfstream to its caller. */
+   filestream_close(f);
    free(buf);
    return path;
 }
@@ -249,34 +296,59 @@ static void slice_reset(core_crc_slice_t *slice)
    slice->active      = false;
 }
 
+/* Mirrors the threaded-queue grant of task_nbio_slice_open(): a whole
+ * window per call, with a floor of one work item.  The unthreaded
+ * share of the window only ever shrinks the allowance, down to that
+ * same floor, which the exhausted-budget lane already covers. */
+typedef struct
+{
+   int64_t start;
+   int64_t allowance;
+   uint8_t floor;
+} slice_budget_t;
+
+static bool slice_within_budget(slice_budget_t *b)
+{
+   if (b->floor)
+   {
+      b->floor = 0;
+      return true;
+   }
+   return __wrap_cpu_features_get_time_usec() - b->start < b->allowance;
+}
+
 static bool slice_step(core_crc_slice_t *slice, const char *core_path,
       uint32_t *crc)
 {
-   int64_t deadline;
+   slice_budget_t budget;
 
-   if (!slice->active)
+   budget.start     = __wrap_cpu_features_get_time_usec();
+   budget.allowance = CORE_CRC_TICK_BUDGET_US;
+   budget.floor     = 1;
+
+   while (slice_within_budget(&budget))
    {
-      slice->accumulator = 0;
-      if (!(slice->file = open_ro(core_path)))
+      int64_t hashed;
+
+      if (!slice->active)
       {
-         *crc = 0;
-         return true;
+         slice->accumulator = 0;
+         if (!(slice->file = open_ro(core_path)))
+         {
+            *crc = 0;
+            return true;
+         }
+         intfstream_rewind(slice->file);
+         slice->active = true;
       }
-      intfstream_rewind(slice->file);
-      slice->active = true;
-   }
 
-   deadline = __wrap_cpu_features_get_time_usec() + CORE_CRC_TICK_BUDGET_US;
-   do
-   {
-      int64_t hashed = intfstream_crc_step(slice->file,
-            &slice->accumulator, CORE_CRC_CHUNK);
-      if (hashed > 0)
+      if ((hashed = intfstream_crc_step(slice->file,
+                  &slice->accumulator, CORE_CRC_CHUNK)) > 0)
          continue;
       *crc = (hashed == 0) ? slice->accumulator : 0;
       slice_reset(slice);
       return true;
-   } while (__wrap_cpu_features_get_time_usec() < deadline);
+   }
 
    return false;
 }
@@ -503,9 +575,7 @@ static void test_abandoned_slice_releases_stream(void)
 
 int main(void)
 {
-   char cmd[600];
-
-   if (!mkdtemp(g_dir))
+   if (!make_temp_dir())
    {
       printf("SKIP: could not create temp dir\n");
       return 0;
@@ -520,8 +590,7 @@ int main(void)
    test_missing_file_completes();
    test_abandoned_slice_releases_stream();
 
-   snprintf(cmd, sizeof(cmd), "rm -rf %s", g_dir);
-   if (system(cmd)) { /* best effort */ }
+   remove_fixtures();
 
    printf("\n%s (%d check%s, %d failure%s)\n",
          failures ? "FAILED" : "PASSED",

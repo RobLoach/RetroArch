@@ -4118,8 +4118,8 @@ static uint32_t rflac__init_private__native(rflac_init_info* pInit,
    /* Pre Condition: The bit stream should be sitting just past the 4-byte id
     * header. */
 
-   uint8_t isLastBlock;
-   uint8_t blockType;
+   uint8_t isLastBlock = 0;
+   uint8_t blockType   = 0;
    uint32_t blockSize;
    rflac_streaminfo streaminfo;
 
@@ -6620,6 +6620,12 @@ rflac_t *rflac_new_raw(const rflac_format_t *fmt)
       free(f);
       return NULL;
    }
+   /* The rewind point rflac_process() takes before every frame. A
+    * headerless decoder knows its geometry now, so it is allocated with
+    * the decoder rather than on the first frame; a caller that keeps
+    * the decoder and rewinds it with rflac_reset() then decodes without
+    * allocating. If this fails it is allocated on first use as before. */
+   f->saved = (rflac*)malloc(sizeof(rflac));
 
    return f;
 }

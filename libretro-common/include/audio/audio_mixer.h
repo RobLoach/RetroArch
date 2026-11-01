@@ -108,9 +108,13 @@ audio_mixer_sound_t* audio_mixer_load_weba(void *buffer, size_t size);
 audio_mixer_sound_t* audio_mixer_load_weba_avail(void *buffer, size_t size,
       size_t avail);
 
-/* Compressed-byte read position of a stream voice's decoder (0 when
- * not a live buffer-mode stream voice).  Thread-safe. */
+/* Compressed-byte read position of a stream voice's decoder as of the
+ * last mix (0 when not a live buffer-mode stream voice).  Takes no
+ * lock; one thread per voice, the one that calls
+ * audio_mixer_voice_set_avail. */
 size_t audio_mixer_voice_buffer_tell(audio_mixer_voice_t *voice);
+/* Lock-free snapshot for this play only. Never inspects the live decoder. */
+size_t audio_mixer_voice_buffer_read_end(audio_mixer_voice_t *voice, size_t serial);
 
 void audio_mixer_destroy(audio_mixer_sound_t* sound);
 
@@ -129,13 +133,38 @@ void audio_mixer_sound_set_data_owner(audio_mixer_sound_t *sound,
 void audio_mixer_sound_set_end_granule(audio_mixer_sound_t *sound,
       int64_t end_granule);
 
+/* The caller's word for a sound, for its stop callback: set before
+ * the play, read by the callback on the mixing thread. */
+void audio_mixer_sound_set_tag(audio_mixer_sound_t *sound, unsigned tag);
+unsigned audio_mixer_sound_tag(const audio_mixer_sound_t *sound);
+
 /* Resident prefix of a windowed sound's source buffer: bounds the
  * decoder's container header parse at open.  0 = fully resident. */
 void audio_mixer_sound_set_avail(audio_mixer_sound_t *sound, size_t avail);
 
-/* Raise a live stream voice's resident prefix as the window slides.
- * Takes the voice lock, like audio_mixer_voice_buffer_tell. */
+/* Exclusive sound owner: attach a started audio_transfer context for
+ * this sound's codec, already positioned by a worker. Success takes
+ * ownership. The next matching play consumes it once; output-rate or
+ * float/S16 changes refuse the play without consuming it. Keep its
+ * borrowed source alive through the sound's usual source ownership. */
+bool audio_mixer_sound_set_prepared_transfer(audio_mixer_sound_t *sound,
+      void *transfer, unsigned mix_rate, bool s16);
+/* Applied before a new voice becomes visible to the mixer. */
+void audio_mixer_sound_set_initial_paused(audio_mixer_sound_t *sound,
+      bool paused);
+
+/* Set a live stream voice's resident prefix as the window slides.
+ * Takes no lock: the mix applies it before its next decode.  A bound
+ * set after audio_mixer_voice_buffer_tell belongs to the position
+ * that call returned, and is dropped if the decoder has rewound since
+ * - call both again.  One set with no tell before it stands across
+ * rewinds. */
 void audio_mixer_voice_set_avail(audio_mixer_voice_t *voice, size_t avail);
+
+/* A retained session's bound: requests for a retired play are ignored
+ * by a reused voice. serial is captured with audio_mixer_voice_clock. */
+void audio_mixer_voice_set_avail_bound(audio_mixer_voice_t *voice,
+      size_t avail, size_t serial);
 
 audio_mixer_voice_t* audio_mixer_play(audio_mixer_sound_t* sound,
       bool repeat, float volume,
@@ -144,6 +173,27 @@ audio_mixer_voice_t* audio_mixer_play(audio_mixer_sound_t* sound,
       audio_mixer_stop_cb_t stop_cb);
 
 void audio_mixer_stop(audio_mixer_voice_t* voice);
+
+/* The owner of a live voice may change its repeat policy without restarting
+ * it. The mixer samples the request at the next end of the source. */
+void audio_mixer_voice_set_repeat(audio_mixer_voice_t *voice, bool repeat);
+
+/* Retain the exact decoder/resampler/PCM position while paused. Applied
+ * at the next mix block boundary; an already mixing block may finish.
+ * The caller owns this live voice until stopped, as for gain/volume.
+ * NULL is harmless. A new voice uses the sound's initial pause setting. */
+void audio_mixer_voice_set_paused(audio_mixer_voice_t *voice, bool paused);
+
+/* PCM frames contributed to the mix, at the output sample rate. This
+ * advances only for actual PCM, not pauses, starvation or decode-ahead,
+ * and continues across loops. The count wraps modulo SIZE_MAX+1; poll
+ * often enough to accumulate unsigned deltas across a wrap. One live
+ * voice per caller, as for pause/gain. False for an idle/NULL voice.
+ * serial distinguishes separate plays, including voice/slot reuse and
+ * mixer restart. False during a reset; retry next poll, never spin.
+ * This is a mix clock, not a physical audio-device play cursor. */
+bool audio_mixer_voice_clock(audio_mixer_voice_t *voice,
+      size_t *frames, unsigned *rate, size_t *serial);
 
 float audio_mixer_voice_get_volume(audio_mixer_voice_t *voice);
 

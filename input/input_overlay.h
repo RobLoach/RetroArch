@@ -102,14 +102,12 @@ enum overlay_show_input_type
 
 enum OVERLAY_LOADER_FLAGS
 {
-   OVERLAY_LOADER_RGBA_SUPPORT = (1 << 0),
    OVERLAY_LOADER_IS_OSK       = (1 << 1),
-   /* The driver samples XRGB2101010, so a 16-bit PNG in the pack is
-    * decoded at ten bits a channel instead of being flattened to
-    * eight. An 8-bit image decodes as it always did. */
-   OVERLAY_LOADER_10BIT        = (1 << 2),
    /* A desc of the pack names the LED its image shows (_led). */
-   OVERLAY_LOADER_HAS_LEDS     = (1 << 3)
+   OVERLAY_LOADER_HAS_LEDS     = (1 << 3),
+   /* The pack's images were decoded together before the first
+    * overlay was parsed (task_overlay_predecode) */
+   OVERLAY_LOADER_PREDECODED   = (1 << 4)
 };
 
 enum INPUT_OVERLAY_FLAGS
@@ -124,7 +122,12 @@ enum INPUT_OVERLAY_FLAGS
    INPUT_OVERLAY_TEXTURES_DECLINED = (1 << 5),
    /* The pack names its LED images (overlayN_descM_led): the overlay
     * LED driver shows and hides those, and ledN_map is not used. */
-   INPUT_OVERLAY_HAS_LEDS = (1 << 6)
+   INPUT_OVERLAY_HAS_LEDS = (1 << 6),
+   /* A stylus is in use: the overlay stays loaded but is not drawn,
+    * takes no touches and answers no pointer queries, so the pen
+    * reaches the core through the input driver. Level-triggered from
+    * the run loop. */
+   INPUT_OVERLAY_STYLUS_HIDDEN = (1 << 7)
 };
 
 enum OVERLAY_FLAGS
@@ -253,6 +256,9 @@ struct overlay_desc
    float range_x_mod, range_y_mod;
    float mod_x, mod_y, mod_w, mod_h;
    float delta_x, delta_y;
+   /* the delta its image was last drawn at: a movable desc's geometry
+    * goes to the driver only when it moves */
+   float sent_dx, sent_dy;
    float x;
    float y;
    /* These are 'raw' x/y values shifted
@@ -299,6 +305,9 @@ struct overlay
     * the overlay is enabled on a driver with load_textures; views
     * into input_overlay_t::page_textures. */
    uintptr_t *textures;
+   /* The pack's unique image behind each of those handles, alongside
+    * them in the same block. */
+   uint32_t *texture_images;
 
    struct texture_image image;
 
@@ -366,12 +375,8 @@ typedef struct input_overlay_state
    /* This is a bitmask of (1 << key_bind_id). */
    input_bits_t buttons;
 
-   /* Input pointers from input_state */
-   struct
-   {
-      int16_t x;
-      int16_t y;
-   } touch[OVERLAY_MAX_TOUCH];
+   /* Input pointers from input_state: x, y as VIDEO_POS_PACK */
+   uint32_t touch[OVERLAY_MAX_TOUCH];
    int touch_count;
 } input_overlay_state_t;
 
@@ -380,8 +385,7 @@ typedef struct input_overlay_mouse_state
    float scale_x;
    float scale_y;
 
-   int16_t prev_screen_x;
-   int16_t prev_screen_y;
+   uint32_t prev_screen_pos;   /* VIDEO_POS_PACK */
 
    /* Bits 0-2 used for LMB, RMB, MMB */
    uint8_t click;
@@ -391,17 +395,12 @@ typedef struct input_overlay_mouse_state
 /* Non-hitbox input state for pointer, mouse, and lightgun */
 typedef struct input_overlay_pointer_state
 {
-   /* Input pointers that missed every hitbox */
-   struct
-   {
-      int16_t x;
-      int16_t y;
-   } ptr[OVERLAY_MAX_TOUCH];
+   /* Input pointers that missed every hitbox: VIDEO_POS_PACK */
+   uint32_t ptr[OVERLAY_MAX_TOUCH];
    unsigned count;
 
-   /* Main pointer, full screen */
-   int16_t screen_x;
-   int16_t screen_y;
+   /* Main pointer, full screen: VIDEO_POS_PACK */
+   uint32_t screen_pos;
 
    struct input_overlay_lightgun_state
    {
@@ -416,6 +415,8 @@ typedef struct input_overlay_pointer_state
    uint8_t device_mask;
 } input_overlay_pointer_state_t;
 
+#define INPUT_OVERLAY_ST(ol) (&(ol)->overlay_states[(ol)->state_cur])
+
 struct input_overlay
 {
    struct overlay *overlays;
@@ -423,7 +424,10 @@ struct input_overlay
    char *path;
    void *iface_data;
    const video_overlay_interface_t *iface;
-   input_overlay_state_t overlay_state;
+   /* This poll's state and the last one's, flipped each poll, so the
+    * last is kept without a copy: INPUT_OVERLAY_ST() is this poll's */
+   input_overlay_state_t overlay_states[2];
+   unsigned state_cur;
    input_overlay_pointer_state_t pointer_state;
    struct texture_image **images;
    /* One block: the pack's texture handle per unique image (the first
@@ -438,9 +442,12 @@ struct input_overlay
    void **anim_data;
    size_t *anim_len;
    void **anim_stream;
-   /* When the frame showing now is due to be replaced, in
-    * microseconds on the same clock as the rest of the frontend. */
-   int64_t *anim_next_us;
+   /* A looping image's playback (gfx_surface_player_t*) into its
+    * surface, made on its first tick once the pack is uploaded. */
+   void **anim_player;
+   /* Set while a looping image's slot holds a frame the driver dropped:
+    * it is sent again before the stream moves on. */
+   uint8_t *anim_resend;
    /* A gfx_surface per unique image, holding that texture: the same
     * ownership the animated previews use, so an overlay asset and a
     * preview frame reach the GPU through one path. num_images of
@@ -449,13 +456,19 @@ struct input_overlay
 
    /* Two-frame APNGs are treated as a pressed/unpressed pair rather
     * than a looping animation. One entry per unique image; only valid
-    * when the corresponding anim_stream entry is non-NULL. */
+    * when the corresponding anim_stream entry is non-NULL.
+    * INPUT_OVERLAY_2FRAME_ATLAS once both frames are one texture,
+    * stacked: a press is then the texture rectangle moved, nothing
+    * uploaded. */
    uint8_t *anim_2frame;
    uint8_t *anim_2frame_pressed;
    uint8_t *anim_2frame_cur;
    /* Both frames of each two-frame APNG, composed once at load and
-    * laid out back to back (width * height pixels each), so a press
-    * is a copy rather than a decode. NULL for every other image. */
+    * stacked as one image (INPUT_OVERLAY_2FRAME_ROWS rows of width):
+    * the first frame, its last row again, the second frame's first
+    * row, then the second frame - the repeated rows keep one frame's
+    * edge from filtering into the other's. NULL for every other image,
+    * and for an atlas once its texture is in. */
    uint32_t **anim_2frame_pix;
 
    /* The alpha last handed to the driver for each image of the active
@@ -608,6 +621,23 @@ void input_overlay_release_textures(input_overlay_t *ol);
  * call; false when it cannot be uploaded this way, or when the uploads
  * are still with the video thread (input_overlay_promote_textures). */
 bool input_overlay_upload_textures(input_overlay_t *ol);
+
+/* Submit the frame in looping animated image @i's slot, or the one a
+ * driver dropped there before. False when nothing was taken. */
+bool input_overlay_anim_submit(input_overlay_t *ol, size_t i);
+
+#define INPUT_OVERLAY_2FRAME_PAIR  1
+#define INPUT_OVERLAY_2FRAME_ATLAS 2
+/* The rows of a two-frame APNG's stacked frames, each @h rows tall. */
+#define INPUT_OVERLAY_2FRAME_ROWS(h) (2 * (h) + 2)
+
+/* Point the active page's entries of two-frame image @image - every
+ * two-frame image when it is (size_t)-1 - at the frame each shows. */
+void input_overlay_atlas_frames(input_overlay_t *ol, size_t image);
+
+/* Stops every looping image's playback; the next tick starts each
+ * again from where its stream stands. */
+void input_overlay_anim_stop(input_overlay_t *ol);
 
 /* Whether the pack can still be shown: it has its textures, or the
  * pixels to make them from. */

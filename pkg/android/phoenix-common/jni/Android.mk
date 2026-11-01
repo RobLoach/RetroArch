@@ -11,7 +11,21 @@ HAVE_CHEEVOS := 1
 HAVE_FILE_LOGGER := 1
 HAVE_GFX_WIDGETS := 1
 HAVE_SAF := 1
-HAVE_BUILTINSMBCLIENT := 1
+# The cleanroom network stack, as on the desktop builds: the crypto,
+# the encrypted keychain, the TLS 1.2/1.3 client and the SMB2/3 client
+# with Kerberos. All of it needs nothing
+# but sockets; the NFSv3/v4 client and its nfs:// backend likewise.
+HAVE_CRYPTO   := 1
+HAVE_KEYCHAIN := 1
+HAVE_RETROSSL := 1
+HAVE_RETROSMB := 1
+HAVE_RETRONFS := 1
+# The video modeline engine, as on the desktop builds. Android drives
+# no modelines (its display server does not advertise DISPSERV_CTX_
+# MODELINE, so the CRT SwitchRes menu stays hidden); this is for the
+# EDID reader behind Information > Display Information > EDID.
+HAVE_MODELINE := 1
+HAVE_OPENXR ?= 0
 
 INCFLAGS    :=
 DEFINES     :=
@@ -75,18 +89,18 @@ LOCAL_MODULE := retroarch-activity
 LOCAL_SRC_FILES  +=	$(RARCH_DIR)/griffin/griffin.c \
 							$(RARCH_DIR)/griffin/griffin_cpp.cpp
 
-ifeq ($(HAVE_BUILTINSMBCLIENT),1)
-   DEFINES += -DHAVE_BUILTINSMBCLIENT
-   DEFINES += "-D_U_=__attribute__((unused))"
-   DEFINES += -DHAVE_TIME_H -DHAVE_FCNTL_H -DHAVE_UNISTD_H
-   DEFINES += -DHAVE_STDLIB_H -DSTDC_HEADERS
-   DEFINES += -DHAVE_STRING_H
-   DEFINES += -DHAVE_LINGER
-   DEFINES += -DHAVE_SYS_UIO_H
-   DEFINES += -DHAVE_POLL_H -DHAVE_NETDB_H
-   DEFINES += -DHAVE_NETINET_TCP_H -DHAVE_NETINET_IN_H
-   DEFINES += -DHAVE_SYS_SOCKET_H -DHAVE_ARPA_INET_H
-   DEFINES += -DHAVE_SMBCLIENT
+ifeq ($(HAVE_CRYPTO),1)
+   DEFINES += -DHAVE_CRYPTO
+   ifeq ($(HAVE_KEYCHAIN),1)
+      DEFINES += -DHAVE_KEYCHAIN
+   endif
+   ifeq ($(HAVE_RETROSMB),1)
+      DEFINES += -DHAVE_SMBCLIENT -DHAVE_RETROSMB
+   endif
+endif
+
+ifeq ($(HAVE_MODELINE),1)
+   DEFINES += -DHAVE_MODELINE
 endif
 
 ifeq ($(HAVE_LOGGER), 1)
@@ -97,6 +111,10 @@ LOGGER_LDLIBS := -llog
 ifeq ($(GLES),3)
    GLES_LIB := -lGLESv3
    DEFINES += -DHAVE_OPENGLES3
+   # Every OpenXR headset's driver supports OpenGL ES 3.2
+   ifeq ($(HAVE_OPENXR),1)
+      DEFINES += -DHAVE_OPENGLES3_1 -DHAVE_OPENGLES3_2
+   endif
 else
    GLES_LIB := -lGLESv2
    DEFINES += -DHAVE_OPENGLES2
@@ -105,6 +123,12 @@ endif
 DEFINES += -DRARCH_MOBILE \
 	   -DHAVE_GRIFFIN \
 	   -DHAVE_RVORBIS \
+	   -DHAVE_ROPUS \
+	   -DHAVE_RAAC \
+	   -DHAVE_RMP4 \
+	   -DHAVE_RWEBM \
+	   -DHAVE_RVP9 \
+	   -DHAVE_RAV1 \
 	   -DHAVE_LANGEXTRA \
 	   -DANDROID \
 	   -DHAVE_DYNAMIC \
@@ -120,6 +144,7 @@ DEFINES += -DRARCH_MOBILE \
 	   -DHAVE_PATCH \
 	   -DHAVE_DSP_FILTER \
 	   -DHAVE_VIDEO_FILTER \
+	   -DHAVE_VIDEO_WINDOWS \
 	   -DHAVE_SCREENSHOTS \
 	   -DHAVE_REWIND \
 	   -DHAVE_CHEATS \
@@ -154,7 +179,6 @@ DEFINES += -DRARCH_MOBILE \
 	   -DHAVE_SHADERPIPELINE \
 	   -DHAVE_LIBRETRODB \
 	   -DHAVE_STB_FONT \
-	   -DHAVE_IMAGEVIEWER \
 	   -DHAVE_ONLINE_UPDATER \
 	   -DHAVE_UPDATE_ASSETS \
 	   -DHAVE_UPDATE_CORES \
@@ -165,6 +189,7 @@ DEFINES += -DRARCH_MOBILE \
 	   -DHAVE_RFLAC \
 	   -DHAVE_RMP3 \
 	   -DHAVE_CHD \
+	   -DHAVE_RCHD \
 	   -DWANT_SUBCODE \
 	   -DWANT_RAW_DATA_SECTOR \
 	   -DHAVE_RUNAHEAD \
@@ -175,24 +200,29 @@ DEFINES += -DRARCH_MOBILE \
 	   -DWANT_IFADDRS \
 	   -DHAVE_XDELTA \
 	   -DHAVE_CORE_INFO_CACHE \
-	   -DHAVE_BUILTINMBEDTLS -DHAVE_SSL
+	   -DHAVE_SSL
+
+ifeq ($(HAVE_RETROSSL),1)
+   DEFINES += -DHAVE_RETROSSL
+endif
 
 ifeq ($(HAVE_GFX_WIDGETS),1)
 DEFINES += -DHAVE_GFX_WIDGETS
 endif
 
 ifeq ($(HAVE_VULKAN),1)
+# slang shaders (Vulkan, GLES 3) are compiled by rslc
 DEFINES += -DHAVE_VULKAN \
 	   -DHAVE_SLANG \
-	   -DHAVE_GLSLANG \
-	   -DHAVE_BUILTINGLSLANG \
-	   -DHAVE_SPIRV_CROSS \
-	   -DWANT_GLSLANG \
+	   -DHAVE_RSLC \
 	   -D__STDC_LIMIT_MACROS
 endif
+
 DEFINES += -DHAVE_7ZIP \
 	   \
-	   -DHAVE_SL
+	   -DHAVE_SL \
+	   -DHAVE_AAUDIO \
+	   -DHAVE_RAC3
 
 ifeq ($(HAVE_CHEEVOS),1)
 DEFINES += -DHAVE_CHEEVOS \
@@ -203,8 +233,12 @@ ifeq ($(HAVE_SAF),1)
    DEFINES += -DHAVE_SAF
 endif
 
-ifeq ($(HAVE_BUILTINSMBCLIENT),1)
-   DEFINES += -DHAVE_SMBCLIENT
+ifeq ($(HAVE_RETRONFS),1)
+   DEFINES += -DHAVE_NFSCLIENT -DHAVE_RETRONFS
+endif
+
+ifeq ($(HAVE_OPENXR),1)
+DEFINES += -DHAVE_OPENXR -DXR_OS_ANDROID -DXR_USE_PLATFORM_ANDROID
 endif
 
 LOCAL_CFLAGS   += -Wall -std=gnu99 -pthread -Wno-unused-function -fno-stack-protector -funroll-loops $(DEFINES)
@@ -223,36 +257,35 @@ INCLUDE_DIRS     := \
 		    -I$(LOCAL_PATH)/$(DEPS_DIR)/stb/ \
 		    -I$(LOCAL_PATH)/$(DEPS_DIR)/7zip/
 
+ifeq ($(HAVE_OPENXR),1)
+OPENXR_DIR := $(RARCH_DIR)/deps/openxr
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(OPENXR_DIR)/include \
+		    $(LOCAL_PATH)/$(OPENXR_DIR)/src \
+		    $(LOCAL_PATH)/$(OPENXR_DIR)/src/common \
+		    $(LOCAL_PATH)/$(OPENXR_DIR)/src/loader
+# The vendored OpenXR loader is C++17; later -std wins over the global
+# gnu++11 above, and the rest of the C++ in this build compiles as 17.
+LOCAL_CPPFLAGS += -std=gnu++17
+endif
+
 ifeq ($(HAVE_CHEEVOS),1)
 INCLUDE_DIRS += -I$(LOCAL_PATH)/$(DEPS_DIR)/rcheevos/include
 endif
 
-ifeq ($(HAVE_BUILTINSMBCLIENT),1)
-   INCLUDE_DIRS += \
-      -I$(LOCAL_PATH)/$(DEPS_DIR)/libsmb2/include \
-      -I$(LOCAL_PATH)/$(DEPS_DIR)/libsmb2/include/smb2
-endif
 
 LOCAL_CFLAGS     += $(INCLUDE_DIRS)
 LOCAL_CPPFLAGS   += $(INCLUDE_DIRS)
 LOCAL_CXXFLAGS   += $(INCLUDE_DIRS)
 
 ifeq ($(HAVE_VULKAN),1)
+LOCAL_CFLAGS += -DHAVE_RECORD_MEDIACODEC
+LOCAL_CPPFLAGS += -DHAVE_RECORD_MEDIACODEC
 INCFLAGS         += $(LOCAL_PATH)/$(RARCH_DIR)/gfx/include
 
 LOCAL_C_INCLUDES += $(INCFLAGS)
-# slang_process.c is C and amalgamated into griffin.c; it includes
-# <spirv_cross_c.h>, so the SPIRV-Cross directory must be on the C
-# include path, not just LOCAL_CPPFLAGS.  LOCAL_C_INCLUDES applies to
-# both C and C++ compiles under ndk-build.
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(DEPS_DIR)/SPIRV-Cross
-LOCAL_CPPFLAGS   += -I$(LOCAL_PATH)/$(DEPS_DIR)/glslang \
-		    -I$(LOCAL_PATH)/$(DEPS_DIR)/glslang/glslang/glslang/Public \
-		    -I$(LOCAL_PATH)/$(DEPS_DIR)/glslang/glslang/glslang/MachineIndependent \
-		    -I$(LOCAL_PATH)/$(DEPS_DIR)/glslang/glslang/SPIRV
 
 LOCAL_CFLAGS    += -Wno-sign-compare -Wno-unused-variable -Wno-parentheses
-LOCAL_SRC_FILES += $(RARCH_DIR)/griffin/griffin_glslang.cpp
+LOCAL_SRC_FILES += $(RARCH_DIR)/griffin/griffin_rslc.c
 endif
 
 LOCAL_LDLIBS += -lOpenSLES
@@ -263,14 +296,12 @@ ifneq ($(SANITIZER),)
    LOCAL_LDFLAGS  += -fsanitize=$(SANITIZER)
 endif
 
-ifneq ($(PLAY_STORE_BUILD),1)
-   ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-      LOCAL_LDFLAGS += -Wl,-z,max-page-size=4096
-   endif
+ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
+   LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384,-z,common-page-size=16384
+endif
 
-   ifeq ($(TARGET_ARCH_ABI),x86_64)
-      LOCAL_LDFLAGS += -Wl,-z,max-page-size=4096
-   endif
+ifeq ($(TARGET_ARCH_ABI),x86_64)
+   LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384,-z,common-page-size=16384
 endif
 
 include $(BUILD_SHARED_LIBRARY)

@@ -20,17 +20,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <stdio.h>
+
 #include <net/net_socket_ssl.h>
 #include <net/net_socket.h>
 #include <encodings/base64.h>
 #include <streams/file_stream.h>
 #include <string/stdstring.h>
+#include <compat/strl.h>
 
-#include "../../deps/bearssl-0.6/inc/bearssl.h"
+#include <bearssl.h>
 
 struct ssl_state
 {
    int fd;
+   char domain[256];
    br_ssl_client_context sc;
    br_x509_minimal_context xc;
    uint8_t iobuf[BR_SSL_BUFSIZE_BIDI];
@@ -269,6 +273,8 @@ void* ssl_socket_init(int fd, const char *domain)
    br_ssl_client_reset(&state->sc, domain, false);
 
    state->fd = fd;
+   if (domain)
+      strlcpy(state->domain, domain, sizeof(state->domain));
    return state;
 }
 
@@ -300,6 +306,16 @@ static bool process_inner(struct ssl_state *state, bool blocking)
    buf = br_ssl_engine_recvrec_buf(&state->sc.eng, &buflen);
    if (buflen)
    {
+      /* A blocking read waits for the server's next bytes, but no
+       * longer than SSL_SOCKET_IO_TIMEOUT_MS: a server that goes silent
+       * would otherwise hold recv() for good. */
+      if (blocking)
+      {
+         bool rd = true;
+         if (     !socket_wait(state->fd, &rd, NULL, SSL_SOCKET_IO_TIMEOUT_MS)
+               || !rd)
+            return false;
+      }
       /* if the socket is blocking, socket_receive_all_nonblocking blocks,
        * but only to read at least 1 byte which is exactly what we want */
       bytes = socket_receive_all_nonblocking(state->fd, &dummy, buf, buflen);
@@ -318,6 +334,51 @@ int ssl_socket_last_error(void *state_data)
    if (!state)
       return 0;
    return br_ssl_engine_last_error(&state->sc.eng);
+}
+
+/* Weak no-op logging hooks; RetroArch overrides these in network/tls_log.c.
+ * See net_socket_ssl_mbed.c for why they are weak and not in griffin. */
+#if (defined(__GNUC__) || defined(__clang__)) && !defined(HAVE_GRIFFIN)
+__attribute__((weak))
+void ssl_socket_log_verify_fail(int mode_required, const char *domain,
+      const char *verify_info)
+{
+   (void)mode_required; (void)domain; (void)verify_info;
+}
+
+__attribute__((weak))
+void ssl_socket_log_verify_disabled(const char *domain)
+{
+   (void)domain;
+}
+#endif
+
+/* A handshake that ended on the certificate goes to the verify hook,
+ * as the other backends' refusals do. BearSSL always verifies, so every
+ * such failure is a required one. */
+static void ssl_bear_report_verify(struct ssl_state *state)
+{
+   char info[64];
+   int err = br_ssl_engine_last_error(&state->sc.eng);
+
+   if (err <= BR_ERR_X509_OK || err >= BR_ERR_X509_OK + 32)
+      return;
+   switch (err)
+   {
+      case BR_ERR_X509_EXPIRED:
+         strlcpy(info, "certificate expired or not yet valid", sizeof(info));
+         break;
+      case BR_ERR_X509_BAD_SERVER_NAME:
+         strlcpy(info, "certificate does not match the host", sizeof(info));
+         break;
+      case BR_ERR_X509_NOT_TRUSTED:
+         strlcpy(info, "certificate is not trusted", sizeof(info));
+         break;
+      default:
+         sprintf(info, "BearSSL X.509 error %d", err);
+         break;
+   }
+   ssl_socket_log_verify_fail(1, state->domain, info);
 }
 
 int ssl_socket_connect(void *state_data,
@@ -343,13 +404,19 @@ int ssl_socket_connect(void *state_data,
    for (;;)
    {
       if (!process_inner(state, true))
+      {
+         ssl_bear_report_verify(state);
          return -1;
+      }
 
       bearstate = br_ssl_engine_current_state(&state->sc.eng);
       if (bearstate & BR_SSL_SENDAPP)
          break; /* handshake done */
       if (bearstate & BR_SSL_CLOSED)
+      {
+         ssl_bear_report_verify(state);
          return -1; /* failed */
+      }
    }
 
    return 1;
@@ -446,26 +513,62 @@ int ssl_socket_send_all_blocking(void *state_data,
    return 1;
 }
 
+/* Takes what fits in the engine's output buffer now and pushes what the
+ * socket will take.  0 means the engine is full of records the socket
+ * has not taken yet; ssl_socket_flush_nonblocking() moves them on. */
 ssize_t ssl_socket_send_all_nonblocking(void *state_data,
       const void *data_, size_t len, bool no_signal)
 {
    size_t __len;
    uint8_t *bear_data;
    struct ssl_state *state = (struct ssl_state*)state_data;
+   (void)no_signal;
 
+   if (br_ssl_engine_current_state(&state->sc.eng) == BR_SSL_CLOSED)
+      return -1;
    socket_set_block(state->fd, false);
+   /* Make room first: records already sealed go before new ones. */
+   if (!process_inner(state, false))
+      return -1;
    bear_data = br_ssl_engine_sendapp_buf(&state->sc.eng, &__len);
    if (__len > len)
       __len = len;
-   memcpy(bear_data, data_, __len);
+   /* sendapp_buf returns NULL with nothing free; memcpy() declares its
+    * pointers nonnull even for a zero length. */
    if (__len)
    {
+      memcpy(bear_data, data_, __len);
       br_ssl_engine_sendapp_ack(&state->sc.eng, __len);
       br_ssl_engine_flush(&state->sc.eng, false);
+      if (!process_inner(state, false))
+         return -1;
    }
-   if (!process_inner(state, false))
+   return (ssize_t)__len;
+}
+
+int ssl_socket_flush_nonblocking(void *state_data)
+{
+   size_t buflen;
+   struct ssl_state *state = (struct ssl_state*)state_data;
+
+   if (br_ssl_engine_current_state(&state->sc.eng) == BR_SSL_CLOSED)
       return -1;
-   return __len;
+   socket_set_block(state->fd, false);
+   br_ssl_engine_flush(&state->sc.eng, false);
+   /* process_inner() sends at most one batch per call and stops when
+    * the socket does; loop while it makes progress. */
+   for (;;)
+   {
+      size_t before;
+      br_ssl_engine_sendrec_buf(&state->sc.eng, &before);
+      if (!before)
+         return 1;
+      if (!process_inner(state, false))
+         return -1;
+      br_ssl_engine_sendrec_buf(&state->sc.eng, &buflen);
+      if (buflen >= before)
+         return 0;
+   }
 }
 
 void ssl_socket_close(void *state_data)

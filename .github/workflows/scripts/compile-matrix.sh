@@ -102,7 +102,7 @@ echo "== mem_stats platform arms =="
 # have. Three console failures reached CI as missing or wrong headers -
 # 3ds.h absent, gccore.h guessed, SYSMEM1_SIZE taken from the SDK when
 # it is RetroArch's own - and each would have shown up here.
-STUBS="$(dirname "$0")/stubs"
+STUBS="$(dirname "$0")/../../../tools/platform_stubs"
 # host headers are the real ones and deprecate things the target's do not
 ARMWARN="$WARN -Wno-deprecated-declarations"
 
@@ -161,11 +161,138 @@ arm "ps3"        ps3        "-D__PSL1GHT__ -DHAVE_MEMINFO"
 arm "ps2"        ""         "-DPS2"
 arm "emscripten" emscripten "-D__EMSCRIPTEN__"
 
+# The consoles that carry the cleanroom crypto, keychain and TLS client
+# (3DS, Vita, Switch), each in its own shape with the SDK stand-ins the
+# random source and the socket layer need. Vita's and the 3DS's socket
+# layers are the SDKs' own, so the TLS client itself is compiled only
+# in the Switch shape here; those two builds are their workflows' to
+# link.
+CRYPTO_SET="libretro-common/crypto/crypto.c libretro-common/crypto/kdf.c libretro-common/crypto/pk.c libretro-common/crypto/x509.c libretro-common/file/keychain.c"
+TLS_SET="$CRYPTO_SET libretro-common/net/net_socket_ssl_retro.c network/tls_log.c"
+CONSOLE_NET="-DHAVE_CRYPTO -DHAVE_KEYCHAIN -DHAVE_SSL -DHAVE_RETROSSL -DHAVE_NETWORKING -DHAVE_THREADS -DHAVE_CONFIGFILE -DRARCH_INTERNAL"
+console_set() {
+   cs_name="$1"; cs_inc="$2"; cs_defs="$3"; shift 3
+   for cs_tu in "$@"; do
+      check "$cs_name: $(basename $cs_tu)" "$HOSTOFF $cs_inc $CONSOLE_NET $cs_defs $CDECL" "$cs_tu"
+   done
+}
+console_set "3ds crypto"    "-Itools/platform_stubs/ctr"  "-D_3DS -DARM11"                    $CRYPTO_SET
+console_set "vita crypto"   "-Itools/platform_stubs/vita" "-DVITA"                            $CRYPTO_SET
+console_set "switch tls"    "-I$STUBS/libnx"              "-DHAVE_LIBNX -DSWITCH -D__SWITCH__" $TLS_SET
+# The built-in NFS client, which the 3DS, Vita, Switch and Wii U
+# build, under the defines their Makefiles set (RARCH_CONSOLE for the
+# console sleep and the 3DS transfer cap, Vita's legacy socket layer):
+# Wii U against its own os/wiiu/include, Vita against stubs of vitasdk's
+# socket headers.
+NFS_SET="libretro-common/net/net_nfs3.c libretro-common/vfs/vfs_implementation_nfs.c libretro-common/vfs/vfs_prefetch.c"
+NFSD="-DHAVE_RETRONFS -DHAVE_NFSCLIENT"
+console_set "3ds nfs"       "-Itools/platform_stubs/ctr $NFSD"  "-D_3DS -DARM11 -DRARCH_CONSOLE" $NFS_SET
+console_set "vita nfs"      "-Itools/platform_stubs/vita $NFSD" "-DVITA -DRARCH_CONSOLE -DHAVE_SOCKET_LEGACY" $NFS_SET
+console_set "switch nfs"    "-I$STUBS/libnx $NFSD"              "-DHAVE_LIBNX -DSWITCH -D__SWITCH__ -DRARCH_CONSOLE" $NFS_SET
+console_set "wiiu nfs"      "-Ios/wiiu/include -Itools/platform_stubs/wiiu $NFSD" "-DWIIU -D__WUT__ -DHW_WUP -D__wiiu__ -DRARCH_CONSOLE" $NFS_SET
+# The built-in SMB and Kerberos clients, which the 3DS, Vita and Switch
+# build on their crypto (the Wii U has no kernel RNG for it to draw on).
+SMB_SET="libretro-common/net/net_smb2.c libretro-common/net/net_krb5.c libretro-common/vfs/vfs_implementation_smb.c"
+SMBD="-DHAVE_RETROSMB -DHAVE_SMBCLIENT"
+console_set "3ds smb"       "-Itools/platform_stubs/ctr $SMBD"  "-D_3DS -DARM11 -DRARCH_CONSOLE" $SMB_SET
+console_set "vita smb"      "-Itools/platform_stubs/vita $SMBD" "-DVITA -DRARCH_CONSOLE -DHAVE_SOCKET_LEGACY" $SMB_SET
+console_set "switch smb"    "-I$STUBS/libnx $SMBD"              "-DHAVE_LIBNX -DSWITCH -D__SWITCH__ -DRARCH_CONSOLE" $SMB_SET
+
+# The network stack in the old MSVC projects (2005 - 2017), which no job
+# here builds: 32-bit Windows, C89, at the Windows floors those projects
+# target - VS2005's _WIN32_WINNT 0x0410 and XP's 0x0501. The stack keeps
+# to what those compilers and SDKs have: C89, the LL/ULL suffixes code
+# they already build uses, Windows entry points resolved at run time,
+# and a CA bundle split into parts under MSVC's 64 KiB string limit.
+MSVC_OLD_CC=${MSVC_OLD_CC:-i686-w64-mingw32-gcc}
+if command -v "$MSVC_OLD_CC" > /dev/null 2>&1; then
+   MSVC_OLD_STACK="$CRYPTO_SET libretro-common/net/net_socket_ssl_retro.c network/tls_log.c libretro-common/net/net_smb2.c libretro-common/net/net_krb5.c libretro-common/net/net_nfs3.c libretro-common/vfs/vfs_implementation_smb.c libretro-common/vfs/vfs_implementation_nfs.c libretro-common/vfs/vfs_prefetch.c"
+   MSVC_OLD_DEFS="-DRARCH_INTERNAL -DHAVE_NETWORKING -DHAVE_THREADS -DHAVE_CONFIGFILE -DHAVE_CRYPTO -DHAVE_KEYCHAIN -DHAVE_SSL -DHAVE_RETROSSL -DHAVE_SMBCLIENT -DHAVE_RETROSMB -DHAVE_NFSCLIENT -DHAVE_RETRONFS -DLEGACY_WIN32_NO_MIGRATION_NOTE"
+   for winnt in 0x0410 0x0501; do
+      mo_bad=0
+      for tu in $MSVC_OLD_STACK; do
+         if ! out=$($MSVC_OLD_CC -std=c89 -ansi -pedantic -Werror=pedantic -Werror=declaration-after-statement -Wno-long-long -Wno-variadic-macros -Werror=implicit-function-declaration -Wall -Wno-unused-function -Wno-overlength-strings \
+               -I. -Ilibretro-common/include -D_WIN32_WINNT=$winnt $MSVC_OLD_DEFS -fsyntax-only "$tu" 2>&1) \
+               || echo "$out" | grep -q "warning:"; then
+            echo "FAIL  msvc-old network stack, _WIN32_WINNT=$winnt"
+            echo "      $tu"
+            show_out "$out"
+            fail=1; mo_bad=1
+         fi
+      done
+      [ "$mo_bad" = 1 ] || echo "ok    msvc-old network stack, _WIN32_WINNT=$winnt"
+   done
+   # and no single string literal in the CA bundle reaches MSVC's limit
+   if python3 - << 'PYEOF'
+import re, sys
+t = open("libretro-common/net/cacert.h", encoding="latin-1").read()
+for body in re.findall(r"\[\] = \{(.*?)\};", t, re.S):
+    lits = re.findall(r'"((?:[^"\\]|\\.)*)"', body)
+    size = sum(len(l.encode("latin-1").decode("unicode_escape")) for l in lits) + len(lits)
+    if size >= 65535:
+        sys.exit(1)
+PYEOF
+   then
+      echo "ok    cacert.h parts under MSVC's 64 KiB string limit"
+   else
+      echo "FAIL  cacert.h has a part at or over MSVC's 64 KiB string limit"; fail=1
+   fi
+else
+   echo "skip  msvc-old network stack (no $MSVC_OLD_CC)"
+fi
+
+# Every platform makefile on Makefile.common, without its toolchain: the
+# graph's own DEFINES checked for consistency (TLS, SMB, NFS need the
+# networking they are built on) and the frontend compiled under exactly
+# them. Makefile.retrofw asked for the TLS client with no networking
+# and only its own workflow saw the undefined reference.
+# Captured with the status in the same list: under set -e a failing
+# substitution in a plain assignment ends the script before the status
+# is read, with nothing said and every lane after it skipped.
+pm_out=$(tools/platform_makefile_check.sh 2>&1) && pm_rc=0 || pm_rc=$?
+printf '%s\n' "$pm_out" | sed 's/^ok    /ok    platform makefile: /'
+[ $pm_rc -eq 0 ] || { echo "FAIL  platform makefile check"; fail=1; }
+
+# What each console Makefile actually builds, from its own object list:
+# no MCP server on any console (a desktop HAVE_MCP option; listed once
+# with the networking objects it broke the 3DS), and no crypto library
+# on the 24/32 MiB machines.
+co_out=$(tools/console_objects_check.sh 2>&1) && co_rc=0 || co_rc=$?
+printf '%s\n' "$co_out" | sed 's/^ok    /ok    console objects: /'
+[ $co_rc -eq 0 ] || { echo "FAIL  console object check"; fail=1; }
+
+# The OpenDingux family builds with a MIPS toolchain; the crypto and the
+# TLS client compile with a MIPS cross compiler when one is installed.
+MIPSEL_CC=${MIPSEL_CC:-mipsel-linux-gnu-gcc}
+if command -v "$MIPSEL_CC" >/dev/null 2>&1; then
+   for tu in $TLS_SET; do
+      if out=$($MIPSEL_CC -march=mips32r2 $INC $CONSOLE_NET -DDINGUX -D_GNU_SOURCE -Wall -Werror -Wno-unused-function -fsyntax-only "$tu" 2>&1); then
+         echo "ok    dingux mips: $(basename $tu)"
+      else
+         echo "FAIL  dingux mips: $(basename $tu)"; show_out "$out"; fail=1
+      fi
+   done
+else
+   echo "skip  dingux mips (no $MIPSEL_CC)"
+fi
+
 platform_video "odroidgo2 video" \
    "-DHAVE_ODROIDGO2 -DHAVE_OPENGL -DHAVE_GLSL" "" \
    gfx/drivers/gl2.c ""
 platform_video "gx video" "-DGEKKO -DHW_RVL" "-I$STUBS/gx" \
-   gfx/drivers/gx_gfx.c ""
+   gfx/drivers/gx_gfx_libogc.c ""
+# The GameCube build takes its display offset from SRAM instead of the
+# Wii's configuration; nothing compiled that branch.
+platform_video "gx video (GameCube)" "-DGEKKO -DHW_DOL" "-I$STUBS/gx" \
+   gfx/drivers/gx_gfx_libogc.c ""
+# Their overlays, and os/gekko's own driver against its headers: no
+# lane compiled either until the textures and overlay packs reached them.
+platform_video "gx video: overlay" "-DGEKKO -DHW_RVL -DHAVE_OVERLAY" \
+   "-I$STUBS/gx" gfx/drivers/gx_gfx_libogc.c ""
+platform_video "gekko video" "$HOSTOFF -DGEKKO -DHW_RVL -DHAVE_OVERLAY" \
+   "-Ios/gekko/include" gfx/drivers/gekko_gfx.c ""
+platform_video "gekko video (GameCube)" "$HOSTOFF -DGEKKO -DHW_DOL -DHAVE_OVERLAY" \
+   "-Ios/gekko/include" gfx/drivers/gekko_gfx.c ""
 platform_video "switch video" \
    "-DHAVE_LIBNX -DSWITCH -D__SWITCH__" "-I$STUBS/libnx" \
    gfx/drivers/switch_nx_gfx.c ""
@@ -216,16 +343,37 @@ platform_video "dingux video"   "-DDINGUX" "-I/usr/include/SDL" \
    gfx/drivers/sdl_dingux_gfx.c /usr/include/SDL/SDL.h
 platform_video "rs90 video"     "-DDINGUX -DRS90" "-I/usr/include/SDL" \
    gfx/drivers/sdl_rs90_gfx.c /usr/include/SDL/SDL.h
-# libdrm's exynos module and its G2D headers, which distros ship only
-# where the hardware exists. A runner building libdrm with -Dexynos=true
-# turns this on.
 platform_video "wiiu gx2 video" "-DWIIU $HOSTOFF" \
-   "-Iwiiu/include -Iwiiu" gfx/drivers/gx2_gfx.c ""
+   "-Ios/wiiu/include -Ios/wiiu" gfx/drivers/gx2_gfx.c ""
+# The iosuhax client, devoptab and libfat sector interface that replaced
+# deps/libiosuhax, against newlib's devoptab order.
+platform_video "wiiu iosuhax" "-DWIIU -D__wiiu__ -DHAVE_IOSUHAX $HOSTOFF" \
+   "-Ios/wiiu/include -Itools/platform_stubs/wiiu" os/wiiu/fs/iosuhax.c ""
 platform_video "hub75 video" "" "" gfx/drivers/hub75_gfx.c ""
 platform_video "openvg video" "-DHAVE_VG -DHAVE_EGL" \
    "-Itools/platform_stubs/openvg" gfx/drivers/vg.c ""
-platform_video "exynos video"   "-DHAVE_EXYNOS" "-I/usr/include/libdrm" \
-   gfx/drivers/exynos_gfx.c /usr/include/exynos/exynos_fimg2d.h
+# The KMS and framebuffer drivers of the ARM boards, each against stubs
+# of the vendor library it drives - libdrm's exynos module and its G2D,
+# the Pi's VideoCore userland, Rockchip's librga - in the shapes the
+# real headers give them, as nothing here installs those. Each draws a
+# core's views, through calls these lanes check.
+platform_video "drm video" "" "-I/usr/include/libdrm" \
+   gfx/drivers/drm_gfx.c /usr/include/xf86drm.h
+platform_video "exynos video" "-DHAVE_EXYNOS -DHAVE_OVERLAY" \
+   "-I$STUBS/exynos -I/usr/include/libdrm" \
+   gfx/drivers/exynos_gfx.c /usr/include/libdrm/drm_fourcc.h
+platform_video "dispmanx video" "-DHAVE_DISPMANX" "-I$STUBS/videocore" \
+   gfx/drivers/dispmanx_gfx.c ""
+platform_video "oga video" "-DHAVE_ODROIDGO2" \
+   "-I$STUBS/rga -I/usr/include/libdrm" \
+   gfx/drivers/oga_gfx.c /usr/include/xf86drm.h
+# Its GL context: the RGA rotate and page flip that libgo2 used to do,
+# against the same librga stand-in.
+platform_video "go2 drm context" \
+   "-DHAVE_ODROIDGO2 -DHAVE_KMS -DHAVE_EGL -DHAVE_OPENGLES -DHAVE_GLSL" \
+   "-I$STUBS/rga -I/usr/include/libdrm" \
+   gfx/drivers_context/drm_go2_ctx.c \
+   "/usr/include/xf86drm.h /usr/include/gbm.h /usr/include/EGL/egl.h"
 
 # The Direct3D drivers, against the DirectX headers the tree vendors in
 # gfx/include/dxsdk. Six drivers no other lane compiles, and they read
@@ -251,6 +399,33 @@ d3d_video() {
    fi
 }
 
+# The window and message pump files as the MSVC 2005 job sees them: it
+# builds for _WIN32_WINNT 0x0400 against an SDK that declares what came
+# with Windows XP only from 0x0501 up. mingw-w64 declares some of that
+# regardless - WM_INPUT is one - so a use outside a _WIN32_WINNT check
+# passes every other lane and breaks that job, which is not GitHub's.
+# tools/platform_stubs/win32_old/old_sdk.h takes those names away again.
+win32_old() {
+   name="$1"; tu="$2"
+   if ! command -v "$MINGW_CC" > /dev/null 2>&1; then
+      echo "skip  $name (no $MINGW_CC)"
+      return
+   fi
+   if ! out=$($MINGW_CC $WARN $INC -Igfx/include $BASE -D_WIN32 \
+         -D_WIN32_WINNT=0x0400 -DHAVE_DINPUT \
+         -include tools/platform_stubs/win32_old/old_sdk.h \
+         -fsyntax-only "$tu" 2>&1); then
+      echo "FAIL  $name"
+      echo "      $tu"
+      show_out "$out"
+      fail=1
+   else
+      echo "ok    $name"
+   fi
+}
+win32_old "win32-old: ui_win32"      ui/drivers/ui_win32.c
+win32_old "win32-old: win32_common"  gfx/common/win32_common.c
+
 D3DDEFS="-DHAVE_D3D -DHAVE_RGUI -DHAVE_OVERLAY"
 d3d_video "d3d8 video"    "$D3DDEFS -DHAVE_D3D8"  gfx/drivers/d3d8.c
 d3d_video "d3d9 video, Cg"   "$D3DDEFS -DHAVE_D3D9"  gfx/drivers/d3d9cg.c
@@ -260,6 +435,51 @@ d3d_video "d3d11 video"   "$D3DDEFS -DHAVE_D3D11" gfx/drivers/d3d11.c
 d3d_video "d3d12 video"   "$D3DDEFS -DHAVE_D3D12" gfx/drivers/d3d12.c
 d3d_video "gdi video"     "-DHAVE_RGUI -DHAVE_OVERLAY -DHAVE_GDI" \
    gfx/drivers/gdi_gfx.c
+# The same drivers without threads, as a --disable-threads build has
+# them: a call into the video thread wrapper outside HAVE_THREADS has no
+# definition there, so it compiles as an implicit declaration and the
+# link fails. BASE defines HAVE_THREADS; the -U after it wins.
+d3d_video "d3d8 video, no threads"   "$D3DDEFS -DHAVE_D3D8 -UHAVE_THREADS" \
+   gfx/drivers/d3d8.c
+d3d_video "d3d9 video, Cg, no threads"   "$D3DDEFS -DHAVE_D3D9 -UHAVE_THREADS" \
+   gfx/drivers/d3d9cg.c
+d3d_video "d3d9 video, HLSL, no threads" "$D3DDEFS -DHAVE_D3D9 -UHAVE_THREADS" \
+   gfx/drivers/d3d9hlsl.c
+d3d_video "d3d10 video, no threads"  "$D3DDEFS -DHAVE_D3D10 -UHAVE_THREADS" \
+   gfx/drivers/d3d10.c
+d3d_video "d3d11 video, no threads"  "$D3DDEFS -DHAVE_D3D11 -UHAVE_THREADS" \
+   gfx/drivers/d3d11.c
+d3d_video "d3d12 video, no threads"  "$D3DDEFS -DHAVE_D3D12 -UHAVE_THREADS" \
+   gfx/drivers/d3d12.c
+d3d_video "d3d12 video, temporal upscaler" "$D3DDEFS -DHAVE_D3D12 -DHAVE_TEMPORAL_UPSCALER" \
+   gfx/drivers/d3d12.c
+d3d_video "d3d12 NGX backend" "$D3DDEFS -DHAVE_D3D12 -DHAVE_TEMPORAL_UPSCALER" \
+   gfx/common/d3d12_ngx.c
+d3d_video "d3d12 NGX backend, no threads" \
+   "$D3DDEFS -DHAVE_D3D12 -DHAVE_TEMPORAL_UPSCALER -UHAVE_THREADS" gfx/common/d3d12_ngx.c
+d3d_video "d3d12 upscaler dispatch" "$D3DDEFS -DHAVE_D3D12 -DHAVE_TEMPORAL_UPSCALER" \
+   gfx/common/d3d12_upscaler.c
+d3d_video "d3d12 FSR backend" "$D3DDEFS -DHAVE_D3D12 -DHAVE_TEMPORAL_UPSCALER" \
+   gfx/common/d3d12_ffx.c
+d3d_video "d3d12 FSR backend, no threads" \
+   "$D3DDEFS -DHAVE_D3D12 -DHAVE_TEMPORAL_UPSCALER -UHAVE_THREADS" gfx/common/d3d12_ffx.c
+d3d_video "d3d12 XeSS backend" "$D3DDEFS -DHAVE_D3D12 -DHAVE_TEMPORAL_UPSCALER" \
+   gfx/common/d3d12_xess.c
+d3d_video "d3d12 XeSS backend, no threads" \
+   "$D3DDEFS -DHAVE_D3D12 -DHAVE_TEMPORAL_UPSCALER -UHAVE_THREADS" gfx/common/d3d12_xess.c
+# With the MP4 previews: frames from rh264's D3D11 video backend,
+# imported by D3D11 and D3D12 through shared handles and fences (11.4
+# interfaces from the bundled headers), and the backend itself.
+d3d_video "d3d11 video, frame import"  "$D3DDEFS -DHAVE_D3D11 -DHAVE_RMP4" \
+   gfx/drivers/d3d11.c
+d3d_video "d3d11 video, frame import, no threads" \
+   "$D3DDEFS -DHAVE_D3D11 -DHAVE_RMP4 -UHAVE_THREADS" gfx/drivers/d3d11.c
+d3d_video "d3d11 video decode backend" "$D3DDEFS -DHAVE_D3D11 -DHAVE_RMP4" \
+   gfx/common/d3d11_video_decode.c
+d3d_video "d3d12 video, frame import"  "$D3DDEFS -DHAVE_D3D12 -DHAVE_RMP4" \
+   gfx/drivers/d3d12.c
+d3d_video "d3d12 video, frame import, no threads" \
+   "$D3DDEFS -DHAVE_D3D12 -DHAVE_RMP4 -UHAVE_THREADS" gfx/drivers/d3d12.c
 
 # The context drivers, which no job here compiles either. Each answers
 # the frontend's window and size questions, so a change to what those
@@ -300,6 +520,19 @@ platform_video "ctx: wayland gl" "-DHAVE_WAYLAND -DHAVE_EGL -DHAVE_OPENGL" "" \
    gfx/drivers_context/wayland_ctx.c "$WL_H"
 platform_video "ctx: wayland vulkan" "-DHAVE_WAYLAND -DHAVE_VULKAN" "" \
    gfx/drivers_context/wayland_vk_ctx.c "$WL_H /usr/include/vulkan/vulkan.h"
+# The desktop GL headset host is built where a GL driver has an EGL or a
+# GLX context driver. Every job that builds it has both, so each
+# binding gets a lane without the other.
+XRGL="-DHAVE_OPENXR -DHAVE_OPENXR_GL -DHAVE_OPENGL"
+XRINC="-Ideps/openxr/include"
+platform_video "openxr gl host, glx only" "$XRGL -DHAVE_X11" "$XRINC" \
+   gfx/common/gl_openxr.c /usr/include/GL/glx.h
+platform_video "openxr gl binding, glx only" "$XRGL -DHAVE_X11" "$XRINC" \
+   gfx/common/openxr_binding_gl.c /usr/include/GL/glx.h
+platform_video "openxr gl host, egl only" "$XRGL -DHAVE_EGL" "$XRINC" \
+   gfx/common/gl_openxr.c /usr/include/EGL/egl.h
+platform_video "openxr gl binding, egl only" "$XRGL -DHAVE_EGL" "$XRINC" \
+   gfx/common/openxr_binding_gl.c /usr/include/EGL/egl.h
 # The shared Wayland code the two contexts above call into. It was the
 # only Wayland unit no lane compiled, which is how four declarations
 # after a statement sat in it. Its libdecor half is a second lane: the
@@ -335,6 +568,26 @@ arm "win32"      win32      "-D_WIN32 -D_WIN32_WINNT=0x0600"
 arm "win32-old"  win32      "-D_WIN32 -D_WIN32_WINNT=0x0400"
 arm "macos"      apple      "-D__APPLE__"
 arm "ios"        apple      "-D__APPLE__ -DTARGET_OS_IPHONE=1"
+
+# The GL core driver without slang: its HDR encode is slang's, and state
+# for it once sat outside the slang guards, which only the C89 lane -
+# built without slang - ever compiled.
+platform_video "glcore without slang" "-DHAVE_OPENGL -DHAVE_OPENGL_CORE" \
+   "" gfx/drivers/gl3.c "/usr/include/GL/gl.h"
+platform_video "glcore with slang" \
+   "-DHAVE_OPENGL -DHAVE_OPENGL_CORE -DHAVE_SLANG -DHAVE_SHADERPIPELINE" \
+   "" gfx/drivers/gl3.c "/usr/include/GL/gl.h"
+
+# The CoreText rasterizer and the font driver's Apple branch, against
+# stand-ins for the SDK headers it includes: no runner builds it but the
+# Apple jobs, so a change to the rasterizer interface reached them first.
+CORETEXT="$HOSTOFF -D__APPLE__ -D__MACH__ -DHAVE_CORETEXT"
+platform_video "macos coretext rasterizer" "$CORETEXT" "-I$STUBS/apple" \
+   gfx/drivers_font_renderer/coretext.c ""
+platform_video "ios coretext rasterizer" "$CORETEXT -DTARGET_OS_IPHONE=1" \
+   "-I$STUBS/apple" gfx/drivers_font_renderer/coretext.c ""
+platform_video "macos font driver" "$CORETEXT" "-I$STUBS/apple" \
+   gfx/font_driver.c ""
 arm "dos/djgpp"  ""         "-D__DJGPP__ -D__unix__"
 arm "linux"      ""         ""
 
@@ -358,17 +611,53 @@ check "gl2: GLES3" \
    "$GLDEFS -DHAVE_OPENGLES -DHAVE_OPENGLES3 -DHAVE_EGL $GLINC" gfx/drivers/gl2.c
 check "gl2: desktop" \
    "$GLDEFS $GLINC" gfx/drivers/gl2.c
-GL3DEFS="-DHAVE_OPENGL -DHAVE_OPENGL_CORE -DHAVE_SLANG -DHAVE_GLSLANG -DHAVE_SPIRV_CROSS -DHAVE_REWIND -DHAVE_OVERLAY -Ideps/SPIRV-Cross"
+# On KMS, gl2 samples a software core's frames from GBM buffers
+# (gfx/common/egl_gbm_frames.c): its own path, in GLES and desktop GL
+KMSINC="$(pkg-config --cflags libdrm 2>/dev/null || echo -I/usr/include/libdrm)"
+check "gl2: GLES2 on KMS" \
+   "$GLDEFS -DHAVE_OPENGLES -DHAVE_OPENGLES2 -DHAVE_EGL -DHAVE_KMS $GLINC $KMSINC" \
+   gfx/drivers/gl2.c gfx/common/egl_gbm_frames.c
+check "gl2: GLES3 on KMS" \
+   "$GLDEFS -DHAVE_OPENGLES -DHAVE_OPENGLES3 -DHAVE_EGL -DHAVE_KMS $GLINC $KMSINC" \
+   gfx/drivers/gl2.c gfx/common/egl_gbm_frames.c
+check "gl2: desktop on KMS" \
+   "$GLDEFS -DHAVE_EGL -DHAVE_KMS $GLINC $KMSINC" \
+   gfx/drivers/gl2.c gfx/common/egl_gbm_frames.c
+GL3DEFS="-DHAVE_OPENGL -DHAVE_OPENGL_CORE -DHAVE_SLANG -DHAVE_RSLC -DHAVE_REWIND -DHAVE_OVERLAY"
 check "gl3: desktop" \
    "$GL3DEFS $GLINC" gfx/drivers/gl3.c
 check "gl3: GLES3" \
    "$GL3DEFS -DHAVE_OPENGLES -DHAVE_OPENGLES3 -DHAVE_EGL $GLINC" gfx/drivers/gl3.c
+# The planar converter both GL drivers share: legacy and core GLSL, a
+# VAO and row lengths only where the API has them
+check "gl_common: GLES2" \
+   "$GLDEFS -DHAVE_OPENGLES -DHAVE_OPENGLES2 -DHAVE_EGL $GLINC" gfx/common/gl_common.c
+check "gl_common: GLES3" \
+   "$GL3DEFS -DHAVE_OPENGLES -DHAVE_OPENGLES3 -DHAVE_EGL $GLINC" gfx/common/gl_common.c
 # gl3 is not in the C89 job's configuration, so its C89 lane is here.
 # The flags the Makefile's C89_BUILD lane uses, _GNU_SOURCE included:
 # -ansi hides the C99 math names otherwise.
 C89="-std=c89 -ansi -pedantic -Werror=pedantic -Werror=declaration-after-statement -Wno-long-long -Wno-variadic-macros -D_GNU_SOURCE -DC89_BUILD"
 check "gl3: desktop, C89" \
    "$GL3DEFS $GLINC $C89" gfx/drivers/gl3.c
+
+# Without threads, in C89: audio_driver.h and rthreads.h both reach the
+# tasks and the audio driver, and a typedef each declared on its own is
+# one C89 refuses twice. make C89_BUILD=1 --disable-threads stopped at
+# task_save.c on it; no job builds that shape. check() always adds
+# HAVE_THREADS, so this lane spells its defines out.
+NOTHREADS_BASE=$(echo "$BASE" | sed 's/-DHAVE_THREADS//')
+nt_bad=0
+for tu in tasks/task_save.c tasks/task_audio_mixer.c \
+          audio/audio_driver.c audio/audio_thread_wrapper.c; do
+   if ! out=$($CC $WARN $INC $NOTHREADS_BASE $C89 -fsyntax-only "$tu" 2>&1); then
+      echo "FAIL  audio + tasks: no threads, C89"
+      echo "      $tu"
+      show_out "$out"
+      fail=1; nt_bad=1
+   fi
+done
+[ "$nt_bad" = 1 ] || echo "ok    audio + tasks: no threads, C89"
 
 # WASAPI is in the Windows C89_BUILD lane, which no job here builds, and
 # its error-string helper serves only the microphone path, so both halves
@@ -396,6 +685,15 @@ win32_audio "wasapi: C89, microphone" "-DHAVE_WASAPI -DHAVE_MICROPHONE" \
    audio/drivers/wasapi.c
 win32_audio "wasapi: C89, no microphone" "-DHAVE_WASAPI" \
    audio/drivers/wasapi.c
+win32_audio "wdmks: C89" "-DHAVE_WDMKS -DHAVE_MICROPHONE" \
+   audio/drivers/wdmks.c
+# WDM-KS keeps an inline path for builds without threads, which no
+# Windows job builds.
+SAVED_BASE=$BASE
+BASE=$NOTHREADS_BASE
+win32_audio "wdmks: C89, no threads" "-DHAVE_WDMKS -DHAVE_MICROPHONE" \
+   audio/drivers/wdmks.c
+BASE=$SAVED_BASE
 check "hw ring: OpenGL only" \
    "-DHAVE_OPENGL $GLINC" gfx/video_thread_hw.c
 check "hw ring: GLES only" \
@@ -474,8 +772,8 @@ check "features_cpu: emscripten" "$HOSTOFF -Itools/platform_stubs/emscripten -D_
 # the stubs already here and shed the host identity like the ones
 # above.
 MENUGFX="gfx/video_driver.c gfx/gfx_display.c gfx/gfx_widgets.c \
- gfx/gfx_thumbnail.c gfx/gfx_surface.c gfx/video_thread_wrapper.c \
- menu/drivers/xmb.c menu/drivers/ozone.c menu/drivers/materialui.c"
+ gfx/gfx_thumbnail.c gfx/gfx_surface.c gfx/gfx_surface_player.c \
+ gfx/video_thread_wrapper.c menu/drivers/xmb.c menu/drivers/ozone.c menu/drivers/materialui.c"
 MG_BASE="-DHAVE_XMB -DHAVE_OZONE -DHAVE_MATERIALUI -DHAVE_RGUI \
  -DHAVE_GFX_WIDGETS -DHAVE_OVERLAY -DHAVE_CONFIGFILE -DRARCH_CONSOLE \
  -DRARCH_INTERNAL -Iinput/include"
@@ -494,7 +792,7 @@ check "console menu+gfx: gekko"   "$HOSTOFF $MG_BASE -Itools/platform_stubs/gekk
 # behind that platform's #ifdef and the desktop makefiles never build
 # it - so a C89 slip or a missing declaration in one sits until the
 # console job runs, which is how a mixed declaration lived in
-# gx_joypad.c. These are the ones the stubs already in the tree can
+# gx_joypad_libogc.c. These are the ones the stubs already in the tree can
 # reach, with one stub added for the pair of PSP input drivers - the
 # 3ds audio drivers want fifteen more symbols whose libctru signatures
 # cannot be checked from here, and a stub that guessed one would let a
@@ -505,15 +803,24 @@ check "console menu+gfx: gekko"   "$HOSTOFF $MG_BASE -Itools/platform_stubs/gekk
 #
 # Same warnings as the driver lanes above, C89 declarations included,
 # because that is the rule these files are furthest from anyone
-# checking. GEKKO takes the vendored libogc headers before its stub:
-# the stub carries only what libogc does not.
+# checking. GEKKO takes libogc's headers before its stub, which
+# carries only what libogc does not: devkitPro's libogc at a fixed
+# release, fetched once (LIBOGC_DIR names a checkout to use instead).
 CDECL="-Wdeclaration-after-statement -Werror=declaration-after-statement"
-GEKKO_INC="-Iwii/libogc/include -Itools/platform_stubs/gekko"
+LIBOGC_TAG=v3.1.0
+LIBOGC_DIR=${LIBOGC_DIR:-${TMPDIR:-/tmp}/libogc-$LIBOGC_TAG}
+if [ ! -f "$LIBOGC_DIR/gc/gccore.h" ]; then
+   rm -rf "$LIBOGC_DIR"
+   git -c advice.detachedHead=false clone -q --depth 1 \
+      --branch "$LIBOGC_TAG" https://github.com/devkitPro/libogc \
+      "$LIBOGC_DIR" || { echo "FAIL  libogc $LIBOGC_TAG could not be fetched"; fail=1; }
+fi
+GEKKO_INC="-I$LIBOGC_DIR/gc -Itools/platform_stubs/gekko -DHAVE_LIBOGC"
 check "gekko: gx_input"        "$HOSTOFF $GEKKO_INC -DGEKKO -DHW_RVL -DRARCH_CONSOLE $CDECL" input/drivers/gx_input.c
-check "gekko: gx_joypad"       "$HOSTOFF $GEKKO_INC -DGEKKO -DHW_RVL -DRARCH_CONSOLE $CDECL" input/drivers_joypad/gx_joypad.c
-check "gekko: mem2_manager"    "$HOSTOFF $GEKKO_INC -DGEKKO -DHW_RVL -DRARCH_CONSOLE $CDECL" libretro-common/memory/mem2_manager.c
-check "gekko: dispserv_gx"     "$HOSTOFF $GEKKO_INC -DGEKKO -DHW_RVL -DRARCH_CONSOLE $CDECL" gfx/display_servers/dispserv_gx.c
-check "gamecube: dispserv_gx"  "$HOSTOFF $GEKKO_INC -DGEKKO -DRARCH_CONSOLE $CDECL" gfx/display_servers/dispserv_gx.c
+check "gekko: gx_joypad"       "$HOSTOFF $GEKKO_INC -DGEKKO -DHW_RVL -DRARCH_CONSOLE $CDECL" input/drivers_joypad/gx_joypad_libogc.c
+check "gekko: mem2_manager"    "$HOSTOFF $GEKKO_INC -DGEKKO -DHW_RVL -DRARCH_CONSOLE $CDECL" libretro-common/memory/mem2_manager_libogc.c
+check "gekko: dispserv_gx"     "$HOSTOFF $GEKKO_INC -DGEKKO -DHW_RVL -DRARCH_CONSOLE $CDECL" gfx/display_servers/dispserv_gx_libogc.c
+check "gamecube: dispserv_gx"  "$HOSTOFF $GEKKO_INC -DGEKKO -DHW_DOL -DRARCH_CONSOLE $CDECL" gfx/display_servers/dispserv_gx_libogc.c
 check "gekko: dispserv_gx_modes" "$HOSTOFF $GEKKO_INC -DGEKKO -DHW_RVL -DRARCH_CONSOLE $CDECL" gfx/display_servers/dispserv_gx_modes.c
 check "psl1ght: dispserv_ps3"  "$HOSTOFF -Itools/platform_stubs/ps3 -D__PS3__ -D__PSL1GHT__ -DRARCH_CONSOLE $CDECL" gfx/display_servers/dispserv_ps3.c gfx/display_servers/dispserv_ps3_modes.c
 check "3ds: ctr_input"         "$HOSTOFF -Itools/platform_stubs/ctr -D_3DS -D__3DS__ -DARM11 -DRARCH_CONSOLE $CDECL" input/drivers/ctr_input.c
@@ -523,19 +830,67 @@ check "psp: psp_joypad"        "$PSP_DEFS $CDECL" input/drivers_joypad/psp_joypa
 check "orbis: ps4_audio"       "$HOSTOFF -Itools/platform_stubs/orbis -DORBIS $CDECL" audio/drivers/ps4_audio.c
 check "qnx: alsa_qsa"          "$HOSTOFF -Itools/platform_stubs/qnx -D__QNX__ $CDECL" audio/drivers/alsa_qsa.c
 check "android: vfs saf"       "$HOSTOFF -Itools/platform_stubs/android -DANDROID $CDECL" libretro-common/vfs/vfs_implementation_saf.c
-check "android: play delivery" "$HOSTOFF -Itools/platform_stubs/android -DANDROID $CDECL" play_feature_delivery/play_feature_delivery.c
+check "android: play delivery" "$HOSTOFF -Itools/platform_stubs/android -DANDROID $CDECL" os/android/play_feature_delivery.c
+# the Android build carries the built-in NFS client and its backend
+# (HAVE_RETRONFS in pkg/android/phoenix-common/jni/Android.mk) and the
+# prefetcher both network backends read through
+check "android: nfs client"    "$HOSTOFF -Itools/platform_stubs/android -DANDROID -DHAVE_NFSCLIENT -DHAVE_RETRONFS -DHAVE_THREADS -DHAVE_NETWORKING $CDECL" libretro-common/net/net_nfs3.c
+check "android: nfs backend"   "$HOSTOFF -Itools/platform_stubs/android -DANDROID -DHAVE_NFSCLIENT -DHAVE_RETRONFS -DHAVE_THREADS -DHAVE_NETWORKING -DRARCH_INTERNAL $CDECL" libretro-common/vfs/vfs_implementation_nfs.c
+check "android: vfs prefetch"  "$HOSTOFF -Itools/platform_stubs/android -DANDROID -DHAVE_THREADS $CDECL" libretro-common/vfs/vfs_prefetch.c
+
+# The Android build carries the cleanroom network stack (Android.mk:
+# HAVE_CRYPTO, keychain, RETROSSL, RETROSMB, RETRONFS) and is compiled
+# by the NDK's clang for aarch64. The same compiler family and target
+# here, with the aarch64 cross headers standing in for the NDK's, over
+# every translation unit of the stack: the AES/PMULL path takes the
+# +crypto target attribute this way, which gcc lanes never exercise.
+ANDROID_CLANG=${ANDROID_CLANG:-clang}
+ANDROID_SYSINC=${ANDROID_SYSINC:-/usr/aarch64-linux-gnu/include}
+android_clang() {
+   name="$1"; defs="$2"; tu="$3"
+   if ! command -v "$ANDROID_CLANG" > /dev/null 2>&1 || [ ! -d "$ANDROID_SYSINC" ]; then
+      echo "skip  $name (no $ANDROID_CLANG or $ANDROID_SYSINC)"
+      return
+   fi
+   if ! out=$($ANDROID_CLANG --target=aarch64-linux-gnu -isystem "$ANDROID_SYSINC" \
+         -Wall -Werror -Wno-unused-function -D__ANDROID__ -DANDROID $INC $defs \
+         -fsyntax-only "$tu" 2>&1); then
+      echo "FAIL  $name"
+      echo "      $tu"
+      show_out "$out"
+      fail=1
+   else
+      echo "ok    $name"
+   fi
+}
+ANDROID_NET="-DHAVE_CRYPTO -DHAVE_KEYCHAIN -DHAVE_SSL -DHAVE_RETROSSL -DHAVE_SMBCLIENT -DHAVE_RETROSMB -DHAVE_NFSCLIENT -DHAVE_RETRONFS -DHAVE_NETWORKING -DHAVE_THREADS -DHAVE_CONFIGFILE -DRARCH_INTERNAL -D_GNU_SOURCE"
+for tu in libretro-common/crypto/crypto.c libretro-common/crypto/kdf.c libretro-common/crypto/pk.c \
+      libretro-common/crypto/x509.c libretro-common/file/keychain.c libretro-common/net/net_socket_ssl_retro.c \
+      libretro-common/net/net_smb2.c libretro-common/net/net_krb5.c libretro-common/net/net_nfs3.c \
+      libretro-common/vfs/vfs_implementation_smb.c libretro-common/vfs/vfs_implementation_nfs.c \
+      libretro-common/vfs/vfs_prefetch.c network/tls_log.c; do
+   android_clang "android clang/aarch64: $(basename $tu)" "$ANDROID_NET" "$tu"
+done
+android_clang "android clang/aarch64: camera" "-Itools/platform_stubs/android -DHAVE_OPENGLES -DHAVE_OPENGLES2 -DHAVE_CAMERA -DRARCH_INTERNAL -include tools/platform_stubs/android/jni.h -include frontend/drivers/platform_unix.h -include verbosity.h" camera/drivers/android.c
 # rwebaudio is its own translation unit in the emscripten build, not
 # part of griffin's, and nothing else compiles it at all.
 check "emscripten: rwebaudio"  "$HOSTOFF -Itools/platform_stubs/emscripten -D__EMSCRIPTEN__ -DEMSCRIPTEN -DHAVE_RWEBAUDIO $CDECL" audio/drivers/rwebaudio.c
 check "emscripten: rwebcam"    "$HOSTOFF -Itools/platform_stubs/emscripten -D__EMSCRIPTEN__ -DEMSCRIPTEN $CDECL" camera/drivers/rwebcam.c
+# The Android camera driver is only ever compiled inside griffin on the
+# Android job, after platform_unix.h; the same shape here, so the C of
+# it is checked on every push.
+check "android: camera"        "$HOSTOFF -Itools/platform_stubs/android -DANDROID -DHAVE_OPENGLES -DHAVE_OPENGLES2 -DHAVE_CAMERA -include tools/platform_stubs/android/jni.h -include frontend/drivers/platform_unix.h -include verbosity.h $CDECL" camera/drivers/android.c
+[ -f /usr/include/linux/videodev2.h ] \
+   && check "camera: v4l2"     "-DHAVE_V4L2 -DHAVE_CAMERA $CDECL" camera/drivers/video4linux2.c \
+   || echo "skip  camera: v4l2 (no /usr/include/linux/videodev2.h)"
 
 # Two more that no job here compiles: the S3 cloud-sync backend, which
 # only griffin includes and which nothing defines HAVE_S3 for, and the
 # Lakka wifi driver, which needs HAVE_LAKKA. Both had a mixed
 # declaration. The C89 build cannot see either, because neither is in
-# its object list.
+# its object list, so S3 is held to the full C89 lane here.
 NETDEFS="-DHAVE_NETWORKING -DHAVE_CONFIGFILE -DHAVE_OVERLAY -DHAVE_CHEATS"
-check "cloudsync: s3"          "$NETDEFS -DHAVE_CLOUDSYNC -DHAVE_S3 $CDECL" network/cloud_sync/s3.c
+check "cloudsync: s3, C89"     "$NETDEFS -DHAVE_CLOUDSYNC -DHAVE_S3 $C89" network/cloud_sync/s3.c
 check "lakka: connmanctl"      "$NETDEFS -DHAVE_LAKKA -DHAVE_WIFI $CDECL" network/drivers_wifi/connmanctl.c
 
 # The salamander launchers link a hand-picked subset of libretro-common
@@ -559,6 +914,32 @@ salamander_link() {
 salamander_link "salamander link: rtime.c" \
    "$HOSTOFF -UHAVE_THREADS -Itools/platform_stubs/vita -DVITA -DIS_SALAMANDER -DRARCH_CONSOLE" \
    libretro-common/time/rtime.c
+
+# Every launcher's whole libretro-common list, read from its Makefile,
+# linked with frontend_salamander.c and a host frontend driver: a unit
+# in a list that calls into one the list leaves out fails the link the
+# way that launcher's would.
+salamander_objs() {
+   case "$1" in
+      Makefile.wiiu)
+         sed -n '/^ifeq ($(SALAMANDER_BUILD),1)/,/^else/p' "$1" ;;
+      *) cat "$1" ;;
+   esac | grep -oE '(libretro-common/[A-Za-z0-9_/]+|verbosity)\.o' \
+        | sed 's/\.o$/.c/' | sort -u
+}
+for mk in Makefile.*.salamander Makefile.wiiu; do
+   if ! out=$($CC $WARN $INC $BASE -UHAVE_THREADS -DIS_SALAMANDER \
+         -DRARCH_CONSOLE -DHAVE_MAIN -o /tmp/salamander_link_check \
+         tools/platform_stubs/salamander_frontend.c \
+         frontend/frontend_salamander.c $(salamander_objs "$mk") 2>&1); then
+      echo "FAIL  salamander link: $mk object set"
+      show_out "$out"
+      fail=1
+   else
+      echo "ok    salamander link: $mk object set"
+   fi
+   rm -f /tmp/salamander_link_check
+done
 
 # runloop.c under Android: runloop_idle_wait's looper branch, and every
 # other ANDROID block in the file, compiled against hermetic NDK stubs
@@ -594,15 +975,28 @@ check "dingux: rgui" "-DDINGUX -DHAVE_MENU -DHAVE_RGUI" menu/drivers/rgui.c
 # along with the thumbnail code that produces into it.
 # The VP9 decoder's tile-column threading and the video streams' pooled
 # colour conversion sit behind HAVE_THREADS; both shapes compile.
+check "AV1 hardware registry: threads" "-DHAVE_RAV1" libretro-common/formats/av1/rav1_hw.c
+check_nothreads "no threads: AV1 hardware registry" "-DHAVE_RAV1" libretro-common/formats/av1/rav1_hw.c
 check "vp9/h265/video streams: threads" "-DHAVE_RVP9 -DHAVE_RVP8 -DHAVE_RWEBM -DHAVE_RMP4 -DHAVE_RH264 -DHAVE_RH265" libretro-common/formats/vp9/rvp9.c libretro-common/formats/h265/rh265.c libretro-common/formats/webm/rwebm_video.c libretro-common/formats/mp4/rmp4_video.c libretro-common/formats/image/image_blit_bands.c
 check_nothreads "no threads: vp9/h265/video streams" "-DHAVE_RVP9 -DHAVE_RVP8 -DHAVE_RWEBM -DHAVE_RMP4 -DHAVE_RH264 -DHAVE_RH265" libretro-common/formats/vp9/rvp9.c libretro-common/formats/h265/rh265.c libretro-common/formats/webm/rwebm_video.c libretro-common/formats/mp4/rmp4_video.c libretro-common/formats/image/image_blit_bands.c
-check "gfx_surface: threads" "$GLINC" gfx/gfx_surface.c gfx/gfx_thumbnail.c
-check_nothreads "no threads: gfx_surface" "$GLINC" gfx/gfx_surface.c gfx/gfx_thumbnail.c
+check "Matroska AVC/HEVC without MP4 or VP9" "-DHAVE_RWEBM" \
+   libretro-common/formats/h264/rh264.c libretro-common/formats/h265/rh265.c \
+   libretro-common/formats/webm/rwebm_video.c libretro-common/formats/image_transfer.c
+check_nothreads "no threads: Matroska AVC/HEVC without MP4 or VP9" "-DHAVE_RWEBM" \
+   libretro-common/formats/h264/rh264.c libretro-common/formats/h265/rh265.c \
+   libretro-common/formats/webm/rwebm_video.c libretro-common/formats/image_transfer.c
+check "gfx_surface: threads" "$GLINC" gfx/gfx_surface.c gfx/gfx_thumbnail.c gfx/gfx_surface_player.c libretro-common/formats/video_player.c
+check_nothreads "no threads: gfx_surface" "$GLINC" gfx/gfx_surface.c gfx/gfx_thumbnail.c gfx/gfx_surface_player.c libretro-common/formats/video_player.c
 check_nothreads "no threads: gl2"          "$GLDEFS $GLINC"       gfx/drivers/gl2.c
 check_nothreads "no threads: video_driver" "$GLINC"               gfx/video_driver.c
 check_nothreads "no threads: retroarch"    "$GLINC -DHAVE_COMMAND -DHAVE_STDIN_CMD" retroarch.c
 check_nothreads "no threads: audio_driver" "$GLINC"               audio/audio_driver.c
 check_nothreads "no threads: linux input"  "$GLINC"               input/common/linux_common.c
+# input_driver.c's keyboard lane is HAVE_THREADS only, and what it shares
+# with the rest of the file has to be declared outside it: a forward
+# declaration left inside broke the Emscripten build, the one job that
+# compiles this file without threads.
+check_nothreads "no threads: input_driver" "$GLINC"               input/input_driver.c
 check_nothreads "no threads: widget state lock stand-ins" \
    "$GLINC -DHAVE_GFX_WIDGETS" \
    gfx/gfx_widgets.c gfx/widgets/gfx_widget_volume.c gfx/video_driver.c runloop.c
@@ -647,6 +1041,11 @@ UITU="retroarch.c runloop.c gfx/video_driver.c gfx/gfx_display.c"
 UIDEFS="$GLINC -DHAVE_COMMAND -DHAVE_STDIN_CMD"
 check_gates "gates: menu + widgets" "$UIDEFS -DHAVE_MENU -DHAVE_GFX_WIDGETS" $UITU
 check_gates "gates: menu only"      "$UIDEFS -DHAVE_MENU"                    $UITU
+# The keychain without networking: its menu entry and task must be
+# declared outside the networking-only parts of tasks_internal.h.
+check_gates "gates: keychain menu, no networking" \
+   "$UIDEFS -DHAVE_MENU -DHAVE_KEYCHAIN -DHAVE_CRYPTO -DHAVE_CONFIGFILE" \
+   menu/menu_setting.c tasks/task_keychain.c
 check_gates "gates: widgets only"   "$UIDEFS -DHAVE_GFX_WIDGETS"             $UITU
 check_gates "gates: neither"        "$UIDEFS"                                $UITU
 
@@ -670,6 +1069,30 @@ check_gates "gates: no subsystems"   "$UIDEFS"                                  
 # a Linux build can have alone is checked alone.
 check_gates "gates: GPU index, EGL only"    "$UIDEFS -DHAVE_EGL -DHAVE_OPENGL" configuration.c
 check_gates "gates: GPU index, Vulkan only" "$UIDEFS -DHAVE_VULKAN"            configuration.c
+
+# griffin is one translation unit, so a file-local name that is fine on
+# its own collides there: p256's fmul against gfx's did, and only the
+# MSVC job builds griffin. Both crypto shapes, on Linux, for free.
+check_gates "griffin: HAVE_CRYPTO + keychain"  "$UIDEFS -DRARCH_INTERNAL -DHAVE_GRIFFIN=1 -DHAVE_MENU -DHAVE_RGUI -DHAVE_CONFIGFILE -DHAVE_CRYPTO -DHAVE_KEYCHAIN -D_GNU_SOURCE" griffin/griffin.c
+check_gates "griffin: HAVE_RETROSSL"            "$UIDEFS -DRARCH_INTERNAL -DHAVE_GRIFFIN=1 -DHAVE_MENU -DHAVE_RGUI -DHAVE_CONFIGFILE -DHAVE_CRYPTO -DHAVE_KEYCHAIN -DHAVE_NETWORKING -DHAVE_SSL -DHAVE_RETROSSL -D_GNU_SOURCE" griffin/griffin.c
+check_gates "griffin: HAVE_RETROSMB + cloud sync"  "$UIDEFS -DRARCH_INTERNAL -DHAVE_GRIFFIN=1 -DHAVE_MENU -DHAVE_RGUI -DHAVE_CONFIGFILE -DHAVE_CRYPTO -DHAVE_NETWORKING -DHAVE_SMBCLIENT -DHAVE_RETROSMB -DHAVE_CLOUDSYNC -D_GNU_SOURCE" griffin/griffin.c
+# The unity build the Android, Apple, webOS and MSVC targets ship: the
+# whole network stack beside every codec, image reader and subsystem
+# griffin can carry. A static helper in one translation unit that
+# another one also defines (get32 in net_smb2.c and rvorbis.c) only
+# collides here, so this lane carries as much of griffin as a host can.
+GRIFFIN_FULL="-DRARCH_INTERNAL -DHAVE_GRIFFIN=1 -DHAVE_MENU -DHAVE_RGUI -DHAVE_XMB -DHAVE_OZONE -DHAVE_MATERIALUI -DHAVE_GFX_WIDGETS -DHAVE_OVERLAY -DHAVE_CONFIGFILE -DHAVE_CHEEVOS -DRC_DISABLE_LUA -DHAVE_RUNAHEAD -DHAVE_REWIND -DHAVE_PATCH -DHAVE_XDELTA -DHAVE_CHEATS -DHAVE_SCREENSHOTS -DHAVE_TRANSLATE -DHAVE_LIBRETRODB -DHAVE_DYNAMIC -DHAVE_DYLIB -DHAVE_THREADS -DHAVE_AUDIOMIXER -DHAVE_DSP_FILTER -DHAVE_VIDEO_FILTER -DHAVE_RWAV -DHAVE_RFLAC -DHAVE_RVORBIS -DHAVE_RMP3 -DHAVE_RAC3 -DHAVE_RPNG -DHAVE_RJPEG -DHAVE_RBMP -DHAVE_RTGA -DHAVE_RWEBP -DHAVE_RDDS -DHAVE_RZSTD -DHAVE_7ZIP -DHAVE_CHD -DHAVE_RCHD -DHAVE_STB_FONT -DHAVE_NETWORKING -DHAVE_IFINFO -DHAVE_NETWORK_CMD -DHAVE_NETPLAYDISCOVERY -DHAVE_ONLINE_UPDATER -DHAVE_UPDATE_ASSETS -DHAVE_UPDATE_CORES -DHAVE_UPDATE_CORE_INFO -DHAVE_CORE_INFO_CACHE -DHAVE_CLOUDSYNC -DHAVE_S3 -DHAVE_CRYPTO -DHAVE_KEYCHAIN -DHAVE_SSL -DHAVE_RETROSSL -DHAVE_SMBCLIENT -DHAVE_RETROSMB -DHAVE_NFSCLIENT -DHAVE_RETRONFS -DHAVE_LANGEXTRA -DHAVE_SHADERPIPELINE -DHAVE_GLSL -DHAVE_OPENGL -D_GNU_SOURCE"
+check_gates "griffin: full unity (every codec + network stack)" "$UIDEFS $GRIFFIN_FULL" griffin/griffin.c
+# The SMB show-settings row read a HAVE_MENU-only default under
+# HAVE_SMBCLIENT alone; with the built-in client on by default that
+# broke every --disable-menu build. configuration.c with SMB and no
+# menu, and the same with no menu at all.
+check_gates "gates: SMB client, no menu"        "$UIDEFS -DHAVE_CONFIGFILE -DHAVE_NETWORKING -DHAVE_CRYPTO -DHAVE_SMBCLIENT -DHAVE_RETROSMB -D_GNU_SOURCE" configuration.c
+check_gates "gates: NFS client, no menu"        "$UIDEFS -DHAVE_CONFIGFILE -DHAVE_NETWORKING -DHAVE_NFSCLIENT -DHAVE_RETRONFS -D_GNU_SOURCE" configuration.c
+check_gates "gates: NFS client + menu"          "$UIDEFS -DHAVE_CONFIGFILE -DHAVE_NETWORKING -DHAVE_NFSCLIENT -DHAVE_RETRONFS -DHAVE_MENU -DHAVE_RGUI -D_GNU_SOURCE" configuration.c menu/menu_setting.c menu/menu_displaylist.c menu/cbs/menu_cbs_ok.c menu/cbs/menu_cbs_deferred_push.c menu/cbs/menu_cbs_sublabel.c menu/cbs/menu_cbs_title.c
+check_gates "gates: no menu, no SMB"            "$UIDEFS -DHAVE_CONFIGFILE -DHAVE_NETWORKING -D_GNU_SOURCE" configuration.c
+check_gates "griffin: HAVE_RETRONFS"            "$UIDEFS -DRARCH_INTERNAL -DHAVE_GRIFFIN=1 -DHAVE_MENU -DHAVE_RGUI -DHAVE_CONFIGFILE -DHAVE_NETWORKING -DHAVE_NFSCLIENT -DHAVE_RETRONFS -D_GNU_SOURCE" griffin/griffin.c
+check_gates "griffin: no crypto (console shape)" "$UIDEFS -DRARCH_INTERNAL -DHAVE_GRIFFIN=1 -DHAVE_MENU -DHAVE_RGUI -DHAVE_CONFIGFILE -DHAVE_KEYCHAIN -D_GNU_SOURCE" griffin/griffin.c
 
 # A subsystem's own unit is built only when its gate is on, so each is
 # checked with that gate on and the user interface off: the achievement
@@ -723,10 +1146,20 @@ GFXDEFS="-DHAVE_RGUI -DHAVE_OVERLAY -DHAVE_GFX_WIDGETS"
 VK_H=/usr/include/vulkan/vulkan.h
 platform_video "vulkan back end" "$GFXDEFS -DHAVE_VULKAN" "" \
    gfx/drivers/vulkan.c "$VK_H"
+check "Vulkan Video: Matroska without MP4" "-DHAVE_VULKAN -DHAVE_RWEBM -DHAVE_DYLIB -Igfx/include" \
+   gfx/common/vulkan_common.c gfx/common/vulkan_video_decode.c
+check "Vulkan Video: AV1 disabled" "-DHAVE_VULKAN -DHAVE_RMP4 -DHAVE_DYLIB -Igfx/include" gfx/common/vulkan_common.c gfx/common/vulkan_video_decode.c
+check "Vulkan Video: AV1 enabled, VP9 disabled" "-DHAVE_VULKAN -DHAVE_RMP4 -DHAVE_RAV1 -DHAVE_DYLIB -Igfx/include" gfx/common/vulkan_common.c gfx/common/vulkan_video_decode.c
 platform_video "vulkan shader back end" "$GFXDEFS -DHAVE_VULKAN" "" \
    gfx/drivers_shader/shader_vulkan.c "$VK_H"
 check "cg shader back end" "$GFXDEFS -DHAVE_CG -DHAVE_OPENGL" \
    gfx/drivers_shader/shader_gl_cg.c
+for api in OPENGLES2 OPENGLES3; do
+   defs="$GFXDEFS -DHAVE_CG -DHAVE_OPENGL -DHAVE_OPENGLES -DHAVE_$api"
+   check "cg shader back end: $api" "$defs" gfx/drivers_shader/shader_gl_cg.c
+   d3d_video "cg shader back end: $api mingw" "$defs -Igfx/include/ANGLE" \
+      gfx/drivers_shader/shader_gl_cg.c
+done
 check "framebuffer back ends" "$GFXDEFS" \
    gfx/drivers/fpga_gfx.c gfx/drivers/hub75_gfx.c gfx/drivers/sunxi_gfx.c
 X11_H=/usr/include/X11/Xlib.h
@@ -744,5 +1177,215 @@ check "runahead: neither"          "$RADEFS"                            runahead
 check "runahead: HAVE_DYLIB only"  "$RADEFS -DHAVE_DYLIB"               runahead.c
 check "runahead: HAVE_DYNAMIC"     "$RADEFS -DHAVE_DYNAMIC"             runahead.c
 check "runahead: both"             "$RADEFS -DHAVE_DYNAMIC -DHAVE_DYLIB" runahead.c
+
+# The Metal driver, as Objective-C against stand-ins for the parts of the
+# macOS SDK it uses (tools/platform_stubs/metal). No runner here has the
+# SDK, so the Apple jobs used to be the first to compile it. A selector
+# the stand-ins do not declare is an error: a new Metal call needs its
+# declaration added there.
+if command -v clang > /dev/null 2>&1; then
+   for metal_features in "" "-DHAVE_RMP4 -DHAVE_THREADS" "-DHAVE_RWEBM -DHAVE_THREADS"; do
+   for metal_ownership in "" "-fobjc-arc"; do
+   if ! out=$(clang -x objective-c -fobjc-runtime=macosx-10.13 -fblocks $metal_ownership \
+         -fsyntax-only -Wall -Wno-unused-function -Werror=objc-method-access \
+         -Werror=unused-but-set-variable $HOSTOFF -D__APPLE__ -D__MACH__ \
+         -DHAVE_METAL $metal_features -Itools/platform_stubs/metal -Itools/platform_stubs/gcd $INC $BASE \
+         gfx/drivers/metal.m 2>&1); then
+      echo "FAIL  metal video (stubs) $metal_features $metal_ownership"
+      echo "      gfx/drivers/metal.m"
+      show_out "$out"
+      fail=1
+   else
+      echo "ok    metal video (stubs) $metal_features $metal_ownership"
+   fi
+   done
+   done
+else
+   echo "skip  metal video (stubs) (no clang)"
+fi
+
+# gfx/font_layout.h expands inside each driver's render function, and a
+# hook that reads a value before declaring its own locals is C99 the C89
+# lane rejects, so these lanes reject it too (the PS2 and Wii U drivers,
+# built only by C99 toolchains, opt out). And a
+# layout counter a driver has no use for is set but never read. GCC 15
+# and clang warn about that; the runner's GCC does not, so these lanes
+# ask clang, with the warning made an error. So is a directive inside a
+# macro's arguments, which MSVC's preprocessor takes as tokens.
+font_layout() {
+   name="$1"; target="$2"; defs="$3"; tu="$4"
+   if ! command -v clang > /dev/null 2>&1; then
+      echo "skip  $name (no clang)"
+      return
+   fi
+   if ! out=$(clang $target -Werror=unused-but-set-variable \
+         -Werror=declaration-after-statement -Werror=embedded-directive \
+         $INC $BASE $defs -fsyntax-only "$tu" 2>&1); then
+      echo "FAIL  $name"
+      echo "      $tu"
+      show_out "$out"
+      fail=1
+   else
+      echo "ok    $name"
+   fi
+}
+# Vulkan from the Khronos headers the tree carries (gfx/include), as the
+# real builds use, so the lane runs on a runner without the SDK headers
+font_layout "font layout: vulkan" "" "-DHAVE_VULKAN -Igfx/include" gfx/drivers/vulkan.c
+font_layout "font layout: gl" "" "-DHAVE_OPENGL" gfx/drivers/gl2.c
+font_layout "font layout: gl1" "" "-DHAVE_OPENGL -DHAVE_OPENGL1" \
+   gfx/drivers/gl1.c
+if command -v sdl2-config > /dev/null 2>&1; then
+   font_layout "font layout: sdl2" "" "-DHAVE_SDL2 $(sdl2-config --cflags)" \
+      gfx/drivers/sdl2_gfx.c
+else
+   echo "skip  font layout: sdl2 (no sdl2-config)"
+fi
+if [ -f /usr/include/SDL3/SDL.h ]; then
+   font_layout "font layout: sdl3" "" "-DHAVE_SDL3 -I/usr/include/SDL3" \
+      gfx/drivers/sdl3_gfx.c
+else
+   echo "skip  font layout: sdl3 (no SDL3 headers)"
+fi
+# The software OSD blitters, where their headers are installed
+if [ -f /usr/include/X11/extensions/Xvlib.h ]; then
+   font_layout "font layout: xvideo" "" "-DHAVE_X11 -DHAVE_XVIDEO" \
+      gfx/drivers/xvideo.c
+fi
+if [ -f /usr/include/SDL/SDL.h ]; then
+   font_layout "font layout: sdl" "" "-DHAVE_SDL -I/usr/include/SDL" \
+      gfx/drivers/sdl_gfx.c
+fi
+if [ -f /usr/include/linux/omapfb.h ]; then
+   font_layout "font layout: omap" "" "-DHAVE_OMAP" gfx/drivers/omap_gfx.c
+fi
+font_layout "font layout: switch" "" \
+   "-DHAVE_LIBNX -DSWITCH -D__SWITCH__ -I$STUBS/libnx" \
+   gfx/drivers/switch_nx_gfx.c
+font_layout "font layout: gxm" "" \
+   "-DVITA -DRARCH_CONSOLE $HOSTOFF -Itools/platform_stubs/vita" \
+   gfx/drivers/gxm_gfx.c
+font_layout "font layout: ps2" "" \
+   "-DPS2 -DRARCH_CONSOLE -DHAVE_WINDOW_OFFSET -DHAVE_RGUI $HOSTOFF -Itools/platform_stubs/ps2 \
+    -Wno-declaration-after-statement" \
+   gfx/drivers/ps2_gfx.c
+font_layout "font layout: gx2" "" \
+   "-DWIIU $HOSTOFF -Ios/wiiu/include -Ios/wiiu -Wno-declaration-after-statement" \
+   gfx/drivers/gx2_gfx.c
+font_layout "font layout: glcore" "" \
+   "-DHAVE_OPENGL -DHAVE_OPENGL_CORE -DHAVE_SLANG" gfx/drivers/gl3.c
+if [ -d /usr/x86_64-w64-mingw32/include ]; then
+   MINGW_CLANG="--target=x86_64-w64-mingw32 -isystemgfx/include/dxsdk -isystem /usr/x86_64-w64-mingw32/include"
+   font_layout "font layout: gdi" "$MINGW_CLANG" \
+      "-DHAVE_RGUI -DHAVE_OVERLAY -DHAVE_GDI -D_WIN32_WINNT=0x0601" \
+      gfx/drivers/gdi_gfx.c
+   font_layout "font layout: d3d8" "$MINGW_CLANG" \
+      "-DHAVE_D3D -DHAVE_RGUI -DHAVE_OVERLAY -DHAVE_D3D8" gfx/drivers/d3d8.c
+   font_layout "font layout: d3d9 hlsl" "$MINGW_CLANG" \
+      "-DHAVE_D3D -DHAVE_RGUI -DHAVE_OVERLAY -DHAVE_D3D9" gfx/drivers/d3d9hlsl.c
+   font_layout "font layout: d3d9 cg" "$MINGW_CLANG" \
+      "-DHAVE_D3D -DHAVE_RGUI -DHAVE_OVERLAY -DHAVE_D3D9" gfx/drivers/d3d9cg.c
+   font_layout "font layout: d3d10" "$MINGW_CLANG" \
+      "-DHAVE_D3D -DHAVE_RGUI -DHAVE_OVERLAY -DHAVE_D3D10" gfx/drivers/d3d10.c
+   font_layout "font layout: d3d11" "$MINGW_CLANG" \
+      "-DHAVE_D3D -DHAVE_RGUI -DHAVE_OVERLAY -DHAVE_D3D11" gfx/drivers/d3d11.c
+   font_layout "font layout: d3d12" "$MINGW_CLANG" \
+      "-DHAVE_D3D -DHAVE_RGUI -DHAVE_OVERLAY -DHAVE_D3D12" gfx/drivers/d3d12.c
+else
+   echo "skip  font layout: gdi, d3d8/9/10/11/12 (no MinGW headers)"
+fi
+
+echo "== unity build: drivers griffin compiles together =="
+# griffin (the MSVC and Xcode builds) includes every driver in one
+# translation unit, where two drivers' file-scope names are
+# redefinitions; the Makefile build compiles them apart and never sees
+# it. GL, GL core and Vulkan share their effect SPIR-V and stock shaders.
+UNITY_DIR=$(mktemp -d)
+printf '#include "gfx/drivers/gl2.c"\n#include "gfx/drivers/gl3.c"\n#include "gfx/drivers/vulkan.c"\n' \
+   > "$UNITY_DIR/unity_gfx.c"
+check "unity: gl2 + gl3 + vulkan in one translation unit" \
+   "-Igfx/include -DHAVE_OPENGL -DHAVE_OPENGL_CORE -DHAVE_GLSL -DHAVE_VULKAN -DHAVE_SLANG -DHAVE_SHADERPIPELINE -DHAVE_RSLC -DHAVE_GFX_WIDGETS -DHAVE_OVERLAY -DHAVE_X11" \
+   "$UNITY_DIR/unity_gfx.c"
+rm -rf "$UNITY_DIR"
+
+check "image YUV: PS2 C89" "-DPS2 -DRARCH_CONSOLE $HOSTOFF -std=c89" \
+   libretro-common/formats/image/image_yuv_blit.c
+
+echo "== screens' own windows: with HAVE_VIDEO_WINDOWS =="
+# Android builds the screens' windows and a desktop build does not, so
+# no other lane compiles the drivers' window code or the frontend's
+# with it; and without threads, as a --disable-threads build would.
+WINDEFS="-DHAVE_VIDEO_WINDOWS -DHAVE_EGL"
+WINTU="gfx/video_driver.c gfx/video_thread_wrapper.c input/input_driver.c \
+   configuration.c menu/menu_setting.c menu/menu_displaylist.c \
+   gfx/common/egl_common.c gfx/video_windows.c"
+check "windows: frontend" "$UIDEFS $WINDEFS -DHAVE_OPENGL -DHAVE_OVERLAY" $WINTU
+check_nothreads "windows: frontend, no threads" \
+   "$UIDEFS $WINDEFS -DHAVE_OPENGL -DHAVE_OVERLAY" \
+   $(echo "$WINTU" | sed 's|gfx/video_thread_wrapper.c||')
+check "windows: gl2 GLES2" \
+   "$GLDEFS -DHAVE_OPENGLES -DHAVE_OPENGLES2 $WINDEFS $GLINC" gfx/drivers/gl2.c
+check "windows: gl2 GLES3" \
+   "$GLDEFS -DHAVE_OPENGLES -DHAVE_OPENGLES3 $WINDEFS $GLINC" gfx/drivers/gl2.c
+check "windows: gl2 desktop" "$GLDEFS $WINDEFS $GLINC" gfx/drivers/gl2.c
+check_nothreads "windows: gl2, no threads" "$GLDEFS $WINDEFS $GLINC" \
+   gfx/drivers/gl2.c
+platform_video "windows: vulkan back end" \
+   "$GFXDEFS -DHAVE_VULKAN -DHAVE_VIDEO_WINDOWS" "" gfx/drivers/vulkan.c "$VK_H"
+check "windows: vulkan second output" \
+   "-DHAVE_VULKAN -DHAVE_DYLIB -DHAVE_VIDEO_WINDOWS -Igfx/include" \
+   gfx/common/vulkan_common.c
+
+
+# PlayStation clang declares in immintrin.h only the intrinsics of the
+# ISAs the whole build enables, so a kernel built under a per-function
+# target("avx2") or target("avx512f") that the host compiles cleanly
+# does not exist there: the PS4 has AVX alone, the PS5 AVX2 and no
+# AVX-512. Every unit carrying a per-function target or 256/512-bit
+# intrinsics is found by content rather than listed, so a new one is
+# checked the day it lands, and compiled (not only parsed) for each
+# console's own target triple, which brings that console's __SCE__ and
+# CPU baseline. Host libc headers stand in for the SDK's.
+echo "== playstation x86 SIMD units =="
+SIMD_PAT='target\("(avx|fma|sse4|bmi|f16c)|_mm256_|_mm512_'
+if git rev-parse --git-dir > /dev/null 2>&1; then
+   SIMD_TU=$(git grep -lE "$SIMD_PAT" -- '*.c' ':!deps/' ':!samples/' \
+      ':!libretro-common/samples/' ':!tools/' ':!pkg/' ':!os/' ':!wiiu/')
+else
+   SIMD_TU=$(grep -rlE --include='*.c' "$SIMD_PAT" . \
+      | sed 's|^\./||' \
+      | grep -vE '^(deps|samples|libretro-common/samples|tools|pkg|os|wiiu)/')
+fi
+SCE_CC=${SCE_CC:-clang}
+SCE_SYS="-isystem /usr/include"
+[ -d /usr/include/x86_64-linux-gnu ] \
+   && SCE_SYS="$SCE_SYS -isystem /usr/include/x86_64-linux-gnu"
+SCE_DEFS="-DRARCH_INTERNAL -DHAVE_THREADS -DHAVE_REWIND -DHAVE_CHEATS -D_BSD_SOURCE"
+for sce in "ps4 x86_64-scei-ps4 -DORBIS -Itools/platform_stubs/orbis" \
+      "ps5 x86_64-sie-ps5"; do
+   set -- $sce
+   sce_name=$1; sce_triple=$2; shift 2
+   sce_extra="$*"
+   if ! command -v "$SCE_CC" > /dev/null 2>&1 \
+         || ! "$SCE_CC" --target=$sce_triple -x c -c -o /dev/null /dev/null \
+            > /dev/null 2>&1; then
+      echo "skip  $sce_name: SIMD units (no clang for $sce_triple)"
+      continue
+   fi
+   bad=0
+   for tu in $SIMD_TU; do
+      if ! out=$("$SCE_CC" --target=$sce_triple $SCE_SYS $HOSTOFF $INC \
+            $SCE_DEFS $sce_extra \
+            -O2 -Wall -Werror=implicit-function-declaration \
+            -c -o /dev/null "$tu" 2>&1); then
+         echo "FAIL  $sce_name: SIMD units"
+         echo "      $tu"
+         show_out "$out"
+         fail=1; bad=1
+      fi
+   done
+   [ "$bad" = 1 ] \
+      || echo "ok    $sce_name: SIMD units ($(echo $SIMD_TU | wc -w) files)"
+done
 
 exit $fail

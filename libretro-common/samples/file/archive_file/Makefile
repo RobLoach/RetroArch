@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := archive_zip_test
 
 LIBRETRO_COMM_DIR := ../../..
@@ -22,13 +24,19 @@ SOURCES := \
 	$(LIBRETRO_COMM_DIR)/streams/trans_stream_pipe.c \
 	$(LIBRETRO_COMM_DIR)/streams/trans_stream_deflate.c \
 	$(LIBRETRO_COMM_DIR)/encodings/encoding_deflate.c \
+	$(LIBRETRO_COMM_DIR)/encodings/encoding_rzstd.c \
+	$(LIBRETRO_COMM_DIR)/encodings/encoding_xxh64.c \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
 	$(LIBRETRO_COMM_DIR)/time/rtime.c
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
 override CPPFLAGS += -DHAVE_COMPRESSION -I$(LIBRETRO_COMM_DIR)/include
-CFLAGS            += -Wall -pedantic -std=gnu99 -g
+
+# Zstandard members inside a zip, while .zst stays without a backend
+archive_zip_test.o $(call sample_objs,$(LIBRETRO_COMM_DIR)/file/archive_file_zlib.o): \
+   override CPPFLAGS += -DHAVE_RZSTD
+CFLAGS            += -Wall -pedantic -std=gnu99 -g1
 
 ifneq ($(SANITIZER),)
    CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer $(CFLAGS)
@@ -45,6 +53,10 @@ all: $(TARGET)
 %.o: %.c Makefile
 	$(CC) -c -o $@ $< $(CPPFLAGS) $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c Makefile
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CPPFLAGS) $(CFLAGS)
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
@@ -52,6 +64,7 @@ check: $(TARGET)
 	./$(TARGET)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJS)
 
 .PHONY: all check clean

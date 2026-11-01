@@ -82,7 +82,16 @@ struct descriptor
    int id_min;
    int id_max;
    uint16_t *value;
+   /* frames since each value last changed, up to REPEAT_SETTLED */
+   uint8_t  *age;
 };
+
+/* A change is sent by UDP, which may lose it, and nothing else would
+ * correct the receiver until the control changes again. So it is sent
+ * again this many frames after the change, three times. */
+#define REPEAT_1       5
+#define REPEAT_2       15
+#define REPEAT_SETTLED 30
 
 struct remote_joypad_message
 {
@@ -108,6 +117,12 @@ static unsigned pointer_prev_x = 0;
 static unsigned pointer_prev_y = 0;
 static unsigned pointer_prev_color = 0;
 static unsigned pointer_idle = 0;
+/* RETRO_DEVICE_TOUCHPAD: port 1's controller touchpad, a finger each */
+static bool touchpad_enabled = false;
+static bool touchpad_shown[2];
+static unsigned touchpad_prev_x[2];
+static unsigned touchpad_prev_y[2];
+static unsigned touchpad_prev_color[2];
 
 static int s;
 static int port;
@@ -613,6 +628,9 @@ void NETRETROPAD_CORE_PREFIX(retro_init)(void)
       struct descriptor *desc = descriptors[i];
       int                size = DESC_NUM_PORTS(desc) * DESC_NUM_INDICES(desc) * DESC_NUM_IDS(desc);
       descriptors[i]->value   = (uint16_t*)calloc(size, sizeof(uint16_t));
+      descriptors[i]->age     = (uint8_t*)malloc(size);
+      if (descriptors[i]->age)
+         memset(descriptors[i]->age, REPEAT_SETTLED, size);
    }
 
    NETRETROPAD_CORE_PREFIX(log_cb)(RETRO_LOG_INFO, "Initialising sockets...\n");
@@ -636,6 +654,8 @@ void NETRETROPAD_CORE_PREFIX(retro_deinit)(void)
    {
       free(descriptors[i]->value);
       descriptors[i]->value = NULL;
+      free(descriptors[i]->age);
+      descriptors[i]->age   = NULL;
    }
 
    sensors_disable();
@@ -781,12 +801,25 @@ static void retropad_update_input(void)
                      index,
                      id);
 
-               /* Continue if state is unchanged */
                if (state == old)
-                  continue;
-
-               /* Update state */
-               desc->value[offset] = state;
+               {
+                  /* unchanged: nothing to do, unless a change is due
+                   * to be sent again (only what is sent at all) */
+                  uint8_t *age = desc->age ? &desc->age[offset] : NULL;
+                  if (i > 1 || !age || *age >= REPEAT_SETTLED)
+                     continue;
+                  (*age)++;
+                  if (     *age != REPEAT_1 && *age != REPEAT_2
+                        && *age != REPEAT_SETTLED)
+                     continue;
+               }
+               else
+               {
+                  /* Update state */
+                  desc->value[offset] = state;
+                  if (desc->age)
+                     desc->age[offset] = 0;
+               }
 
                if (i > 2)
                {
@@ -888,6 +921,7 @@ void NETRETROPAD_CORE_PREFIX(retro_set_environment)(retro_environment_t cb)
       { "net_retropad_screen", "Screen (Switch: LShift+Tab); RetroPad|Keyboard|Sensor" },
       { "net_retropad_pointer", "Pointer; Pointer|Mouse|Lightgun|Lightgun (Old)|disabled" },
       { "net_retropad_hide_analog_mismatch", "Hide Mismatching Analog Button Inputs; enabled|disabled" },
+      { "net_retropad_touchpad", "Controller Touchpad (read by the core); disabled|enabled" },
       { "net_retropad_port", "Port; 55400|55401|55402|55403|55404|55405|55406|55407|55408|55409|55410|55411|55412|55413|55414|55415|55416|55417|55418|55419|55420" },
       { "net_retropad_ip_octet1", "IP Address Part 1; " IP_VALUE_RANGE },
       { "net_retropad_ip_octet2", "IP Address Part 2; " IP_VALUE_RANGE },
@@ -912,7 +946,7 @@ void NETRETROPAD_CORE_PREFIX(retro_set_environment)(retro_environment_t cb)
 
 static void netretropad_check_variables(void)
 {
-   struct retro_variable var, var2, var3, var4, port_var, screen_var, hide_a_var, mouse_var;
+   struct retro_variable var, var2, var3, var4, port_var, screen_var, hide_a_var, mouse_var, touch_var;
    var.key        = "net_retropad_ip_octet1";
    var2.key       = "net_retropad_ip_octet2";
    var3.key       = "net_retropad_ip_octet3";
@@ -921,6 +955,8 @@ static void netretropad_check_variables(void)
    screen_var.key = "net_retropad_screen";
    mouse_var.key  = "net_retropad_pointer";
    hide_a_var.key = "net_retropad_hide_analog_mismatch";
+   touch_var.key  = "net_retropad_touchpad";
+   touch_var.value = NULL;
 
    NETRETROPAD_CORE_PREFIX(environ_cb)(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
    NETRETROPAD_CORE_PREFIX(environ_cb)(RETRO_ENVIRONMENT_GET_VARIABLE, &var2);
@@ -930,6 +966,7 @@ static void netretropad_check_variables(void)
    NETRETROPAD_CORE_PREFIX(environ_cb)(RETRO_ENVIRONMENT_GET_VARIABLE, &screen_var);
    NETRETROPAD_CORE_PREFIX(environ_cb)(RETRO_ENVIRONMENT_GET_VARIABLE, &mouse_var);
    NETRETROPAD_CORE_PREFIX(environ_cb)(RETRO_ENVIRONMENT_GET_VARIABLE, &hide_a_var);
+   NETRETROPAD_CORE_PREFIX(environ_cb)(RETRO_ENVIRONMENT_GET_VARIABLE, &touch_var);
 
    snprintf(server, sizeof(server), "%s.%s.%s.%s", var.value, var2.value, var3.value, var4.value);
    port = atoi(port_var.value);
@@ -940,6 +977,10 @@ static void netretropad_check_variables(void)
         || (current_screen == NETRETROPAD_SCREEN_KEYBOARD && strstr(screen_var.value, "Keyboard"))
         || (current_screen == NETRETROPAD_SCREEN_SENSORS  && strstr(screen_var.value, "Sensor"))))
       flip_screen();
+
+   /* Reading the device takes the touchpad from the frontend's
+    * Controller Touchpad mapping, which the pointer shows otherwise */
+   touchpad_enabled = touch_var.value && strstr(touch_var.value, "enabled");
 
    if (hide_a_var.value && strstr(hide_a_var.value, "enabled"))
       hide_analog_mismatch = true;
@@ -1015,7 +1056,7 @@ void NETRETROPAD_CORE_PREFIX(retro_run)(void)
    {
       int offset = DESC_OFFSET(&joypad, 0, 0, i);
       if (joypad.value[offset])
-         input_state |= 1 << i;
+         input_state |= 1U << i;
 
       /* Construct a red gradient representation for analog buttons */
       offset = DESC_OFFSET(&analog_button, 0, RETRO_DEVICE_INDEX_ANALOG_BUTTON, i);
@@ -1030,44 +1071,44 @@ void NETRETROPAD_CORE_PREFIX(retro_run)(void)
       int offset = DESC_OFFSET(&analog, 0, RETRO_DEVICE_INDEX_ANALOG_LEFT, i);
       if (     (int16_t)analog.value[offset] < -32768/2)
       {
-         input_state |= 1 << (16 + i*8 + 0);
+         input_state |= 1U << (16 + i*8 + 0);
          analog_item_colors[  16 + i*8 + 0] = (uint16_t)((-1*((int16_t)analog.value[offset])-32768/2) /528) << 11;
       }
       else if ((int16_t)analog.value[offset] < -3276)
       {
-         input_state |= 1 << (16 + i*8 + 1);
+         input_state |= 1U << (16 + i*8 + 1);
          analog_item_colors[  16 + i*8 + 1] = (uint16_t)((-1*((int16_t)analog.value[offset])        ) /528) << 11;
       }
       else if ((int16_t)analog.value[offset] > 32768/2)
       {
-         input_state |= 1 << (16 + i*8 + 3);
+         input_state |= 1U << (16 + i*8 + 3);
          analog_item_colors[  16 + i*8 + 3] = (uint16_t)((   ((int16_t)analog.value[offset])-32768/2) /528) << 11;
       }
       else if ((int16_t)analog.value[offset] > 3276)
       {
-         input_state |= 1 << (16 + i*8 + 2);
+         input_state |= 1U << (16 + i*8 + 2);
          analog_item_colors[  16 + i*8 + 2] = (uint16_t)((   ((int16_t)analog.value[offset])        ) /528) << 11;
       }
 
       offset = DESC_OFFSET(&analog, 0, RETRO_DEVICE_INDEX_ANALOG_RIGHT, i);
       if (     (int16_t)analog.value[offset] < -32768/2)
       {
-         input_state |= 1 << (16 + i*8 + 4);
+         input_state |= 1U << (16 + i*8 + 4);
          analog_item_colors[  16 + i*8 + 4] = (uint16_t)((-1*((int16_t)analog.value[offset])-32768/2) /528) << 11;
       }
       else if ((int16_t)analog.value[offset] < -3276)
       {
-         input_state |= 1 << (16 + i*8 + 5);
+         input_state |= 1U << (16 + i*8 + 5);
          analog_item_colors[  16 + i*8 + 5] = (uint16_t)((-1*((int16_t)analog.value[offset])        ) /528) << 11;
       }
       else if ((int16_t)analog.value[offset] > 32768/2)
       {
-         input_state |= 1 << (16 + i*8 + 7);
+         input_state |= 1U << (16 + i*8 + 7);
          analog_item_colors[  16 + i*8 + 7] = (uint16_t)((   ((int16_t)analog.value[offset])-32768/2) /528) << 11;
       }
       else if ((int16_t)analog.value[offset] > 3276)
       {
-         input_state |= 1 << (16 + i*8 + 6);
+         input_state |= 1U << (16 + i*8 + 6);
          analog_item_colors[  16 + i*8 + 6] = (uint16_t)((   ((int16_t)analog.value[offset])        ) /528) << 11;
       }
    }
@@ -1341,7 +1382,10 @@ void NETRETROPAD_CORE_PREFIX(retro_run)(void)
 
          if (input_test_steps[current_test_step].expected_button < KEYBOARD_OFFSET)
          {
-            expected_input = 1 << input_test_steps[current_test_step].expected_button;
+            /* The test file may name a button past input_state's 32 bits */
+            expected_input = (input_test_steps[current_test_step].expected_button < 32)
+               ? 1U << input_test_steps[current_test_step].expected_button
+               : 0;
             if (input_state & expected_input)
                test_success = true;
          }
@@ -1383,9 +1427,9 @@ void NETRETROPAD_CORE_PREFIX(retro_run)(void)
                /* 0  - 15: buttons, 16 - 31: analog x/y */
                /* 32 - 47: analog input for same buttons */
                if (retropad_buttons[rle] < 32)
-                  button        = 1 <<  retropad_buttons[rle];
+                  button        = 1U <<  retropad_buttons[rle];
                else
-                  button_analog = 1 << (retropad_buttons[rle] - 32);
+                  button_analog = 1U << (retropad_buttons[rle] - 32);
 
                /* Red for active inputs */
                if (input_state & button)
@@ -1521,6 +1565,34 @@ void NETRETROPAD_CORE_PREFIX(retro_run)(void)
       {
          pointer_prev_color = set_pixel(pointer_x_coord, pointer_y_coord, (pointer_idle > POINTER_IDLE_MAX / 2) ? 0xA000 :  0xbff7);
          pointer_idle++;
+      }
+   }
+
+   if (touchpad_enabled)
+   {
+      /* a finger is a dot, green for the first down, magenta for the
+       * second: where it is on the touchpad, the touchpad as the screen */
+      static const unsigned colors[2] = { 0x07e0, 0xf81f };
+      unsigned f;
+      for (f = 0; f < 2; f++)
+      {
+         bool down = NETRETROPAD_CORE_PREFIX(input_state_cb)(0,
+               RETRO_DEVICE_TOUCHPAD, f, RETRO_DEVICE_ID_POINTER_PRESSED) != 0;
+         if (touchpad_shown[f])
+            set_pixel(touchpad_prev_x[f], touchpad_prev_y[f],
+                  touchpad_prev_color[f]);
+         touchpad_shown[f] = down;
+         if (down)
+         {
+            int16_t x = NETRETROPAD_CORE_PREFIX(input_state_cb)(0,
+                  RETRO_DEVICE_TOUCHPAD, f, RETRO_DEVICE_ID_POINTER_X);
+            int16_t y = NETRETROPAD_CORE_PREFIX(input_state_cb)(0,
+                  RETRO_DEVICE_TOUCHPAD, f, RETRO_DEVICE_ID_POINTER_Y);
+            touchpad_prev_x[f]     = get_pixel_coordinate(x, 320);
+            touchpad_prev_y[f]     = get_pixel_coordinate(y, 240);
+            touchpad_prev_color[f] = set_pixel(touchpad_prev_x[f],
+                  touchpad_prev_y[f], colors[f]);
+         }
       }
    }
 

@@ -12,7 +12,6 @@
 		053FC270214340F500D98D46 /* QtGui.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 053FC25321433F1700D98D46 /* QtGui.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		053FC275214341F000D98D46 /* QtCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 053FC25421433F1700D98D46 /* QtCore.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		05422E3E2140C8DB00F09961 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
-		05422E432140C8DB00F09961 /* griffin_glslang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 05D7753420A5678400646447 /* griffin_glslang.cpp */; };
 		05422E452140C8DB00F09961 /* griffin_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 05D7753320A5678300646447 /* griffin_cpp.cpp */; };
 		05422E462140C8DB00F09961 /* griffin_objc.m in Sources */ = {isa = PBXBuildFile; fileRef = 509F0C9C1AA23AFC00619ECC /* griffin_objc.m */; };
 		05422E472140C8DB00F09961 /* griffin.c in Sources */ = {isa = PBXBuildFile; fileRef = 840222FB1A889EE2009AB261 /* griffin.c */; };
@@ -32,7 +31,6 @@
 		05A8E23A20A63CED0084ABDA /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 05A8E23920A63CED0084ABDA /* IOSurface.framework */; };
 		05A8E23C20A63CF50084ABDA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 05A8E23B20A63CF50084ABDA /* QuartzCore.framework */; };
 		05D7753520A567A400646447 /* griffin_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 05D7753320A5678300646447 /* griffin_cpp.cpp */; };
-		05D7753720A567A700646447 /* griffin_glslang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 05D7753420A5678400646447 /* griffin_glslang.cpp */; };
 		0703E3292D76B6ED00D7B9BE /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0703E3282D76B6ED00D7B9BE /* CoreMedia.framework */; };
 		0703E32A2D76B6F400D7B9BE /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0703E3282D76B6ED00D7B9BE /* CoreMedia.framework */; };
 		0703E32B2D76B6FA00D7B9BE /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0703E3282D76B6ED00D7B9BE /* CoreMedia.framework */; };
@@ -43,7 +41,6 @@
 		070A88412A4E7A24003161C0 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 070A883F2A4E7A1B003161C0 /* OpenAL.framework */; };
 		0720993E29B1258C001642BB /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		0720994029B1258C001642BB /* assets.zip in Resources */ = {isa = PBXBuildFile; fileRef = 9254B33025FA0BA300A1E0DA /* assets.zip */; };
-		0720994429B1258C001642BB /* griffin_glslang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 05D7753420A5678400646447 /* griffin_glslang.cpp */; };
 		0720994629B1258C001642BB /* griffin_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 05D7753320A5678300646447 /* griffin_cpp.cpp */; };
 		0720994729B1258C001642BB /* griffin_objc.m in Sources */ = {isa = PBXBuildFile; fileRef = 509F0C9C1AA23AFC00619ECC /* griffin_objc.m */; };
 		0720994829B1258C001642BB /* griffin.c in Sources */ = {isa = PBXBuildFile; fileRef = 840222FB1A889EE2009AB261 /* griffin.c */; settings = {COMPILER_FLAGS = "-include $(DERIVED_FILE_DIR)/git_version.h"; }; };
@@ -52,6 +49,7 @@
 		0720994C29B1258C001642BB /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 072976DC296284F600D6E00C /* OpenGL.framework */; };
 		0720994D29B1258C001642BB /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 074695362995C03900CCB7BD /* GameController.framework */; };
 		0720994F29B1258C001642BB /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D27C50872228360000113BC0 /* AVFoundation.framework */; };
+		C0DE20261019000000000000 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84DD5E9E1A88E45B007336C1 /* CoreVideo.framework */; };
 		0720995029B1258C001642BB /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 05A8E23B20A63CF50084ABDA /* QuartzCore.framework */; };
 		0720995129B1258C001642BB /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 05A8E23920A63CED0084ABDA /* IOSurface.framework */; };
 		0720995229B1258C001642BB /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0795A8C6299A095300D5035D /* CoreHaptics.framework */; };
@@ -90,7 +88,6 @@
 		07D851CD2CAF06E2005097EA /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 075650242C488918004C5E7E /* CloudKit.framework */; };
 		07F2BBC62BE83A4700FD1295 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		07F2BBC82BE83A4700FD1295 /* assets.zip in Resources */ = {isa = PBXBuildFile; fileRef = 9254B33025FA0BA300A1E0DA /* assets.zip */; };
-		07F2BBCC2BE83A4700FD1295 /* griffin_glslang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 05D7753420A5678400646447 /* griffin_glslang.cpp */; };
 		07F2BBCE2BE83A4700FD1295 /* griffin_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 05D7753320A5678300646447 /* griffin_cpp.cpp */; };
 		07F2BBCF2BE83A4700FD1295 /* griffin_objc.m in Sources */ = {isa = PBXBuildFile; fileRef = 509F0C9C1AA23AFC00619ECC /* griffin_objc.m */; };
 		07F2BBD02BE83A4700FD1295 /* griffin.c in Sources */ = {isa = PBXBuildFile; fileRef = 840222FB1A889EE2009AB261 /* griffin.c */; settings = {COMPILER_FLAGS = "-include $(DERIVED_FILE_DIR)/git_version.h"; }; };
@@ -99,6 +96,7 @@
 		07F2BBD42BE83A4700FD1295 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 072976DC296284F600D6E00C /* OpenGL.framework */; };
 		07F2BBD52BE83A4700FD1295 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 074695362995C03900CCB7BD /* GameController.framework */; };
 		07F2BBD72BE83A4700FD1295 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D27C50872228360000113BC0 /* AVFoundation.framework */; };
+		C0DE20261019000000000001 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84DD5E9E1A88E45B007336C1 /* CoreVideo.framework */; };
 		07F2BBD82BE83A4700FD1295 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 05A8E23B20A63CF50084ABDA /* QuartzCore.framework */; };
 		07F2BBD92BE83A4700FD1295 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 05A8E23920A63CED0084ABDA /* IOSurface.framework */; };
 		07F2BBDA2BE83A4700FD1295 /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0795A8C6299A095300D5035D /* CoreHaptics.framework */; };
@@ -121,8 +119,10 @@
 		9254B33125FA0BA300A1E0DA /* assets.zip in Resources */ = {isa = PBXBuildFile; fileRef = 9254B33025FA0BA300A1E0DA /* assets.zip */; };
 		9254B33825FA72F100A1E0DA /* assets.zip in Resources */ = {isa = PBXBuildFile; fileRef = 9254B33025FA0BA300A1E0DA /* assets.zip */; };
 		D27C50882228360000113BC0 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D27C50872228360000113BC0 /* AVFoundation.framework */; };
+		C0DE20261019000000000002 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84DD5E9E1A88E45B007336C1 /* CoreVideo.framework */; };
 		D27C508A2228360D00113BC0 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D27C50892228360D00113BC0 /* AudioToolbox.framework */; };
 		D27C508B2228361D00113BC0 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D27C50872228360000113BC0 /* AVFoundation.framework */; };
+		C0DE20261019000000000003 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84DD5E9E1A88E45B007336C1 /* CoreVideo.framework */; };
 		D27C508C2228362700113BC0 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D27C50892228360D00113BC0 /* AudioToolbox.framework */; };
 /* End PBXBuildFile section */
 
@@ -419,7 +419,6 @@
 		05C5D5A320E3DD0A00654EE4 /* input_driver.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = input_driver.c; sourceTree = "<group>"; };
 		05D7753120A55D2700646447 /* BaseConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = BaseConfig.xcconfig; sourceTree = "<group>"; };
 		05D7753320A5678300646447 /* griffin_cpp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = griffin_cpp.cpp; path = ../../griffin/griffin_cpp.cpp; sourceTree = "<group>"; };
-		05D7753420A5678400646447 /* griffin_glslang.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = griffin_glslang.cpp; path = ../../griffin/griffin_glslang.cpp; sourceTree = "<group>"; };
 		05F2872F20F2BEEA00632D47 /* task_autodetect.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = task_autodetect.c; sourceTree = "<group>"; };
 		05F2873020F2BEEA00632D47 /* task_netplay_find_content.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = task_netplay_find_content.c; sourceTree = "<group>"; };
 		05F2873120F2BEEA00632D47 /* task_netplay_nat_traversal.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = task_netplay_nat_traversal.c; sourceTree = "<group>"; };
@@ -489,6 +488,7 @@
 				076E640E2BF30AA200681536 /* OpenAL.framework in Frameworks */,
 				D27C508A2228360D00113BC0 /* AudioToolbox.framework in Frameworks */,
 				D27C50882228360000113BC0 /* AVFoundation.framework in Frameworks */,
+				C0DE20261019000000000002 /* CoreVideo.framework in Frameworks */,
 				076E640D2BF30A9200681536 /* GameController.framework in Frameworks */,
 				053FC275214341F000D98D46 /* QtCore.framework in Frameworks */,
 				053FC270214340F500D98D46 /* QtGui.framework in Frameworks */,
@@ -515,6 +515,7 @@
 				0720994C29B1258C001642BB /* OpenGL.framework in Frameworks */,
 				0720994D29B1258C001642BB /* GameController.framework in Frameworks */,
 				0720994F29B1258C001642BB /* AVFoundation.framework in Frameworks */,
+				C0DE20261019000000000000 /* CoreVideo.framework in Frameworks */,
 				0703E3292D76B6ED00D7B9BE /* CoreMedia.framework in Frameworks */,
 				0720995029B1258C001642BB /* QuartzCore.framework in Frameworks */,
 				0720995129B1258C001642BB /* IOSurface.framework in Frameworks */,
@@ -543,6 +544,7 @@
 				074A924C2D76B18D0084364A /* Accelerate.framework in Frameworks */,
 				0703E32B2D76B6FA00D7B9BE /* CoreMedia.framework in Frameworks */,
 				07F2BBD72BE83A4700FD1295 /* AVFoundation.framework in Frameworks */,
+				C0DE20261019000000000001 /* CoreVideo.framework in Frameworks */,
 				07F2BBD82BE83A4700FD1295 /* QuartzCore.framework in Frameworks */,
 				07F2BBD92BE83A4700FD1295 /* IOSurface.framework in Frameworks */,
 				07F2BBDA2BE83A4700FD1295 /* CoreHaptics.framework in Frameworks */,
@@ -570,6 +572,7 @@
 				074A924B2D76B1850084364A /* Accelerate.framework in Frameworks */,
 				0703E32A2D76B6F400D7B9BE /* CoreMedia.framework in Frameworks */,
 				D27C508B2228361D00113BC0 /* AVFoundation.framework in Frameworks */,
+				C0DE20261019000000000003 /* CoreVideo.framework in Frameworks */,
 				05A8E23C20A63CF50084ABDA /* QuartzCore.framework in Frameworks */,
 				05A8E23A20A63CED0084ABDA /* IOSurface.framework in Frameworks */,
 				0795A8C7299A095300D5035D /* CoreHaptics.framework in Frameworks */,
@@ -1291,7 +1294,6 @@
 				509F0C9C1AA23AFC00619ECC /* griffin_objc.m */,
 				840222FB1A889EE2009AB261 /* griffin.c */,
 				05D7753320A5678300646447 /* griffin_cpp.cpp */,
-				05D7753420A5678400646447 /* griffin_glslang.cpp */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -1611,7 +1613,6 @@
 			files = (
 				07ATRANS032025010700000003 /* AppleTranslateBackend.swift in Sources */,
 				07B9B97F2E49A7A3007E419E /* RetroArchAppShortcuts.swift in Sources */,
-				05422E432140C8DB00F09961 /* griffin_glslang.cpp in Sources */,
 				05422E452140C8DB00F09961 /* griffin_cpp.cpp in Sources */,
 				05422E462140C8DB00F09961 /* griffin_objc.m in Sources */,
 				05422E472140C8DB00F09961 /* griffin.c in Sources */,
@@ -1625,7 +1626,6 @@
 			files = (
 				07ATRANS042025010700000004 /* AppleTranslateBackend.swift in Sources */,
 				07B9B9812E49A7A3007E419E /* RetroArchAppShortcuts.swift in Sources */,
-				0720994429B1258C001642BB /* griffin_glslang.cpp in Sources */,
 				0720994629B1258C001642BB /* griffin_cpp.cpp in Sources */,
 				0720994729B1258C001642BB /* griffin_objc.m in Sources */,
 				0720994829B1258C001642BB /* griffin.c in Sources */,
@@ -1639,7 +1639,6 @@
 			files = (
 				07ATRANS052025010700000005 /* AppleTranslateBackend.swift in Sources */,
 				07B9B9802E49A7A3007E419E /* RetroArchAppShortcuts.swift in Sources */,
-				07F2BBCC2BE83A4700FD1295 /* griffin_glslang.cpp in Sources */,
 				07F2BBCE2BE83A4700FD1295 /* griffin_cpp.cpp in Sources */,
 				07F2BBCF2BE83A4700FD1295 /* griffin_objc.m in Sources */,
 				07F2BBD02BE83A4700FD1295 /* griffin.c in Sources */,
@@ -1653,7 +1652,6 @@
 			files = (
 				07ATRANS062025010700000006 /* AppleTranslateBackend.swift in Sources */,
 				07B9B9822E49A7A3007E419E /* RetroArchAppShortcuts.swift in Sources */,
-				05D7753720A567A700646447 /* griffin_glslang.cpp in Sources */,
 				05D7753520A567A400646447 /* griffin_cpp.cpp in Sources */,
 				509F0C9D1AA23AFC00619ECC /* griffin_objc.m in Sources */,
 				840222FC1A889EE2009AB261 /* griffin.c in Sources */,
@@ -1884,12 +1882,6 @@
 					"$(DEPS_DIR)/rcheevos/include",
 					"$(DEPS_DIR)/stb",
 					"$(DEPS_DIR)",
-					"$(DEPS_DIR)/SPIRV-Cross",
-					"$(DEPS_DIR)/glslang",
-					"$(DEPS_DIR)/glslang/glslang/glslang/Public",
-					"$(DEPS_DIR)/glslang/glslang/glslang/MachineIndependent",
-					"$(DEPS_DIR)/glslang/glslang/SPIRV",
-					"$(DEPS_DIR)/glslang/glslang/glslang/OSDependent/Unix",
 				);
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1966,12 +1958,6 @@
 					"$(DEPS_DIR)/rcheevos/include",
 					"$(DEPS_DIR)/stb",
 					"$(DEPS_DIR)",
-					"$(DEPS_DIR)/SPIRV-Cross",
-					"$(DEPS_DIR)/glslang",
-					"$(DEPS_DIR)/glslang/glslang/glslang/Public",
-					"$(DEPS_DIR)/glslang/glslang/glslang/MachineIndependent",
-					"$(DEPS_DIR)/glslang/glslang/SPIRV",
-					"$(DEPS_DIR)/glslang/glslang/glslang/OSDependent/Unix",
 				);
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				LD_RUNPATH_SEARCH_PATHS = (

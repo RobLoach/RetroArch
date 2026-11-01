@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := retro_asym_eventcount_test
 
 LIBRETRO_COMM_DIR := ../../..
@@ -10,14 +12,14 @@ SOURCES := \
 	$(LIBRETRO_COMM_DIR)/rthreads/retro_procbarrier.c \
 	$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
 
-CFLAGS  += -Wall -W -std=gnu99 -g -O1 \
+CFLAGS  += -Wall -W -std=gnu99 -g1 -O1 \
            -DHAVE_THREADS -I$(LIBRETRO_COMM_DIR)/include
 LDFLAGS += -lpthread
 # rthreads.c uses clock_gettime on Linux glibc; on older glibc that is in
 # -lrt. Harmless on newer glibc.
 LDFLAGS += -lrt
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
 ifneq ($(SAN),)
    SANITIZER := $(SAN)
@@ -30,6 +32,10 @@ endif
 all: $(TARGET)
 
 %.o: %.c
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(TARGET): $(OBJS)
@@ -48,6 +54,7 @@ check: all
 	RETRO_PROCBARRIER=signal     ./$(TARGET)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(OBJS) $(TARGET)
 
 .PHONY: all check clean

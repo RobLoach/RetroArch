@@ -160,6 +160,7 @@ typedef struct
     * getter. The read stays a single benign per-tick poll of a
     * monotonic counter. */
    const uint64_t *frame_count;
+   retro_task_callback_t done_cb; /* the caller's */
    char path[PATH_MAX_LENGTH];
 } save_task_state_t;
 
@@ -195,13 +196,18 @@ static struct
 static struct ram_save_state_buf ram_buf;
 
 static bool save_state_in_background       = false;
-/* See content_load_state_in_progress() for why this is a flag and
- * not a task_queue_find(). */
+/* See content_load_state_in_progress() for why these are flags and
+ * not a task_queue_find().  Save tasks are TASK_TYPE_BLOCKING, so at
+ * most one is in flight. */
 static bool load_state_task_pending        = false;
+
+/* How long a state load waiting for the core's second frame parks. */
+#define LOAD_STATE_FRAME_WAIT_USEC 8000
+static bool save_state_task_pending        = false;
 static bool save_state_disable_undo        = false;
 
 /* Time tracking for automatic savestate interval */
-static time_t last_savestate_automatic_time = 0;
+static retro_time_t last_savestate_automatic_time = 0;
 
 typedef struct rastate_size_info
 {
@@ -394,6 +400,8 @@ static void undo_save_state_cb(retro_task_t *task,
 {
    save_task_state_t *state = (save_task_state_t*)task_data;
 
+   save_state_task_pending  = false;
+
    /* Wipe the save file buffer as it's intended to be one use only */
    undo_save_buf.path[0]  = '\0';
    undo_save_buf.size     = 0;
@@ -407,6 +415,18 @@ static void undo_save_state_cb(retro_task_t *task,
    free(state);
 }
 
+bool content_finish_tmp(const char *path, bool ok)
+{
+   int ret = filestream_finish_atomic(path, ok);
+   if (ret == 1 && path_is_valid(path))
+   {
+      char tmp_path[PATH_MAX_LENGTH];
+      if (filestream_atomic_temp_name(tmp_path, sizeof(tmp_path), path))
+         filestream_delete(tmp_path);
+   }
+   return ret == 0;
+}
+
 /**
  * task_save_handler_finished:
  * @task : the task to finish
@@ -418,7 +438,6 @@ static void task_save_handler_finished(retro_task_t *task,
       save_task_state_t *state)
 {
    uint8_t flg;
-   save_task_state_t *task_data = NULL;
 
    task_set_flags(task, RETRO_TASK_FLG_FINISHED, true);
 
@@ -426,8 +445,15 @@ static void task_save_handler_finished(retro_task_t *task,
     * (serialize failure, or the open itself). */
    if (state->file)
    {
-      intfstream_close(state->file);
+      /* rzip writes its last chunk at close, and a buffered write
+       * reports a full disk there, so a failed close is a failed save
+       * and the temporary file must not replace the old state. */
+      if (     intfstream_close(state->file) != 0
+            && !task_get_error(task))
+         task_set_error(task, strdup(
+               msg_hash_to_str(MSG_FAILED_TO_SAVE_STATE_TO)));
       free(state->file);
+      state->file = NULL;
    }
 
    flg = task_get_flags(task);
@@ -435,17 +461,23 @@ static void task_save_handler_finished(retro_task_t *task,
    if (!task_get_error(task) && ((flg & RETRO_TASK_FLG_CANCELLED) > 0))
       task_set_error(task, strdup("Task canceled"));
 
-   task_data = (save_task_state_t*)calloc(1, sizeof(*task_data));
-   /* NULL-check: the memcpy below NULL-derefs on OOM.  The
-    * completion callbacks save_state_cb / undo_save_state_cb
-    * are NULL-tolerant to match this code path.  On OOM we leave
-    * task_data unset (NULL); task_set_data is skipped and the
-    * completion callback receives NULL for its task_data
-    * parameter. */
-   if (task_data)
+   /* The state was written to "<path>.tmp", so a crash, cancel or
+    * short write leaves the existing file intact. Move it into place
+    * on success, discard it otherwise. */
    {
-      memcpy(task_data, state, sizeof(*state));
-      task_set_data(task, task_data);
+      char tmp_path[PATH_MAX_LENGTH];
+
+      if (!filestream_atomic_temp_name(tmp_path, sizeof(tmp_path), state->path))
+      {
+         /* Nothing was written: the open refused the same path. */
+         if (!task_get_error(task))
+            task_set_error(task, strdup(
+                  msg_hash_to_str(MSG_FAILED_TO_SAVE_STATE_TO)));
+      }
+      else if (!content_finish_tmp(state->path, !task_get_error(task))
+            && !task_get_error(task))
+         task_set_error(task, strdup(
+               msg_hash_to_str(MSG_FAILED_TO_SAVE_STATE_TO)));
    }
 
    if (state->data)
@@ -458,8 +490,12 @@ static void task_save_handler_finished(retro_task_t *task,
    }
    free(state->fe_replay);
    free(state->fe_cheevos);
+   state->fe_replay  = NULL;
+   state->fe_cheevos = NULL;
 
-   free(state);
+   /* The state itself is the callback's task_data, which frees it:
+    * nothing is allocated here, so the callback always has it. */
+   task_set_data(task, state);
 }
 
 /* Align to 8-byte boundary */
@@ -504,7 +540,7 @@ static size_t content_get_rastate_size(rastate_size_info_t* size, bool rewind)
    /* 8-byte block header + content */
    if (!rewind)
    {
-      size->replay_size = replay_get_serialize_size();
+      size->replay_size = replay_get_serialize_size(input_state_get_ptr());
       if (size->replay_size > 0)
          size->total_size += 8 + CONTENT_ALIGN_SIZE(size->replay_size);
    }
@@ -583,12 +619,13 @@ static bool content_write_serialized_state(void* buffer,
        bool frame_is_reversed         = false;
 #endif
        if (    !rewind
+             && size->replay_size
              && input_st->bsv_movie_state.flags & (BSV_FLAG_MOVIE_RECORDING | BSV_FLAG_MOVIE_PLAYBACK)
              && !frame_is_reversed)
        {
           content_write_block_header(output,
              RASTATE_REPLAY_BLOCK, size->replay_size);
-          if (replay_get_serialized_data(output + 8))
+          if (replay_get_serialized_data(input_st, output + 8))
           {
             CONTENT_ZERO_PADDING(output + 8, size->replay_size);
             output += CONTENT_ALIGN_SIZE(size->replay_size) + 8;
@@ -830,7 +867,7 @@ static void task_save_handler(retro_task_t *task)
        * the user a 'state saved' notification and an empty slot. */
       if (!state->data || state->size <= 0)
       {
-         RARCH_ERR("[State] save task could not serialize core state "
+         RARCH_ERR("[State] Save task could not serialize core state "
                "for slot %d, path \"%s\".\n",
                state->state_slot, state->path);
          task_set_error(task, strdup(
@@ -842,12 +879,20 @@ static void task_save_handler(retro_task_t *task)
 
    if (!state->file)
    {
-      if (state->flags & SAVE_TASK_FLAG_COMPRESS_FILES)
+      char tmp_path[PATH_MAX_LENGTH];
+
+      /* Write to "<path>.tmp"; task_save_handler_finished moves it
+       * into place on success or deletes it on failure or cancel.
+       * A path too long to take the suffix is refused rather than
+       * written in place. */
+      if (!filestream_atomic_temp_name(tmp_path, sizeof(tmp_path), state->path))
+         state->file   = NULL;
+      else if (state->flags & SAVE_TASK_FLAG_COMPRESS_FILES)
          state->file   = intfstream_open_rzip_file(
-               state->path, RETRO_VFS_FILE_ACCESS_WRITE);
+               tmp_path, RETRO_VFS_FILE_ACCESS_WRITE);
       else
          state->file   = intfstream_open_file(
-               state->path, RETRO_VFS_FILE_ACCESS_WRITE,
+               tmp_path, RETRO_VFS_FILE_ACCESS_WRITE,
                RETRO_VFS_FILE_ACCESS_HINT_NONE);
 
       if (!state->file)
@@ -859,7 +904,7 @@ static void task_save_handler(retro_task_t *task)
           * blocking task for the rest of the session.  An open that
           * failed once (read-only medium, bad path, no space) is not
           * going to succeed on retry; fail it. */
-         RARCH_ERR("[State] save task could not open \"%s\" for writing "
+         RARCH_ERR("[State] Save task could not open \"%s\" for writing "
                "(slot %d). The auto-index slot was already advanced, so "
                "this leaves an advanced slot with no save file.\n",
                state->path, state->state_slot);
@@ -915,7 +960,7 @@ static void task_save_handler(retro_task_t *task)
       }
 
       task_set_error(task, strdup(msg));
-      RARCH_ERR("[State] save task FAILED for slot %d, path \"%s\" "
+      RARCH_ERR("[State] Save task FAILED for slot %d, path \"%s\" "
             "(wrote %d of %d bytes%s).\n",
             state->state_slot, state->path,
             (int)state->written, (int)state->size,
@@ -926,7 +971,7 @@ static void task_save_handler(retro_task_t *task)
    {
       char       *msg      = NULL;
 
-      RARCH_LOG("[State] save task COMPLETED for slot %d, path \"%s\" "
+      RARCH_LOG("[State] Save task COMPLETED for slot %d, path \"%s\" "
             "(%d bytes).\n",
             state->state_slot, state->path, (int)state->size);
 
@@ -1001,9 +1046,17 @@ static bool task_push_undo_save_state(const char *path, void *data, size_t len)
       else
          task->flags       &= ~RETRO_TASK_FLG_MUTE;
 
-      task_queue_push(task);
+      if (task_queue_push(task))
+      {
+         save_state_task_pending = true;
+         return true;
+      }
 
-      return true;
+      /* Another blocking task is already active: this one never runs,
+       * so nothing else frees what it holds */
+      task_free_title(task);
+      free(task);
+      task = NULL;
    }
 
    if (data)
@@ -1045,7 +1098,6 @@ static void task_load_handler_finished(retro_task_t *task,
       save_task_state_t *state)
 {
    uint8_t flg;
-   load_task_data_t *task_data = NULL;
 
    task_set_flags(task, RETRO_TASK_FLG_FINISHED, true);
 
@@ -1053,6 +1105,7 @@ static void task_load_handler_finished(retro_task_t *task,
    {
       intfstream_close(state->file);
       free(state->file);
+      state->file = NULL;
    }
 
    flg = task_get_flags(task);
@@ -1060,26 +1113,10 @@ static void task_load_handler_finished(retro_task_t *task,
    if (!task_get_error(task) && ((flg & RETRO_TASK_FLG_CANCELLED) > 0))
       task_set_error(task, strdup("Task canceled"));
 
-   if (!(task_data = (load_task_data_t*)calloc(1, sizeof(*task_data))))
-   {
-      /* On OOM: set a task error (so the user sees 'load state
-       * failed' rather than silent failure), free state - an early
-       * return without the free leaks it - and return.  The completion
-       * callbacks handle NULL task_data via their own NULL-
-       * checks. */
-      if (!task_get_error(task))
-         task_set_error(task, strdup("Out of memory"));
-      if (state->data)
-         free(state->data);
-      free(state);
-      return;
-   }
-
-   memcpy(task_data, state, sizeof(*task_data));
-
-   task_set_data(task, task_data);
-
-   free(state);
+   /* The state, with the data read into it, is the callback's
+    * task_data, which frees both: nothing is allocated here, so the
+    * callback always has it. */
+   task_set_data(task, state);
 }
 
 /**
@@ -1094,25 +1131,15 @@ static void task_load_handler(retro_task_t *task)
    ssize_t remaining, bytes_read;
    save_task_state_t *state = (save_task_state_t*)task->state;
 
-   /* Ensure the core is ready for loading states (Dolphin CLI).
-    *
-    * A spin here (while (...) retro_sleep(1)) cannot work.  When
-    * the task queue is not threaded the handler runs on the same
-    * thread that advances frame_count, so the condition it would
-    * wait on can never become true and the spin is an unconditional
-    * hang - masked interactively only because frame_count is already
-    * past 2 by the time a user loads a state, and CLI autoload is
-    * the one path that reaches here early.  When it IS threaded, a
-    * spin is a hot unsynchronised read of a counter the video thread
-    * writes - a data race, and TSan reports it.
-    *
-    * Yielding does both jobs: the task stays queued and is re-entered
-    * on the next tick, by which time the runloop has advanced the
-    * counter.  The read stays unsynchronised, but as a single benign
-    * poll of a monotonic counter per tick, with no progress depending
-    * on this thread observing it promptly. */
+   /* A core takes a state from its second frame on (Dolphin's CLI
+    * autoload reaches here sooner).  frame_count is advanced by the
+    * frame loop, which wakes no task, so the handler looks again after
+    * about a frame; the unthreaded queue looks once per check. */
    if (*state->frame_count < 2)
+   {
+      task_queue_park(task, LOAD_STATE_FRAME_WAIT_USEC);
       return;
+   }
 
    if (!state->file)
    {
@@ -1336,7 +1363,7 @@ static bool content_load_rastate1(unsigned char* input, size_t len)
 #ifdef HAVE_CHEEVOS
       else if (memcmp(marker, RASTATE_CHEEVOS_BLOCK, 4) == 0)
       {
-         if (rcheevos_set_serialized_data((void*)input))
+         if (rcheevos_set_serialized_data(input, block_size))
             seen_cheevos = true;
       }
 #endif
@@ -1348,7 +1375,8 @@ static bool content_load_rastate1(unsigned char* input, size_t len)
 #else
          bool frame_is_reversed         = false;
 #endif
-         if (frame_is_reversed || replay_set_serialized_data((void*)input))
+         if (frame_is_reversed || replay_set_serialized_data(input_state_get_ptr(), (void*)input,
+               block_size))
             seen_replay = true;
          else
             return false;
@@ -1366,7 +1394,7 @@ static bool content_load_rastate1(unsigned char* input, size_t len)
 
 #ifdef HAVE_CHEEVOS
    if (!seen_cheevos)
-      rcheevos_set_serialized_data(NULL);
+      rcheevos_set_serialized_data(NULL, 0);
 #endif
 #ifdef HAVE_BSV_MOVIE
    {
@@ -1376,7 +1404,7 @@ static bool content_load_rastate1(unsigned char* input, size_t len)
       bool frame_is_reversed = false;
 #endif
       if (!seen_replay && !frame_is_reversed)
-         replay_set_serialized_data(NULL);
+         replay_set_serialized_data(input_state_get_ptr(), NULL, 0);
    }
 #endif
 
@@ -1401,7 +1429,7 @@ bool content_deserialize_state(const void *s, size_t len)
       if (!core_unserialize(&serial_info))
          return false;
 #ifdef HAVE_CHEEVOS
-      rcheevos_set_serialized_data(NULL);
+      rcheevos_set_serialized_data(NULL, 0);
 #endif
 #ifdef HAVE_BSV_MOVIE
       {
@@ -1411,7 +1439,7 @@ bool content_deserialize_state(const void *s, size_t len)
          bool frame_is_reversed = false;
 #endif
          if (!frame_is_reversed)
-            replay_set_serialized_data(NULL);
+            replay_set_serialized_data(input_state_get_ptr(), NULL, 0);
       }
 #endif
    }
@@ -1454,14 +1482,6 @@ static void content_load_state_cb(retro_task_t *task,
     * whichever way this callback exits. */
    load_state_task_pending     = false;
 
-   /* NULL-check load_data: task_load_handler_finished may fail
-    * to allocate the task_data copy on OOM and leave it NULL.
-    * Skip all processing - the emulator state is unchanged and
-    * the task error (set by the handler) surfaces the failure
-    * to the user. */
-   if (!load_data)
-      return;
-
    _len = load_data->size;
    buf  = load_data->data;
 
@@ -1493,6 +1513,8 @@ static void content_load_state_cb(retro_task_t *task,
       undo_save_buf.capacity = (size_t)_len;
       strlcpy(undo_save_buf.path, load_data->path, sizeof(undo_save_buf.path));
 
+      if (load_data->done_cb)
+         load_data->done_cb(task, load_data->path, user_data, NULL);
       free(load_data);
       return;
    }
@@ -1584,6 +1606,8 @@ static void content_load_state_cb(retro_task_t *task,
    if (!ret)
       goto error;
 
+   if (load_data->done_cb)
+      load_data->done_cb(task, load_data->path, user_data, NULL);
    free(buf);
    free(load_data);
 
@@ -1593,6 +1617,14 @@ error:
    RARCH_ERR("[State] %s \"%s\".\n",
          msg_hash_to_str(MSG_FAILED_TO_LOAD_STATE),
          load_data->path);
+   if (load_data->done_cb)
+   {
+      char msg[PATH_MAX_LENGTH + 64];
+      snprintf(msg, sizeof(msg), "%s \"%s\".",
+            msg_hash_to_str(MSG_FAILED_TO_LOAD_STATE), load_data->path);
+      load_data->done_cb(task, load_data->path, user_data,
+            error ? error : msg);
+   }
    if (buf)
       free(buf);
    free(load_data);
@@ -1608,12 +1640,11 @@ static void save_state_cb(retro_task_t *task,
       void *user_data, const char *error)
 {
    save_task_state_t *state   = (save_task_state_t*)task_data;
-   /* NULL-check: task_save_handler_finished may fail to alloc
-    * the task_data copy on OOM and leave it NULL.  Skip the
-    * screenshot hook and free(state) on NULL - free(NULL) is a
-    * no-op but we can't read state->path / state->flags. */
-   if (!state)
-      return;
+
+   /* Out of the core whichever way this callback exits. */
+   save_state_task_pending    = false;
+   if (state->done_cb)
+      state->done_cb(task, state->path, user_data, error);
 #ifdef HAVE_SCREENSHOTS
    {
       char               *path   = strdup(state->path);
@@ -1647,10 +1678,10 @@ static void content_capture_frontend_blocks(save_task_state_t *state)
                & (BSV_FLAG_MOVIE_RECORDING | BSV_FLAG_MOVIE_PLAYBACK))
           && !frame_is_reversed)
       {
-         size_t _len = replay_get_serialize_size();
+         size_t _len = replay_get_serialize_size(input_st);
          if (_len > 0 && (state->fe_replay = malloc(_len)))
          {
-            if (replay_get_serialized_data(state->fe_replay))
+            if (replay_get_serialized_data(input_st, state->fe_replay))
                state->fe_replay_size = _len;
             else
             {
@@ -1687,7 +1718,8 @@ static void content_capture_frontend_blocks(save_task_state_t *state)
  *
  * Create a new task to save the content state.
  **/
-static void task_push_save_state(const char *path, void *data, size_t len, bool autosave)
+static bool task_push_save_state(const char *path, void *data, size_t len,
+      bool autosave, retro_task_callback_t cb, void *user_data)
 {
    settings_t     *settings        = config_get_ptr();
    retro_task_t       *task        = task_init();
@@ -1732,6 +1764,8 @@ static void task_push_save_state(const char *path, void *data, size_t len, bool 
    task->state                   = state;
    task->handler                 = task_save_handler;
    task->callback                = save_state_cb;
+   task->user_data               = user_data;
+   state->done_cb                = cb;
    task->title                   = strdup(msg_hash_to_str(MSG_SAVING_STATE));
 
    if (state->flags & SAVE_TASK_FLAG_MUTE)
@@ -1739,7 +1773,12 @@ static void task_push_save_state(const char *path, void *data, size_t len, bool 
    else
       task->flags               &= ~RETRO_TASK_FLG_MUTE;
 
-   if (!task_queue_push(task))
+   if (task_queue_push(task))
+   {
+      save_state_task_pending = true;
+      return true;
+   }
+   else
    {
       /* Another blocking task is already active. */
       if (data)
@@ -1750,7 +1789,7 @@ static void task_push_save_state(const char *path, void *data, size_t len, bool 
       free(state);
    }
 
-   return;
+   return false;
 
 error:
    if (data)
@@ -1763,6 +1802,7 @@ error:
          task_free_title(task);
       free(task);
    }
+   return false;
 }
 
 /**
@@ -1780,26 +1820,26 @@ static void content_load_and_save_state_cb(retro_task_t *task,
    void                  *data;
    size_t                 size;
    bool               autosave;
-
-   /* NULL-check load_data: task_load_handler_finished may have
-    * failed to allocate the task_data copy on OOM.  Delegate the
-    * NULL-safe no-op to content_load_state_cb (which already
-    * handles NULL via its own guard) and skip the subsequent
-    * save push which would NULL-deref ->path / ->undo_data. */
-   if (!load_data)
-   {
-      content_load_state_cb(task, task_data, user_data, error);
-      return;
-   }
+   retro_task_callback_t done_cb;
 
    path     = strdup(load_data->path);
    data     = load_data->undo_data;
    size     = load_data->undo_size;
    autosave = (load_data->flags & SAVE_TASK_FLAG_AUTOSAVE) ? true : false;
+   /* the caller asked about the save, not this backup load */
+   done_cb  = load_data->done_cb;
+   load_data->done_cb = NULL;
 
    content_load_state_cb(task, task_data, user_data, error);
 
-   task_push_save_state(path, data, size, autosave);
+   if (     !task_push_save_state(path, data, size, autosave, done_cb, user_data)
+         && done_cb)
+   {
+      char msg[PATH_MAX_LENGTH + 64];
+      snprintf(msg, sizeof(msg), "%s \"%s\".",
+            msg_hash_to_str(MSG_FAILED_TO_SAVE_STATE_TO), path);
+      done_cb(NULL, path, user_data, msg);
+   }
 
    free(path);
 }
@@ -1814,8 +1854,9 @@ static void content_load_and_save_state_cb(retro_task_t *task,
  * Create a new task to load current state first into a backup buffer (for undo)
  * and then save the content state.
  **/
-static void task_push_load_and_save_state(const char *path, void *data,
-      size_t len, bool load_to_backup_buffer, bool autosave)
+static bool task_push_load_and_save_state(const char *path, void *data,
+      size_t len, bool load_to_backup_buffer, bool autosave,
+      retro_task_callback_t cb, void *user_data)
 {
    retro_task_t      *task        = NULL;
    settings_t        *settings    = config_get_ptr();
@@ -1823,12 +1864,12 @@ static void task_push_load_and_save_state(const char *path, void *data,
       calloc(1, sizeof(*state));
 
    if (!state)
-      return;
+      return false;
 
    if (!(task = task_init()))
    {
       free(state);
-      return;
+      return false;
    }
 
 
@@ -1858,6 +1899,8 @@ static void task_push_load_and_save_state(const char *path, void *data,
    task->type                   = TASK_TYPE_BLOCKING;
    task->handler                = task_load_handler;
    task->callback               = content_load_and_save_state_cb;
+   task->user_data              = user_data;
+   state->done_cb               = cb;
    task->title                  = strdup(msg_hash_to_str(MSG_LOADING_STATE));
 
    load_state_task_pending      = true;
@@ -1878,7 +1921,9 @@ static void task_push_load_and_save_state(const char *path, void *data,
          task_free_title(task);
       free(task);
       free(state);
+      return false;
    }
+   return true;
 }
 
 /**
@@ -1893,9 +1938,11 @@ static void task_push_load_and_save_state(const char *path, void *data,
 bool content_auto_save_state(const char *path)
 {
    size_t _len;
+   int _close_ret;
    settings_t *settings = config_get_ptr();
    void *serial_data    = NULL;
    intfstream_t *file   = NULL;
+   char tmp_path[PATH_MAX_LENGTH];
 
    if (!core_info_current_supports_savestate())
    {
@@ -1912,12 +1959,20 @@ bool content_auto_save_state(const char *path)
    if (!serial_data)
       return false;
 
+   /* Write to "<path>.tmp" and move it into place, so a crash or power
+    * loss mid-save leaves the previous state intact. */
+   if (!filestream_atomic_temp_name(tmp_path, sizeof(tmp_path), path))
+   {
+      free(serial_data);
+      return false;
+   }
+
 #if defined(HAVE_COMPRESSION)
    if (settings->bools.savestate_file_compression)
-      file = intfstream_open_rzip_file(path, RETRO_VFS_FILE_ACCESS_WRITE);
+      file = intfstream_open_rzip_file(tmp_path, RETRO_VFS_FILE_ACCESS_WRITE);
    else
 #endif
-      file = intfstream_open_file(path, RETRO_VFS_FILE_ACCESS_WRITE,
+      file = intfstream_open_file(tmp_path, RETRO_VFS_FILE_ACCESS_WRITE,
                                   RETRO_VFS_FILE_ACCESS_HINT_NONE);
 
    if (!file)
@@ -1931,12 +1986,17 @@ bool content_auto_save_state(const char *path)
       intfstream_close(file);
       free(serial_data);
       free(file);
+      filestream_delete(tmp_path);
       return false;
    }
 
-   intfstream_close(file);
+   /* A failed close (rzip's last chunk, a full disk) is a failed save. */
+   _close_ret = intfstream_close(file);
    free(serial_data);
    free(file);
+
+   if (!content_finish_tmp(path, _close_ret == 0))
+      return false;
 
 #ifdef HAVE_SCREENSHOTS
    if (settings->bools.savestate_thumbnail_enable)
@@ -1960,6 +2020,12 @@ bool content_auto_save_state(const char *path)
  * Returns: true if successful, false otherwise.
  **/
 bool content_save_state(const char *path, bool save_to_disk)
+{
+   return content_save_state_notify(path, save_to_disk, NULL, NULL);
+}
+
+bool content_save_state_notify(const char *path, bool save_to_disk,
+      retro_task_callback_t cb, void *user_data)
 {
    size_t _len;
    void *data  = NULL;
@@ -2050,12 +2116,10 @@ bool content_save_state(const char *path, bool save_to_disk)
       /* TODO/FIXME - Use msg_hash_to_str here */
       RARCH_LOG("[State] %s...\n",
             msg_hash_to_str(MSG_FILE_ALREADY_EXISTS_SAVING_TO_BACKUP_BUFFER));
-      task_push_load_and_save_state(path, data, _len, true, false);
+      return task_push_load_and_save_state(path, data, _len, true, false,
+            cb, user_data);
    }
-   else
-      task_push_save_state(path, data, _len, false);
-
-   return true;
+   return task_push_save_state(path, data, _len, false, cb, user_data);
 }
 
 /**
@@ -2069,26 +2133,19 @@ bool content_ram_state_pending(void)
    return ram_buf.to_write_file;
 }
 
-static bool task_save_state_finder(retro_task_t *task, void *user_data)
-{
-   return (task && task->handler == task_save_handler);
-}
-
-/* Returns true if a save state task is in progress */
-/* True while a save state task is in progress.
- *
- * Public because closing content needs to know whether the wait
- * below is going to block before it blocks, so it can say so. */
+/* True from the moment a save state task is pushed until its
+ * main-thread callback has run: the task is inside the core until
+ * then.  A flag, not a finder, for the reason given at
+ * content_load_state_in_progress() below - the close asks from
+ * inside a task handler, where a finder cannot see the save. */
 bool content_save_state_in_progress(void* data)
 {
-   task_finder_data_t find_data;
-
-   find_data.func     = task_save_state_finder;
-   find_data.userdata = data;
-
-   return task_queue_find(&find_data);
+   (void)data;
+   return save_state_task_pending;
 }
 
+/* Blocks until the state task is through.  For the exit, startup and
+ * init-failure paths only; CI keeps it out of menu/ and tasks/. */
 void content_wait_for_save_state_task(void)
 {
    task_queue_wait(content_save_state_in_progress, NULL);
@@ -2120,6 +2177,7 @@ bool content_load_state_in_progress(void* data)
    return load_state_task_pending;
 }
 
+/* As content_wait_for_save_state_task(), for a load. */
 void content_wait_for_load_state_task(void)
 {
    task_queue_wait(content_load_state_in_progress, NULL);
@@ -2135,6 +2193,14 @@ void content_wait_for_load_state_task(void)
  **/
 bool content_load_state(const char *path,
       bool load_to_backup_buffer, bool autoload)
+{
+   return content_load_state_notify(path, load_to_backup_buffer, autoload,
+         NULL, NULL);
+}
+
+bool content_load_state_notify(const char *path,
+      bool load_to_backup_buffer, bool autoload,
+      retro_task_callback_t cb, void *user_data)
 {
    retro_task_t       *task        = NULL;
    save_task_state_t *state        = NULL;
@@ -2182,6 +2248,8 @@ bool content_load_state(const char *path,
    task->state                  = state;
    task->handler                = task_load_handler;
    task->callback               = content_load_state_cb;
+   task->user_data              = user_data;
+   state->done_cb               = cb;
    task->title                  = strdup(msg_hash_to_str(MSG_LOADING_STATE));
 
    load_state_task_pending      = true;
@@ -2191,7 +2259,19 @@ bool content_load_state(const char *path,
    else
       task->flags               &= ~RETRO_TASK_FLG_MUTE;
 
-   task_queue_push(task);
+   if (!task_queue_push(task))
+   {
+      /* Another blocking task is already active. No callback will run
+       * for this task, so the load is not pending - left set, the
+       * flag would hold a content close and a movie recording waiting
+       * on a load that never comes - and nothing else frees what it
+       * holds. */
+      load_state_task_pending   = false;
+      task_free_title(task);
+      free(task);
+      free(state);
+      return false;
+   }
 
    return true;
 
@@ -2398,21 +2478,25 @@ bool content_ram_state_to_file(const char *path)
          && ram_buf.state_buf.data
          && ram_buf.to_write_file)
    {
+      /* Write via a temporary file, so a crash or power loss mid-save
+       * leaves the previous file intact instead of a truncated one. */
+      bool written = false;
 #if defined(HAVE_COMPRESSION)
       settings_t *settings = config_get_ptr();
       if (settings->bools.save_file_compression)
       {
-         if (rzipstream_write_file(
-               path, ram_buf.state_buf.data, ram_buf.state_buf.size))
-            goto success;
+         char tmp_path[PATH_MAX_LENGTH];
+         if (filestream_atomic_temp_name(tmp_path, sizeof(tmp_path), path))
+            written = content_finish_tmp(path, rzipstream_write_file(tmp_path,
+                  ram_buf.state_buf.data, ram_buf.state_buf.size));
       }
       else
 #endif
-      {
-         if (filestream_write_file(
-               path, ram_buf.state_buf.data, ram_buf.state_buf.size))
-            goto success;
-      }
+         written = filestream_write_file_atomic(path,
+               ram_buf.state_buf.data, ram_buf.state_buf.size);
+
+      if (written)
+         goto success;
    }
 
    return false;
@@ -2432,24 +2516,22 @@ void set_save_state_disable_undo(bool disable)
    save_state_disable_undo = disable;
 }
 
-bool content_save_state_automatic(void)
+bool content_save_state_automatic(retro_time_t now_us)
 {
-   time_t current_time;
    char savestate_path[PATH_MAX_LENGTH];
    settings_t *settings = config_get_ptr();
-   unsigned savestate_automatic_interval = 
+   unsigned savestate_automatic_interval =
       settings->uints.savestate_automatic_interval;
-   
+
    /* Return early if automatic savestate is disabled,
       safety checks already happen in content_auto_save_state() */
    if (savestate_automatic_interval == 0)
       return false;
-   
-   current_time = time(NULL);
-   
-   /* Check how long since last autosavestate */
-   if ((current_time - last_savestate_automatic_time) < 
-       (time_t)savestate_automatic_interval)
+
+   /* Check how long since last autosavestate, against the clock the
+    * frame already read - no time() call of its own per frame. */
+   if ((now_us - last_savestate_automatic_time)
+         < (retro_time_t)savestate_automatic_interval * 1000000)
       return false;
    
    /* Generate the savestate path */
@@ -2467,7 +2549,7 @@ bool content_save_state_automatic(void)
          savestate_path);
    
    /* Update the last savestate time, rinse/repeat */
-   last_savestate_automatic_time = current_time;
+   last_savestate_automatic_time = now_us;
    
    return content_auto_save_state(savestate_path);
 }

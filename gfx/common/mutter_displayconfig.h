@@ -33,8 +33,10 @@
 
 #include "../video_display_server.h"
 #include "dbus_runtime.h"
+#include <queues/retro_retire.h>
 
-#if defined(RARCH_HAVE_DBUS_RUNTIME) && defined(HAVE_THREADS)
+#if defined(RARCH_HAVE_DBUS_RUNTIME) && defined(HAVE_THREADS) \
+      && defined(RETRO_RETIRE_LOCK_FREE)
 #define RARCH_HAVE_MUTTER_DC 1
 #endif
 

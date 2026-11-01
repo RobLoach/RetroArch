@@ -146,6 +146,8 @@ void conv_argb8888_rgba4444(void *output_, const void *input_,
       int width, int height,
       int out_stride, int in_stride);
 
+/* May narrow in place (output == input) with positive, pixel-aligned
+ * strides: width * 2 <= out_stride <= in_stride, in_stride >= width * 4. */
 void conv_argb8888_rgb565(void *output, const void *input,
       int width, int height,
       int out_stride, int in_stride);
@@ -175,6 +177,20 @@ void conv_yuyv_argb8888(void *output, const void *input,
       int out_stride, int in_stride);
 
 void conv_copy(void *output, const void *input,
+      int width, int height,
+      int out_stride, int in_stride);
+
+/* conv_copy() of the @width pixels of each row only, for 16, 24 and 32
+ * bits a pixel: the output may be a rectangle inside a larger image */
+void conv_copy_16(void *output, const void *input,
+      int width, int height,
+      int out_stride, int in_stride);
+
+void conv_copy_24(void *output, const void *input,
+      int width, int height,
+      int out_stride, int in_stride);
+
+void conv_copy_32(void *output, const void *input,
       int width, int height,
       int out_stride, int in_stride);
 

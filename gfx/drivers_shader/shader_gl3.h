@@ -35,7 +35,10 @@ struct gl3_filter_chain_texture
 {
    GLuint image;
    unsigned dims;        /* VIDEO_SCALE_PACK */
-   unsigned padded_dims; /* VIDEO_SCALE_PACK */
+   /* The texture's size, and where in it the frame starts, when the
+    * frame is not all of it: VIDEO_SCALE_PACK, padded_dims 0 for all. */
+   unsigned padded_dims;
+   unsigned origin;
    GLenum format;
 };
 
@@ -100,9 +103,19 @@ void gl3_filter_chain_set_pass_info(
 
 bool gl3_filter_chain_init(gl3_filter_chain_t *chain);
 
+void gl3_filter_chain_set_passthrough(
+      gl3_filter_chain_t *chain, unsigned passthrough);
+
+void gl3_filter_chain_set_source_hdr(
+      gl3_filter_chain_t *chain, unsigned source_hdr);
+
 void gl3_filter_chain_set_input_texture(
       gl3_filter_chain_t *chain,
       const struct gl3_filter_chain_texture *texture);
+
+/* Whether the chain reads a frame where it lies in a larger texture,
+ * rather than copying it out. */
+bool gl3_filter_chain_reads_in_place(gl3_filter_chain_t *chain);
 
 void gl3_filter_chain_set_frame_count(
       gl3_filter_chain_t *chain,
@@ -124,6 +137,10 @@ void gl3_filter_chain_set_frame_direction(
 void gl3_filter_chain_set_frame_time_delta(
       gl3_filter_chain_t *chain,
       uint32_t time_delta);
+
+void gl3_filter_chain_set_hdr_parameters(
+      gl3_filter_chain_t *chain, unsigned mode,
+      float paper_white_nits, unsigned expand_gamut, float peak_nits);
 
 void gl3_filter_chain_set_original_fps(
       gl3_filter_chain_t *chain,
@@ -155,6 +172,12 @@ void gl3_filter_chain_set_simulate_scanline(
       bool simulate_scanline);
 #endif /* GL3_ROLLING_SCANLINE_SIMULATION */
 
+/* Cuts the final pass to @scissor, inside its viewport, until NULL is
+ * set: a view placed larger than the part of its target it may fill. */
+void gl3_filter_chain_set_scissor(
+      gl3_filter_chain_t *chain,
+      const struct gl3_viewport *scissor);
+
 void gl3_filter_chain_set_pass_name(
       gl3_filter_chain_t *chain,
       unsigned pass,
@@ -169,12 +192,27 @@ void gl3_filter_chain_build_viewport_pass(
       const struct gl3_viewport *vp,
       const float *mvp);
 
+/* The final pass again, into another viewport in the same frame, for a
+ * view shown in both eyes: the feedback buffers swap once per frame. */
+void gl3_filter_chain_build_viewport_pass_again(
+      gl3_filter_chain_t *chain,
+      const struct gl3_viewport *vp,
+      const float *mvp);
+
 gl3_filter_chain_t *gl3_filter_chain_create_default(
       enum glslang_filter_chain_filter filter);
 
+gl3_filter_chain_t *gl3_filter_chain_create_shrink(void);
+
+/* @frame_rect: frames may come inside a larger texture (padded_dims);
+ * the passes are built to read them there where the preset allows,
+ * rather than have each copied out. @replay: the chain may draw its last
+ * frame's final pass again in a later frame (build_viewport_pass_replay),
+ * and its history keeps one more texture for that. */
 gl3_filter_chain_t *gl3_filter_chain_create_from_preset(
       const char *path,
-      enum glslang_filter_chain_filter filter);
+      enum glslang_filter_chain_filter filter,
+      bool frame_rect, bool replay);
 
 /**
  * Deferred (per-frame) filter chain creation API.
@@ -195,9 +233,11 @@ struct video_shader *gl3_filter_chain_get_preset(
  * compile any shader passes. Returns NULL on failure.
  * The returned chain is NOT yet usable for rendering.
  **/
+/* The scheduled count may include a copy step pruned after reflection. */
 gl3_filter_chain_t *gl3_filter_chain_create_deferred(
       const char *path,
       enum glslang_filter_chain_filter filter,
+      bool frame_rect,
       unsigned *out_num_passes);
 
 /**
@@ -221,6 +261,17 @@ bool gl3_filter_chain_compile_pass(
  **/
 bool gl3_filter_chain_finalize(gl3_filter_chain_t *chain);
 
+/* Whether a frame's final pass was drawn since the passes were built,
+ * for build_viewport_pass_replay to draw again. */
+bool gl3_filter_chain_replay_ready(const gl3_filter_chain_t *chain);
+/* The last frame's final pass, in a later frame and at vp, from what it
+ * read then, in place of the offscreen and viewport passes: no other
+ * pass runs, the feedback buffers do not swap and the history stays.
+ * For a frame shown again, resized or redrawn. */
+void gl3_filter_chain_build_viewport_pass_replay(
+      gl3_filter_chain_t *chain,
+      const struct gl3_viewport *vp,
+      const float *mvp);
 void gl3_filter_chain_end_frame(gl3_filter_chain_t *chain);
 
 GLuint gl3_cross_compile_program(

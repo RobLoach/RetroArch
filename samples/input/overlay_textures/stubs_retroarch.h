@@ -13,14 +13,18 @@ struct stub_texture
    unsigned width;
    unsigned height;
    bool     live;
+   bool     bcn;     /* made from the compressed payload */
 };
 
 extern struct stub_texture stub_tex[STUB_MAX_TEXTURES];
 extern unsigned stub_tex_loads;      /* uploads since stub_reset()   */
 extern unsigned stub_tex_live;       /* textures not yet unloaded    */
 extern bool     stub_tex_load_fails; /* the driver refuses an upload */
+extern unsigned stub_drop_updates;   /* that many updates are dropped */
+extern bool     stub_samples_bc1;    /* the driver samples BC1        */
 
 uint32_t stub_checksum(const struct texture_image *img);
+uint32_t stub_checksum_bytes(const void *data, size_t len);
 void stub_reset(void);
 const struct stub_texture *stub_texture_get(uintptr_t id);
 

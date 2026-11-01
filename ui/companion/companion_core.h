@@ -267,13 +267,11 @@ size_t companion_core_playlist_default_core(companion_core_t *core,
       const char *name, char *s, size_t len);
 void companion_core_event_command(companion_core_t *core,
       enum event_command cmd);
-/* Scan @path (a directory when @directory, else a single file) against
- * the content databases into the playlist directory, on the task
- * queue. on_scan_finished fires when done, after the menu's horizontal
+/* Scan @path, a directory or a single file, against the content
+ * databases into the playlist directory, on the task queue. on_scan_finished fires when done, after the menu's horizontal
  * list has been reset. Returns false when no scan could be started
  * (no libretrodb in this build, or the task could not be pushed). */
-bool companion_core_request_scan(companion_core_t *core, const char *path,
-      bool directory, bool show_hidden_files);
+bool companion_core_request_scan(companion_core_t *core, const char *path);
 
 /* --- Companion settings (retroarch.cfg) ------------------------------- */
 
@@ -291,7 +289,6 @@ const char *companion_core_pref_thumbnail_subdir(companion_core_t *core);
 /* Playlist file to open at startup ("" = use History). */
 const char *companion_core_pref_initial_playlist(companion_core_t *core);
 bool companion_core_pref_suggest_loaded_core_first(companion_core_t *core);
-bool companion_core_pref_show_hidden_files(companion_core_t *core);
 /* Content-browser tab to restore: -1 when not remembering, else 0/1. */
 int companion_core_pref_last_tab(companion_core_t *core);
 void companion_core_pref_set_last_tab(companion_core_t *core, int tab);
@@ -525,6 +522,28 @@ const char *companion_core_setting_get(companion_core_t *core, size_t i, char *s
 bool        companion_core_setting_set(companion_core_t *core, size_t i, const char *text);
 size_t      companion_core_setting_choice_count(companion_core_t *core, size_t i);
 const char *companion_core_setting_choice(companion_core_t *core, size_t i, size_t c);
+
+/* --- Controller shortcuts (the hotkeys list's entries and macros) -----
+ * Combinations (input_combo_N) and macros (input_macro_N) as rows of
+ * text, each as the configuration writes it: every combination there
+ * is by its number and an empty row to add the next, then the same for
+ * macros. companion_core_shortcut_count() reads what there is; the
+ * other calls go by that reading, so call it again after a set. */
+size_t      companion_core_shortcut_count(companion_core_t *core);
+bool        companion_core_shortcut_is_macro(companion_core_t *core, size_t i);
+/* "Combination 3", "New combination", "Macro 1", "New macro" */
+const char *companion_core_shortcut_label(companion_core_t *core, size_t i,
+      char *s, size_t len);
+const char *companion_core_shortcut_get(companion_core_t *core, size_t i,
+      char *s, size_t len);
+/* Set from text; an empty text takes the row's number out. False when
+ * the text is not read as a combination or a macro, which is then left
+ * as it was. */
+bool        companion_core_shortcut_set(companion_core_t *core, size_t i,
+      const char *text);
+/* How a row is written, and for a combination what it can do. */
+const char *companion_core_shortcut_help(companion_core_t *core, bool macro,
+      char *s, size_t len);
 
 /* --- Core Options (Qt's Core Options dialog) ---------------------------
  * The running core's options as a flat table: one row per visible

@@ -600,23 +600,6 @@ static int32_t rmsgpack_read_key_string(intfstream_t *fd,
 #define CURSOR_MAX_MAP_FIELDS    24
 
 /**
- * libretrodb_scan_field:
- *
- * Walk the database once, reporting the binary value of @field and
- * the offset of the record carrying it.  Records without the field,
- * or carrying it as something other than binary, are skipped.
- *
- * This exists so a caller can build its own lookup structure in one
- * pass instead of re-walking the whole database for every key it
- * wants to test.  Nothing is parsed beyond the field itself: values
- * the caller did not ask for are stepped over, not decoded.
- *
- * @cb is called for each match and may return non-zero to stop the
- * scan, which is then reported as success.
- *
- * Returns: 0 when the database was walked, -1 on a malformed stream.
- */
-/**
  * rmsgpack_read_bin_inplace:
  *
  * Read a MsgPack binary value into a caller buffer.  Returns -1 and
@@ -711,42 +694,156 @@ static int rmsgpack_read_uint_inplace(intfstream_t *fd, uint64_t *out)
    return -1;
 }
 
-int libretrodb_scan_field(libretrodb_t *db, const char *field,
-      const char *aux_field, libretrodb_scan_cb cb, void *ctx)
+/**
+ * rmsgpack_read_str_inplace:
+ *
+ * Read a MsgPack string value into a caller buffer, NUL-terminated.
+ * Returns -1 and leaves the stream positioned after the value when it
+ * is not a string or does not fit, so the caller can carry on
+ * scanning.
+ */
+static int rmsgpack_read_str_inplace(intfstream_t *fd, char *buf,
+      size_t buf_size, uint64_t *len)
+{
+   uint8_t type = 0;
+   int32_t n;
+
+   if (intfstream_read(fd, &type, 1) != 1)
+      return -1;
+   if (intfstream_seek(fd, -1, RETRO_VFS_SEEK_POSITION_CURRENT) < 0)
+      return -1;
+   if (   (type < _MPF_FIXSTR || type >= _MPF_NIL)
+       && type != _MPF_STR8 && type != _MPF_STR16 && type != _MPF_STR32)
+   {
+      rmsgpack_skip_value(fd);
+      return -1;
+   }
+   /* One too long is stepped over by the reader. */
+   if ((n = rmsgpack_read_key_string(fd, buf, buf_size)) < 0)
+      return -1;
+   *len = (uint64_t)n;
+   return 0;
+}
+
+struct libretrodb_scan
 {
    intfstream_t *fd;
+   const char   *field;
+   const char   *field2;
+   const char   *aux_field;
+   const char   *name_field;
    size_t        field_len;
-   size_t        aux_len = 0;
-   int           rv      = -1;
+   size_t        field2_len;
+   size_t        aux_len;
+   size_t        name_len;
+};
 
-   if (!db || !db->path || !*db->path || !field || !*field || !cb)
-      return -1;
+libretrodb_scan_t *libretrodb_scan_begin(libretrodb_t *db,
+      const char *field, const char *field2, const char *aux_field,
+      const char *name_field)
+{
+   libretrodb_scan_t *scan;
 
-   field_len = strlen(field);
+   if (!db || !db->path || !*db->path)
+      return NULL;
+   if (!(scan = (libretrodb_scan_t*)calloc(1, sizeof(*scan))))
+      return NULL;
+
+   if (field && *field)
+      scan->field_len  = strlen(field);
+   if (field2 && *field2)
+      scan->field2_len = strlen(field2);
    if (aux_field && *aux_field)
-      aux_len = strlen(aux_field);
+      scan->aux_len    = strlen(aux_field);
+   if (name_field && *name_field)
+      scan->name_len   = strlen(name_field);
+   scan->field     = field;
+   scan->field2    = field2;
+   scan->aux_field = aux_field;
+   scan->name_field = name_field;
 
-   if (!(fd = intfstream_open_buffered(db->path, LIBRETRODB_WINDOW_SIZE)))
-      if (!(fd = intfstream_open_file(db->path,
+   if (!scan->field_len && !scan->field2_len)
+   {
+      free(scan);
+      return NULL;
+   }
+
+   if (!(scan->fd = intfstream_open_buffered(db->path,
+               LIBRETRODB_WINDOW_SIZE)))
+      if (!(scan->fd = intfstream_open_file(db->path,
                   RETRO_VFS_FILE_ACCESS_READ,
                   RETRO_VFS_FILE_ACCESS_HINT_NONE)))
-         return -1;
+      {
+         free(scan);
+         return NULL;
+      }
 
-   if (intfstream_seek(fd, (int64_t)(db->root + sizeof(libretrodb_header_t)),
+   if (intfstream_seek(scan->fd,
+            (int64_t)(db->root + sizeof(libretrodb_header_t)),
             RETRO_VFS_SEEK_POSITION_START) < 0)
-      goto end;
+   {
+      libretrodb_scan_end(scan);
+      return NULL;
+   }
+   return scan;
+}
 
-   for (;;)
+void libretrodb_scan_end(libretrodb_scan_t *scan)
+{
+   if (!scan)
+      return;
+   intfstream_close(scan->fd);
+   free(scan->fd);
+   free(scan);
+}
+
+int libretrodb_scan_step(libretrodb_scan_t *scan, unsigned max_records,
+      libretrodb_scan2_cb cb, void *ctx)
+{
+   intfstream_t *fd;
+   const char   *field;
+   const char   *field2;
+   const char   *aux_field;
+   const char   *name_field;
+   size_t        field_len;
+   size_t        field2_len;
+   size_t        aux_len;
+   size_t        name_len;
+   unsigned      n;
+   int           rv = -1;
+
+   if (!scan || !cb)
+      return -1;
+
+   fd         = scan->fd;
+   field      = scan->field;
+   field2     = scan->field2;
+   aux_field  = scan->aux_field;
+   field_len  = scan->field_len;
+   field2_len = scan->field2_len;
+   aux_len    = scan->aux_len;
+   name_field = scan->name_field;
+   name_len   = scan->name_len;
+
+   /* Every record is read from its start to its end, so the stream's
+    * position is all that carries over to the next call. */
+   for (n = 0; n < max_records; n++)
    {
       int64_t record_start = intfstream_tell(fd);
       int32_t  map_len;
       int32_t  i;
       int      stop        = 0;
-      int      have_key    = 0;
-      int      have_aux    = 0;
+      int      have_key     = 0;
+      int      have_key2    = 0;
+      int      have_aux     = 0;
+      int      have_name    = 0;
       uint8_t  key_val[LIBRETRODB_MAX_KEY_SIZE];
-      uint64_t key_val_len = 0;
-      uint64_t aux_val     = 0;
+      uint8_t  key2_val[LIBRETRODB_MAX_KEY_SIZE];
+      char     name_val[LIBRETRODB_MAX_KEY_SIZE];
+      uint64_t key_val_len  = 0;
+      uint64_t key2_val_len = 0;
+      uint64_t name_val_len = 0;
+      uint64_t aux_val      = 0;
 
       if (record_start < 0)
          goto end;
@@ -763,8 +860,10 @@ int libretrodb_scan_field(libretrodb_t *db, const char *field,
 
       /* The field and its companion can sit either way round in the
        * map, so both are collected before the record is reported. */
-      have_key = 0;
-      have_aux = 0;
+      have_key  = 0;
+      have_key2 = 0;
+      have_aux  = 0;
+      have_name = 0;
 
       for (i = 0; i < map_len; i++)
       {
@@ -781,7 +880,8 @@ int libretrodb_scan_field(libretrodb_t *db, const char *field,
             continue;
          }
 
-         if (     !have_key
+         if (     field_len
+               && !have_key
                && (size_t)key_len == field_len
                && memcmp(key_buf, field, field_len) == 0)
          {
@@ -790,6 +890,28 @@ int libretrodb_scan_field(libretrodb_t *db, const char *field,
             if (rmsgpack_read_bin_inplace(fd, key_val, sizeof(key_val),
                      &key_val_len) == 0)
                have_key = 1;
+            continue;
+         }
+
+         if (     field2_len
+               && !have_key2
+               && (size_t)key_len == field2_len
+               && memcmp(key_buf, field2, field2_len) == 0)
+         {
+            if (rmsgpack_read_bin_inplace(fd, key2_val, sizeof(key2_val),
+                     &key2_val_len) == 0)
+               have_key2 = 1;
+            continue;
+         }
+
+         if (     name_len
+               && !have_name
+               && (size_t)key_len == name_len
+               && memcmp(key_buf, name_field, name_len) == 0)
+         {
+            if (rmsgpack_read_str_inplace(fd, name_val, sizeof(name_val),
+                     &name_val_len) == 0)
+               have_name = 1;
             continue;
          }
 
@@ -813,12 +935,16 @@ int libretrodb_scan_field(libretrodb_t *db, const char *field,
        * record rather than only the ones it can index.  Reporting only
        * on the key gave a range narrower than the data, which is the
        * wrong direction for a range used to decide what to skip. */
-      if (have_key || have_aux)
+      if (have_key || have_key2 || have_name || have_aux)
       {
          int64_t resume = intfstream_tell(fd);
 
          if (cb(ctx, have_key ? key_val : NULL,
                   have_key ? (size_t)key_val_len : 0,
+                  have_key2 ? key2_val : NULL,
+                  have_key2 ? (size_t)key2_val_len : 0,
+                  have_name ? name_val : NULL,
+                  have_name ? (size_t)name_val_len : 0,
                   (uint64_t)record_start, have_aux ? &aux_val : NULL))
             stop = 1;
 
@@ -833,10 +959,9 @@ int libretrodb_scan_field(libretrodb_t *db, const char *field,
          }
       }
    }
+   return 1;
 
 end:
-   intfstream_close(fd);
-   free(fd);
    return rv;
 }
 
@@ -844,7 +969,7 @@ end:
  * libretrodb_read_at:
  *
  * Read the record beginning at @offset, which must have come from
- * libretrodb_scan_field().  Lets a caller that kept only offsets
+ * libretrodb_scan_step().  Lets a caller that kept only offsets
  * fetch a record without walking to it.
  */
 int libretrodb_read_at(libretrodb_t *db, uint64_t offset,

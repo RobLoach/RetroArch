@@ -55,21 +55,22 @@ static const struct
    char s_534cf44d[91];
    char s_5f9d9369[64];
    char s_6e51030f[66];
+   char s_18e73263[199];
    char s_d32da23d[18];
    char s_551f3071[25];
    char s_1f6e5f89[41];
    char s_212963fd[92];
    char s_5523ef09[45];
    char s_38e226a5[36];
-   char s_239aa255[127];
+   char s_239aa255[135];
    char s_fa198259[120];
    char s_55288d64[32];
    char s_41d19ccb[52];
    char s_d32da48f[18];
    char s_d1558b35[45];
    char s_4c378b95[95];
-   char s_c435566b[339];
-   char s_793f841a[284];
+   char s_c435566b[347];
+   char s_793f841a[283];
    char s_b4ed19c0[34];
    char s_3a147fac[89];
    char s_a4a373a7[31];
@@ -103,12 +104,13 @@ static const struct
    char s_7607974d[11];
    char s_bdf1165f[25];
    char s_6a15d029[19];
-   char s_3817de39[367];
+   char s_3817de39_0[500];
+   char s_3817de39_1[30];
    char s_16ae54ac[272];
    char s_b3e89428[271];
    char s_7af11c30[89];
    char s_91bc1342[293];
-   char s_78cabcca[384];
+   char s_78cabcca[371];
    char s_0e85a0d1[44];
    char s_ff583ef3_0[500];
    char s_ff583ef3_1[31];
@@ -135,13 +137,13 @@ static const struct
 #endif
    char s_3f5ab0a6[155];
    char s_39308167[407];
-   char s_60255deb_0[500];
-   char s_60255deb_1[15];
-   char s_f39c636f[401];
-   char s_4c991c18[392];
+   char s_60255deb_0[499];
+   char s_60255deb_1[21];
+   char s_f39c636f[353];
+   char s_4c991c18[389];
    char s_4b299805[154];
    char s_1bd35af2[37];
-   char s_24e40f00[275];
+   char s_24e40f00[269];
    char s_1382c258[220];
    char s_4caab10c[243];
    char s_03580e17[163];
@@ -163,7 +165,7 @@ static const struct
    char s_9eebc6cc[54];
    char s_5fdad539[282];
    char s_353c64eb_0[500];
-   char s_353c64eb_1[93];
+   char s_353c64eb_1[146];
    char s_33a76811[104];
    char s_e180f55d[108];
    char s_11aa0e91[60];
@@ -183,14 +185,14 @@ static const struct
    char s_64fa1377[26];
    char s_e189c949[125];
    char s_e189c94a[153];
-   char s_12cc52ac[80];
+   char s_12cc52ac[92];
    char s_6c7809c7[48];
    char s_ad397cb2[78];
    char s_7354d146[176];
    char s_e18c0fd3[40];
    char s_2d9d0a50[229];
    char s_0e7699a6[218];
-   char s_16721de3[224];
+   char s_16721de3[218];
    char s_abab74fb[172];
    char s_c0a60ee2[211];
    char s_14a6bfe2[256];
@@ -198,15 +200,15 @@ static const struct
    char s_efd6795c_0[500];
    char s_efd6795c_1[30];
    char s_7a7a3d56[221];
-   char s_378ad7dc[205];
-   char s_95f467be[298];
+   char s_378ad7dc[200];
+   char s_95f467be[297];
    char s_49088c17[176];
    char s_ae87ea53[260];
    char s_9834febe[455];
-   char s_93805cc8_0[499];
-   char s_93805cc8_1[12];
-   char s_b495662b[367];
-   char s_9953f4e2[236];
+   char s_93805cc8_0[500];
+   char s_93805cc8_1[36];
+   char s_b495662b[366];
+   char s_9953f4e2[268];
    char s_de76d2dc[21];
    char s_79e212bd[5];
    char s_6342700c[11];
@@ -214,10 +216,10 @@ static const struct
    char s_cd77e985[26];
    char s_6be7f013[13];
    char s_9f689905[16];
-   char s_5edaf90a[16];
+   char s_5edaf90a[19];
    char s_27ea651d[6];
    char s_1997a873[24];
-   char s_fc24216f[16];
+   char s_fc24216f[19];
    char s_728aa9b3[17];
    char s_929e8e7a[21];
    char s_51edb70d[15];
@@ -286,6 +288,7 @@ static const struct
    char s_079ba7c7[35];
    char s_b271ae95[24];
    char s_fb84857a[10];
+   char s_7ee0d4c8[18];
    char s_3943c7ae[30];
    char s_5b2d8d2f[15];
    char s_6fd9b032[34];
@@ -329,6 +332,7 @@ static const struct
    char s_9a57d328[26];
 #endif
 #endif
+   char s_682e6742[19];
 #ifdef _3DS
    char s_22a46583[31];
    char s_a4d079f8[18];
@@ -388,7 +392,7 @@ static const struct
    char s_67e4657f[38];
    char s_f30ab1c8[24];
    char s_2ce0b4f4[25];
-   char s_c90e4caf[14];
+   char s_c90e4caf[17];
    char s_6afa2137[28];
    char s_d75d3923[28];
    char s_b133119b[28];
@@ -455,6 +459,7 @@ static const struct
    char s_0a05438c[24];
    char s_1324c306[22];
    char s_152cd261[28];
+   char s_91318729[37];
    char s_7d00b7ed[10];
    char s_7bd7aa88[31];
    char s_0674b554[32];
@@ -573,6 +578,7 @@ static const struct
 #endif
    char s_543b5a62[25];
    char s_d1dc5a72[42];
+   char s_b72aa8dd[51];
    char s_1d9a045d[55];
    char s_9ada0438[37];
    char s_eb66d46b[26];
@@ -596,6 +602,7 @@ static const struct
    char s_beaf53f1[17];
    char s_c3fd1e84[14];
    char s_0f2da3af[17];
+   char s_a89a965a[8];
    char s_f4875576[19];
    char s_df3def90[26];
    char s_22600fe7[20];
@@ -687,8 +694,9 @@ static const struct
    char s_deed0812[12];
    char s_dfa3c8c3[5];
    char s_52dea05d[25];
-   char s_7ec63ffc[50];
+   char s_7ec63ffc[49];
    char s_7f004a36[124];
+   char s_fcd0c0d6[183];
    char s_a3825f18[13];
    char s_ef2d0a03[23];
    char s_ad17a194[12];
@@ -739,6 +747,7 @@ static const struct
    char s_db16b335[18];
    char s_10358d4e[15];
    char s_0ad18744[13];
+   char s_7a3aee46[23];
    char s_0b7c8e91[20];
    char s_0bf63b67[13];
    char s_36b2a31c[13];
@@ -804,20 +813,29 @@ static const struct
    char s_b30d3e14[7];
    char s_af315ae7[50];
    char s_87994f40[24];
+   char s_19bdcb0b[25];
    char s_6f199f35[24];
+   char s_b5849afd[18];
    char s_b1e1d992[15];
    char s_798643f5[30];
    char s_b61d0a2d[28];
    char s_c68080b6[25];
    char s_b87232ce[25];
+   char s_0d77b260[35];
+   char s_a8ae729b[18];
    char s_231308e8[28];
    char s_27db7cc0[26];
    char s_700d45a9[23];
    char s_2a30a561[23];
    char s_6ae6f953[19];
+   char s_ee635545[31];
 #ifdef ANDROID
    char s_b573f90c[26];
 #endif
+   char s_ed300063[41];
+   char s_28ea7dfa[19];
+   char s_b9dacc8a[29];
+   char s_e7afbcd6[45];
    char s_e28bc72f[11];
    char s_0b2a8528[30];
    char s_ea5757a0[12];
@@ -830,6 +848,10 @@ static const struct
    char s_8b9af73a[16];
    char s_66389548[32];
    char s_926f9e93[41];
+   char s_c546f81b[10];
+   char s_539024ed[9];
+   char s_3703a97b[12];
+   char s_933104ed[23];
    char s_c6b760c9[51];
    char s_1d5a27f5[44];
    char s_18029d7e[11];
@@ -841,13 +863,17 @@ static const struct
    char s_3518bec3[32];
    char s_54e5819b[21];
    char s_009a10e3[10];
+   char s_7a9cbfe8[32];
    char s_22c19b64[27];
    char s_58de51be[9];
    char s_cde2111a[14];
    char s_aded1e43[37];
    char s_0b32f489[30];
    char s_1c82054d[36];
+   char s_cb11ce3d[58];
    char s_d458f013[37];
+   char s_5aa6602e[68];
+   char s_6e1d0b9d[25];
    char s_56e1b31e[17];
    char s_56e1b31f[16];
    char s_267cbe7d[32];
@@ -866,7 +892,13 @@ static const struct
    char s_56e1b335[16];
    char s_56e1b336[19];
    char s_313d15c0[9];
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   char s_392e7967[35];
+#endif
    char s_e9f0dd82[41];
+   char s_b58b86df[18];
+   char s_1b46171b[19];
+   char s_0bd714f7[5];
    char s_0bebb490[15];
    char s_72765a06[15];
    char s_72765a07[15];
@@ -899,6 +931,10 @@ static const struct
    char s_b3a9ff57[19];
    char s_f4eaed02[27];
    char s_a9f5617a[25];
+   char s_9dffef92[32];
+   char s_7b2598f2[30];
+   char s_01686cd6[19];
+   char s_182194b5[21];
    char s_50e34bc5[19];
    char s_00ea00d3[16];
    char s_b43e2e98[8];
@@ -960,11 +996,14 @@ static const struct
 #endif
    char s_267cef24[34];
    char s_727b11f4[36];
+   char s_b6670eec[21];
    char s_21ec213c[27];
    char s_030a629f[22];
    char s_8bc5b398[21];
    char s_0c353c96[27];
+   char s_7997964b[25];
    char s_629528b9[43];
+   char s_a67c80f1[30];
    char s_b662d01f[16];
    char s_f6cc615c[24];
    char s_46d040e3[48];
@@ -996,9 +1035,12 @@ static const struct
    char s_88226df7[29];
    char s_4c92f60e[28];
    char s_9c702ee1[38];
+   char s_b8abf5ac[40];
    char s_b8b18b90[12];
    char s_efa8d516[35];
    char s_d7c1d887[20];
+   char s_ac419de7[19];
+   char s_d87f977f[28];
    char s_8c49943c[17];
    char s_d2c6b214[27];
 #ifdef HAVE_SDL3
@@ -1014,7 +1056,26 @@ static const struct
    char s_a7da7dc1[23];
    char s_980ef0e8[10];
    char s_fcf05466[18];
+   char s_172a1f47[34];
+   char s_ebede389[34];
+   char s_941bb4f3[34];
+   char s_8f104024[23];
+   char s_60523ef9[26];
    char s_da16c634[15];
+#ifdef ANDROID
+   char s_4c636851[14];
+   char s_8871e585[47];
+   char s_10996997[35];
+   char s_a8f7398d[28];
+   char s_16430f5d[31];
+#endif
+   char s_a310fe56[86];
+   char s_873828af[26];
+   char s_400f0351[19];
+   char s_b7a9e199[29];
+   char s_acfde8f7[4];
+   char s_ca2f1e0f[10];
+   char s_ad54dc4c[27];
    char s_d042d680[6];
    char s_16cacb01[11];
 #ifdef UDEV_TOUCH_SUPPORT
@@ -1024,6 +1085,7 @@ static const struct
    char s_9c91e6ef[34];
    char s_f03621e7[33];
 #endif
+   char s_9d47ac69[36];
    char s_75851363[16];
    char s_a60a77f9[38];
    char s_f07432ff[15];
@@ -1035,10 +1097,21 @@ static const struct
    char s_feaf16c5[12];
    char s_dedb2642[25];
    char s_ff1b8ce5[19];
+#if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   char s_8033e2a5[31];
+   char s_19f5e3bc[49];
+#endif
+#endif
+   char s_3f0087c2[39];
    char s_bd07998f[17];
    char s_4e2f19db[22];
    char s_9e66791a[13];
    char s_f3076af9[4];
+   char s_3e958bb3[24];
+   char s_3e981328[19];
+   char s_d5d699bd[35];
+   char s_591b268d[27];
    char s_168d155d[23];
    char s_c64d260f[10];
 #ifdef HAVE_LAKKA_SWITCH
@@ -1077,6 +1150,7 @@ static const struct
    char s_dc362405[12];
    char s_e2f51ded[12];
    char s_d9685b01[10];
+   char s_88d4b1c5[29];
    char s_74b6dd31[8];
    char s_3e39918c[15];
    char s_96380b84[16];
@@ -1138,6 +1212,17 @@ static const struct
    char s_d3574e33[12];
    char s_9d0bdde1[15];
    char s_eded64b9[14];
+   char s_337429c4[11];
+   char s_4c78a5a2[15];
+   char s_dbd59c7e[16];
+   char s_0152194a[25];
+   char s_0a01c40d[61];
+   char s_4f02f70d[50];
+   char s_f03bfa6d[43];
+   char s_e371b6a9[25];
+   char s_02688604[13];
+   char s_aa01ad12[12];
+   char s_ea06344d[45];
    char s_d86adca1[23];
    char s_a17f6a67[59];
    char s_9da5609f[10];
@@ -1149,14 +1234,16 @@ static const struct
    char s_136eaaf4[22];
    char s_8d3a8b68[5];
    char s_68d27147[11];
-   char s_f02f73fc[26];
+   char s_b5721b90[24];
    char s_e5b971a0[7];
+   char s_8f27c71e[18];
    char s_17615fcf[7];
    char s_3a0a3fef[13];
    char s_1b6ed818[18];
    char s_89a75c21[19];
    char s_9439ec8b[18];
    char s_1e09db79[16];
+   char s_6735ad12[20];
    char s_0d2d8eef[11];
    char s_400523e5[22];
    char s_989836e4[34];
@@ -1211,7 +1298,6 @@ static const struct
 #endif
 #endif
    char s_a6e5d0ee[30];
-   char s_f228c6c5[14];
    char s_11926382[19];
    char s_645ae416[25];
    char s_df92f5b5[44];
@@ -1250,7 +1336,7 @@ static const struct
    char s_0c1e1a65[39];
    char s_8ed62097[51];
    char s_6b9ce765[55];
-   char s_35c18fe2[38];
+   char s_35c18fe2[36];
    char s_7742d553[36];
    char s_813d8d09[42];
    char s_87f05947[23];
@@ -1260,7 +1346,9 @@ static const struct
    char s_b201bb70[43];
    char s_b66840e9[23];
 #ifdef HAVE_MICROPHONE
+#if defined(RARCH_MOBILE)
    char s_f0db2883[23];
+#endif
 #endif
 #ifdef HAVE_MICROPHONE
 #if !defined(RARCH_CONSOLE)
@@ -1294,13 +1382,16 @@ static const struct
    char s_40084357[8];
    char s_df62d56f[6];
    char s_4a1166e1[6];
+   char s_44e2e900[11];
    char s_9f2cc577[10];
+   char s_dc216f95[21];
    char s_42b8ffbf[6];
    char s_64702d9a[27];
    char s_e829b8da[36];
    char s_60ff701a[9];
    char s_96e64a19[17];
    char s_af36f3b0[29];
+   char s_dafc36af[28];
    char s_73312855[15];
    char s_e4405788[24];
    char s_6c4b8962[22];
@@ -1322,6 +1413,7 @@ static const struct
    char s_d95b4346[17];
    char s_1adb7f60[75];
    char s_21e6be74[19];
+   char s_8a85a9a9[13];
    char s_4327ffcc[27];
    char s_737c9877[18];
    char s_30ba6e91[23];
@@ -1335,8 +1427,9 @@ static const struct
    char s_2bc31697[16];
    char s_69e645f2[18];
    char s_d48223f9[26];
-   char s_28adc26d[34];
-   char s_0b9c6082[30];
+   char s_28adc26d[35];
+   char s_0b9c6082[31];
+   char s_8974ac0f[15];
    char s_b80a2fc4[16];
    char s_02b33f2e[39];
    char s_d3b03946[13];
@@ -1362,11 +1455,34 @@ static const struct
    char s_89920317[21];
    char s_9e49780c[32];
    char s_5703c323[22];
+   char s_00fcd264[55];
+   char s_ae7e624b[58];
+   char s_c1870a3a[58];
    char s_ce445b41[34];
+   char s_972c382e[38];
    char s_87d88aa2[9];
    char s_aadf6541[33];
 #ifdef _3DS
    char s_4b1915d7[34];
+#endif
+#ifdef HAVE_NFSCLIENT
+   char s_2ab94c3e[22];
+   char s_3225c36e[11];
+   char s_eaf7de23[24];
+   char s_f11cbd53[32];
+   char s_46d3d8b1[9];
+   char s_6b12cfdb[24];
+   char s_51775f83[11];
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_NFSCLIENT
+   char s_9155967d[33];
+#endif
+#endif
+#ifdef HAVE_NFSCLIENT
+   char s_528fd575[17];
+   char s_d64e8d73[20];
+   char s_675071f2[12];
 #endif
    char s_c3168ee5[4];
    char s_e2f5e678[6];
@@ -1401,13 +1517,14 @@ static const struct
    char s_d9d847b8[35];
    char s_7a6a492f[17];
    char s_cf28bcf5[21];
+   char s_d3e7cd81[18];
    char s_821edb57[29];
    char s_5f080876[28];
    char s_9358d8ba[26];
    char s_d92341ca[31];
    char s_c813b6c6[15];
    char s_fd533325[25];
-   char s_ed43994d[32];
+   char s_ed43994d[33];
    char s_78ccdecc[31];
    char s_15345f7c[23];
    char s_b78a0248[24];
@@ -1434,6 +1551,9 @@ static const struct
    char s_e6e43c7d[44];
    char s_c1ddd207[44];
    char s_ded83500[43];
+   char s_69bfecad[15];
+   char s_69c06e41[6];
+   char s_097e2527[9];
    char s_690802fe[11];
    char s_7895cc5b[22];
    char s_e46faa42[15];
@@ -1545,8 +1665,16 @@ static const struct
    char s_2010df6a[13];
    char s_64dd7209[30];
    char s_77155e0f[12];
+   char s_04ef691f[32];
+   char s_af2c2c4e[59];
+   char s_af2f5836[52];
+   char s_04f38f4d[30];
    char s_3936fe87[78];
    char s_393985fc[23];
+   char s_57110ba8[38];
+   char s_973fff7c[34];
+   char s_54463db9[34];
+   char s_364fa4f0[35];
    char s_56e21ee1[16];
    char s_b152eb42[24];
    char s_f70406ce[15];
@@ -1615,13 +1743,14 @@ static const struct
    char s_1cad7751[9];
    char s_753c8d3b[6];
    char s_0029bb07[16];
+   char s_cf419bec[35];
    char s_82847606[19];
    char s_036acd54[49];
    char s_a0a191ca[45];
    char s_aee9789b[17];
    char s_e42992fb[26];
    char s_a1f8401f[28];
-   char s_153a031d[48];
+   char s_153a031d[54];
    char s_c0267103[29];
    char s_c4994969[22];
    char s_c471147e[33];
@@ -1638,7 +1767,7 @@ static const struct
    char s_6d08238d[5];
    char s_033bf99f[13];
    char s_8076aea7[13];
-   char s_a00583cf[13];
+   char s_a00583cf[14];
    char s_e8a86d57[8];
    char s_725702e3[9];
    char s_30834c9e[10];
@@ -1669,7 +1798,7 @@ static const struct
    char s_2237e69e[11];
    char s_e5d4f181[16];
    char s_7217fd0f[15];
-   char s_abfa790d[18];
+   char s_abfa790d[17];
    char s_6d0b3292[6];
    char s_08785e85[13];
    char s_3313a0d7[7];
@@ -1682,7 +1811,7 @@ static const struct
    char s_cbddcf50[12];
    char s_9abb40fc[28];
    char s_a9dc9f21[82];
-   char s_6c786a36[30];
+   char s_6c786a36[38];
    char s_6d0ca7a7[5];
    char s_25486b43[7];
    char s_37708c23[6];
@@ -1753,6 +1882,14 @@ static const struct
    char s_69f2e90c[19];
    char s_4ceac87e[9];
    char s_387a4176[17];
+   char s_7745a38e[8];
+   char s_2102d995[9];
+   char s_e69d6a8f[8];
+   char s_4e2cbad9[5];
+   char s_4e2cbb07[5];
+   char s_13ef7ee0[5];
+   char s_863f74bc[4];
+   char s_6c9436e3[8];
    char s_28863bc1[14];
    char s_f751c497[14];
    char s_9329c64c[7];
@@ -1762,6 +1899,12 @@ static const struct
    char s_0a2aa953[7];
    char s_ffd0dac4[9];
    char s_80a2b273[10];
+#ifdef HAVE_LAKKA
+#ifdef HAVE_LAKKA_SWITCH
+   char s_7c66e948[54];
+   char s_35d14c7c[25];
+#endif
+#endif
    char s_91dd478e[19];
    char s_865cee49[13];
    char s_1b8a5cb5[11];
@@ -1813,7 +1956,7 @@ static const struct
    char s_ccfe26d1[13];
    char s_728ca1d3[3];
    char s_5f612db6[13];
-   char s_9f29f708[20];
+   char s_9f29f708[16];
    char s_a9145c83[10];
    char s_22f52844[12];
    char s_06842e2b[14];
@@ -1901,7 +2044,6 @@ static const struct
    char s_df763da7[8];
    char s_69dad0e6[46];
    char s_1532af95[55];
-   char s_03fb590d[24];
    char s_7c2f8b04[24];
    char s_fdbd73a3[25];
    char s_6cead93e[16];
@@ -1939,8 +2081,10 @@ static const struct
    char s_b160f7a1[23];
    char s_cd5ff0f5[18];
    char s_8b92e740[18];
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
    char s_e2415d78[18];
+#endif
 #endif
    char s_aeef8db2[13];
    char s_14d20957[18];
@@ -1966,21 +2110,58 @@ static const struct
    char s_01a73130[30];
    char s_44ebca0d[27];
    char s_608ac5a1[22];
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
    char s_3839f91d[29];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    char s_86b07599[25];
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    char s_8d5f85ee[20];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   char s_ef0cd939[17];
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    char s_9b023eee[37];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    char s_ccae82ba[14];
 #endif
-   char s_35808dba[34];
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
+   char s_6e573f56[24];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   char s_e62744f8[19];
+#endif
+   char s_35808dba[34];
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    char s_ad6e88de[11];
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    char s_c7bc8298[33];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    char s_e63b035a[19];
    char s_d21d875b[14];
    char s_ae86fed0[17];
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    char s_b12ae22e[20];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    char s_b2d073c7[18];
    char s_1cbc2657[16];
 #endif
@@ -2040,6 +2221,7 @@ static const struct
    char s_8356c98c[14];
    char s_5c7bbce1[17];
    char s_cd916c68[17];
+   char s_f017f754[25];
    char s_8fe41f79[23];
    char s_2c296537[14];
    char s_43ac80a0[12];
@@ -2051,6 +2233,7 @@ static const struct
    char s_6d353bd6[11];
    char s_3f874a40[13];
    char s_da093426[18];
+   char s_29f62899[21];
    char s_d9b00fbd[28];
    char s_9c6ed9ca[14];
    char s_68664e16[19];
@@ -2086,6 +2269,10 @@ static const struct
    char s_60a38895[6];
    char s_db01e988[4];
    char s_e1c715da[4];
+   char s_b4d6cb93[30];
+   char s_ee1c318a[23];
+   char s_32b51618[24];
+   char s_a2906bd3[23];
    char s_e2f93e68[5];
    char s_47d26662[12];
    char s_0ca3b319[9];
@@ -2148,6 +2335,7 @@ static const struct
 #else
    char s_e07e844d[25];
 #endif
+   char s_ef289a2f[30];
 #if defined(DINGUX)
    char s_bfd4c6ef[9];
    char s_ce997004[10];
@@ -2166,12 +2354,32 @@ static const struct
 #endif
 #endif
    char s_f4341e25[33];
+   char s_964cf6c8[13];
+   char s_a40142d6[19];
+   char s_b9942e59[11];
+   char s_d173c82d[15];
+   char s_84a2ce72[10];
+   char s_74def6a5[23];
+   char s_28774055[19];
+   char s_28774056[19];
+   char s_28774057[19];
+   char s_e09bad69[9];
+   char s_27993823[22];
+   char s_b85928b7[12];
+   char s_207186e9[21];
+   char s_dcf8a6a3[5];
+   char s_f09399af[8];
+   char s_f66c7b67[9];
+   char s_efe678d9[9];
    char s_b9d37039[174];
+   char s_79f9b43b[25];
+   char s_1249554a[18];
    char s_d0a04fe4[12];
    char s_c682e4e2[12];
    char s_cf6bc52a[21];
    char s_05c5a263[14];
    char s_ed22c5f1[20];
+   char s_32c41d0e[25];
    char s_49f9815b[18];
    char s_ddc4f021[26];
    char s_ddc6b80f[18];
@@ -2185,6 +2393,7 @@ static const struct
    char s_2e6ad26e[8];
    char s_43e9897c[42];
    char s_7fbf0860[11];
+   char s_594f79fd[12];
    char s_f417f6f1[18];
    char s_020e2bc5[16];
    char s_59f183c8[21];
@@ -2204,7 +2413,10 @@ static const struct
    char s_8fc1e4da[3];
    char s_14ed14d0[11];
    char s_5c87e95b[16];
+   char s_fad361a0[27];
    char s_bb929824[16];
+   char s_fe2ec9bd[33];
+   char s_1e3a9360[29];
    char s_5741c1d0[14];
    char s_a1a7717d[19];
    char s_e6ca3876[32];
@@ -2220,14 +2432,47 @@ static const struct
    char s_4b582a0c[31];
    char s_61213f1d[12];
    char s_95e4b29f[71];
-   char s_317b17ed[8];
-   char s_94c8d15f[8];
-   char s_1f66aac3[7];
+   char s_1ee69db0[28];
+   char s_0cfd4fd0[11];
+   char s_d64659c4[8];
+   char s_0861dea4[15];
+   char s_ca605800[17];
+   char s_717c4d1c[27];
+   char s_430aec76[16];
+   char s_fa462638[6];
+   char s_dd66e556[26];
+   char s_29f97e35[5];
+   char s_569b0627[5];
+   char s_569b11b0[3];
+   char s_ec2c67d0[19];
+   char s_a2f70d09[18];
+   char s_328ddae3[3];
+   char s_d7deafe0[24];
+   char s_83217fd0[12];
+   char s_60258de0[7];
+   char s_caf658e4[13];
+   char s_5410e874[7];
+   char s_7563a069[24];
+   char s_9eb59c3e[3];
+   char s_34b2592a[3];
+   char s_ec4aeae0[23];
+   char s_2a1860ac[37];
+   char s_be406532[16];
+   char s_13ce50e1[14];
+   char s_8dfe8b04[14];
+   char s_bacb5991[16];
+   char s_740ed6e5[15];
+   char s_c7ab7873[32];
+   char s_83ecb279[12];
+   char s_317b17ed[7];
+   char s_94c8d15f[7];
+   char s_1f66aac3[6];
    char s_57665cff[10];
    char s_0e2c0fca[35];
    char s_93ac5ec8[33];
    char s_6cdf4f07[35];
    char s_a03f132e[42];
+   char s_39f58459[46];
    char s_b3d1e989[8];
    char s_50eb4c56[5];
    char s_a023adce[12];
@@ -2237,6 +2482,9 @@ static const struct
    char s_205caaf6[8];
    char s_eb4eab83[5];
    char s_c6d5bcb5[5];
+   char s_74bced1d[41];
+   char s_a9ef6377[23];
+   char s_62b8a0ba[42];
    char s_74dcbca5[20];
    char s_3ea80887[20];
    char s_c0cdc638[30];
@@ -2257,8 +2505,29 @@ static const struct
    char s_f57f6158[11];
    char s_69b801ef[9];
    char s_a40653a7[25];
+   char s_e67b672d[33];
    char s_52e3d6ea[34];
+   char s_f387bafb[13];
+   char s_2c868ae4[12];
+   char s_9c535394[9];
+   char s_7f065006[7];
+   char s_5c12d979[10];
+   char s_32cb293c[26];
+   char s_284873ec[18];
+   char s_3220e9be[9];
+   char s_3242e549[19];
+   char s_b88b9861[26];
+   char s_284fc3ff[9];
+   char s_3253994e[6];
+   char s_0bd0e014[7];
+   char s_1e1af8de[26];
+   char s_1e1af8df[23];
+   char s_10bcb557[8];
+   char s_1e1af8e0[18];
    char s_c992346c[33];
+#if defined(HAVE_RSLC) && defined(HAVE_GLSLANG)
+   char s_81f725af[17];
+#endif
    char s_f5911f43[25];
    char s_55f488d2[11];
    char s_d5901b68[18];
@@ -2279,10 +2548,21 @@ static const struct
    char s_bdaa2cfe[37];
    char s_ec9ccdc3[25];
    char s_8bf6ccd4[41];
+   char s_d59de774[32];
+   char s_75c24fec[16];
+   char s_697c4a13[16];
    char s_2cb6ab5c[28];
    char s_552163d9[29];
    char s_ef3d53d8[21];
    char s_6dcc2f9f[13];
+   char s_7a23be94[12];
+   char s_07483307[20];
+   char s_166f5c6e[14];
+   char s_33da1d6d[20];
+   char s_33dae115[21];
+   char s_b2b1563a[20];
+   char s_fa98dce0[30];
+   char s_2bf7c29f[13];
    char s_48431da6[8];
    char s_21d7a1f6[6];
    char s_d2fe3ed2[18];
@@ -2290,9 +2570,36 @@ static const struct
    char s_45816e1d[21];
    char s_730df420[15];
    char s_bcddf275[7];
-   char s_258060bf[14];
+   char s_16aa0100[21];
+   char s_46ab38b2[43];
+   char s_9e5c39b2[35];
+   char s_9e5c39b3[35];
+   char s_9e5c39b4[35];
+   char s_9e5c39b5[35];
+   char s_bddbac76[9];
+   char s_9e5c39b6[33];
+   char s_9e5c39b7[35];
+   char s_9e5c39b8[25];
+   char s_9e5c39b9[19];
+   char s_9e5c39ba[19];
+   char s_9e5c39bb[53];
+   char s_9e5c39bc[50];
+   char s_9e5c39bd[19];
+   char s_9e5c39be[19];
+   char s_9e5c39bf[19];
+   char s_66ae393b[42];
+   char s_9e5c39c0[19];
+   char s_6fbfde48[35];
+   char s_482ee1f1[11];
+   char s_3794746e[48];
+   char s_214b7699[10];
+   char s_3e628390[9];
+   char s_6b25e2a0[15];
+   char s_574badd6[34];
+   char s_258060bf[22];
    char s_3bbc8b05[39];
    char s_e595f6df[36];
+   char s_2a5f7cd7[29];
    char s_f90edcc2[50];
 #if defined(RARCH_MOBILE)
    char s_774121c7[66];
@@ -2314,16 +2621,21 @@ static const struct
 #endif
    char s_84c46931[27];
    char s_ebf10493[14];
+   char s_d15bd14f[24];
+   char s_539d5393[8];
    char s_a64b3a0b[22];
    char s_83e8dc72[22];
    char s_7cf985f0[33];
    char s_0f5266ce[14];
+   char s_0f97fdc1[5];
    char s_ea2674d3[32];
    char s_ea2674d4[29];
    char s_2d8cb7ce[17];
    char s_68190518[35];
+   char s_6448376a[8];
    char s_b9e24170[26];
    char s_30140cb5[14];
+   char s_0bb834d5[13];
    char s_25a21976[70];
    char s_95a59dc0[11];
    char s_24244577[14];
@@ -2332,6 +2644,8 @@ static const struct
    char s_e0609921[15];
    char s_b3c7fa93[21];
    char s_f6a0db44[21];
+   char s_a9af29b1[36];
+   char s_2cdaeb21[34];
    char s_4eecff92[31];
    char s_0ca1128d[17];
    char s_65e6ea7c[6];
@@ -2448,6 +2762,8 @@ static const struct
    char s_f0838a35_1[43];
    char s_95821d83[36];
    char s_bdeebb68[42];
+   char s_84b03e36_0[500];
+   char s_84b03e36_1[37];
    char s_f9005edc[175];
    char s_6ade80dd[29];
    char s_ec7aa7a0[467];
@@ -2459,7 +2775,7 @@ static const struct
    char s_f46c7b83_1[92];
    char s_cb67f2a4[34];
    char s_3c3598a9[47];
-   char s_3bac47bd[352];
+   char s_3bac47bd[370];
    char s_90e7db40[416];
    char s_b07cd572_0[500];
    char s_b07cd572_1[20];
@@ -2504,7 +2820,7 @@ static const struct
    char s_96bda3d0[50];
    char s_4f627df2[38];
    char s_af2a7718[40];
-   char s_ecebea7a[54];
+   char s_ecebea7a[65];
    char s_4be2cc7b[34];
    char s_11577805[18];
    char s_6cc5ba39[48];
@@ -2522,8 +2838,8 @@ static const struct
    char s_0d18752c[56];
    char s_0339e08c[91];
    char s_11a7b0a0[159];
-   char s_f6e584ef[90];
-   char s_f6e584fd[90];
+   char s_f6e584ef[101];
+   char s_f6e584fd[101];
    char s_c9868f82[78];
    char s_05186758[57];
    char s_6f85964e[33];
@@ -2552,6 +2868,7 @@ static const struct
    char s_19b6373a[87];
    char s_f63531f4[62];
    char s_f83d414f[96];
+   char s_539bbd17[182];
    char s_65e89a5b[44];
    char s_1757ee76[68];
    char s_11fd7702[79];
@@ -2631,6 +2948,7 @@ static const struct
    char s_48e88dc4[141];
    char s_3d233cd0[73];
    char s_9198f1a0[205];
+   char s_dfe733cb[349];
    char s_165e564b[317];
    char s_c3968f26[82];
    char s_a2b65159[63];
@@ -2639,6 +2957,7 @@ static const struct
    char s_79b8ce4a[81];
    char s_a1a8257e[107];
    char s_282f7955[109];
+   char s_d5231783[223];
    char s_a68d6d11[57];
    char s_74022c02[89];
    char s_8abad013[79];
@@ -2701,7 +3020,7 @@ static const struct
    char s_aa771128[450];
    char s_e531c55e[109];
    char s_deab66ee[112];
-   char s_5ce79fca[178];
+   char s_5ce79fca[368];
 #ifdef HAVE_GAME_AI
    char s_b7dcc585[41];
    char s_328f4fd8[23];
@@ -2726,12 +3045,19 @@ static const struct
    char s_9eb26572[35];
    char s_50707595[66];
    char s_976074ee[119];
+   char s_2269a679[238];
    char s_5c8a1d63[84];
+   char s_56c3b5ab[213];
    char s_744c0f80[53];
+   char s_d69a22ce[189];
+   char s_71d0e309[197];
    char s_2aa39081[43];
+   char s_89e39933[231];
 #ifdef ANDROID
    char s_50f43cfa[255];
 #endif
+   char s_b65270d1[356];
+   char s_27fda584[205];
    char s_e85b309d[79];
    char s_cd94bb16[222];
    char s_a17a67e1[56];
@@ -2739,8 +3065,12 @@ static const struct
    char s_df4225b9[80];
    char s_a5b7b768[70];
    char s_d0b943e8[68];
-   char s_4f2077b6[154];
+   char s_4f2077b6[254];
    char s_5b920f01[113];
+   char s_a8576709[211];
+   char s_71b76e1b[399];
+   char s_f96ddf69[90];
+   char s_d84f519b[186];
    char s_5d20ea2c[58];
    char s_b339b327[157];
    char s_a9e0aaa3[92];
@@ -2755,7 +3085,13 @@ static const struct
    char s_6da9b571[273];
    char s_c2827177[137];
    char s_09f2837b[282];
+   char s_dac2c1eb[458];
+   char s_512d7a8b[67];
    char s_2c4c27eb[233];
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   char s_f07df655[292];
+#endif
+   char s_bb6fb70d[370];
    char s_85147d5c[72];
    char s_0b56ad4c[58];
    char s_c312b1ca[43];
@@ -2776,6 +3112,10 @@ static const struct
    char s_a11a7d85[174];
    char s_e25b6b30[161];
    char s_4b347c28[50];
+   char s_1aa0e700[88];
+   char s_44480960[66];
+   char s_0cf12e84[188];
+   char s_94c28c23[65];
    char s_0832c8b3[55];
    char s_109af481[57];
    char s_bcea0a06[28];
@@ -2819,7 +3159,7 @@ static const struct
    char s_74d87c7a[34];
    char s_12adb1e7[32];
    char s_070529d4[64];
-   char s_30d1fc05[53];
+   char s_30d1fc05[230];
 #ifdef GEKKO
    char s_3180dcf5[54];
 #endif
@@ -2828,11 +3168,14 @@ static const struct
 #endif
    char s_13ed6d52[104];
    char s_ad9b9762[114];
+   char s_6db68bda[244];
    char s_623a09ea[118];
    char s_ba59df8d[130];
    char s_4b824ac6[182];
    char s_c384b984[42];
+   char s_42ba06b9[165];
    char s_9db5ae27[85];
+   char s_5dcbfddf[236];
    char s_bc47004d[68];
    char s_980b7c0a[58];
    char s_cc27d9d1[118];
@@ -2861,9 +3204,11 @@ static const struct
    char s_47df0525[61];
    char s_03e272fc[52];
    char s_5c2cc60f[80];
-   char s_d6d8d4be[83];
+   char s_d6d33eda[159];
+   char s_d6d8d4be[139];
    char s_e86d2704[75];
    char s_dda608b5[301];
+   char s_bc08c395[269];
    char s_6f5a032a[52];
    char s_9530e802[110];
 #ifdef HAVE_SDL3
@@ -2878,6 +3223,19 @@ static const struct
    char s_aaa55caa[86];
    char s_6a44b3af[75];
    char s_a7d61696[64];
+   char s_ae581977[271];
+   char s_493a2167[307];
+#ifdef ANDROID
+   char s_354b4abf[100];
+   char s_3fc16273[335];
+   char s_21594ec5[189];
+   char s_d1b3c47b[189];
+   char s_27919f0b[179];
+#endif
+   char s_96ff4e5d_0[500];
+   char s_96ff4e5d_1[16];
+   char s_a091c407[160];
+   char s_b3390c7a[158];
    char s_f9db39ef[102];
 #ifdef UDEV_TOUCH_SUPPORT
    char s_d46604e4[76];
@@ -2886,6 +3244,7 @@ static const struct
    char s_65b4575d[74];
    char s_dda6a015[107];
 #endif
+   char s_5d044397[304];
    char s_b5bb6ba7[114];
    char s_0e9b7c2d[79];
    char s_2447fa4c[42];
@@ -2897,8 +3256,15 @@ static const struct
    char s_a7fd96b0[81];
    char s_1d42d613[105];
    char s_eaa7274b[44];
+#if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   char s_2172fd53[269];
+   char s_bb34fe6a[189];
+#endif
+#endif
    char s_10994fc9[89];
    char s_bde8a108[62];
+   char s_420308fb[258];
 #ifdef HAVE_LAKKA_SWITCH
    char s_c4b1f676[51];
 #endif
@@ -2924,6 +3290,7 @@ static const struct
    char s_e29f9539[106];
    char s_824e2e0c[165];
    char s_c5a7263e[45];
+   char s_8eb8e1f3[299];
    char s_d9b9d57a[72];
    char s_858f09e9[147];
    char s_608f698e[113];
@@ -2949,6 +3316,17 @@ static const struct
    char s_c220b5bb[143];
    char s_bcca484f[97];
    char s_1205716b[258];
+   char s_168498b2[262];
+   char s_55248110[27];
+   char s_f9fce5ac[127];
+   char s_072182b8[136];
+   char s_a58207fb[222];
+   char s_54d2607b[123];
+   char s_a78b775b[214];
+   char s_9ac13397[86];
+   char s_c4d2bbf2[71];
+   char s_b9b2a0c0[83];
+   char s_b328a4bb[85];
    char s_b3c6310f[60];
    char s_b1305e15[68];
    char s_2b2a7762[68];
@@ -2958,9 +3336,10 @@ static const struct
    char s_193e1462[59];
    char s_6895dfd6[52];
    char s_788364f5[86];
-   char s_dd9ff22a[71];
+   char s_ff7d19fe[175];
    char s_db495a9d[42];
    char s_ddc672a7[48];
+   char s_6fe18880[299];
    char s_ccea261d[139];
    char s_f754a0d3[81];
    char s_4fe7b3d2[105];
@@ -3009,7 +3388,6 @@ static const struct
 #endif
 #endif
    char s_acca011c[112];
-   char s_01efec73[41];
    char s_d3fc9970[46];
    char s_740bd7c4[52];
    char s_f052dae3[77];
@@ -3027,7 +3405,8 @@ static const struct
    char s_8f707459[31];
    char s_5aa622cc[201];
    char s_2b908073[258];
-   char s_64bea160[176];
+   char s_64bea160[178];
+   char s_2826de99[317];
    char s_97c62766[163];
    char s_6f458a85[92];
    char s_41702fdc[54];
@@ -3088,6 +3467,7 @@ static const struct
    char s_198c91d3[48];
    char s_59508007[41];
    char s_b51b23de[167];
+   char s_eaad2a5d[165];
    char s_4e8c7cc3[48];
    char s_f3f14b36[29];
    char s_721af2d0[29];
@@ -3095,12 +3475,13 @@ static const struct
    char s_be3d7079[85];
    char s_ff04d19c[42];
    char s_8fd135b7[52];
-   char s_61771e16[38];
+   char s_61771e16[39];
    char s_57922b21[36];
-   char s_71e4e031[210];
-   char s_7ef3d15a[218];
+   char s_71e4e031[208];
+   char s_7ef3d15a[212];
    char s_a166bef0[40];
    char s_20212574[50];
+   char s_a8acf2d7[289];
    char s_48f7693a[96];
    char s_91a3e1a5[110];
    char s_19a250ff[104];
@@ -3108,20 +3489,46 @@ static const struct
    char s_b3502258[93];
    char s_49ea5fc5[68];
    char s_4cf6b4e0[49];
-   char s_da518d67[159];
-   char s_1195a4db[36];
-   char s_ce069670[28];
+   char s_da518d67[155];
+   char s_1195a4db[37];
+   char s_ce069670[29];
+   char s_8f44157d[132];
    char s_77c6c6f2[56];
    char s_126432dc[132];
+   char s_7b4c2ad6[262];
+   char s_c0817362[355];
    char s_bc33055d[86];
-   char s_be8c2b47[33];
+   char s_be8c2b47[34];
    char s_02526a85[73];
    char s_8b64010b[149];
+   char s_09c9a0f9[260];
    char s_7279e585[56];
    char s_8bb9f63a[110];
+   char s_196df911[345];
+   char s_ca1f42d2[256];
+   char s_9d10685c[134];
    char s_a5ffd3d0[44];
 #ifdef _3DS
-   char s_0d834bc5[55];
+   char s_0d834bc5[57];
+#endif
+#ifdef HAVE_NFSCLIENT
+   char s_0dc9bb2c[59];
+   char s_1536325c[253];
+   char s_ad621411[59];
+   char s_f6ec26c1[45];
+   char s_4f7fb41f[57];
+   char s_70f70009[343];
+   char s_3487ce71[36];
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_NFSCLIENT
+   char s_7a3d78eb[46];
+#endif
+#endif
+#ifdef HAVE_NFSCLIENT
+   char s_35a04463[51];
+   char s_1b6cda21[53];
+   char s_ac6ebea0[241];
 #endif
    char s_d2ae640b[76];
    char s_8e5bac99[81];
@@ -3185,7 +3592,7 @@ static const struct
    char s_21d6e6d9[58];
    char s_79553ba5[27];
    char s_a5b1e615[43];
-   char s_03195749[357];
+   char s_03195749[347];
    char s_61fe415a[56];
    char s_d78d776f[119];
    char s_ee99b729[37];
@@ -3202,7 +3609,7 @@ static const struct
    char s_bfe5efd0[44];
    char s_d72464dc[256];
    char s_6b2c2495[73];
-   char s_abf90aae[130];
+   char s_abf90aae[129];
    char s_b48e1eda[62];
    char s_4113227d[48];
    char s_0a1cf5a1[158];
@@ -3272,9 +3679,15 @@ static const struct
    char s_43eca1b5[16];
    char s_dd51dec4[49];
    char s_00961284[116];
-   char s_a5962f42[77];
-   char s_0c7750cd[79];
+   char s_a5962f42[54];
+   char s_0c7750cd[59];
    char s_f3b31ef1[49];
+#ifdef HAVE_LAKKA
+#ifdef HAVE_LAKKA_SWITCH
+   char s_458959b6[190];
+   char s_4598722a[209];
+#endif
+#endif
    char s_331c623c[51];
    char s_279c08f7[37];
    char s_60a8a963[39];
@@ -3305,7 +3718,7 @@ static const struct
    char s_72d7857d[58];
    char s_1f084654[53];
    char s_38daa2f5[60];
-   char s_3ca87244[32];
+   char s_3ca87244[21];
    char s_01be7381[46];
    char s_2b36bd4d[41];
    char s_5deae9b2[140];
@@ -3314,7 +3727,7 @@ static const struct
    char s_c7c09eb0[100];
    char s_7d4adfaf[43];
    char s_6f122164[44];
-   char s_61942cf6[52];
+   char s_61942cf6[179];
    char s_6b7e9271[109];
    char s_68b6e245[55];
    char s_3bb4fbf9[110];
@@ -3336,7 +3749,7 @@ static const struct
    char s_32f590c0[44];
 #endif
    char s_0a8d4a2c[58];
-   char s_d4c47f59[127];
+   char s_d4c47f59[124];
    char s_86d4b7cd[63];
    char s_6fed6990[96];
    char s_b775da75[168];
@@ -3364,7 +3777,6 @@ static const struct
    char s_34a76adb[55];
    char s_88021a14[138];
    char s_fe1a9203[276];
-   char s_2222a23b[113];
    char s_8213bb32[197];
    char s_48462dac[320];
    char s_631de1a2[126];
@@ -3390,13 +3802,15 @@ static const struct
    char s_a55bf936[34];
    char s_c519f84d[36];
    char s_48aefa30[37];
-   char s_5d383a58[40];
+   char s_5d383a58[141];
    char s_dcf8bd8b[39];
    char s_bce9b94f[44];
    char s_d32f5a63[38];
    char s_9177176e[39];
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
    char s_a1fdf4a6[39];
+#endif
 #endif
    char s_97d77020[34];
    char s_59f05605[39];
@@ -3412,18 +3826,55 @@ static const struct
    char s_4b009af3[36];
    char s_46c57dde[70];
    char s_7eb20ecf[69];
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
    char s_3e1e294b[51];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    char s_69c0e487[53];
-   char s_706ff4dc[278];
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   char s_706ff4dc[277];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   char s_fed3fee7[102];
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    char s_a0d1a85c[63];
-   char s_b5966528[194];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   char s_b5966528[193];
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   char s_743b6f84[343];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   char s_044e8e26[205];
    char s_907ef7cc[36];
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    char s_b0a46506[54];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    char s_04624c88[138];
    char s_91976dbe[60];
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    char s_f6492edc[37];
-   char s_9bb85635[202];
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   char s_9bb85635[201];
    char s_22a05685[63];
 #endif
    char s_f3bfa8b9[81];
@@ -3465,7 +3916,7 @@ static const struct
    char s_ffd591e0[48];
    char s_a51ab538[24];
    char s_55d6cc44[39];
-   char s_5a8f7fb9[203];
+   char s_5a8f7fb9[201];
    char s_f2963d2d[31];
    char s_4c592ae1[90];
    char s_52ac4fb9[109];
@@ -3477,6 +3928,7 @@ static const struct
    char s_f77f7a41[65];
 #endif
    char s_e7cb5685[35];
+   char s_bd82a701[368];
    char s_8bb367a2[133];
    char s_2beab583[24];
    char s_a1c071eb[106];
@@ -3512,6 +3964,7 @@ static const struct
 #else
    char s_c38ef33b[49];
 #endif
+   char s_f50cca5d[287];
 #if defined(DINGUX)
    char s_6dc7aece[205];
    char s_c0e554ab[152];
@@ -3525,11 +3978,25 @@ static const struct
 #endif
 #endif
    char s_ab839b13[131];
+   char s_9c3126f6[96];
+   char s_a9d0ac44[83];
+   char s_60cf8ce7[245];
+   char s_bf6397c7[11];
+   char s_6cf40c1b[15];
+   char s_445f65a0[71];
+   char s_7ac326d3[163];
+   char s_374a2bd1[139];
+   char s_a5c9a6e5[117];
+   char s_c5e08911[266];
    char s_135d20b8[47];
+   char s_62e196a9_0[500];
+   char s_62e196a9_1[71];
+   char s_5767a1f8[469];
    char s_17663212[175];
    char s_e4aa2e10[49];
    char s_b853a798[110];
    char s_d60aa85f[46];
+   char s_38a84d3c[269];
    char s_2d09f049[25];
    char s_e670cb8f[41];
    char s_e672937d[124];
@@ -3540,11 +4007,12 @@ static const struct
    char s_15cad80e[410];
    char s_01e5fbea[332];
    char s_0653bf6a[446];
+   char s_42375c6b[115];
    char s_123f401f[91];
    char s_0d96ed73[44];
    char s_9f0fd076[136];
    char s_9f0fd077[135];
-   char s_c315b54c[427];
+   char s_c315b54c[426];
    char s_7a2050af[38];
    char s_d2859556[49];
    char s_ef13be35[56];
@@ -3555,8 +4023,11 @@ static const struct
    char s_cfa51e8c[429];
    char s_b62c2f7e[302];
    char s_456fcbc9[387];
+   char s_ba8ff8ce[276];
    char s_82fab47a[38];
    char s_72e21512[180];
+   char s_9f6de46b[288];
+   char s_26e66ece[211];
    char s_66f2b57e[38];
    char s_a776daeb[88];
    char s_88095324[88];
@@ -3571,11 +4042,30 @@ static const struct
    char s_34400c79[73];
    char s_34400c7a[70];
    char s_4a09218b[39];
+   char s_dea334de[176];
+   char s_cacc1492[52];
+   char s_9382c86e[280];
+   char s_774bb68a[196];
+   char s_a68955c4[231];
+   char s_fbdd5b7e[289];
+   char s_3e7750f7[360];
+   char s_c0c6924e[220];
+   char s_c83fcc7e[239];
+   char s_d0c5c252[195];
+   char s_ac07820e[241];
+   char s_2fe7ca1a[226];
+   char s_cdf158e0[305];
+   char s_7efaf561[212];
+   char s_c90aff27[75];
    char s_19d092ed[43];
    char s_1eebf4f8[181];
    char s_2f2ca2b6[185];
    char s_2c9be635[133];
    char s_c8fb9e1c[317];
+   char s_d575c847[227];
+   char s_3479844b[143];
+   char s_b9a05725[191];
+   char s_68880a28[188];
    char s_05ec12e6[217];
    char s_b5a603de[68];
    char s_d9c2db25[67];
@@ -3587,10 +4077,30 @@ static const struct
    char s_eec252b5[124];
    char s_f4e4e921[217];
    char s_7968f59d[42];
+   char s_8cee3615[213];
+   char s_87ba81db[147];
    char s_58c80718[291];
-   char s_894ecb9a[376];
+   char s_dc6f9d69[55];
+   char s_417085f4[44];
+   char s_1bcf70a7[142];
+   char s_fbed99aa[156];
+   char s_2e2ca41a[296];
+   char s_f48b1fac[55];
+   char s_f4ad1b37[84];
+   char s_6fdb154f[169];
+   char s_2e33f42d[35];
+   char s_f4bdcf3c[49];
+   char s_11a04982[89];
+   char s_012b67cc[60];
+   char s_012b67cd[54];
+   char s_f9a497c5[59];
+   char s_012b67ce[72];
+   char s_894ecb9a[375];
    char s_67d549fd[43];
    char s_afac733c[37];
+#if defined(HAVE_RSLC) && defined(HAVE_GLSLANG)
+   char s_44615b9d[183];
+#endif
    char s_3aaf6bf1[126];
    char s_ae3f2a01[50];
    char s_5bc3f240[150];
@@ -3613,16 +4123,30 @@ static const struct
    char s_3a4b246c[106];
    char s_2ceab671[159];
    char s_977f8e82[259];
+   char s_e65dcca2[192];
+   char s_b0e2d55a[63];
+   char s_7acad9c1[63];
    char s_3c679f0a[291];
    char s_5b059407[132];
    char s_36033606[181];
-   char s_d62ed5dc[354];
+   char s_5d342d82[234];
+   char s_bd0312ce[102];
+   char s_3ba8b64d[124];
+   char s_d62ed5dc[345];
    char s_2e69508b[331];
    char s_7e96b5ce[48];
+   char s_1c796a6e_0[500];
+   char s_1c796a6e_1[106];
+   char s_5233fa60_0[500];
+   char s_5233fa60_1[29];
+   char s_ec60d5b6[437];
+   char s_800838c4[325];
    char s_3547866d_0[500];
-   char s_3547866d_1[16];
-   char s_d73ccef3[394];
+   char s_3547866d_1[26];
+   char s_d73ccef3_0[500];
+   char s_d73ccef3_1[35];
    char s_81163acd[402];
+   char s_ecc9b2c5[298];
    char s_c2314d30[215];
 #if defined(RARCH_MOBILE)
    char s_82c9e375[195];
@@ -3643,6 +4167,8 @@ static const struct
 #endif
    char s_3c13e61f[103];
    char s_d96182c1[42];
+   char s_d740017d[59];
+   char s_675acf1d[50];
    char s_93bbb839[112];
    char s_4d0b4ce0[112];
    char s_f99a7d5e[209];
@@ -3654,9 +4180,13 @@ static const struct
    char s_74e69f4b[88];
    char s_5562855e[36];
    char s_75325963[51];
+   char s_119c6503[116];
    char s_6ac06624[143];
    char s_f765b650[48];
    char s_7059a595[56];
+   char s_c7d672df_0[500];
+   char s_c7d672df_1[75];
+   char s_c85b2f0f[301];
    char s_6d1448c0[39];
    char s_cf0b487b[86];
    char s_840f4569[29];
@@ -3707,6 +4237,11 @@ static const struct
    char s_ac3c4c54[34];
    char s_a7a47ea6[28];
    char s_09a5996c[30];
+   char s_d80c36a8[181];
+   char s_0d8a28d5[26];
+   char s_becf560a[23];
+   char s_b0ec1b4e[38];
+   char s_353aa616[124];
    char s_73c9507b[71];
    char s_825152dd[35];
    char s_19e809ad[37];
@@ -3745,7 +4280,7 @@ static const struct
    char s_96df643a[104];
    char s_150b4ebe[92];
    char s_0d212ca9[102];
-   char s_be02ba0f[107];
+   char s_be02ba0f[108];
    char s_059f98c0[67];
    char s_b077bb95[99];
    char s_48720114[53];
@@ -3824,6 +4359,8 @@ static const struct
    char s_d50c6bf1[30];
    char s_64a038aa[31];
    char s_697f59c0[32];
+   char s_10e46c37[48];
+   char s_2a722735[31];
    char s_05437279[26];
    char s_c0cae103[27];
    char s_71d52dde[46];
@@ -3863,14 +4400,16 @@ static const struct
    char s_b0e4eb88[54];
    char s_9589cc66[65];
    char s_a0cd3533[40];
+   char s_29ffdb0d[64];
    char s_135957cd[39];
    char s_96b546df[56];
    char s_731e9836[34];
    char s_ffb4111b[42];
    char s_a363d07a[41];
    char s_9e5bd759[38];
+   char s_b880bab5[52];
    char s_8d7296ed[39];
-   char s_21580d7c[99];
+   char s_21580d7c[36];
    char s_fc5e1d2c[63];
    char s_51b22327[48];
    char s_2f6a6e51[28];
@@ -3881,7 +4420,7 @@ static const struct
    char s_bcf709c3[32];
    char s_5bd95c11[47];
    char s_ac935d4d[44];
-   char s_1cf93e21[28];
+   char s_1cf93e21[45];
    char s_7530ae6d[50];
    char s_2814f14c[49];
    char s_e4a3fbd9[39];
@@ -3935,18 +4474,51 @@ static const struct
    char s_265dbfa3[46];
    char s_b0e45a57[30];
    char s_543fcabd[11];
+   char s_a4487584[96];
+   char s_8b9891bf[77];
    char s_59212b5f[13];
    char s_f26b6cff[28];
+   char s_58909bc7[15];
+   char s_33aefb0e[15];
+   char s_bd1fdff6[12];
+   char s_d9d9a1be[12];
+   char s_a63c824a[10];
+   char s_94d1736a[10];
+   char s_b969706a[243];
+   char s_a3f6ebc3[18];
+   char s_98adf951[63];
+   char s_11b4cc97[18];
+   char s_d3e49974[39];
+   char s_a8fa00e0[72];
+   char s_4c1e527b[93];
+   char s_efc0708e[80];
+   char s_98ba6f71[102];
+   char s_33a982dd[50];
+   char s_5d9ea02b[53];
    char s_a9f3b2c3[15];
    char s_0e7aca8a[21];
    char s_ab1afe7c[19];
+   char s_58ec4881[76];
+   char s_c1c1065c[89];
+   char s_9dfbac4f[64];
+   char s_e046c812[151];
+   char s_c0aeb71e[55];
+   char s_b6b13e9f[27];
+   char s_1492e328[50];
    char s_026b7f11[15];
    char s_3b7c0dd8[21];
    char s_b43a100a[19];
+   char s_b8bfcaec[192];
    char s_51df877a[39];
    char s_136098cd[31];
    char s_f482576f[34];
+   char s_d2b9475b[100];
    char s_0408afc3[14];
+   char s_1d50105b[96];
+   char s_2e362cb6[110];
+   char s_eed86f69[73];
+   char s_4579c9ec[144];
+   char s_ea0b7738[68];
    char s_654f5308[21];
    char s_c4a8e97c[12];
    char s_5317d41c[15];
@@ -3958,6 +4530,14 @@ static const struct
    char s_01a4c762[12];
    char s_ba4d8b17[25];
    char s_ffed014a[23];
+   char s_cc3fcff6[40];
+   char s_68bd6ae1[38];
+   char s_599fa4bb[38];
+   char s_406b377c[37];
+   char s_66e729cd[42];
+   char s_c826cb6b[21];
+   char s_cd004b60[25];
+   char s_5c253665[50];
    char s_1295b61f[36];
    char s_debd302d[11];
    char s_8bd09b44[31];
@@ -3993,7 +4573,10 @@ static const struct
    char s_583a8462[25];
    char s_3c214e5f[31];
    char s_2ada2134[26];
+   char s_d3bcc29d[78];
    char s_00fc26e4[6];
+   char s_d66d432f[26];
+   char s_15c0f14a[35];
    char s_7c4c8dd7[72];
    char s_45fa49af[64];
    char s_143f28c7[115];
@@ -4004,34 +4587,34 @@ static const struct
    char s_b1e9bfbf[24];
    char s_1de3d99f[32];
    char s_dad076ef[55];
-   char s_bff0b58f[35];
+   char s_bff0b58f[36];
    char s_69a0990c[34];
    char s_28bbcc15[34];
    char s_59ac0f0c[13];
    char s_03c57bc8[8];
    char s_f9a13828[21];
-   char s_f5ab7ff9[65];
-   char s_d277f01e[110];
-   char s_680d4c36[105];
-   char s_0c53fe6c[59];
+   char s_f5ab7ff9[69];
+   char s_d277f01e[114];
+   char s_680d4c36[109];
+   char s_0c53fe6c[60];
    char s_5b678bc4[30];
    char s_a6abc697[30];
-   char s_e3bb7f4c[39];
+   char s_e3bb7f4c[40];
    char s_d15060ee[35];
    char s_a068841f[33];
-   char s_be840037[26];
+   char s_be840037[27];
    char s_11d0d482[20];
    char s_4d7ee7e2[22];
-   char s_9d7c6772[31];
+   char s_9d7c6772[32];
    char s_4bc518be[33];
-   char s_c8812645[56];
-   char s_dd3ee761[132];
-   char s_f9aa7e70[80];
-   char s_509dd374[29];
-   char s_a1aa4c42[59];
+   char s_c8812645[57];
+   char s_dd3ee761[133];
+   char s_f9aa7e70[84];
+   char s_509dd374[33];
+   char s_a1aa4c42[60];
    char s_ef0f5f52[11];
    char s_52453850[32];
-   char s_9cfca240[36];
+   char s_9cfca240[37];
    char s_bab020a4[23];
    char s_4118132b[25];
    char s_daafc17a[27];
@@ -4039,7 +4622,7 @@ static const struct
    char s_3d1657dc[10];
    char s_529fb939[34];
    char s_35e8cecb[46];
-   char s_b1b24b70[37];
+   char s_b1b24b70[38];
    char s_6933100b[32];
    char s_3f47f1dd[44];
    char s_12552dca[22];
@@ -4052,6 +4635,23 @@ static const struct
    char s_8ab54d62[93];
    char s_aa554847[23];
    char s_ac2c797c[22];
+   char s_ade25a42[73];
+   char s_3c8a9fe6[51];
+   char s_3fe52ba8[216];
+   char s_c52621db[5];
+   char s_b512be06[10];
+   char s_ac0d4daf[100];
+   char s_a09b2ea1[88];
+   char s_c5fee1cb[60];
+   char s_7ce002de[14];
+   char s_3fe94404[6];
+   char s_0a17a4ae[12];
+   char s_fcce3890[14];
+   char s_272dccbd[16];
+   char s_7da2720b[62];
+   char s_9e9f8d9d[224];
+   char s_fdc097e9[103];
+   char s_5fe664ca[77];
    char s_80528b14[43];
    char s_eae21890[39];
    char s_1451fe0d[42];
@@ -4090,6 +4690,7 @@ static const struct
    char s_49a2e6d9[30];
    char s_d6c12228[41];
    char s_af784f91[39];
+   char s_002fd84a[92];
    char s_f1337004[51];
    char s_ada3890a[15];
    char s_bc246801[26];
@@ -4178,13 +4779,15 @@ static const struct
    char s_75bc15aa[25];
    char s_50ebaaa1[30];
    char s_842b54ed[32];
-   char s_b30573ed[95];
+   char s_b30573ed[96];
    char s_914b3efd[29];
    char s_8f35069c[29];
    char s_6cc672f6[28];
    char s_1a5c7ca6[19];
    char s_1a5c880d[17];
    char s_7b23d9e6[16];
+   char s_77943569[104];
+   char s_04305cd6[138];
    char s_c182bd2e[5];
    char s_0110d0c7[16];
    char s_c6156015[21];
@@ -4192,7 +4795,7 @@ static const struct
    char s_ca50dc6d[21];
    char s_9d2c8cfb[7];
    char s_7675f215[18];
-   char s_843b6a7b[34];
+   char s_843b6a7b[35];
    char s_4d7ff150[9];
    char s_88494936[33];
    char s_29c753ae[24];
@@ -4201,9 +4804,12 @@ static const struct
    char s_a2250ebd[45];
    char s_cc5d39b1[59];
    char s_2bf9a406[35];
+   char s_038f0580[23];
    char s_94fc1cd0[14];
    char s_2aaf8414[16];
    char s_28a4c280[24];
+   char s_33d728a4[21];
+   char s_344809fa[4];
    char s_ae2838e7[24];
    char s_f5c32889[22];
    char s_d085ad84[46];
@@ -4268,6 +4874,9 @@ static const struct
    "ck_2).",
    "Anpassat s\303\266kv\303\244gsv\303\244rde f\303\266r OSS-drivrutinen (t.ex. /dev/dsp).",
    "Anpassad IP-adress f\303\266r en RSound-server f\303\266r RSound-drivrutinen.",
+   "AAudio-drivrutin, Android 8.0 och senare. L\303\244gre f\303\266rdr\303\266jning \303\244n OpenS"
+   "L. Surroundlayouter skickas som AC-3 till en utg\303\245ng som bara tar emot PCM i stereo, d\303"
+   "\244r det avkodas (Android 14 och senare).",
    "OpenAL-drivrutin.",
    "Standard ALSA-drivrutin.",
    "ALSA-drivrutin med st\303\266d f\303\266r tr\303\245dning.",
@@ -4276,7 +4885,7 @@ static const struct
    "Drivrutinen f\303\266r Jack Audio anslutningssats.",
    "\303\204ldre Open Sound System-drivrutin.",
    "PipeWire-drivrutin. Om systemet anv\303\244nder PipeWire, se till att anv\303\244nda den h\303"
-   "\244r drivrutinen ist\303\244llet f\303\266r t.ex. PulseAudio.",
+   "\244r drivrutinen i st\303\244llet f\303\266r till exempel PulseAudio.",
    "PulseAudio-drivrutin. Om systemet anv\303\244nder PulseAudio, se till att anv\303\244nda denna d"
    "rivrutin ist\303\244llet f\303\266r t.ex. ALSA.",
    "Ljudsystem RoarAudio-drivrutin.",
@@ -4285,15 +4894,15 @@ static const struct
    "ALSA-drivrutin implementerad utan beroenden.",
    "Windows Audio Session API-drivrutin. WASAPI anv\303\244nds huvudsakligen fr\303\245n Windows 7 o"
    "ch senare.",
-   "Maximum audio timing skew.\nDefinierar den maximala f\303\266r\303\244ndringen i ing\303\245ngsh"
-   "astighet. Du kanske vill \303\266ka detta f\303\266r att m\303\266jligg\303\266ra mycket stora f"
-   "\303\266r\303\244ndringar i timing, till exempel att k\303\266ra PAL-k\303\244rnor p\303\245 NTS"
-   "C-sk\303\244rmar, p\303\245 bekostnad av felaktig ljudh\303\266jd.\nIng\303\245ngshastighet defi"
-   "nieras som:\ninput rate * (1,0 +/- (max timing skew))",
+   "Maximal tidsf\303\266rskjutning f\303\266r ljudet.\nAnger den maximala \303\244ndringen av ing"
+   "\303\245ngshastigheten. Du kan \303\266ka v\303\244rdet f\303\266r att till\303\245ta mycket sto"
+   "ra tidsf\303\266r\303\244ndringar, till exempel att k\303\266ra PAL-k\303\244rnor p\303\245 NTSC"
+   "-sk\303\244rmar, men ljudh\303\266jden blir d\303\245 felaktig.\nIng\303\245ngshastigheten defin"
+   "ieras som:\ning\303\245ngshastighet * (1,0 +/- (maximal tidsf\303\266rskjutning))",
    "Om detta v\303\244rde s\303\244tts till 0 inaktiveras hastighetskontrollen. Alla andra v\303\244"
    "rden styr delta f\303\266r ljudfrekvensreglering.\nDefinierar hur mycket ing\303\245ngsfrekvense"
-   "n kan justeras dynamiskt. Inmatningshastigheten definieras som:\\inmatningshastighet * (1,0 +/- "
-   "(hastighetskontroll delta))",
+   "n kan justeras dynamiskt. Inmatningshastigheten definieras som:\ninmatningshastighet * (1,0 +/- "
+   "(hastighetskontrolldelta))",
    "Invecklad kosinus implementering.",
    "N\303\244rmsta omsamplings implementering. Denna omsampling ignorerar kvalitetsinst\303\244llnin"
    "gen.",
@@ -4354,11 +4963,14 @@ static const struct
    "Shaderfil.",
    "F\303\266rinst\303\244lld Shaderfil.",
    "Konfigurationsfil.",
-   "Om du aktiverar Linux GameMode kan du f\303\266rb\303\244ttra latensen, \303\245tg\303\244rda pr"
-   "oblem med sprakande ljud och maximera den totala prestandan genom att automatiskt konfigurera CP"
-   "U och GPU f\303\266r b\303\244sta prestanda.\nProgramvaran GameMode m\303\245ste installeras f"
-   "\303\266r att detta ska fungera. Se https://github.com/FeralInteractive/gamemode f\303\266r info"
-   "rmation om hur du installerar GameMode.",
+   "Spell\303\244ge h\303\266jer prioriteten f\303\266r disk\303\245tkomst och beg\303\244r energipr"
+   "ofilen f\303\266r h\303\266g prestanda via power-profiles-daemon eller tuned-ppd. Det kan minska"
+   " f\303\266rdr\303\266jningen, \303\245tg\303\244rda sprakande ljud och f\303\266rb\303\244ttra p"
+   "restandan. Profilen h\303\245lls bara aktiv n\303\244r datorn \303\244r ansluten till str\303"
+   "\266m: den sl\303\244pps n\303\244r du kopplar ur str\303\266mmen och \303\245terst\303\244lls n"
+   "\303\244r du kopplar in den igen.Ingen ytterligare programvara beh\303\266vs i skrivbordsdistrib"
+   "utioner. Profilen sl\303\244pps n\303\244r Spell\303\244ge st\303\244ngs av eller RetroArch avs",
+   "lutas, \303\244ven efter en krasch.",
    "Mappa angiven analog spak f\303\266r D-Pad-inmatning.\nOm k\303\244rnan har inbyggt analogt st"
    "\303\266d, kommer D-Pad-mappning att inaktiveras om inte alternativet '(Tvingad)' \303\244r valt"
    ".\nOm D-Pad-mappning \303\244r p\303\245tvingad kommer k\303\244rnan inte att f\303\245 n\303"
@@ -4372,11 +4984,12 @@ static const struct
    "\303\266der ocks\303\245 tangentbords\303\245teruppringning, m\303\266ss och pekplattor.\nSom st"
    "andard i de flesta distros \303\244r /dev/input-noder endast root (l\303\244ge 600). Du kan konf"
    "igurera en udev-regel som g\303\266r dessa tillg\303\244ngliga f\303\266r icke-root.",
-   "P\303\245verkar hur input polling utf\303\266rs i RetroArch.\nEarly - Input polling utf\303\266r"
-   "s innan ramen bearbetas.\nNormal - Input polling utf\303\266rs n\303\244r polling beg\303\244rs."
-   "\nLate - Input polling utf\303\266rs vid f\303\266rsta beg\303\244ran om inputstatus per ram.\nA"
-   "tt st\303\244lla in den p\303\245 'Early' eller 'Late' kan resultera i mindre latens, beroende p"
-   "\303\245 din konfiguration. Kommer att ignoreras n\303\244r du anv\303\244nder netplay.",
+   "P\303\245verkar hur inmatningen l\303\244ses av i RetroArch.\nTidig: Inmatningen l\303\244ses av"
+   " innan bildrutan bearbetas.\nNormal: Inmatningen l\303\244ses av n\303\244r det beg\303\244rs.\n"
+   "Sen: Inmatningen l\303\244ses av vid den f\303\266rsta beg\303\244ran om inmatningsstatus f\303"
+   "\266r varje bildruta.\nInst\303\244llningen \342\200\235Tidig\342\200\235 eller \342\200\235Sen"
+   "\342\200\235 kan ge l\303\244gre f\303\266rdr\303\266jning beroende p\303\245 konfigurationen. I"
+   "gnoreras vid n\303\244tspel.",
    "Anv\303\244nd fr\303\244mre ist\303\244llet f\303\266r bakre tryck.",
    "Libretro anv\303\244nder en virtuell gamepad-abstraktion k\303\244nd som \"RetroPad\" f\303\266r"
    " att kommunicera fr\303\245n frontends (som RetroArch) till k\303\244rnor och vice versa. Den h"
@@ -4444,33 +5057,34 @@ static const struct
    "\266der MIDI-utg\303\245ng, kommer en del eller alla ljud (beroende p\303\245 spel/app) att gene"
    "reras av MIDI-enhet. I h\303\244ndelse av 'null' MIDI-drivrutin betyder detta att dessa ljud int"
    "e kommer att h\303\266ras.",
-   "Frekvensen i bildrutor med vilken netplay kommer att verifiera att v\303\244rden och klienten "
-   "\303\244r synkroniserade. Med de flesta k\303\244rnor har detta v\303\244rde ingen synlig effekt"
-   " och kan ignoreras. Med icke-best\303\244mbara k\303\244rnor avg\303\266r detta v\303\244rde hur"
-   " ofta netplay-peers kommer att synkroniseras. Med buggiga k\303\244rnor kommer det att orsaka al"
-   "lvarliga prestandaproblem om detta v\303\244rde s\303\244tts till n\303\245got annat \303\244n n"
-   "oll. St\303\244ll in p\303\245 noll f\303\266r att inte utf\303\266ra n\303\245gra kontroller. D"
-   "etta v\303\244rde anv\303\244nds endast p\303\245 ne",
-   "tplay-v\303\244rden.",
-   "Antalet bildrutor med inmatningsf\303\266rdr\303\266jning som netplay ska anv\303\244nda f\303"
-   "\266r att d\303\266lja n\303\244tverksf\303\266rdr\303\266jning.\nN\303\244r det h\303\244r alte"
-   "rnativet anv\303\244nds i netplay f\303\266rdr\303\266jer det lokal inmatning s\303\245 att den "
-   "bildruta som k\303\266rs ligger n\303\244rmare de bildrutor som tas emot fr\303\245n n\303\244tv"
-   "erket. Detta minskar jitter och g\303\266r netplay mindre CPU-intensivt, men till priset av en m"
-   "\303\244rkbar f\303\266rdr\303\266jning av inmatningen.",
-   "Det intervall av bildrutor med inmatningslatens som kan anv\303\244ndas av netplay f\303\266r at"
-   "t d\303\266lja n\303\244tverkslatens.\nOm det \303\244r inst\303\244llt kommer netplay att juste"
-   "ra antalet bildrutor med inmatningslatens dynamiskt f\303\266r att balansera CPU-tid, inmatnings"
-   "latens och n\303\244tverkslatens. Detta minskar jitter och g\303\266r netplay mindre CPU-intensi"
-   "vt, men till priset av of\303\266ruts\303\244gbar inmatningsf\303\266rdr\303\266jning.",
+   "Frekvensen i bildrutor med vilken n\303\244tspel kommer att verifiera att v\303\244rden och klie"
+   "nten \303\244r synkroniserade. Med de flesta k\303\244rnor har detta v\303\244rde ingen synlig e"
+   "ffekt och kan ignoreras. Med icke-best\303\244mbara k\303\244rnor avg\303\266r detta v\303\244rd"
+   "e hur ofta n\303\244tspelspartner kommer att synkroniseras. Med buggiga k\303\244rnor kommer det"
+   " att orsaka allvarliga prestandaproblem om detta v\303\244rde s\303\244tts till n\303\245got ann"
+   "at \303\244n noll. St\303\244ll in p\303\245 noll f\303\266r att inte utf\303\266ra n\303\245gra"
+   " kontroller. Detta v\303\244rde anv\303\244nds endast p",
+   "\303\245 n\303\244tspelsv\303\244rden.",
+   "Antalet bildrutor med inmatningsf\303\266rdr\303\266jning som n\303\244tspel anv\303\244nder f"
+   "\303\266r att d\303\266lja n\303\244tverksf\303\266rdr\303\266jning.\nVid n\303\244tspel f\303"
+   "\266rdr\303\266jer alternativet lokal inmatning s\303\245 att den bildruta som k\303\266rs ligge"
+   "r n\303\244rmare bildrutorna fr\303\245n n\303\244tverket. Det minskar tidsvariationer och g\303"
+   "\266r n\303\244tspel mindre CPU-intensivt, men ger en m\303\244rkbar inmatningsf\303\266rdr\303"
+   "\266jning.",
+   "Intervallet av bildrutor med inmatningslatens som n\303\244tspel kan anv\303\244nda f\303\266r a"
+   "tt d\303\266lja n\303\244tverkslatens.\nN\303\244r alternativet \303\244r inst\303\244llt juster"
+   "ar n\303\244tspel antalet bildrutor med inmatningslatens dynamiskt f\303\266r att balansera CPU-"
+   "tid, inmatningslatens och n\303\244tverkslatens. Det minskar tidsvariationer och g\303\266r n"
+   "\303\244tspel mindre CPU-intensivt, men ger en of\303\266ruts\303\244gbar inmatningsf\303\266rdr"
+   "\303\266jning.",
    "Huruvida netplay ska startas i \303\245sk\303\245darl\303\244ge. Om inst\303\244llt p\303\245 tr"
    "ue kommer netplay att starta i \303\245sk\303\245darl\303\244ge. Det g\303\245r alltid att \303"
    "\244ndra l\303\244ge senare.",
    "G\303\245 bak\303\245t till f\303\266r\303\244ldrakatalogen.",
-   "Avsluta RetroArch. D\303\266da programmet p\303\245 ett h\303\245rt s\303\244tt (SIGKILL, etc.) "
-   "kommer att terminera RetroArch utan att spara konfigurationen i n\303\245got fall. P\303\245 Uni"
-   "x-liknande system till\303\245ter SIGINT/SIGTERM en ren deinitiering som inkluderar att konfigur"
-   "ationen sparas om aktiverad.",
+   "Avsluta RetroArch. Om programmet avslutas med tv\303\245ng, till exempel med SIGKILL eller likna"
+   "nde, avslutas RetroArch utan att konfigurationen sparas. P\303\245 Unix-liknande system medf\303"
+   "\266r SIGINT/SIGTERM en ordnad avslutning och att konfigurationen sparas om det \303\244r aktive"
+   "rat.",
    "Om kontrollpunkter som lagrats i \303\245teruppspelningar ska avserialiseras under normal uppspe"
    "lning. B\303\266r st\303\244llas in p\303\245 true f\303\266r de flesta k\303\244rnor, men vissa"
    " kan uppvisa oj\303\244mnt beteende vid avserialisering av inneh\303\245ll.",
@@ -4529,15 +5143,15 @@ static const struct
    "\303\266relseklarheten men minskar ljusstyrkan. Inte till\303\244mpligt vid 120 Hz eftersom det "
    "bara finns en enda extra 60 Hz-bildruta, s\303\245 den m\303\245ste vara svart, annars skulle BF"
    "I inte vara aktiv alls.",
-   "Infogar svart(a) ram(ar) mellan bildrutorna f\303\266r \303\266kad r\303\266relseklarhet. Anv"
-   "\303\244nd endast det alternativ som \303\244r avsett f\303\266r din aktuella bildsk\303\244rms "
-   "uppdateringsfrekvens. Anv\303\244nds inte vid uppdateringsfrekvenser som inte \303\244r multipla"
-   "r av 60 Hz, t. ex. 144 Hz, 165 Hz osv. Kombinera inte med Swap Interval > 1, subframes, Frame De"
-   "lay eller Sync to Exact Content Framerate. Att l\303\245ta systemets VRR vara p\303\245 \303\244"
-   "r ok, men inte med den inst\303\244llningen. Om du m\303\244rker - n\303\245gon - tillf\303\244l"
-   "lig bildretention b\303\266r ",
-   "du inaktivera vid 120 Hz och f\303\266r h\303\266gre Hz justera inst\303\244llningen f\303\266r "
-   "m\303\266rka bilder nedan.",
+   "L\303\244gger in svarta bildrutor mellan bildrutorna f\303\266r att \303\266ka r\303\266relsekla"
+   "rheten. Anv\303\244nd bara alternativet som \303\244r avsett f\303\266r bildsk\303\244rmens aktu"
+   "ella uppdateringsfrekvens. Anv\303\244nd det inte vid uppdateringsfrekvenser som inte \303\244r "
+   "multiplar av 60 Hz, till exempel 144 Hz och 165 Hz. Kombinera det inte med v\303\244xlingsinterv"
+   "all \303\266ver 1, delbildrutor, bildrutef\303\266rdr\303\266jning eller synkronisering med inne"
+   "h\303\245llets exakta bildfrekvens. Systemets VRR kan vara p\303\245, men inte den h\303\244r in"
+   "st\303\244llningen. Om du m\303\244rke",
+   "r tillf\303\244lliga efterbilder ska du inaktivera funktionen vid 120 Hz. Vid h\303\266gre frekv"
+   "enser justerar du inst\303\244llningen f\303\266r m\303\266rka bildrutor nedan.",
    "Inaktivera komposition med tv\303\245ng. Inaktivering \303\244r endast giltig p\303\245 Windows "
    "Vista/7 f\303\266r tillf\303\244llet.",
    "LibCACA-drivrutin. Ger teckenutmatning ist\303\244llet f\303\266r grafik. Rekommenderas inte f"
@@ -4571,8 +5185,8 @@ static const struct
    "g att anv\303\244nda den endast som en sista utv\303\244g.",
    "SDL 2-programvara-renderad drivrutin. Prestanda f\303\266r mjukvarurenderade libretro-k\303\244r"
    "nimplementeringar \303\244r beroende av din plattforms SDL-implementering.",
-   "En l\303\245gniv\303\245 Sunxi-videodrivrutin som anv\303\244nder G2D-blocket i Allwinner SoC:er"
-   ".",
+   "En Sunxi-videodrivrutin p\303\245 l\303\245g niv\303\245 som anv\303\244nder G2D-blocket i Allwi"
+   "nner-systemkretsar.",
    "Switch-drivrutin. St\303\266der GLSL shader-formatet.",
    "OpenVG-drivrutin. Anv\303\244nder OpenVG-maskinvaruaccelererat 2D-vektorgrafik-API.",
    "Vulkan drivrutinen. Denna drivrutin g\303\266r att libretro Vulkan-k\303\244rnor kan anv\303\244"
@@ -4585,9 +5199,9 @@ static const struct
    "Anv\303\244nd ett CPU-drivet videofilter. Kan inneb\303\244ra en h\303\266g prestandakostnad. Vi"
    "ssa videofilter kanske bara fungerar f\303\266r k\303\244rnor som anv\303\244nder 32-bitars elle"
    "r 16-bitars f\303\244rg. Inbyggda videofilterbibliotek kan v\303\244ljas.",
-   "St\303\244ller in hur m\303\245nga millisekunder som ska sovas innan k\303\244rnan k\303\266rs e"
-   "fter videopresentation. Minskar latensen p\303\245 bekostnad av h\303\266gre risk f\303\266r stu"
-   "ttering.\nV\303\244rden 20 och h\303\266gre behandlas som procentandelar f\303\266r bildtid.",
+   "Anger hur m\303\245nga millisekunder k\303\244rnan ska v\303\244nta efter bildpresentationen inn"
+   "an den k\303\266rs. Minskar f\303\266rdr\303\266jningen men \303\266kar risken f\303\266r hackni"
+   "ngar.\nV\303\244rden p\303\245 20 eller h\303\266gre behandlas som procent av bildrutetiden.",
    "F\303\266rs\303\266k att h\303\245lla \303\266nskat m\303\245l f\303\266r 'Bildrutef\303\266rdr"
    "\303\266jning' och minimera bildf\303\266rluster. Utg\303\245ngspunkten \303\244r 3/4 av bildrut"
    "ans tid n\303\244r bildf\303\266rdr\303\266jningen \303\244r 0 (Auto).",
@@ -4613,14 +5227,14 @@ static const struct
    "Simulerar en grundl\303\244ggande rullande skanningslinje \303\266ver flera subframes genom att "
    "dela upp sk\303\244rmen vertikalt och rendera varje del av sk\303\244rmen enligt hur m\303\245ng"
    "a subframes det finns fr\303\245n toppen av sk\303\244rmen och ned\303\245t.",
-   "H\303\245rdvarufilter f\303\266r detta pass. Om \342\200\235Default\342\200\235 \303\244r inst"
-   "\303\244llt kommer filtret att vara antingen \342\200\235Linear\342\200\235 eller \342\200\235Ne"
-   "arest\342\200\235 beroende p\303\245 inst\303\244llningen \342\200\235Bilinear Filtering\342\200"
-   "\235 under Video settings.",
-   "RetroArch g\303\266r det m\303\266jligt att blanda och matcha olika shaders med godtyckliga shad"
-   "erpass, med anpassade h\303\245rdvarufilter och skalfaktorer.\nDetta alternativ anger antalet sh"
-   "aderpass som ska anv\303\244ndas. Om du st\303\244ller in det p\303\245 0 och anv\303\244nder Ap"
-   "ply Shader Changes anv\303\244nder du en \342\200\235tom\342\200\235 shader.",
+   "H\303\245rdvarufilter f\303\266r detta pass. Om \342\200\235Standard\342\200\235 \303\244r valt "
+   "blir filtret antingen \342\200\235Linj\303\244r\342\200\235 eller \342\200\235N\303\244rmsta\342"
+   "\200\235, beroende p\303\245 inst\303\244llningen \342\200\235Bilinj\303\244r-filtrering\342\200"
+   "\235 under videoinst\303\244llningar.",
+   "RetroArch g\303\266r det m\303\266jligt att kombinera olika skuggningar med valfritt antal skugg"
+   "ningspass, anpassade h\303\245rdvarufilter och skalfaktorer.Det h\303\244r alternativet anger an"
+   "talet skuggningspass som ska anv\303\244ndas. Om du anger 0 och verkst\303\244ller skuggnings"
+   "\303\244ndringar anv\303\244nder du en \342\200\235tom\342\200\235 skuggning.",
    "S\303\266kv\303\244g till shader. Alla shaders m\303\245ste vara av samma typ (t.ex. Cg, GLSL el"
    "ler Slang). St\303\244ll in Shader Directory f\303\266r att ange var webbl\303\244saren b\303"
    "\266rjar leta efter shaders.",
@@ -4635,23 +5249,24 @@ static const struct
    "m \342\200\235Standard\342\200\235 \303\244r inst\303\244llt anv\303\244nds antingen 1x skala el"
    "ler str\303\244ckning till fullsk\303\244rm beroende p\303\245 om det inte \303\244r sista passe"
    "t eller inte.",
-   "Infogar extra shader-ram(ar) mellan bildrutorna f\303\266r eventuella shader-effekter som \303"
-   "\244r utformade f\303\266r att k\303\266ras snabbare \303\244n inneh\303\245llshastigheten. Anv"
-   "\303\244nd endast det alternativ som \303\244r avsett f\303\266r din aktuella bildsk\303\244rmsu"
-   "ppdateringsfrekvens. Anv\303\244nds inte vid uppdateringsfrekvenser som inte \303\244r multiplar"
-   " av 60 Hz, t. ex. 144 Hz, 165 Hz osv. Kombinera inte med Swap Interval > 1, BFI, Frame Delay ell"
-   "er Sync to Exact Content Framerate. Att l\303\245ta systemets VRR vara p\303\245 \303\244r ok, m"
-   "en inte den inst",
-   "\303\244llningen.",
+   "L\303\244gger in extra shaderbildrutor mellan bildrutorna f\303\266r shader-effekter som \303"
+   "\244r avsedda att k\303\266ras snabbare \303\244n inneh\303\245llets hastighet. Anv\303\244nd ba"
+   "ra alternativet som \303\244r avsett f\303\266r bildsk\303\244rmens aktuella uppdateringsfrekven"
+   "s. Anv\303\244nd det inte vid uppdateringsfrekvenser som inte \303\244r multiplar av 60 Hz, till"
+   " exempel 144 Hz och 165 Hz. Kombinera det inte med v\303\244xlingsintervall \303\266ver 1, BFI, "
+   "bildrutef\303\266rdr\303\266jning eller synkronisering med inneh\303\245llets exakta bildfrekven"
+   "s. Systemets VRR kan vara p\303\245",
+   ", men inte den h\303\244r inst\303\244llningen.",
    "K\303\266r videodrivrutinen i en egen tr\303\245d. Bildsk\303\244rmen beh\303\245ller sin takt n"
-   "\303\244r k\303\244rnan hackar, och k\303\244rnan k\303\266r n\303\244sta bildruta medan den f"
+   "\303\244r k\303\244rnan hackar och k\303\244rnan k\303\266r n\303\244sta bildruta medan den f"
    "\303\266reg\303\245ende g\303\245r genom shaderkedjan och presentationen. Med \342\200\235Tr\303"
    "\245dad synkronisering av videovisning\342\200\235 startar k\303\244rnan s\303\245 sent som n"
    "\303\244sta uppdatering till\303\245ter, vilket h\303\245ller latensen p\303\245 samma niv\303"
    "\245 som bildrutef\303\266rdr\303\266jning.",
-   "Synkronisera till exakt inneh\303\245llsframerate. Det h\303\244r alternativet motsvarar att tvi"
-   "nga fram x1-hastighet samtidigt som snabbspolning till\303\245ts. Ingen avvikelse fr\303\245n de"
-   "n beg\303\244rda uppdateringsfrekvensen, inget ljud Dynamic Rate Control.",
+   "Synkronisera med inneh\303\245llets exakta bildfrekvens. Det h\303\244r alternativet motsvarar a"
+   "tt tvinga fram normal hastighet samtidigt som snabbspolning till\303\245ts. Ingen avvikelse fr"
+   "\303\245n den uppdateringsfrekvens som k\303\244rnan beg\303\244r och ingen dynamisk frekvensreg"
+   "lering av ljudet.",
    "Mixer str\303\266m #%d: %s",
    "Alla",
    "\303\204ndringar",
@@ -4659,10 +5274,10 @@ static const struct
    "Minskar med Rumble-v\303\244rde",
    "\303\204ndras inte",
    "= Rumble-v\303\244rde",
-   "> Rumble-v\303\244rde",
+   "> Vibrationsstyrka",
    "\303\226kar",
    "\303\226kar med Rumble-v\303\244rde",
-   "< Rumble-v\303\244rde",
+   "< Vibrationsstyrka",
    "!= Rumble-v\303\244rde",
    "Aktivera hj\303\244lpmedel",
    "Talsyntesmotor",
@@ -4731,6 +5346,7 @@ static const struct
    "H\303\266gtalarkonfiguration f\303\266r utdata",
    "Utmatningsfrekvens (Hz)",
    "Utmatning",
+   "Grund pipelinek\303\266",
    "Dynamisk ljudfrekvenskontroll",
    "Ljudomsamplare",
    "H\303\266gkvalitativ sinc-\303\266versampling",
@@ -4774,6 +5390,7 @@ static const struct
    "Inaktivera Bluetooth ERTM",
 #endif
 #endif
+   "S\303\266k efter enheter",
 #ifdef _3DS
    "Nedre sk\303\244rmens Tillg\303\245ngsmapp",
    "Teckenf\303\244rg: Bl\303\245",
@@ -4833,7 +5450,7 @@ static const struct
    "Tidsl\303\244ngd f\303\266r sekund\303\244r Rumble (ms)",
    "Sekund\303\244r Rumble-styrka",
    "Vibrera vid minnesv\303\244rde",
-   "Rumble-v\303\244rde",
+   "Vibrationsstyrka",
    "S\303\266k i minnet efter v\303\244rden",
    "S\303\266k i minnet efter v\303\244rden",
    "S\303\266k i minnet efter v\303\244rden",
@@ -4900,6 +5517,7 @@ static const struct
    "Destruktiv molnsynkning",
    "Backend f\303\266r molnsynk",
    "Aktivera molnsynkronisering",
+   "NFS-underkatalog f\303\266r synkronisering",
    "L\303\266senord",
    "L\303\266s konflikter: Beh\303\245ll lokal",
    "L\303\266s konflikter: Beh\303\245ll server",
@@ -5018,6 +5636,7 @@ static const struct
 #endif
    "F\303\266resl\303\245 alltid k\303\244rnor",
    "S\303\244kerhetskopiera k\303\244rnor vid uppdatering",
+   "Komprimera automatiska s\303\244kerhetskopior av k\303\244rnor",
    "Storlek f\303\266r s\303\244kerhetskopieringshistorik f\303\266r k\303\244rnor",
    "Packa automatiskt upp h\303\244mtade arkiv",
    "URL f\303\266r Buildbot-k\303\244rnor",
@@ -5041,6 +5660,7 @@ static const struct
    "Maximal frekvens",
    "Menyregulator",
    "Minimal frekvens",
+   "tr\303\245dar",
    "Skapa ny spellista",
    "Anv\303\244nd h\303\266guppl\303\266st meny",
    "Horisontell storlek",
@@ -5132,9 +5752,12 @@ static const struct
    "Serienummer",
    "L\303\244s",
    "Standardtidsinst\303\244llning",
-   "Endast en del av EDID-informationen kunde l\303\244sas.",
+   "Endast en del av EDID-informationen kunde l\303\244sas",
    "En inbyggd bildsk\303\244rm i en b\303\244rbar eller allt-i-ett-dator har ingen EDID. En extern "
    "bildsk\303\244rm som ansluts via DDC har det.",
+   "Android till\303\245ter inte appar att l\303\244sa EDID fr\303\245n en telefons eller surfplatta"
+   "s inbyggda sk\303\244rm. En tv-box som driver en bildsk\303\244rm via HDMI exponerar det d\303"
+   "\244r enheten till\303\245ter det.",
    "EDID-version",
    "Bildsk\303\244rmsinformation",
    "Orientering",
@@ -5185,6 +5808,7 @@ static const struct
    "Efter spelarantal",
    "Efter utgivare",
    "Efter region",
+   "Efter utgivningsm\303\245nad",
    "Efter utgivnings\303\245r",
    "Efter rumble",
    "Efter po\303\244ng",
@@ -5250,20 +5874,29 @@ static const struct
    "Bilder",
    "L\303\244s in filer f\303\266r initiala skivindex automatiskt",
    "Analog till Digital typ",
+   "Sikta fr\303\245n analog pinne",
    "Alla kontrollerar menyn",
+   "Analog motd\303\266dzon",
    "Analog d\303\266dzon",
    "V\303\244nster Analog X- (V\303\244nster)",
    "V\303\244nster Analog X+ (H\303\266ger)",
    "V\303\244nster Analog Y- (Upp)",
    "V\303\244nster Analog Y+ (Ner)",
+   "Yttre d\303\266dzon f\303\266r analog styrspak",
+   "Analog svarskurva",
    "H\303\266ger Analog X- (V\303\244nster)",
    "H\303\266ger Analog X+ (H\303\266ger)",
    "H\303\266ger Analog Y- (Upp)",
    "H\303\266ger Analog Y+ (Ner)",
    "Analog k\303\244nslighet",
+   "D\303\266dzon f\303\266r analog avtryckare",
 #ifdef ANDROID
    "Anv\303\244nd Systemtangentbord",
 #endif
+   "Tangentbord vid f\303\266rsta knapptryckningen",
+   "Tilldelar sin port",
+   "V\303\244ntar p\303\245 sin handkontroll",
+   "Tilldela portar vid f\303\266rsta knapptryckningen",
    "Autokonfig",
    "Automatiskt 'Spelfokus'-l\303\244ge",
    "Identifiera",
@@ -5276,6 +5909,10 @@ static const struct
    "Bind tidsgr\303\244ns",
    "Tidsgr\303\244ns f\303\266r inmatningsblock",
    "Tr\303\266skelv\303\244rde f\303\266r inmatningsknappsaxel",
+   "Tryckdjup",
+   "Svarstid",
+   "H\303\245ll ned i",
+   "Vad kombinationen g\303\266r",
    "D\303\266lj obundna inmatningsbeskrivningar f\303\266r k\303\244rnor",
    "Visa etiketter f\303\266r inmatningsbeskrivningar",
    "Enhetindex",
@@ -5287,13 +5924,17 @@ static const struct
    "Inaktivera h\303\266ger analog i meny",
    "Inaktivera S\303\266kknapp",
    "Inmatning",
+   "Aktivera Wii U GameCube-adapter",
    "Haptisk feedback/vibration",
    "H\303\245ll in",
    "Kortkommandon",
    "Snabbknappsf\303\266rdr\303\266jning (Bildrutor)",
    "Sammanfoga Hotkey-enhetstyper",
    "Snabbtangenter f\303\266r F\303\266lj spelare 1",
+   "F\303\266rdr\303\266jning f\303\266r tryck p\303\245 aktiveringssnabbtangent (ms)",
    "Mappning f\303\266r tangentbordskontroller",
+   "Ignorerad handkontroll %04X:%04X (v\303\244lj f\303\266r att anv\303\244nda den igen)",
+   "Information om inmatning",
    "A-knapp (H\303\266gra)",
    "B-knapp (Nedre)",
    "Handkontrollindata i bakgrunden",
@@ -5312,7 +5953,13 @@ static const struct
    "X-knapp (\303\226vre)",
    "Y-knapp (V\303\244nstra)",
    "Knapp %s",
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   "Tangentbordsinmatning i bakgrunden",
+#endif
    "Mappningstyp f\303\266r tangentbordskontroller",
+   "Tangentbordsindex",
+   "%s (inte anslutet)",
+   "Alla",
    "Tangentbord %s",
    "Pistol knapp A",
    "Pistol knapp B",
@@ -5345,6 +5992,10 @@ static const struct
    "Spelfokus (v\303\244xla)",
    "F\303\245nga muspekaren (v\303\244xla)",
    "Stoppa Inspelning/Repris",
+   "Redigera VR-headsetets sk\303\244rmar",
+   "Centrera headsetsk\303\244rmar igen",
+   "Headsetvy (v\303\244xla)",
+   "Laserpekare (v\303\244xla)",
    "L\303\244s in tillst\303\245nd",
    "Visa/d\303\266lj meny",
    "Ljud av",
@@ -5406,11 +6057,14 @@ static const struct
 #endif
    "Auto-skala tangentbords\303\266verl\303\244gg",
    "\303\226verlappningsk\303\244nslighet f\303\266r ABXY",
+   "ABXY-inmatningsmetod",
    "Analog \303\245terst\303\244llningszon",
    "Autorotera \303\266verl\303\244gg",
    "Autoskala \303\266verl\303\244gg",
    "Visa \303\266verl\303\244gg bakom meny",
+   "Kontaktomr\303\245dets storlek",
    "Diagonal k\303\244nslighet f\303\266r riktningsknappar",
+   "Inmatningsmetod f\303\266r styrkors",
    "Visa \303\266verl\303\244gg",
    "D\303\266lj \303\266verl\303\244gg i meny",
    "D\303\266lj \303\266verl\303\244gg n\303\244r spelkontroll \303\244r ansluten",
@@ -5442,9 +6096,12 @@ static const struct
    "Avsluta (spelkontroll kombo)",
    "Ommappningar f\303\266r inmatning",
    "Mappa om kontroller f\303\266r denna k\303\244rna",
+   "Hitta en knapp genom att trycka p\303\245 den",
    "Mappad Port",
    "Sortera ommappningar efter gamepad",
    "RetroPad-bindningar",
+   "Inmatningsrotation",
+   "Automatiskt (videorotation)",
    "Vibrationsstyrka",
    "Spara spelkontrolls-profil",
 #ifdef HAVE_SDL3
@@ -5460,7 +6117,27 @@ static const struct
    "R\303\266relse-/ljussensorer",
    "Inmatning",
    "Litet tangentbord",
+   "F\303\266rsta inmatning har f\303\266retr\303\244de",
+   "SOCD-rensning (v\303\244nster + h\303\266ger)",
+   "Senaste inmatning har f\303\266retr\303\244de",
+   "Upp\303\245t har f\303\266retr\303\244de",
+   "SOCD-rensning (upp + ned)",
    "Delade Joy-Con",
+#ifdef ANDROID
+   "Pekpennest\303\266d",
+   "D\303\266lj \303\266verlagringen vid anv\303\244ndning av stylus",
+   "Pekpennans hovring flyttar pekaren",
+   "Pekpennans tryckk\303\244nslighet",
+   "Pekpenna kr\303\244ver sk\303\244rmkontakt",
+#endif
+   "Inmatningsdrivrutinen \342\200\235%s\342\200\235 l\303\244ser dessa som en enhet och kan inte sk"
+   "ilja dem \303\245t.",
+   "Handkontrollens pekplatta",
+   "Halvor som knappar",
+   "V\303\244nster halva av pekplattan",
+   "Mus",
+   "Peksk\303\244rm",
+   "H\303\266ger halva av pekplattan",
    "Tryck",
    "Tryckskala",
 #ifdef UDEV_TOUCH_SUPPORT
@@ -5470,6 +6147,7 @@ static const struct
    "VMouse-peksk\303\244rmsl\303\244ge: pekplatta",
    "VMouse-peksk\303\244rmsl\303\244ge: styrkula",
 #endif
+   "Analog avtryckare med fullt omf\303\245ng",
    "Turbo-avfyrning",
    "Till\303\245t styrkorsriktningar f\303\266r turbo",
    "Turbo-bindning",
@@ -5481,10 +6159,21 @@ static const struct
    "Turboperiod",
    "Enhetliga menykontroller",
    "Port %u kontroller",
+#if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   "Spelarlampor f\303\266r handkontroll",
+   "XInput f\303\266r Xbox-handkontroller (omstart kr\303\244vs)",
+#endif
+#endif
+   "Aktivera ursprunglig Xbox-handkontroll",
    "JIT tillg\303\244nglig",
    "Spelkontrollsprofiler",
    "Spelkontroll",
    "Tgb",
+   "Enhetens VID/PID: %d/%d",
+   "Tangentbord %d: %s",
+   "Tangentbord: Alla tangentbord (%s)",
+   "L\303\266senfras f\303\266r nyckelring",
    "Str\303\266mnyckel f\303\266r Kick",
    "Tj\303\244nster",
 #ifdef HAVE_LAKKA_SWITCH
@@ -5523,6 +6212,7 @@ static const struct
    "2 (Varning)",
    "Huvudsaklig",
    "Huvudmeny",
+   "H\303\266j huvudtr\303\245dens prioritet",
    "Hantera",
    "Standardk\303\244rna",
    "<Ospecificerat>",
@@ -5584,6 +6274,17 @@ static const struct
    "Dubbel ikon",
    "Lista (Medium)",
    "Lista (Liten)",
+   "MCP-server",
+   "MCP-serverport",
+   "MCP-servertoken",
+   "Kontinuerlig uppspelning",
+   "F\303\266rdr\303\266jning innan kontroller d\303\266ljs automatiskt (sekunder)",
+   "Anv\303\244nd CRT SwitchRes vid uppspelning i helsk\303\244rm",
+   "Anpassa bildsk\303\244rmens uppdateringsfrekvens",
+   "S\303\266kningssteg (sekunder)",
+   "Mediaspelare",
+   "Undertexter",
+   "F\303\266rdr\303\266jning av undertexter (millisekunder)",
    "Visa Minnesanv\303\244ndning",
    "Uppdateringsintervall f\303\266r minnesanv\303\244ndning (i bildrutor)",
    "Huvudmeny",
@@ -5595,14 +6296,16 @@ static const struct
    "Inaktivera kioskl\303\244ge",
    "Meny",
    "Kioskl\303\244ge",
-   "Stryp menyns bildfrekvens",
+   "Visning av fil\303\244ndelser",
    "Alltid",
+   "Endast dubbletter",
    "Aldrig",
    "Filhanterare",
    "Teckenf\303\244rg: Bl\303\245",
    "Teckenf\303\244rg: Gr\303\266n",
    "Teckenf\303\244rg: R\303\266d",
    "Genomskinlighet",
+   "Menyns bildfrekvens",
    "Ljusstyrka",
    "Horisontell animering",
    "V\303\244xla knappar f\303\266r OK och Avbryt",
@@ -5657,7 +6360,6 @@ static const struct
 #endif
 #endif
    "Visa fullst\303\244ndiga s\303\266kv\303\244gar",
-   "Visa 'Hj\303\244lp'",
    "Visa 'Information'",
    "Visa 'L\303\244s in inneh\303\245ll'",
    "\"L\303\244s in inneh\303\245ll\"-meddelande vid uppstart",
@@ -5696,7 +6398,7 @@ static const struct
    "\303\205sidos\303\244tt skalning av grafikwidgetar",
    "\303\205sidos\303\244tt skalning av grafikwidgetar (helsk\303\244rm)",
    "\303\205sidos\303\244tt skalning av grafikwidgetar (f\303\266nsterl\303\244ge)",
-   "Horisontell ikonmarkering i animation",
+   "Horisontell ikonmarkeringsanimation",
    "Animering f\303\266r flytta upp\303\245t/ner\303\245t",
    "Animering f\303\266r huvudmenyns \303\266ppna/st\303\244nga",
    "Visa horisontell lista",
@@ -5706,7 +6408,9 @@ static const struct
    "Horisontell f\303\266rskjutning av titelmarginal",
    "Vertikal toningsfaktor",
 #ifdef HAVE_MICROPHONE
+#if defined(RARCH_MOBILE)
    "Mikrofon bildrutsblock",
+#endif
 #endif
 #ifdef HAVE_MICROPHONE
 #if !defined(RARCH_CONSOLE)
@@ -5740,13 +6444,16 @@ static const struct
    "Ta bort",
    "Stopp",
    "Volym",
+   "Mus %s: %s",
    "Mus-st\303\266d",
+   "Mus: Alla m\303\266ss (%s)",
    "Musik",
    "Filtrera ok\303\244nda filformat",
    "Navigering b\303\266rjar om fr\303\245n b\303\266rjan",
    "N\303\244rmsta",
    "Till\303\245t pausning",
    "Till\303\245t klienter i slavl\303\244ge",
+   "Synkronisera analoga spakar",
    "Bannlys klient",
    "Chattf\303\244rg (Meddelande)",
    "Chattf\303\244rg (Nicknamn)",
@@ -5770,6 +6477,7 @@ static const struct
    "Kunde inte hitta en l\303\244mplig k\303\244rna eller inneh\303\245llsfil, l\303\244s in manuell"
    "t.",
    "Filter f\303\266r lobbyn",
+   "L\303\245sstegring",
    "Max samtidiga anslutningar",
    "Ping begr\303\244nsning",
    "Plats f\303\266r rel\303\244server",
@@ -5783,8 +6491,9 @@ static const struct
    "Serverl\303\266senord",
    "Visa Netplay Ping",
    "Annonsera Netplay publikt",
-   "Uppdatera Netplay-listan f\303\266r LAN",
-   "Uppdatera Netplay-v\303\244rdlistan",
+   "Uppdatera N\303\244tspelslistan f\303\266r LAN",
+   "Uppdatera N\303\244tspelsv\303\244rdlistan",
+   "Beg\303\244r enheter",
    "Beg\303\244r enhet %u",
    "Till\303\245t inte klienter i icke-slavl\303\244ge",
    "Nicknamn: %s",
@@ -5810,11 +6519,34 @@ static const struct
    "N\303\244tverksinformation",
    "H\303\244mta miniatyrbilder vid behov",
    "N\303\244tverksspelkontroll",
+   "N\303\244tverksansluten RetroPad: endast f\303\266rsta avs\303\244ndaren",
+   "N\303\244tverksansluten RetroPad %u: port %u, fr\303\245n %u.%u.%u.%u",
+   "N\303\244tverksansluten RetroPad %u: port %u, \303\244nnu ingen enhet",
    "Port f\303\266r n\303\244tverksspelkontroller",
+   "N\303\244tverksanslutna RetroPad-anv\303\244ndare",
    "N\303\244tverk",
    "Spelare %d N\303\244tverksspelkontroll",
 #ifdef _3DS
    "Aktivera New3DS-klocka / L2-cache",
+#endif
+#ifdef HAVE_NFSCLIENT
+   "Bl\303\244ddra i NFS-export",
+   "NFS-export",
+   "Monteringsport f\303\266r NFS",
+   "Maximalt antal NFS-anslutningar",
+   "NFS-port",
+   "NFS-f\303\266rh\303\244mtning (KiB)",
+   "NFS-server",
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_NFSCLIENT
+   "N\303\244tverksinst\303\244llningar f\303\266r NFS",
+#endif
+#endif
+#ifdef HAVE_NFSCLIENT
+   "NFS-underkatalog",
+   "Tidsgr\303\244ns f\303\266r NFS",
+   "NFS-version",
 #endif
    "Nej",
    "Ingen",
@@ -5849,13 +6581,14 @@ static const struct
    "Inga k\303\244rnalternativ tillg\303\244ngliga",
    "Ingen skiva vald",
    "Inga poster att visa",
+   "ingen fil\303\244ndelse",
    "Inga favoriter tillg\303\244ngliga",
    "Ingen historik tillg\303\244nglig",
    "Inga bilder tillg\303\244ngliga",
    "Ingen information tillg\303\244nglig",
    "Inga f\303\266rem\303\245l",
    "Ingen musik tillg\303\244nglig",
-   "Inga netplay-klienter hittades.",
+   "Inga n\303\244tspelsklienter hittades.",
    "Inga Netplay v\303\244rdar hittades.",
    "Inga n\303\244tverk hittades",
    "Inga prestandar\303\244knare.",
@@ -5882,6 +6615,9 @@ static const struct
    "(Liggande) Justera \303\266verl\303\244ggsf\303\266rh\303\245llande",
    "(St\303\245ende) Justera \303\266verl\303\244ggsf\303\266rh\303\245llande",
    "L\303\244s automatiskt in f\303\266redraget \303\266verl\303\244gg",
+   "Kontaktomr\303\245de",
+   "B\303\245da",
+   "Riktning",
    "\303\226verl\303\244gg",
    "\303\226verl\303\244gg ljuspistol",
    "\303\226verl\303\244gg mus",
@@ -5993,8 +6729,16 @@ static const struct
    "Spela repris",
    "Uppdatera spellisteminiatyrer",
    "Touch-st\303\266d",
+   "Ansluter via Bluetooth till: %s",
+   "- Ansluter via Bluetooth till: Ingenting (inte parkopplad)",
+   "- Ansluter via Bluetooth till: den h\303\244r datorn (%s)",
+   "Para ihop med den h\303\244r datorn",
    "Enhetens sk\303\244rmnamn: %s\nEnhetens konfigurationsnamn: %s\nEnhets-VID/PID: %d/%d",
    "Port %d Enhetsnamn: %s",
+   "Ingen automatisk konfigurationsprofil",
+   "- Aktivera st\303\266d f\303\266r DualShock 3",
+   "- \303\205terst\303\244ll Windows-drivrutinen",
+   "- Ignorera den h\303\244r handkontrollen",
    "Energihantering",
    "Antal preemptive frames",
    "Finns, valfri:",
@@ -6063,13 +6807,14 @@ static const struct
    "&Verktyg",
    "&Visa",
    "St\303\244ngda dockor",
+   "Handkontroll och &kortkommandon\342\200\246",
    "&Inst\303\244llningar...",
    "Max antal rutn\303\244tsposter f\303\266r \"Alla spellistor\":",
    "Max antal listposter f\303\266r \"Alla spellistor\":",
    "Highlight f\303\244rg:",
    "Kom ih\303\245g dockpositioner:",
    "Kom ih\303\245g f\303\266nstergeometri:",
-   "Kom ih\303\245g senaste filk i inneh\303\245llsbl\303\244ddraren:",
+   "Kom ih\303\245g den senaste fliken i inneh\303\245llsbl\303\244ddraren:",
    "Visa dolda filer och mappar:",
    "Starta med spellista:",
    "F\303\266resl\303\245 inl\303\244st k\303\244rna f\303\266rst:",
@@ -6086,7 +6831,7 @@ static const struct
    "Namn",
    "N\303\244tverksfel",
    "Ny spellista",
-   "Spellistpost",
+   "Spellistepost",
    "K\303\244rna:",
    "Databas:",
    "Till\303\244gg:",
@@ -6124,7 +6869,7 @@ static const struct
    "V\303\244lj tema",
    "L\303\244gg till pass",
    "T\303\266m alla pass",
-   "Inga shader-pass.",
+   "Inga shaderpass.",
    "Stopp",
    "Filhanterare",
    "Toppen",
@@ -6137,7 +6882,7 @@ static const struct
    "Titelsk\303\244rm",
    "Uppdateringen misslyckades.",
    "RetroArch uppdaterades. Starta om programmet f\303\266r att \303\244ndringarna ska ta effekt.",
-   "Uppdatera RetroArch (nightly)",
+   "Uppdatera RetroArch (nattlig version)",
    "Visa",
    "Ikoner",
    "Lista",
@@ -6208,6 +6953,14 @@ static const struct
    "Plattformsexklusiv",
    "Utgivare",
    "Utgivningsm\303\245nad",
+   "Augusti",
+   "Februari",
+   "Januari",
+   "Juli",
+   "Juni",
+   "Mars",
+   "Maj",
+   "Oktober",
    "Utgivnings\303\245r",
    "Rumble st\303\266ds",
    "Po\303\244ng",
@@ -6217,6 +6970,12 @@ static const struct
    "Fordon",
    "Visuellt",
    "Starta om",
+#ifdef HAVE_LAKKA
+#ifdef HAVE_LAKKA_SWITCH
+   "Tvinga omstart till Lakka om det finns en uppdatering",
+   "Starta om till nyttolast",
+#endif
+#endif
    "Inspelning Configs",
    "Inspelningar",
    "Inspelning",
@@ -6268,7 +7027,7 @@ static const struct
    "Heltalsskala",
    "AV",
    "Startkatalog",
-   "Konfigurationsfiler",
+   "Konfigurationer",
    "F\303\244rgtema",
    "\303\204ppelgr\303\266n",
    "Klassisk bl\303\245",
@@ -6356,7 +7115,6 @@ static const struct
    "Anpassa",
    "Hoppa \303\266ver databasreferenser fr\303\245n spellista",
    "S\303\266k igenom CRC-kontrollsummor vid m\303\266jliga dubbletter",
-   "S\303\266k igenom en enda fil",
    "Spellista att uppdatera",
    "<Automatiskt/Systemnamn>",
    "Databaskontroll",
@@ -6394,8 +7152,10 @@ static const struct
    "Visa 'Energihantering'",
    "Visa 'Inspelning'",
    "Visa 'Sparningar'",
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
    "Visa \"SMB-klient\"",
+#endif
 #endif
    "Visa 'Steam'",
    "Visa 'Anv\303\244ndare'",
@@ -6421,21 +7181,58 @@ static const struct
    "Installera/\303\205terst\303\244ll k\303\244rna",
    "K\303\244rninstallation lyckades",
    "Slow motion hastighet",
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
    "Autentiseringsl\303\244ge f\303\266r SMB",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    "Bl\303\244ddra i SMB-utdelning",
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    "Aktivera SMB-klient",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   "SMB Kerberos-KDC",
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    "Maximalt antal anslutningar f\303\266r SMB",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    "SMB-l\303\266senord",
 #endif
-   "KRB om tillg\303\244ngligt, annars NTLM",
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
+   "SMB-f\303\266rh\303\244mtning (KiB)",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   "SMB Kerberos-sf\303\244r",
+#endif
+   "KRB om tillg\303\244ngligt, annars NTLM",
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    "SMB-server",
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    "N\303\244tverksinst\303\244llningar f\303\266r SMB",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    "SMB-utdelningsnamn",
    "SMB-utdelning",
    "SMB-underkatalog",
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    "Tidsgr\303\244ns f\303\266r SMB",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    "SMB-anv\303\244ndarnamn",
    "SMB-arbetsgrupp",
 #endif
@@ -6495,6 +7292,7 @@ static const struct
    "Sk\303\244rmens DPI",
    "Sk\303\244rmh\303\266jd (mm)",
    "Sk\303\244rmbredd (mm)",
+   "Drivrutinssynkronisering",
    "Frontend-identifierare",
    "Frontend-namn",
    "Git-version",
@@ -6506,6 +7304,7 @@ static const struct
    "Urladdning",
    "Ingen k\303\244lla",
    "RetroArch-version",
+   "Temporal uppskalning",
    "Drivrutin f\303\266r videokontext",
    "Ta sk\303\244rmdump",
    "Tr\303\245dade uppgifter",
@@ -6541,6 +7340,10 @@ static const struct
    "vecka",
    "\303\245r",
    "\303\245r",
+   "Verifiering av TLS-certifikat",
+   "Inaktiverat (Os\303\244kert)",
+   "Valfritt (Varna endast)",
+   "Kr\303\244vs (Rekommenderas)",
    "Sant",
    "Halv period",
    "Klassisk",
@@ -6603,6 +7406,7 @@ static const struct
 #else
    "Kontextspecifik skalning",
 #endif
+   "Presentering med Direct3D 9Ex",
 #if defined(DINGUX)
    "Bikubisk",
    "Bilinj\303\244r",
@@ -6621,14 +7425,34 @@ static const struct
 #endif
 #endif
    "Inaktivera skrivbordskomposition",
+   "DLSS-katalog",
+   "Automatisk hudmask",
+   "Intensitet",
+   "Lokal struktur",
+   "Lokal ton",
+   "Modellf\303\266rinst\303\244llning",
+   "F\303\266rinst\303\244llning 1",
+   "F\303\266rinst\303\244llning 2",
+   "F\303\266rinst\303\244llning 3",
+   "Standard",
+   "DLSS neural rendering",
+   "Hudstruktur",
+   "F\303\266lj lokal struktur",
+   "Stil",
+   "Filmisk",
+   "Standard",
+   "Naturlig",
    "Din grafikdrivrutin \303\244r inte kompatibel med aktuella videodrivrutinen i RetroArch, faller "
    "tillbaka p\303\245 drivrutinen %s. Starta om RetroArch f\303\266r att \303\244ndringen ska ta ef"
    "fekt.",
+   "Drivrutinssynkronisering",
+   "DXGI presentation",
    "Videofilter",
    "Videofilter",
    "Videofilter aktivera",
    "Flimmerfilter",
    "Ta bort videofilter",
+   "Tr\303\245dar f\303\266r videofilter",
    "Sk\303\244rmmeddelanden",
    "Typsnitt f\303\266r meddelanden",
    "Meddelandestorlek",
@@ -6642,6 +7466,7 @@ static const struct
    "Tvingad",
    "F\303\266rhandling om exklusivt helsk\303\244rmsl\303\244ge",
    "Avslappnad",
+   "FSR-katalog",
    "Helsk\303\244rmsvisning",
    "Helsk\303\244rmsl\303\244ge",
    "Bredd f\303\266r helsk\303\244rm",
@@ -6661,7 +7486,10 @@ static const struct
    "Av",
    "Ljusstyrka",
    "Skanningslinjer",
+   "Skicka bildrutans luminans",
    "Subpixel-layout",
+   "Anv\303\244nd bildsk\303\244rmens toppv\303\244rde",
+   "Maskinvaruavkodning av video",
    "Videolayouter",
    "Max bildrutelatens",
    "Maximalt antal swapchain-bilder",
@@ -6677,14 +7505,47 @@ static const struct
    "Meddelandeposition (vertikalt)",
    "Sk\303\244rmindex",
    "Aktivera helsk\303\244rm utan h\303\244nsyn till notch p\303\245 Android och iOS-enheter",
-   "180 gr.",
-   "270 gr.",
-   "90 gr.",
+   "Handkontroller f\303\266r headset",
+   "Kombinerat",
+   "Separat",
+   "Sk\303\244rmavst\303\245nd",
+   "G\303\245ngj\303\244rnsspalt",
+   "Vid redigering av sk\303\244rmar",
+   "Forts\303\244tt k\303\266ra",
+   "Pausa",
+   "Utj\303\244mning vid redigering",
+   "H\303\266g",
+   "L\303\245g",
+   "Av",
+   "F\303\244st mot sk\303\244rmar",
+   "F\303\244st mot vinklar",
+   "Av",
+   "Headsetutg\303\245ng (OpenXR)",
+   "Laserpekare",
+   "Alltid",
+   "Laserstr\303\245le",
+   "Alltid",
+   "Endast redigeringsl\303\244ge",
+   "Av",
+   "Av",
+   "Meny framf\303\266r sk\303\244rm 1",
+   "Prestandaf\303\266rst\303\244rkning f\303\266r headset",
+   "Sk\303\244rmplacering",
+   "Fast i rummet",
+   "F\303\266lj huvudet",
+   "Tr\303\266g f\303\266ljning",
+   "Headsetets val",
+   "Headsetets uppdateringsfrekvens",
+   "Sk\303\244rmbredd",
+   "180 gr",
+   "270 gr",
+   "90 gr",
    "Utmatning",
    "\303\226verskanningskorrigering (Botten)",
    "\303\226verskanningskorrigering (Topp)",
    "Anv\303\244nd inspelning med efterfilter",
    "Styr upprepningstakten fr\303\245n bildsk\303\244rmen",
+   "Sl\303\244pp bildrutor n\303\244r kodaren inte hinner med",
    "Anpassa",
    "H\303\266g",
    "F\303\266rlustfri",
@@ -6694,6 +7555,9 @@ static const struct
    "Anpassa",
    "H\303\266g",
    "L\303\245g",
+   "Videobuffert f\303\266r inspelning (bildrutor)",
+   "Spela in endast spelet",
+   "Anv\303\244nd maskinvaruaccelererad videokodare",
    "Inspelningskvalitet",
    "Inspelnings-tr\303\245dar",
    "Vertikal uppdateringsfrekvens",
@@ -6714,8 +7578,29 @@ static const struct
    "Underskala",
    "Skalning",
    "Skannlinjesynkronisering",
+   "F\303\266rskjutning f\303\266r Scanline Sync",
    "Rullande skanningslinjesimulering",
+   "Sk\303\244rmlayout",
+   "Horisontell",
+   "Vertikal",
+   "Sk\303\244rm",
+   "Sk\303\244rm %u",
+   "Bildsk\303\244rm f\303\266r sk\303\244rm %u",
+   "Redigera sk\303\244rmar",
+   "Stigning",
+   "\303\205terst\303\244ll sk\303\244rm",
+   "\303\205terst\303\244ll alla sk\303\244rmar",
+   "Rollning",
+   "Skala",
+   "Synlig",
+   "Horisontell f\303\266rskjutning",
+   "Vertikal f\303\266rskjutning",
+   "Girning",
+   "Djupf\303\266rskjutning",
    "Byte av bildsk\303\244rmsl\303\244ge med SDL",
+#if defined(HAVE_RSLC) && defined(HAVE_GLSLANG)
+   "Shaderkompilator",
+#endif
    "Autoshader-f\303\266rdr\303\266jning",
    "Shaderpass",
    "Shader parametrar",
@@ -6736,10 +7621,21 @@ static const struct
    "Spara f\303\266rval f\303\266r inneh\303\245llskatalog",
    "Enkla f\303\266rinst\303\244llningar",
    "Kom ih\303\245g senast anv\303\244nda Shader-katalog",
+   "Simulerad inmatningsuppl\303\266sning",
+   "Simulerad h\303\266jd",
+   "Simulerad bredd",
    "Underbildrutor f\303\266r shaders",
    "Delad kontext f\303\266r h\303\245rdvara",
    "Bilinj\303\244r-filtrering",
    "Mjukt filter",
+   "Stereol\303\244ge",
+   "Anaglyf (r\303\266d/cyan)",
+   "Sammanfl\303\244tad",
+   "Sida vid sida (hel)",
+   "Sida vid sida (halv)",
+   "\303\226verst och nederst",
+   "Stereoskopisk 3D och sk\303\244rmar",
+   "V\303\244xla \303\266gon",
    "Anpassa",
    "Lokal",
    "Streamingkvalitet",
@@ -6747,9 +7643,36 @@ static const struct
    "VSynk bytesintervall",
    "Synkronisering",
    "Videor",
-   "Tr\303\245dad video",
+   "Temporal uppskalning",
+   "F\303\266rinst\303\244llning f\303\266r temporal uppskalning",
+   "F\303\266rinst\303\244llning A (CNN, DLSS 2/3)",
+   "F\303\266rinst\303\244llning B (CNN, DLSS 2/3)",
+   "F\303\266rinst\303\244llning C (CNN, DLSS 2/3)",
+   "F\303\266rinst\303\244llning D (CNN, DLSS 2/3)",
+   "Standard",
+   "F\303\266rinst\303\244llning E (CNN, DLSS 3)",
+   "F\303\266rinst\303\244llning F (CNN, DLSS 2/3)",
+   "F\303\266rinst\303\244llning G (CNN)",
+   "F\303\266rinst\303\244llning H",
+   "F\303\266rinst\303\244llning I",
+   "F\303\266rinst\303\244llning J (transformer, f\303\244rre sp\303\266kbilder)",
+   "F\303\266rinst\303\244llning K (transformer, b\303\244sta kvalitet)",
+   "F\303\266rinst\303\244llning L",
+   "F\303\266rinst\303\244llning M",
+   "F\303\266rinst\303\244llning N",
+   " (finns inte i denna DLSS-k\303\266rtidsmilj\303\266)",
+   "F\303\266rinst\303\244llning O",
+   "Kvalitet f\303\266r temporal uppskalning",
+   "Balanserad",
+   "Ursprunglig uppl\303\266sning (endast kantutj\303\244mning)",
+   "Prestanda",
+   "Kvalitet",
+   "Ultraprestanda",
+   "Sk\303\244rpa f\303\266r temporal uppskalning",
+   "Tr\303\245dad videopipeline",
    "Synkronisering av tr\303\245dad videovisning",
    "Upprepa bildrutor med tr\303\245dad video",
+   "H\303\266j videotr\303\245dens prioritet",
    "Anv\303\244nd Metal-argumentbuffertar (kr\303\244ver omstart)",
 #if defined(RARCH_MOBILE)
    "Ankarf\303\266rskjutning f\303\266r visningsomr\303\245de, X (st\303\245ende orientering)",
@@ -6771,16 +7694,21 @@ static const struct
 #endif
    "F\303\266nster i helsk\303\244rmsl\303\244ge",
    "F\303\266nsterl\303\244ge",
+   "Separata sk\303\244rmf\303\266nster",
+   "Kopplad",
    "Maximal f\303\266nsterh\303\266jd",
    "Maximal f\303\266nsterbredd",
    "Anv\303\244nd anpassad f\303\266nsterstorlek",
    "F\303\266nsterh\303\266jd",
+   "Dold",
    "Horisontell sk\303\244rmf\303\266rskjutning",
    "Vertikal sk\303\244rmf\303\266rskjutning",
    "F\303\266nsteropacitet",
    "Kom ih\303\245g f\303\266nsterposition/storlek",
+   "Separat",
    "Visa f\303\266nsterdekorationer",
    "F\303\266nsterbredd",
+   "XeSS-katalog",
    "Synkronisera exakt till inneh\303\245llets bildhastighet (G-Sync, FreeSync)",
    "Ljudlatens",
    "Klientbuffert",
@@ -6789,6 +7717,8 @@ static const struct
    "Aktivera Wi-Fi",
    "Anslut till n\303\244tverk",
    "Anslut till n\303\244tverk",
+   "Energischema med l\303\245g f\303\266rdr\303\266jning",
+   "Inaktivera processorns vilol\303\244gen",
    "Opacitetsfaktor f\303\266r f\303\244rgtema",
    "Aktuell menyikon",
    "Ingen",
@@ -6979,6 +7909,15 @@ static const struct
    "kan \303\266ppna mer \303\244n stereo f\303\266rblir stereo.",
    "Samplingsfrekvens f\303\266r ljudutg\303\245ng.",
    "\303\204ndra inst\303\244llningar f\303\266r ljudutg\303\245ngen.",
+   "H\303\245ll den tr\303\245dade pipelinens k\303\266 p\303\245 samma niv\303\245 som den bildrute"
+   "synkrona v\303\244gen f\303\266r l\303\244gsta f\303\266rdr\303\266jning: hastighetsregleringen "
+   "k\303\266ar halva ljudf\303\266rdr\303\266jningen i st\303\244llet f\303\266r n\303\244stan hela"
+   " den plus en bildruta. N\303\244r synkronisering \303\244r p\303\245 och ljudet styr k\303\244rn"
+   "ans tempo, till exempel n\303\244r vertikal synkronisering \303\244r av, h\303\245lls k\303\244r"
+   "nan d\303\244r en bildrutesynkron skrivning skulle h\303\245lla den i st\303\244llet f\303\266r "
+   "vid full k\303\266. N\303\244r synkronisering \303\244r av beh\303\245ller k\303\266n inte l\303"
+   "\244ngre en extra ljudf\303\266rdr\303\266jn",
+   "ing som marginal mot sena bildrutor.",
    "Hj\303\244lper till att j\303\244mna ut brister i timing n\303\244r ljud och video synkroniseras"
    ". T\303\244nk p\303\245 att korrekt synkronisering \303\244r n\303\244stan om\303\266jlig att f"
    "\303\245 till om den \303\244r inaktiverad.",
@@ -7008,10 +7947,10 @@ static const struct
    "Synkronisera ljud. Rekommenderas.",
    "\303\204ndra inst\303\244llningar f\303\266r ljudsynkronisering.",
    "Omsampla, filtrera och mixa ljud i ljudtr\303\245den i st\303\244llet f\303\266r i varje bildrut"
-   "a. Ger samma latens som den bildrutesynkrona kedjan vid alla inst\303\244llningar f\303\266r lju"
-   "dlatens, med frekvenskontroll uppm\303\244tt i enhetens egen takt och omsamplaren utanf\303\266r"
-   " bildrutebudgeten. Ljuddrivrutiner som inte kan v\303\244ckas av enheten beh\303\245ller den bil"
-   "drutesynkrona kedjan.",
+   "a, med hastighetsreglering som m\303\244ts i enhetens egen takt och med omsamplaren utanf\303"
+   "\266r bildrutans tidsbudget. N\303\244r grund pipelinek\303\266 \303\244r av h\303\245lls mer lj"
+   "ud f\303\266re enheten \303\244n i den bildrutesynkrona v\303\244gen. Ljuddrivrutiner som inte k"
+   "an v\303\244ckas av enheten beh\303\245ller den bildrutesynkrona v\303\244gen.",
    "Be operativsystemet prioritera ljudtr\303\245den f\303\266re resten av gr\303\244nssnittet, s"
    "\303\245 att en belastad bildruta mer s\303\244llan g\303\266r att ljudenheten f\303\245r f\303"
    "\266r lite processortid. G\303\266r det m\303\266jligt att anv\303\244nda l\303\244gre ljudlaten"
@@ -7083,7 +8022,7 @@ static const struct
    "Till\303\244mpa fusk automatiskt n\303\244r spelet l\303\244ses in.",
    "Till\303\244mpa fusk direkt efter v\303\244xling.",
    "Fusk\303\244ndringar kommer aktiveras direkt.",
-   "Big endian: 258 = 0x0102, little endian: 258 = 0x0201",
+   "Rak byteordning: 258 = 0x0102, omv\303\244nd byteordning: 258 = 0x0201",
    "Fuskfiler lagras i denna katalog.",
    "Rensa fusklistan.",
    "L\303\244s in en fuskfil och ers\303\244tt befintliga fusk.",
@@ -7108,10 +8047,10 @@ static const struct
    "Ange om prestationsmeddelanden ska \303\266verensst\303\244mma med andra typer av sk\303\244rmme"
    "ddelanden. Inaktivera f\303\266r att st\303\244lla in manuella utfyllnads-/positionsv\303\244rde"
    "n.",
-   "Avst\303\245nd fr\303\245n v\303\244nster/h\303\266ger sk\303\244rmkant, vilket kan kompensera f"
-   "\303\266r sk\303\244rmens overscan.",
-   "Avst\303\245nd fr\303\245n sk\303\244rmens \303\266vre/nedre kant, vilket kan kompensera f\303"
-   "\266r sk\303\244rmens overscan.",
+   "Avst\303\245nd fr\303\245n v\303\244nster eller h\303\266ger sk\303\244rmkant, vilket kan kompen"
+   "sera f\303\266r sk\303\244rmens \303\266verskanning.",
+   "Avst\303\245nd fr\303\245n sk\303\244rmens \303\266vre eller nedre kant, vilket kan kompensera f"
+   "\303\266r sk\303\244rmens \303\266verskanning.",
    "\303\204ndra position och f\303\266rskjutningar f\303\266r prestationsmeddelanden p\303\245 sk"
    "\303\244rmen.",
    "Ta automatiskt en sk\303\244rmbild n\303\244r en prestation tj\303\244nas.",
@@ -7157,6 +8096,9 @@ static const struct
    "Vilket n\303\244tverksprotokoll f\303\266r molnlagring som ska anv\303\244ndas.",
    "F\303\266rs\303\266k att synkronisera konfigurationer, SRAM och tillst\303\245nd till en molnlag"
    "ringsleverant\303\266r.",
+   "Katalog under NFS-exporten f\303\266r molnsynkronisering. Filer lagras i katalogen cloud_sync. L"
+   "\303\244mna tomt f\303\266r att anv\303\244nda NFS-underkatalog eller ange / f\303\266r att anv"
+   "\303\244nda exportens rot.",
    "Ditt l\303\266senord f\303\266r ditt molnlagringskonto.",
    "L\303\266s alla konflikter genom att ladda upp lokala filer till servern.",
    "L\303\266s alla konflikter genom att ladda ner serverfiler, ers\303\244tter lokala kopior.",
@@ -7277,6 +8219,11 @@ static const struct
    "Skapa automatiskt en s\303\244kerhetskopia av installerade k\303\244rnor n\303\244r en online-up"
    "pdatering utf\303\266rs. M\303\266jligg\303\266r enkel \303\245terst\303\244llning till en funge"
    "rande k\303\244rna om en uppdatering introducerar en f\303\266rs\303\244mring.",
+   "Lagra s\303\244kerhetskopian som en onlineuppdatering tar av en k\303\244rna komprimerad, till u"
+   "ngef\303\244r h\303\244lften av k\303\244rnans storlek. N\303\244r funktionen \303\244r inaktive"
+   "rad flyttas den ersatta k\303\244rnan till s\303\244kerhetskopiorna som den \303\244r: uppdateri"
+   "ngen beh\303\266ver inte l\303\244gga tid p\303\245 att komprimera den, men varje s\303\244kerhe"
+   "tskopia tar ungef\303\244r dubbelt s\303\245 mycket utrymme.",
    "Ange hur m\303\245nga automatiskt genererade s\303\244kerhetskopior som ska sparas f\303\266r va"
    "rje installerad k\303\244rna. N\303\244r denna gr\303\244ns har uppn\303\245tts kommer den \303"
    "\244ldsta s\303\244kerhetskopian att raderas n\303\244r en ny s\303\244kerhetskopia skapas via e"
@@ -7295,6 +8242,9 @@ static const struct
    "l\303\266sta menyer n\303\244r inget inneh\303\245ll \303\244r laddat.",
    "Bl\303\244ddra igenom dessa alternativ f\303\266r att justera de horisontella inst\303\244llning"
    "arna och \303\244ndra bildstorleken.",
+   "Skapa ett videol\303\244ge som motsvarar inneh\303\245llets uppl\303\266sning och uppdateringsfr"
+   "ekvens. 15/31 kHz \303\244r f\303\266r CRT-sk\303\244rmar; Matcha bildsk\303\244rm och Matcha en"
+   "dast uppdateringsfrekvens anv\303\244nder gr\303\244nserna fr\303\245n bildsk\303\244rmens EDID.",
    "V\303\244xla mellan inbyggda och ultravida superuppl\303\266sningar.",
    "Anv\303\244nd en anpassad uppdateringsfrekvens som anges i konfigurationsfilen om det beh\303"
    "\266vs.",
@@ -7392,9 +8342,12 @@ static const struct
    " n\303\244r tr\303\245dad video \303\244r inaktiverad.",
    "Ange loggniv\303\245 f\303\266r frontend. Om en loggniv\303\245 som utf\303\244rdats av frontend"
    " \303\244r under detta v\303\244rde, ignoreras den.",
-   "Kan f\303\266rb\303\244ttra prestanda, minska f\303\266rdr\303\266jningar och \303\245tg\303\244"
-   "rda problem med knastrande ljud. Du beh\303\266ver https://github.com/FeralInteractive/gamemode "
-   "f\303\266r att detta ska fungera.",
+   "\303\226kar RetroArchs prioritet f\303\266r disk\303\245tkomst och l\303\245ser systemets presta"
+   "ndaprofil genom power-profiles-daemon eller tuned-ppd. Det kan f\303\266rb\303\244ttra prestanda"
+   "n, minska f\303\266rdr\303\266jningen och r\303\244tta till sprakande ljud. Prestandaprofilen an"
+   "v\303\244nds bara n\303\244r datorn \303\244r ansluten till str\303\266m. F\303\266reg\303\245en"
+   "de profil \303\245terst\303\244lls n\303\244r GameMode st\303\244ngs av eller RetroArch avslutas"
+   ".",
 #ifdef HAVE_GAME_AI
    "\303\205sidos\303\244tt underetikett f\303\266r AI-spelare",
    "\303\205sidos\303\244tt spelare 01",
@@ -7426,15 +8379,41 @@ static const struct
    "Byt till senaste anv\303\244nda skivan vid start av flerskivsinneh\303\245ll.",
    "Anv\303\244nd angiven analog spak f\303\266r D-Pad-inmatning. L\303\244get 'Tvingad' \303\245sid"
    "os\303\244tter den ursprungliga analoga inmatningen.",
+   "L\303\245ter en analog pinne sikta med denna ports ljuspistol eller pekare: pinnen pekar d\303"
+   "\244r den h\303\245lls p\303\245 sk\303\244rmen, med pinnens mittpunkt i centrum. Flera spelare "
+   "kan d\303\245 sikta var f\303\266r sig utan mus. Vapnets knappar binds som vanligt nedan.",
    "Till\303\245t alla spelare att styra menyn. Inaktiverad kan endast spelare 1 styra menyn.",
+   "Starta en styrspaks r\303\266relse p\303\245 den h\303\244r andelen av fullt utslag s\303\245 sn"
+   "art den l\303\244mnar d\303\266dzonen. F\303\266r k\303\244rnor som har en egen d\303\266dzon so"
+   "m annars skulle l\303\244ggas ovanp\303\245 denna: st\303\244ll in den p\303\245 k\303\244rnans "
+   "d\303\266dzon.",
    "Ignorera analoga spakr\303\266relser under d\303\266dzon-v\303\244rde.",
+   "Behandla en styrspak som lutas s\303\245 n\303\244ra kanten som helt utslagen, f\303\266r styrsp"
+   "akar som slits och inte n\303\245r hela v\303\244gen. R\303\266relsen mellan d\303\266dzonen och"
+   " kanten sprids \303\266ver hela intervallet.",
+   "Hur en styrspaks r\303\266relse \303\266kar med dess lutning. 1,0 \303\244r en rak linje. \303"
+   "\226ver 1,0 r\303\266r sig sm\303\245 lutningar mindre f\303\266r finare styrning n\303\244ra mi"
+   "tten. Under 1,0 r\303\266r de sig mer f\303\266r snabbare respons.",
    "Justera k\303\244nsligheten f\303\266r analoga spakar.",
+   "Ignorera den f\303\266rsta delen av en analog avtryckares r\303\266relse eller en tryckk\303\244"
+   "nslig knapps nedtryckning. Resten av r\303\266relsen skalas om till hela intervallet. Detta g"
+   "\303\244ller inte styrspakens d\303\266dzon, som endast g\303\244ller styrspakarna.",
 #ifdef ANDROID
    "Anv\303\244nd Androids systemtangentbord f\303\266r textinmatning i menyn i st\303\244llet f\303"
    "\266r det inbyggda sk\303\244rmtangentbordet. Aktiverar inklistring fr\303\245n urklipp och l"
    "\303\266senordshanterare. Kr\303\244ver peksk\303\244rm eller en inmatningsmetod som kan naviger"
    "as med en handkontroll.",
 #endif
+   "Med \342\200\235Tilldela portar vid f\303\266rsta knapptryckningen\342\200\235: vad en tangent s"
+   "om \303\244r bunden till en ports kontroller g\303\266r. \342\200\235Tilldelar sin port\342\200"
+   "\235 ger porten dess k\303\244rnport, p\303\245 samma s\303\244tt som en knapp p\303\245 handkon"
+   "trollen skulle g\303\266ra. \342\200\235V\303\244ntar p\303\245 sin handkontroll\342\200\235 "
+   "\303\266verl\303\245ter det \303\245t handkontrollens knappar, om inte porten saknar ansluten ha"
+   "ndkontroll.",
+   "N\303\244r inneh\303\245ll startas \303\244r ingen handkontroll mappad till en k\303\244rnport. "
+   "Varje handkontroll f\303\245r n\303\244sta lediga k\303\244rnport n\303\244r en knapp trycks ned"
+   " f\303\266r f\303\266rsta g\303\245ngen. G\303\244ller fr\303\245n n\303\244sta inneh\303\245lls"
+   "start.",
    "Konfigurerar automatiskt spelkontroller som har en profil, Plug-and-Play-stil.",
    "Aktivera alltid 'Spelfokus' -l\303\244get n\303\244r inneh\303\245ll startar eller \303\245terup"
    "ptas. N\303\244r inst\303\244llt p\303\245 \"Identifiera\" kommer alternativet att aktiveras om "
@@ -7446,10 +8425,26 @@ static const struct
    "\244rden.",
    "Antal sekunder att beh\303\245lla en inmatning intryckt f\303\266r att binda den.",
    "Antal sekunder att v\303\244nta f\303\266r att g\303\245 vidare till n\303\244sta bindning.",
-   "Antalet millisekunders v\303\244ntetid f\303\266r att f\303\245 ett komplett inmatningsprov. Anv"
-   "\303\244nd det om du har problem med samtidiga knapptryckningar (endast Android).",
+   "Hur l\303\244nge, i millisekunder, ett knapptryck fr\303\245n en handkontroll h\303\245lls tillb"
+   "aka s\303\245 att resten av ett samtidigt tryck p\303\245 flera knappar hinner fram. Anv\303\244"
+   "nd detta om en handkontroll registrerar samtidiga tryck med en bildruta emellan (endast Android)"
+   ".",
    "Hur l\303\245ngt en spak m\303\245ste lutas f\303\266r att resultera i en knapptryckning vid anv"
    "\303\244ndning av 'Analog till Digital'.",
+   "Hur l\303\245ngt ned varje knapp i kombinationen m\303\245ste tryckas innan den aktiveras, f\303"
+   "\266r analoga avtryckare och tryckk\303\244nsliga knappar. En knapp som bara kan l\303\244sa av "
+   "nedtryckt eller inte r\303\244knas som helt nedtryckt.",
+   "Omedelbar aktiveras s\303\245 snart alla knappar h\303\245lls ned. H\303\245ll inne v\303\244nta"
+   "r tills de har h\303\245llits ned tillsammans under den tid du v\303\244ljer h\303\244rn\303\244"
+   "st, s\303\245 att en kort tryckning mitt i ett spel inte g\303\266r n\303\245got. Tryckdjup v"
+   "\303\244ntar tills de har tryckts ned s\303\245 l\303\245ngt som du v\303\244ljer h\303\244rn"
+   "\303\244st, s\303\245 att analoga avtryckare och tryckk\303\244nsliga knappar (DualShock 2 och 3"
+   ") bara aktiveras n\303\244r de trycks h\303\245rt.",
+   "Hur l\303\244nge alla knappar i kombinationen m\303\245ste h\303\245llas ned samtidigt innan den"
+   " aktiveras.",
+   "Vad som sker n\303\244r alla knappar i kombinationen h\303\245lls ned samtidigt: en snabbtangent"
+   ", ett kommando utan snabbtangent eller ett av dina makron. Knapparna skickas fortfarande till sp"
+   "elet.",
    "Den fysiska kontrollern som den k\303\244nns igen av RetroArch.",
    "F\303\266redragen: om angiven enhet finns, kommer den att allokeras till denna spelare. Reserver"
    "ad: ingen annan styrenhet kommer att tilldelas f\303\266r denna spelare.",
@@ -7476,10 +8471,30 @@ static const struct
    "igeras till en annan anv\303\244ndare. Observera! Snabbtangenterna p\303\245 tangentbordet funge"
    "rar inte om k\303\244rnport 1 omdirigeras till n\303\245gon annan anv\303\244ndare \303\244n > 1"
    " (tangentbordsinmatningen kommer fr\303\245n anv\303\244ndare 1).",
+   "Om \342\200\235Aktivera snabbtangent\342\200\235 ocks\303\245 \303\244r en spelknapp (t.ex. \342"
+   "\200\235Select\342\200\235) h\303\245lls den undan fr\303\245n spelet tills det \303\244r klart "
+   "att den inte anv\303\244nds som snabbtangent: ett tryck utan snabbtangent g\303\245r till spelet"
+   " n\303\244r knappen sl\303\244pps, om den har h\303\245llits s\303\245 h\303\244r l\303\244nge; "
+   "en h\303\245llning g\303\245r till spelet n\303\244r s\303\245 h\303\244r m\303\245nga milliseku"
+   "nder har passerat utan snabbtangent. N\303\244r den anv\303\244nds med en snabbtangent m\303\244"
+   "rker spelet den aldrig. 0 st\303\244nger av funktionen.",
+   "Visa handkontrollen i varje port och konfigurationen som anv\303\244nds.",
    "Ta emot handkontrollindata n\303\244r RetroArch inte \303\244r det aktiva f\303\266nstret. N\303"
    "\244r funktionen \303\244r avst\303\244ngd ignoreras handkontroller n\303\244r f\303\266nstret s"
    "aknar fokus: menyn, snabbtangenterna och det k\303\266rande inneh\303\245llet reagerar inte p"
    "\303\245 dem.",
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   "Med inmatningsdrivrutinen \342\200\235raw\342\200\235 kan inneh\303\245ll som k\303\266rs l\303"
+   "\244sa tangentbordet medan RetroArch inte \303\244r det aktiva f\303\266nstret. Snabbtangenterna"
+   " och menyn kr\303\244ver fortfarande ett aktivt f\303\266nster. Inneh\303\245llet m\303\245ste f"
+   "orts\303\244tta k\303\266ra: \342\200\235Pausa inneh\303\245ll n\303\244r det inte \303\244r akt"
+   "ivt\342\200\235 ska vara av.",
+#endif
+   "Tangentbordet som den h\303\244r portens tangentbindningar l\303\244ses fr\303\245n. \342\200"
+   "\235Alla\342\200\235 l\303\244ser alla tangentbord som ett. Ett enskilt tangentbord kan v\303"
+   "\244ljas n\303\244r inmatningsdrivrutinen kan skilja tangentbord \303\245t. Det koms ih\303\245g"
+   " efter vad det \303\244r och \303\244r kopplat till porten n\303\244r tangentbord ansluts eller "
+   "kopplas fr\303\245n. Snabbtangenter och menyn svarar alltid p\303\245 alla tangentbord.",
    "H\303\266gsta antal anv\303\244ndare som RetroArch har st\303\266d f\303\266r. (Omstart kr\303"
    "\244vs)",
    "Spelkontrolls knappkombination f\303\266r att visa/d\303\266lj menyn.",
@@ -7515,6 +8530,12 @@ static const struct
    "\303\266ren och begr\303\244nsas till RetroArch-visningsf\303\266nstret, vilket f\303\266rb\303"
    "\244ttrar relativ musinmatning.",
    "Stoppar inspelning/uppspelning av aktuell repris.",
+   "Startar eller stoppar flytt av VR-headsetets sk\303\244rmar och meny med dess handkontroller.",
+   "Placerar headsetets sk\303\244rmar framf\303\266r den plats du tittar p\303\245 nu.",
+   "V\303\244xlar vilken vy k\303\244rnan f\303\245r veta att headsetet visar: uppslukande (huvudsp"
+   "\303\245rad), stereoskopisk (en 3D-sk\303\244rm) eller platt. \303\205terg\303\245r till k\303"
+   "\244rnans standardv\303\244rde n\303\244r k\303\244rnan st\303\244ngs.",
+   "V\303\244xlar headsetets laserpekare mellan av och dess senaste l\303\244ge.",
    "L\303\244ser in sparat tillst\303\245nd fr\303\245n aktuellt vald plats.",
    "V\303\244xlar den aktuella sk\303\244rmen mellan meny och inneh\303\245ll.",
    "Sl\303\245r p\303\245/av ljudutg\303\245ngen.",
@@ -7576,7 +8597,10 @@ static const struct
    "Minskar utg\303\245ende ljudvolymniv\303\245.",
    "\303\226kar utg\303\245ende ljudvolymniv\303\245.",
    "Sl\303\245r p\303\245/av synkronisering till exakt inneh\303\245llsbildhastighet.",
-   "Den fysiska musen som den identifieras av RetroArch.",
+   "Den fysiska mus som RetroArch k\303\244nner igen. N\303\244r inmatningsdrivrutinen kan skilja m"
+   "\303\266ss \303\245t kommer en mus som v\303\244ljs h\303\244r att kommas ih\303\245g efter vad "
+   "den \303\244r och vara kopplad till denna port n\303\244r m\303\266ss ansluts eller kopplas fr"
+   "\303\245n.",
 #ifdef GEKKO
    "Justera x/y-hastighetsskala f\303\266r Wiimotes ljuspistol.",
 #endif
@@ -7587,6 +8611,10 @@ static const struct
    "\266r att fylla sk\303\244rmen.",
    "Justera storleken p\303\245 \303\266verlappningszonerna i handlingsknappens diamant. St\303\244l"
    "l in p\303\245 100% f\303\266r 8-v\303\244gssymmetri.",
+   "Anger hur frontknapparna tolkar en ber\303\266ring. \342\200\235Riktning\342\200\235: knappen n"
+   "\303\244rmast fingertoppens mitt. \342\200\235Kontaktyta\342\200\235: alla knappar som t\303\244"
+   "cks av fingerkontakten, s\303\245 att en tumme mellan tv\303\245 knappar aktiverar b\303\245da. "
+   "\342\200\235B\303\245da\342\200\235: endera metoden.",
    "Inmatningen f\303\266r den analoga spaken kommer att vara relativ till f\303\266rsta ber\303\266"
    "ringen om den trycks in inom denna zon.",
    "Om det st\303\266ds av aktuell \303\266verl\303\244ggning, rotera automatiskt layouten s\303\245"
@@ -7595,8 +8623,15 @@ static const struct
    "dargr\303\244nssnittet f\303\266r att matcha sk\303\244rmens bildf\303\266rh\303\245llande. Ger "
    "b\303\244sta resultat med \303\266verkontroll\303\266r.",
    "Visa \303\266verl\303\244gg bakom inte framf\303\266r meny.",
+   "Hur stort fingerkontaktomr\303\245de som r\303\244knas i f\303\266rh\303\245llande till storleke"
+   "n som peksk\303\244rmen rapporterar. \303\226ka v\303\244rdet om peksk\303\244rmen rapporterar s"
+   "m\303\245 kontaktomr\303\245den.",
    "Justera storleken p\303\245 de diagonala zonerna. St\303\244ll in p\303\245 100% f\303\266r 8-v"
    "\303\244gssymmetri.",
+   "S\303\245 h\303\244r tolkar styrkorset en ber\303\266ring. \342\200\235Riktning\342\200\235: var"
+   " fingrets mittpunkt ligger. \342\200\235Kontaktomr\303\245de\342\200\235: alla riktningar som fi"
+   "ngerkontakten t\303\244cker, s\303\245 att en tumme \303\266ver tv\303\245 riktningar trycker ne"
+   "d b\303\245da. \342\200\235B\303\245da\342\200\235: antingen.",
    "\303\226verl\303\244gg anv\303\244nds f\303\266r kantramar och spelkontroller p\303\245 sk\303"
    "\244rmen.",
    "D\303\266lj \303\266verl\303\244gg  i meny och visa igen n\303\244r meny st\303\244ngs.",
@@ -7649,13 +8684,21 @@ static const struct
    "Ommappningar f\303\266r inmatning lagras i denna katalog.",
    "\303\205sidos\303\244tt nuvarande med de ommappade bindningarna f\303\266r den nuvarande k\303"
    "\244rnan.",
-   "Anger vilken k\303\244rnport som ska ta emot inmatning fr\303\245n frontend-kontrollerport %u.",
+   "Tryck p\303\245 en knapp eller f\303\266r en styrspak p\303\245 handkontrollen f\303\266r den h"
+   "\303\244r porten, eller en tangent som \303\244r bunden till den, s\303\245 hoppar listan nedan "
+   "till den.",
+   "Anger vilken k\303\244rnport som tar emot indata fr\303\245n klientdelens handkontrollsport %u. "
+   "\342\200\235Ingen\342\200\235 skickar inte indata till n\303\245gon k\303\244rnport.",
    "Ommappningar till\303\244mpas endast till aktiv gamepad till vilken de sparades.",
    "\303\204ndra hur den virtuella RetroPad mappas till en fysisk inmatningsenhet. Om en inmatningse"
    "nhet k\303\244nns igen och automatiskt konfigurerad p\303\245 r\303\244tt s\303\244tt beh\303"
    "\266ver anv\303\244ndare f\303\266rmodligen inte anv\303\244nda den h\303\244r menyn.\nOBS: F"
    "\303\266r k\303\244rnspecifika \303\244ndringar, anv\303\244nd 'Spelkontroller' i Snabbmenyn ist"
    "\303\244llet.",
+   "Styr vilken riktning en k\303\244rna ser f\303\266r styrkorset och de analoga pinnarna n\303\244"
+   "r inneh\303\245llet visas roterat. Vinkeln \303\244r den som videorotation skulle ha: vid 90 gra"
+   "der \303\244r v\303\244nster p\303\245 handkontrollen upp\303\245t i spelet. \342\200\235Auto"
+   "\342\200\235 f\303\266ljer inst\303\244llningen f\303\266r videorotation.",
    "Ange storleken p\303\245 haptiska \303\245terkopplingseffekter.",
    "Spara en autokonfigurationsfil som kommer att anv\303\244ndas automatiskt n\303\244r den h\303"
    "\244r styrenheten uppt\303\244cks igen.",
@@ -7676,6 +8719,51 @@ static const struct
    "Rotera accelerometerns och gyroskopets axlar s\303\245 att de matchar enhetens orientering.",
    "\303\204ndra inst\303\244llningarna f\303\266r accelerometer, gyroskop och belysningsstyrka.",
    "\303\204ndra inst\303\244llningar f\303\266r spelkontroller, tangentbord och mus.",
+   "Vad en k\303\244rna ser av styrkorset n\303\244r v\303\244nster och h\303\266ger h\303\245lls ne"
+   "d samtidigt. \342\200\235AV\342\200\235 skickar b\303\245da. \342\200\235Neutral\342\200\235 ski"
+   "ckar ingen, \342\200\235Senaste inmatning har f\303\266retr\303\244de\342\200\235 skickar den so"
+   "m trycktes sist och \342\200\235F\303\266rsta inmatning har f\303\266retr\303\244de\342\200\235 "
+   "den som trycktes f\303\266rst.",
+   "Vad en k\303\244rna ser av styrkorset n\303\244r upp och ned h\303\245lls ned samtidigt. \342"
+   "\200\235AV\342\200\235 skickar b\303\245da. \342\200\235Neutral\342\200\235 skickar ingen, \342"
+   "\200\235Senaste inmatning har f\303\266retr\303\244de\342\200\235 skickar den som trycktes sist,"
+   " \342\200\235F\303\266rsta inmatning har f\303\266retr\303\244de\342\200\235 den som trycktes f"
+   "\303\266rst och \342\200\235Upp\303\245t har f\303\266retr\303\244de\342\200\235 alltid upp\303"
+   "\245t.",
+#ifdef ANDROID
+   "Aktivera pekpennor. Ger exakt inmatning f\303\266r rit- och pekspel. Inaktivera vid inmatningsko"
+   "nflikter.",
+   "D\303\266lj \303\266verlagringen p\303\245 sk\303\244rmen medan stylusen anv\303\244nds och visa"
+   " den igen n\303\244r den inte har anv\303\244nts p\303\245 tv\303\245 sekunder. En stylus som ho"
+   "vrar r\303\244knas bara n\303\244r \342\200\235Stylus Hover Moves Cursor\342\200\235 \303\244r a"
+   "ktiverat. St\303\244ng AV f\303\266r att beh\303\245lla \303\266verlagringen p\303\245 sk\303"
+   "\244rmen s\303\245 att du kan spela med den medan du anv\303\244nder stylusen p\303\245 sk\303"
+   "\244rmen.",
+   "Till\303\245t att pekpennan hovrar (utan att vidr\303\266ra sk\303\244rmen) f\303\266r att flytt"
+   "a pekaren. Avg\303\266rande f\303\266r rit- och m\303\245larspel eller spel med ljuspistol. St"
+   "\303\244ng AV om pekaren flyttar sig ov\303\244ntat.",
+   "Pekpennans tryckk\303\244nslighet. H\303\266gre v\303\244rden = k\303\244nsligare (l\303\244ttar"
+   "e ber\303\266ring). Standardv\303\244rdet 70 fungerar f\303\266r de flesta enheter. S\303\244nk "
+   "v\303\244rdet om du anv\303\244nder ett sk\303\244rmskydd (40\342\200\22350).",
+   "P\303\205: Pekpennan m\303\245ste vidr\303\266ra sk\303\244rmen f\303\266r att registreras som e"
+   "tt klick. AV: Pekpennan kan klicka genom att vidr\303\266ra sk\303\244rmen ELLER genom att hovra"
+   " och trycka p\303\245 sidoknappen.",
+#endif
+   "Anger hur den h\303\244r portens handkontrollpekplatta motsvarar k\303\244rnan p\303\245 DualSho"
+   "ck 4 eller DualSense. \342\200\235Peksk\303\244rm\342\200\235: ett finger p\303\245 plattan r"
+   "\303\266r den punkten p\303\245 sk\303\244rmen, tv\303\245 fingrar r\303\266r tv\303\245 punkter"
+   ". \342\200\235Mus\342\200\235: n\303\244r du flyttar ett finger flyttas musen och ett tryck p"
+   "\303\245 plattan klickar; tv\303\245 fingrar ger h\303\266gerklick. \342\200\235Halvor som knapp"
+   "ar\342\200\235: ett tryck p\303\245 plattans v\303\244nstra eller h\303\266gra halva aktiverar k"
+   "nappen som \303\244r vald f\303\266r respektive halva. Tv\303\245 fingrar aktiverar b\303\245da."
+   " Kr\303\244ver \342\200\235Mappa om",
+   " kontroller\342\200\235.",
+   "N\303\244r \342\200\235Handkontrollens pekplatta\342\200\235 \303\244r inst\303\244lld p\303\245"
+   " \342\200\235Halvor som knappar\342\200\235: RetroPad-knappen som aktiveras n\303\244r du trycke"
+   "r p\303\245 pekplattans v\303\244nstra halva.",
+   "N\303\244r \342\200\235Handkontrollens pekplatta\342\200\235 \303\244r inst\303\244lld p\303\245"
+   " \342\200\235Halvor som knappar\342\200\235: RetroPad-knappen som aktiveras n\303\244r du trycke"
+   "r p\303\245 pekplattans h\303\266gra halva.",
    "Justera x/y-skalan f\303\266r peksk\303\244rmens koordinater f\303\266r att anpassa den till OS-"
    "niv\303\245ns sk\303\244rmskalning.",
 #ifdef UDEV_TOUCH_SUPPORT
@@ -7687,6 +8775,10 @@ static const struct
    "Aktivera tillsammans med musen f\303\266r att anv\303\244nda peksk\303\244rmen som en styrkula, "
    "vilket ger pekaren tr\303\266ghet.",
 #endif
+   "F\303\266r L2 och R2 p\303\245 en axel som vilar i ena \303\244nden av sitt omf\303\245ng: r\303"
+   "\244kna nedtryckningen fr\303\245n avtryckarens vilol\303\244ge. En full nedtryckning ger d\303"
+   "\245 hela det analoga omf\303\245nget och en halv nedtryckning trycker p\303\245 knappen. N\303"
+   "\244r detta \303\244r av r\303\244knas endast den andra halvan av nedtryckningen, som tidigare.",
    "Om den \303\244r aktiverad kan digitala riktningsinmatningar (\303\244ven k\303\244nda som d-pad"
    " eller \342\200\235hatswitch\342\200\235) vara turbo.",
    "Turbo aktiverar RetroPad-bindning. Tom anv\303\244nder den portspecifika bindningen.",
@@ -7703,8 +8795,23 @@ static const struct
    "\303\204ndra hur den virtuella RetroPad \303\244r mappad till den fysiska inmatningsenhet f\303"
    "\266r denna virtuella port.",
    "\303\204ndra k\303\244rnspecifika inmatningsmappningar.",
+#if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   "Med styrenhetsdrivrutinen \342\200\235raw\342\200\235 visar du varje handkontrolls port p\303"
+   "\245 egna lampor: spelarlamporna p\303\245 en DualSense, ljuslistens f\303\244rg p\303\245 en Du"
+   "alShock 4 (bl\303\245, r\303\266d, gr\303\266n, rosa). De f\303\266ljer handkontrollen n\303\244"
+   "r dess port \303\244ndras och slocknar n\303\244r detta st\303\244ngs av.",
+   "Med handkontrolldrivrutinen \342\200\235raw\342\200\235 l\303\244ses Xbox-kompatibla handkontrol"
+   "ler via XInput: separata avtryckare och XInputs knapplayout. Andra handkontroller l\303\244ses f"
+   "ortfarande med r\303\245 indata.",
+#endif
+#endif
    "Spelkontrollsprofiler som automatisk konfigurerar spelkontroller lagras i denna katalog.",
    "Drivrutin f\303\266r handkontroller att anv\303\244nda. (kr\303\244ver omstart)",
+   "Skydda nyckelringen som inneh\303\245ller sparade l\303\266senord med en l\303\266senfras, s\303"
+   "\245 att den kan \303\266ppnas igen n\303\244r konfigurationen flyttas till en annan dator. Ange"
+   " l\303\266senfrasen h\303\244r en g\303\245ng efter en s\303\245dan flytt. L\303\244mna f\303"
+   "\244ltet tomt f\303\266r att ta bort l\303\266senfrasen.",
 #ifdef HAVE_LAKKA_SWITCH
    "Hantera specifika alternativ f\303\266r Nintendo Switch.",
 #endif
@@ -7737,6 +8844,11 @@ static const struct
    "Vid loggning till fil, dirigera utdata fr\303\245n varje RetroArch session till en ny tidsst\303"
    "\244mplad fil. Inaktiverad skrivs loggen \303\266ver varje g\303\245ng RetroArch startas om.",
    "Logga h\303\244ndelser till en terminal eller fil.",
+   "Beg\303\244r att operativsystemet schemal\303\244gger huvudtr\303\245den, som k\303\266r k\303"
+   "\244rnan och menyn, f\303\266re vanliga tr\303\245dar utan realtidsschemal\303\244ggning. Inneh"
+   "\303\245ll som k\303\266rs utan begr\303\244nsning, som vid snabbspolning, tar d\303\245 process"
+   "ortid fr\303\245n andra program f\303\266rst. Ett system som nekar beh\303\245ller standardprior"
+   "iteten.",
    "V\303\244lj en standardk\303\244rna att anv\303\244nda vid start av genoms\303\266kt inneh\303"
    "\245ll.",
    "V\303\244lj en Logiqx eller MAME List XML DAT-fil f\303\266r att m\303\266jligg\303\266ra automa"
@@ -7787,6 +8899,29 @@ static const struct
    "nd. Detta s\303\244kerst\303\244ller en enhetlig visningsstorlek f\303\266r alla bilder, vilket "
    "f\303\266rb\303\244ttrar menyutseendet n\303\244r du tittar p\303\245 miniatyrbilder av blandat "
    "inneh\303\245ll med olika basm\303\245tt.",
+   "L\303\245t AI-assistenter styra RetroArch via Model Context Protocol: varje n\303\244tverkskomma"
+   "ndo blir ett verktyg. Servern lyssnar endast p\303\245 den h\303\244r datorn p\303\245 http://12"
+   "7.0.0.1:<port>/mcp och accepterar bara klienter som skickar token nedan. Verkst\303\244lls efter"
+   " omstart.",
+   "TCP-port f\303\266r MCP-servern.",
+   "Bearer-token som en MCP-klient m\303\245ste skicka. Skapas n\303\244r servern startas f\303\266r"
+   "sta g\303\245ngen; ange den i klientens konfiguration.",
+   "Spela upp \303\245terst\303\245ende filmer i den aktuella mappen i naturlig filnamnsordning. Sto"
+   "ppa vid slutet av mappen eller vid uppspelningsfel.",
+   "D\303\266lj vilande kontroller f\303\266r helsk\303\244rmsuppspelning efter denna f\303\266rdr"
+   "\303\266jning. Noll inneb\303\244r att kontrollerna alltid visas. Kontrollerna f\303\266rblir sy"
+   "nliga n\303\244r uppspelningen \303\244r pausad, vid s\303\266kning eller n\303\244r de anv\303"
+   "\244nds.",
+   "Anv\303\244nd filmens storlek och uppm\303\244tta bildfrekvens med den konfigurerade CRT SwitchR"
+   "es-motorn vid uppspelning i helsk\303\244rm.",
+   "Anv\303\244nd en uppdateringsfrekvens som bildsk\303\244rmen st\303\266der och som matchar filme"
+   "ns bildfrekvens vid uppspelning i helsk\303\244rm. \303\205terst\303\244ll f\303\266reg\303\245e"
+   "nde l\303\244ge n\303\244r uppspelningen avslutas. CRT SwitchRes har f\303\266retr\303\244de.",
+   "Anger hur l\303\245ngt kontrollerna f\303\266r helsk\303\244rmsuppspelning s\303\266ker fram\303"
+   "\245t eller bak\303\245t.",
+   "\303\204ndra de inbyggda inst\303\244llningarna f\303\266r medieuppspelning i helsk\303\244rm.",
+   "Visa en UTF-8-kodad SubRip-fil (.srt) med samma grundnamn som den aktuella filmen.",
+   "Positiva v\303\244rden visar undertexterna senare och negativa v\303\244rden visar dem tidigare.",
    "Visa systemets anv\303\244nd och total m\303\244ngd minne p\303\245 sk\303\244rmen.",
    "Minnesanv\303\244ndningen uppdateras med inst\303\244llt intervall i bildrutor.",
    "\303\205terg\303\245 till huvudmenyn fr\303\245n flikar/sidof\303\244lt n\303\244r Bak\303\245t "
@@ -7798,10 +8933,16 @@ static const struct
    "Drivrutin f\303\266r meny att anv\303\244nda. (kr\303\244ver omstart)",
    "Skyddar installationen genom att d\303\266lja alla konfigurationsrelaterade inst\303\244llningar"
    ".",
-   "S\303\244kerst\303\244ller att bildfrekvensen begr\303\244nsas n\303\244r du \303\244r inne i me"
-   "nyn.",
+   "Ange n\303\244r fil\303\244ndelser ska visas vid bl\303\244ddring efter inneh\303\245ll. Filv"
+   "\303\244ljare f\303\266r shaders, \303\266verl\303\244gg, konfigurationer och andra inst\303\244"
+   "llningsfiler visar alltid fil\303\244ndelser.",
    "\303\204ndra inst\303\244llningar f\303\266r filutforskare.",
    "\303\204ndra f\303\266rinst\303\244llda menybakgrundens opacitet.",
+   "Frekvensen som menyn k\303\266rs med medan inneh\303\245ll \303\244r inl\303\244st. \342\200\235"
+   "Bildsk\303\244rmens uppdateringsfrekvens\342\200\235 k\303\266r menyn med bildsk\303\244rmens up"
+   "pdateringsfrekvens; inneh\303\245ll som forts\303\244tter k\303\266ra bakom menyn beh\303\245lle"
+   "r sin egen frekvens. \342\200\235Inneh\303\245llets bildfrekvens\342\200\235 k\303\266r menyn me"
+   "d inneh\303\245llets bildfrekvens.",
    "Ljusstyrka p\303\245 menyn i cd/m2 (nits) vid anv\303\244ndning av en HDR-sk\303\244rm. Endast s"
    "ynlig n\303\244r HDR \303\244r aktiverat i Inst\303\244llningar > Video > HDR.",
    "Aktivera horisontell animering f\303\266r menyn. Detta kommer att p\303\245verka prestandan.",
@@ -7894,7 +9035,6 @@ static const struct
 #endif
    "Visa fullst\303\244ndiga s\303\266kv\303\244gar f\303\266r kataloginst\303\244llningar i st\303"
    "\244llet f\303\266r endast namnet p\303\245 den valda katalogen.",
-   "Visa alternativet 'Hj\303\244lp' i huvudmenyn.",
    "Visa alternativet 'Information' i huvudmenyn.",
    "Visa alternativet 'L\303\244s in inneh\303\245ll' i huvudmenyn.",
    "Visa en kort animering med \303\245terkoppling vid start n\303\244r inneh\303\245ll l\303\244ses"
@@ -7920,8 +9060,13 @@ static const struct
    "f\303\266rb\303\244ttrar menyutseendet n\303\244r du tittar p\303\245 miniatyrbilder av blandat "
    "inneh\303\245ll med olika basm\303\245tt.",
    "Spelar upp ljudsp\303\245ret f\303\266r animerade WebM-miniatyrbilder medan de visas. Ljud i Vor"
-   "bis och Opus st\303\266ds. Ljudet loopas med animeringen och stoppas n\303\244r miniatyrbilden s"
-   "t\303\244ngs.",
+   "bis och Opus st\303\266ds. Ljudet upprepas med animeringen och stoppas n\303\244r miniatyrbilden"
+   " st\303\244ngs.",
+   "Antalet tr\303\245dar som en animerad miniatyrbild f\303\245r avkoda med. En tr\303\245d beh\303"
+   "\245ller hela avkodningen i sin egen tr\303\245d. Fler tr\303\245dar f\303\266rdelar arbetet "
+   "\303\266ver k\303\244rnor, s\303\245 att stora f\303\266rhandsvisningar kan spelas upp snabbt. M"
+   "edan en k\303\244rna k\303\266rs anv\303\244nder f\303\266rhandsvisningen en tr\303\245d s\303"
+   "\245 att spelet beh\303\245ller sina k\303\244rnor.",
    "Uppskala automatiskt miniatyrbilder med en bredd/h\303\266jd som \303\244r mindre \303\244n det "
    "angivna v\303\244rdet. F\303\266rb\303\244ttrar bildkvalit\303\251n. Har en m\303\245ttlig inver"
    "kan p\303\245 prestanda.",
@@ -7992,7 +9137,7 @@ static const struct
    "\244ge.",
 #endif
 #endif
-   "Midi-drivrutin att anv\303\244nda. (Kr\303\244ver omstart)",
+   "MIDI-drivrutin att anv\303\244nda. (Kr\303\244ver omstart)",
    "V\303\244lj inmatningsenhet.",
    "V\303\244lj utmatningsenhet.",
    "\303\204ndra inst\303\244llningar f\303\266r MIDI.",
@@ -8018,6 +9163,9 @@ static const struct
    "Till\303\245t anslutningar i slavl\303\244ge. Klienter i slavl\303\244ge kr\303\244ver mycket li"
    "te processorkraft p\303\245 b\303\245da sidor, men kommer att drabbas avsev\303\244rt av n\303"
    "\244tverksf\303\266rdr\303\266jning.",
+   "Skickar de analoga spakarna f\303\266r handkontrollportarna, liksom deras knappar. Spelare med "
+   "\303\244ldre versioner av RetroArch kan inte ansluta n\303\244r det h\303\244r \303\244r aktiver"
+   "at.",
    "Bannlys en klient fr\303\245n ditt aktuella v\303\244rdrum.",
    "Format: #RRGGBB eller RRGGBB",
    "Format: #RRGGBB eller RRGGBB",
@@ -8026,16 +9174,21 @@ static const struct
    "Ange adressen till din anpassade rel\303\244server h\303\244r. Format: adress eller adress|port.",
    "Koppla fr\303\245n en aktiv Netplay anslutning.",
    "Ange Netplay-serveradress och anslut i klientl\303\244ge.",
-   "Starta netplay i v\303\244rdl\303\244ge (server).",
+   "Starta n\303\244tspel i v\303\244rdl\303\244ge (server).",
    "Tona ut chattmeddelanden \303\266ver tid.",
-   "Antalet bildrutor med inmatningslatens som netplay ska anv\303\244nda f\303\266r att d\303\266lj"
-   "a n\303\244tverkslatens. Minskar jitter och g\303\266r netplay mindre CPU-kr\303\244vande, men p"
-   "\303\245 bekostnad av m\303\244rkbar f\303\266rdr\303\266jning i inmatningen.",
-   "Det intervall av bildrutor med inmatningslatens som kan anv\303\244ndas f\303\266r att d\303\266"
-   "lja n\303\244tverkslatens. Minskar jitter och g\303\266r netplay mindre CPU-kr\303\244vande, men"
-   " p\303\245 bekostnad av of\303\266ruts\303\244gbar f\303\266rdr\303\266jning i inmatningen.",
+   "Antalet bildrutor med inmatningslatens som n\303\244tspel anv\303\244nder f\303\266r att d\303"
+   "\266lja n\303\244tverkslatens. Minskar tidsvariationer och g\303\266r n\303\244tspel mindre CPU-"
+   "kr\303\244vande, men ger en m\303\244rkbar f\303\266rdr\303\266jning i inmatningen.",
+   "Intervallet av bildrutor med inmatningslatens som kan anv\303\244ndas f\303\266r att d\303\266lj"
+   "a n\303\244tverkslatens. Minskar tidsvariationer och g\303\266r n\303\244tspel mindre CPU-kr\303"
+   "\244vande, men ger en of\303\266ruts\303\244gbar inmatningsf\303\266rdr\303\266jning.",
    "Adressen f\303\266r v\303\244rden att ansluta till.",
    "Sparka ut en klient fr\303\245n ditt aktuella v\303\244rdrum.",
+   "K\303\266r varje bildruta endast n\303\244r varje spelares inmatning f\303\266r den har kommit, "
+   "i st\303\244llet f\303\266r att f\303\266ruts\303\244ga i f\303\266rv\303\244g och spola tillbak"
+   "a. Beh\303\245ller en sparad status i st\303\244llet f\303\266r en per bildruta. K\303\244rnor v"
+   "ars status \303\244r f\303\266r stor f\303\266r att kunna spolas tillbaka k\303\266rs s\303\245 "
+   "h\303\244r \303\244nd\303\245.",
    "Det maximala antalet aktiva anslutningar som v\303\244rden accepterar innan nya anslutningar avv"
    "isas.",
    "Den maximala anslutningsf\303\266rdr\303\266jningen (ping) som v\303\244rden accepterar. St\303"
@@ -8049,26 +9202,82 @@ static const struct
    "r Netplay-sessioner.",
    "L\303\266senordet som anv\303\244nds av klienter f\303\266r att ansluta till v\303\244rden.",
    "Visa pingen f\303\266r den aktuella Netplay sessionen.",
-   "Om netplay-spel ska annonseras offentligt. Om inst\303\244llningen \303\244r avaktiverad m\303"
+   "Om n\303\244tspel ska annonseras offentligt. Om inst\303\244llningen \303\244r avaktiverad m\303"
    "\245ste klienter ansluta manuellt i st\303\244llet f\303\266r att anv\303\244nda den publika lob"
    "byn.",
-   "Leta efter netplay-v\303\244rdar p\303\245 LAN.",
-   "Leta efter netplay-v\303\244rdar.",
+   "Leta efter n\303\244tspelsv\303\244rdar p\303\245 LAN.",
+   "Leta efter n\303\244tspelsv\303\244rdar.",
+   "Spelarplatserna att beg\303\244ra fr\303\245n v\303\244rden n\303\244r du ansluter till en n\303"
+   "\244tspelssession. Om inga v\303\244ljs ger v\303\244rden den f\303\266rsta lediga.",
    "Beg\303\244r att f\303\245 spela med den angivna inmatningsenheten.",
    "Till\303\245t inte anslutningar som inte \303\244r i slavl\303\244ge. Rekommenderas inte, utom f"
    "\303\266r mycket snabba n\303\244tverk med mycket svaga maskiner.",
+   "F\303\266r en spelarplats som delas med andra n\303\244tspelsklienter: hur deras analoga pinnar "
+   "kombineras. \342\200\235Max\342\200\235: den starkaste r\303\266relsen vinner. \342\200\235Medel"
+   "\342\200\235: medelv\303\244rdet av alla. Med detta och delning av digital inmatning satt till "
+   "\342\200\235Ingen\342\200\235 beg\303\244rs en egen plats.",
+   "F\303\266r en spelarplats som delas med andra n\303\244tspelsklienter: hur deras knapptryckninga"
+   "r kombineras. \342\200\235Dela\342\200\235: nedtryckt n\303\244r n\303\245gon trycker p\303\245 "
+   "den. \342\200\235Grapple\342\200\235: nedtryckt n\303\244r ett udda antal spelare trycker p\303"
+   "\245 den. \342\200\235R\303\266sta\342\200\235: nedtryckt n\303\244r de flesta g\303\266r det. M"
+   "ed detta och delning av analog inmatning satt till \342\200\235Ingen\342\200\235 beg\303\244rs e"
+   "n egen plats.",
    "L\303\266senordet som anv\303\244nds av klienter f\303\266r att ansluta till v\303\244rden som e"
    "n \303\245sk\303\245dare.",
-   "Starta netplay i \303\245sk\303\245darl\303\244ge.",
+   "Starta n\303\244tspel i \303\245sk\303\245darl\303\244ge.",
    "Porten f\303\266r v\303\244rdens IP-adress. Kan vara antingen en TCP eller UDP-port.",
    "Vidarebefordra n\303\244tverksanslutningar via en mellanliggande server. Anv\303\244ndbart om v"
    "\303\244rden ligger bakom en brandv\303\244gg eller har problem med NAT/UPnP.",
+   "Ta emot kommandon fr\303\245n andra program \303\266ver UDP via n\303\244tverkskommandoporten: v"
+   "ad snabbtangenterna g\303\266r och annat, som att l\303\244sa in inneh\303\245ll eller l\303\244"
+   "sa en k\303\244rnas minne. Avs\303\244ndaren beh\303\266ver inte autentiseras, s\303\245 anv\303"
+   "\244nd detta p\303\245 ett n\303\244tverk du litar p\303\245.",
    "Visa n\303\244tverksgr\303\244nssnitt och tillh\303\266rande IP-adresser.",
    "H\303\244mta automatiskt ner saknade miniatyrbilder n\303\244r du bl\303\244ddrar i spellistor. "
    "Har en stor prestandap\303\245verkan.",
+   "L\303\245t en annan enhet fungera som handkontroll \303\266ver n\303\244tverket: en RetroArch-in"
+   "stans som k\303\266r \342\200\235Starta fj\303\244rr-RetroPad\342\200\235 skickar sina knappar o"
+   "ch pinnar hit via UDP. Varje anv\303\244ndare som aktiveras nedan lyssnar p\303\245 sin egen por"
+   "t, r\303\244knat fr\303\245n basporten. Avs\303\244ndaren beh\303\266ver inte autentiseras, s"
+   "\303\245 anv\303\244nd detta p\303\245 ett n\303\244tverk du litar p\303\245.",
+   "Varje anv\303\244ndares n\303\244tverksanslutna RetroPad lyssnar p\303\245 den f\303\266rsta enh"
+   "eten som skickar till den och ignorerar alla andra tills RetroArch startas om. En andra enhet ka"
+   "n inte ta \303\266ver handkontrollen. Detta stoppar inte en enhet som f\303\266rfalskar sin adre"
+   "ss.",
+   "De andra enheter som anv\303\244ndaren kan spela som \303\266ver n\303\244tverket. Varje vald en"
+   "het lyssnar p\303\245 sin egen port, r\303\244knat fr\303\245n basporten.",
    "\303\204ndra server- och n\303\244tverksinst\303\244llningar.",
 #ifdef _3DS
-   "Aktivera New3DS-klockhastighet (804 Mhz) och L2-cache.",
+   "Aktivera New3DS-klockhastighet p\303\245 804 MHz och L2-cache.",
+#endif
+#ifdef HAVE_NFSCLIENT
+   "Bl\303\244ddra i den konfigurerade NFS-exporten efter inneh\303\245ll.",
+   "S\303\266kv\303\244g som servern exporterar, till exempel /export/roms. Katalogens s\303\266kv"
+   "\303\244g p\303\245 servern fungerar \303\244ven f\303\266r NFS version 4, d\303\244r servern ka"
+   "n visa den under ett kortare namn. L\303\244mna tomt f\303\266r att ange exporten i adressen som"
+   " nfs://server/export/path.",
+   "Port f\303\266r MOUNT-tj\303\244nsten. 0 fr\303\245gar serverns portmappare.",
+   "Anslutningar som h\303\245lls \303\266ppna till servern.",
+   "Port f\303\266r NFS-tj\303\244nsten. 0 fr\303\245gar serverns portmappare.",
+   "Data som h\303\244mtas i f\303\266rv\303\244g n\303\244r ett spel l\303\244ser en fil i sm\303"
+   "\245 delar. En bakgrundstr\303\245d f\303\266rbereder n\303\244sta f\303\266nster. Kan g\303\266"
+   "ra stora skivavbildningar mjukare \303\266ver en l\303\245ngsam l\303\244nk, men anv\303\244nder"
+   " s\303\245 mycket minne och ytterligare en anslutning per \303\266ppen fil. 0 st\303\244nger av "
+   "funktionen: varje l\303\244sning \303\244r en beg\303\244ran, som f\303\266re f\303\266rh\303"
+   "\244mtning.",
+   "Serverns IP-adress eller v\303\244rdnamn.",
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_NFSCLIENT
+   "Konfigurera inst\303\244llningarna f\303\266r NFS-export.",
+#endif
+#endif
+#ifdef HAVE_NFSCLIENT
+   "S\303\266kv\303\244g till underkatalog under exporten. Valfri.",
+   "Sekunder att v\303\244nta p\303\245 servern f\303\266r varje beg\303\244ran.",
+   "Version 3 anv\303\244nder portmappare och MOUNT-tj\303\244nsten. Version 4 ansluter direkt till "
+   "NFS-porten och anv\303\244nder exporten som serverns pseudos\303\266kv\303\244g i filsystemet. D"
+   "en anv\303\244nder den senaste av versionerna 4.2, 4.1 och 4.0 som servern erbjuder.",
 #endif
    "Visa ett meddelande p\303\245 sk\303\244rmen n\303\244r spelkontroller ansluts/kopplas fr\303"
    "\245n.",
@@ -8186,9 +9395,9 @@ static const struct
    "Skala storleken p\303\245 horisontell utfyllnad.",
    "N\303\244r den \303\244r aktiverad kommer varje metadataobjekt som visas i spellistornas h\303"
    "\266gra sidof\303\244lt (associerad k\303\244rna, speltid) att uppta en enda rad; str\303\244nga"
-   "r som \303\266verskrider sidof\303\244ltets bredd kommer att visas som rullande tickertext. N"
-   "\303\244r den \303\244r inaktiverad visas varje inneh\303\245llsmetadata statiskt, omslaget s"
-   "\303\245 att det upptar s\303\245 m\303\245nga rader som kr\303\244vs.",
+   "r som \303\266verskrider sidof\303\244ltets bredd visas som rullande l\303\266ptext. N\303\244r "
+   "den \303\244r inaktiverad visas varje inneh\303\245llsmetadata statiskt och radbryts s\303\245 a"
+   "tt den upptar s\303\245 m\303\245nga rader som kr\303\244vs.",
    "Till\303\245t navigering och spellistor i v\303\244nster sidof\303\244lt.",
    "Spellistorna kommer att sorteras om i alfabetisk ordning efter att tillverkarkomponenten i deras"
    " namn har tagits bort.",
@@ -8216,7 +9425,7 @@ static const struct
    "rimerade filer.",
    "Validera k\303\244rnassociationer och ta bort ogiltiga och duplicerade poster.",
    "Ange vilken k\303\244rna som ska anv\303\244ndas n\303\244r inneh\303\245ll startas via en spell"
-   "istepost som inte har n\303\245gon befintlig k\303\244rn-association.",
+   "istepost som inte har n\303\245gon befintlig k\303\244rnassociation.",
    "\303\204ndra hur inneh\303\245llsetiketterna visas i den h\303\244r spellistan.",
    "Genomf\303\266r underh\303\245lls\303\245tg\303\244rder p\303\245 spellistor.",
    "L\303\244gg till nytt inneh\303\245ll och ta bort ogiltiga poster genom att upprepa den inneh"
@@ -8323,9 +9532,19 @@ static const struct
    "V\303\244xla synligheten f\303\266r menyobjekt i Snabbmenyn.",
    "Avsluta RetroArch automatiskt vid St\303\244ng inneh\303\245ll. 'CLI' avslutas bara n\303\244r i"
    "nneh\303\245llet startas via kommandoraden.",
-   "Avsluta RetroArch-programmet. Konfiguration sparas vid avslut \303\244r aktiverat.",
-   "Avsluta RetroArch-programmet. Konfiguration sparas vid avslut \303\244r inaktiverat.",
+   "Avsluta RetroArch. Konfigurationen sparas vid avslut.",
+   "Avsluta RetroArch. Konfigurationen sparas inte vid avslut.",
    "Visa databasinformation f\303\266r aktuellt inneh\303\245ll.",
+#ifdef HAVE_LAKKA
+#ifdef HAVE_LAKKA_SWITCH
+   "N\303\244r en Lakka-uppdatering har f\303\266rberetts startas Lakka om i st\303\244llet f\303"
+   "\266r den valda nyttolasten s\303\245 att uppdateringen installeras. Inaktivera om den valda nyt"
+   "tolasten alltid ska anv\303\244ndas.",
+   "V\303\244lj vilken Hekate-post som \342\200\235Starta om\342\200\235 i huvudmenyn startar till. "
+   "Anv\303\244nd v\303\244nster/h\303\266ger f\303\266r att v\303\244xla mellan posterna i hekate_i"
+   "pl.ini och bootloader/ini/. Som standard anv\303\244nds posten som k\303\266rs nu.",
+#endif
+#endif
    "Inspelningskonfigurationer lagras i denna katalog.",
    "Inspelningar lagras i denna katalog.",
    "\303\204ndra inst\303\244llningar f\303\266r inspelning.",
@@ -8374,7 +9593,7 @@ static const struct
    "\303\205terst\303\244ll k\303\244rnan som \303\244r kopplad till detta inneh\303\245ll.",
    "\303\205terst\303\244ller nuvarande konfigurations grundv\303\244rden.",
    "Utl\303\266s mjuk omstart. RetroPad Start utl\303\266ser h\303\245rd omstart.",
-   "Starta om RetroArch-programmet.",
+   "Starta om RetroArch.",
    "\303\205teruppta inneh\303\245llet och l\303\244mna snabbmenyn.",
    "\303\204ndra inst\303\244llningar f\303\266r prestationer.",
    "Den minnesm\303\244ngd (i MB) som ska reserveras f\303\266r \303\245terspolningsbufferten. Om du"
@@ -8387,7 +9606,9 @@ static const struct
    "\245terspolningshastigheten.",
    "\303\204ndra inst\303\244llningar f\303\266r bak\303\245tspolning.",
    "St\303\244ll in startkatalog f\303\266r filbl\303\244ddraren.",
-   "Standardkonfigurationsfilen lagras i denna katalog.",
+   "Katalog f\303\266r sparade konfigurationer, \303\245sidos\303\244ttningar samt alternativ f\303"
+   "\266r k\303\244rnor och inneh\303\245ll. Spara huvudkonfiguration anv\303\244nder s\303\266kv"
+   "\303\244gen till den aktiva konfigurationen.",
    "V\303\244lj ett annat f\303\244rgtema. Om du v\303\244ljer \342\200\235Anpassad\342\200\235 kan "
    "du anv\303\244nda f\303\266rinst\303\244llda filer f\303\266r menyteman.",
    "V\303\244lj ett f\303\266rinst\303\244llt menytema fr\303\245n filbl\303\244ddraren.",
@@ -8422,8 +9643,8 @@ static const struct
    "Dela n\303\244tverksmappar genom SMB-protokollet.",
 #endif
    "Anv\303\244nd inneh\303\245llskatalog som katalog f\303\266r sparade filer.",
-   "Spara alla sparningsfiler till denna katalog. Om den inte \303\244r inst\303\244lld f\303\266rs"
-   "\303\266ker den spara i inneh\303\245llsfilens arbetskatalog.",
+   "Spara alla sparfiler i denna katalog. Om den inte har angetts f\303\266rs\303\266ker programmet "
+   "spara i inneh\303\245llsfilens arbetskatalog.",
    "Anv\303\244nd inneh\303\245llskatalog som katalog f\303\266r sparade tillst\303\245nd.",
    "Spara automatiskt ett tillst\303\245nd med j\303\244mna intervall (i sekunder). Ange 0 f\303\266"
    "r att inaktivera.",
@@ -8480,8 +9701,6 @@ static const struct
    "ta sig p\303\245 serienumret kan ibland leda till att skannern placerar inneh\303\245llet i fel "
    "system. Detta l\303\244gger till en CRC-kontroll, vilket saktar ner skanningen avsev\303\244rt, "
    "men kan vara mer exakt.",
-   "S\303\266ker igenom endast en enda fil ist\303\244llet f\303\266r en katalog. V\303\244lj inneh"
-   "\303\245llsplats igen efter att detta \303\244ndrats.",
    "Resultaten l\303\244ggs till i denna spellista. Vid inst\303\244llningen Auto - Alla kan flera s"
    "ystemspellistor uppdateras. Anpassa utan databasreferens l\303\244nkar inte posterna till n\303"
    "\245gon databas i spellistan.",
@@ -8513,13 +9732,17 @@ static const struct
    "Visar inst\303\244llningar f\303\266r latens.",
    "Visar inst\303\244llningar f\303\266r loggning.",
    "Visa inst\303\244llningar f\303\266r 'N\303\244tverk'.",
-   "Visa inst\303\244llningar f\303\266r sk\303\244rmvisning.",
+   "Visa inst\303\244llningar f\303\266r \342\200\235Sk\303\244rmvisning\342\200\235. P\303\245verka"
+   "r b\303\245de \342\200\235Sk\303\244rmmeddelanden och sk\303\244rm\303\266verl\303\244gg\342\200"
+   "\235 under \342\200\235Anv\303\244ndargr\303\244nssnitt\342\200\235.",
    "Visa inst\303\244llningar f\303\266r 'Spellistor'.",
    "Visa inst\303\244llningar f\303\266r 'Energihantering'.",
    "Visar inst\303\244llningar f\303\266r inspelning.",
    "Visa inst\303\244llningar f\303\266r 'Sparningar'.",
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
    "Visa inst\303\244llningar f\303\266r \"SMB-klient\".",
+#endif
 #endif
    "Visa inst\303\244llningar f\303\266r 'Steam'.",
    "Visa inst\303\244llningar f\303\266r 'Anv\303\244ndare'.",
@@ -8537,27 +9760,72 @@ static const struct
    "Installera eller \303\245terst\303\244ll en k\303\244rna fr\303\245n 'H\303\244mtningar'-katalog"
    "en.",
    "Den hastighet som inneh\303\245llet spelas upp i n\303\244r slowmotion anv\303\244nds.",
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
    "V\303\244lj den autentisering som anv\303\244nds i din milj\303\266.",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    "Bl\303\244ddra efter filer p\303\245 konfigurerad SMB-utdelning.",
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    "Aktivera \303\245tkomst till SMB-n\303\244tverksresurser. Ethernet rekommenderas starkt framf"
    "\303\266r Wi-Fi f\303\266r en tillf\303\266rlitligare anslutning. Obs: \303\204ndringarna tr\303"
-   "\244der i kraft n\303\244sta g\303\245ng en resurs bl\303\244ddras, och inneh\303\245ll som reda"
-   "n k\303\266rs fr\303\245n en resurs beh\303\245ller sin aktuella anslutning.",
+   "\244der i kraft n\303\244sta g\303\245ng en resurs bl\303\244ddras och inneh\303\245ll som redan"
+   " k\303\266rs fr\303\245n en resurs beh\303\245ller sin aktuella anslutning.",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   "V\303\244rd f\303\266r Kerberos nyckeldistributionscentral. L\303\244mna tomt n\303\244r SMB-ser"
+   "vern \303\244r dom\303\244nkontrollanten.",
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    "V\303\244lj maximala antalet anslutningar som anv\303\244nds i din milj\303\266.",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    "L\303\266senord f\303\266r autentisering. Detta \303\244r valfritt n\303\244r g\303\244st\303"
-   "\245tkomst \303\244r aktiverad p\303\245 servern. I Windows 10 och senare \303\244r g\303\244st"
-   "\303\245tkomst inaktiverad som standard, s\303\245 h\303\244r kr\303\244vs ett l\303\266senord.",
+   "\245tkomst \303\244r aktiverad p\303\245 servern. Windows 10 och senare: g\303\244st\303\245tkom"
+   "st \303\244r inaktiverad som standard, s\303\245 h\303\244r kr\303\244vs ett l\303\266senord.",
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   "Data som h\303\244mtas i f\303\266rv\303\244g n\303\244r ett spel l\303\244ser en fil i sm\303"
+   "\245 delar. En bakgrundstr\303\245d f\303\266rbereder n\303\244sta f\303\266nster. Kan g\303\266"
+   "ra stora skivavbildningar mjukare \303\266ver en l\303\245ngsam l\303\244nk, men anv\303\244nder"
+   " s\303\245 mycket minne och ytterligare en anslutning per \303\266ppen fil. 0 st\303\244nger av "
+   "funktionen: varje l\303\244sning \303\244r en beg\303\244ran, som f\303\266re f\303\266rh\303"
+   "\244mtning.",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   "Kerberos-sf\303\244r f\303\266r biljettbaserad autentisering, till exempel Active Directory-dom"
+   "\303\244nen med versaler (EXAMPLE.COM). L\303\244mna tomt f\303\266r l\303\266senordsautentiseri"
+   "ng (NTLMSSP). Servern m\303\245ste anges med v\303\244rdnamn.",
    "Serverns IP-adress eller v\303\244rdnamn.",
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    "Konfigurera inst\303\244llningar f\303\266r SMB-n\303\244tverksdelning.",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    "Namn p\303\245 n\303\244tverksresursen som ska anv\303\244ndas. L\303\244mna tomt f\303\266r att"
    " lista alla resurser som servern delar ut och v\303\244lja en vid bl\303\244ddring.",
    "S\303\266kv\303\244g till underkatalog p\303\245 n\303\244tverksresursen. Valfritt.",
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
    "V\303\244lj standardtidsgr\303\244ns i sekunder.",
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
    "Anv\303\244ndarnamn f\303\266r autentisering. Detta \303\244r valfritt n\303\244r g\303\244st"
-   "\303\245tkomst \303\244r aktiverad p\303\245 servern. I Windows 10 och senare \303\244r g\303"
-   "\244st\303\245tkomst inaktiverad som standard, s\303\245 h\303\244r kr\303\244vs ett anv\303\244"
-   "ndarnamn.",
+   "\303\245tkomst \303\244r aktiverad p\303\245 servern. Windows 10 och senare: g\303\244st\303\245"
+   "tkomst \303\244r inaktiverad som standard, s\303\245 h\303\244r kr\303\244vs ett anv\303\244ndar"
+   "namn.",
    "Arbetsgrupp eller dom\303\244nnamn. Valfritt i vissa inst\303\244llningar.",
 #endif
    "Sortera sparade filer i mappar med namn efter katalogen som inneh\303\245llet finns i.",
@@ -8601,9 +9869,9 @@ static const struct
    "Visa information som \303\244r specifik f\303\266r enheten.",
    "Ta en bild av sk\303\244rmen.",
    "Utf\303\266r uppgifter p\303\245 en separat tr\303\245d.",
-   "H\303\245ll huvud- och ljudtr\303\245darna p\303\245 de snabbaste processork\303\244rnorna i en "
-   "processor med blandade k\303\244rntyper. Har ingen effekt p\303\245 processorer d\303\244r alla "
-   "k\303\244rnor \303\244r likadana. Tr\303\244der i kraft efter omstart.",
+   "Beh\303\245ll huvud-, video-, ljud- och uppgiftstr\303\245darna p\303\245 de snabbaste CPU-k\303"
+   "\244rnorna i processorer med blandade k\303\244rnor. Har ingen effekt p\303\245 processorer med "
+   "likadana k\303\244rnor. Verkst\303\244lls efter omstart.",
    "Typ av miniatyr som ska visas.",
    "Omslagsbilder, sk\303\244rmbilder och miniatyrbilder f\303\266r titelsk\303\244rmar lagras i den"
    "na katalog.",
@@ -8619,6 +9887,11 @@ static const struct
    "V\303\244lj din tidszon f\303\266r att justera datum och tid till din plats.",
 #endif
    "Visa aktuell tid i \303\266nskat format.",
+   "Styr hur servercertifikat kontrolleras vid s\303\244kra anslutningar (HTTPS) som anv\303\244nds "
+   "av Cloud Sync, RetroAchievements och Online Updater. Inst\303\244llningen \342\200\235Kr\303\244"
+   "vs\342\200\235 avvisar icke-betrodda certifikat och skyddar mot MitM-angrepp. S\303\244nk endast"
+   " denna s\303\244kerhetsniv\303\245 om du ansluter via en f\303\266retagsproxy eller till en v"
+   "\303\244rd med sj\303\244lvsignerat certifikat som du litar p\303\245.",
    "Drivrutin f\303\266r kompletterande anv\303\244ndargr\303\244nssnitt p\303\245 skrivbordet som a"
    "nv\303\244nds n\303\244r skrivbordsmenyn \303\244r aktiverad. (Omstart kr\303\244vs)",
    "Visa f\303\266nstermenyf\303\244lt.",
@@ -8682,6 +9955,10 @@ static const struct
 #else
    "Kontextskalning med h\303\245rdvara (om tillg\303\244nglig).",
 #endif
+   "Med Direct3D 9-drivrutinerna i Windows Vista och senare: presentera som Direct3D 11, med ett f"
+   "\303\266nster via bl\303\244ddermodellen och med v\303\244ntbara v\303\244xlingskedjor samt maxi"
+   "mal bildf\303\266rdr\303\266jning respekterad n\303\244r V-synk \303\244r aktiverat. \303\204ndr"
+   "ar bildsynkroniseringen. Av: presenteras som tidigare.",
 #if defined(DINGUX)
    "Ange bildinterpoleringsmetod vid skalning av inneh\303\245ll via intern IPU. 'Bikubisk' eller 'B"
    "ilinj\303\244r' rekommenderas n\303\244r du anv\303\244nder CPU-drivna videofilter. Det h\303"
@@ -8701,7 +9978,44 @@ static const struct
 #endif
    "F\303\266nsterhanterare anv\303\244nder komposition f\303\266r att till\303\244mpa visuella effe"
    "kter, uppt\303\244cka f\303\266nster som inte svarar och mycket annat.",
+   "Mappen som DLSS-k\303\266rmilj\303\266n l\303\244ses in fr\303\245n. Standard: \342\200\235upsca"
+   "lers/dlss\342\200\235 i RetroArch-mappen.",
+   "L\303\245t modellen sj\303\244lv hitta hud och behandla den separat fr\303\245n resten av bildru"
+   "tan.",
+   "K\303\266r DLSS 5:s modell f\303\266r neural rendering p\303\245 den uppskalade bildrutan. Den o"
+   "marbetar belysning och material med det djup och den r\303\266relse som k\303\244rnan exporterar"
+   " och kostar n\303\245gra millisekunder per bildruta. B\303\266rjar g\303\244lla vid n\303\244sta"
+   " bildruta.",
+   "Intensitet",
+   "Lokal struktur",
+   "Anger hur starkt modellen bearbetar lokalt ljus och skugga, i procent.",
+   "Anger vilken Neural Rendering-modell som ska anv\303\244ndas. Standard l\303\245ter k\303\266rmi"
+   "lj\303\266n v\303\244lja. Den numreras inte som f\303\266rinst\303\244llningen f\303\266r tidsm"
+   "\303\244ssig uppskalning.",
+   "DLSS 5:s Neural Rendering-modell som k\303\266rs p\303\245 DLSS utdata. Kr\303\244ver nvngx_dlss"
+   "nr.dll i DLSS-katalogen och en NVIDIA-drivrutin som har den.",
+   "Strukturstyrkan f\303\266r hud, i procent. F\303\266lj lokal struktur, modellens standard, anv"
+   "\303\244nder ocks\303\245 lokal struktur d\303\244r.",
+   "Modellens bearbetningsprofil. Standard \303\244r den kraftfullaste: mer lokal kontrast och djupa"
+   "re belysning, men ibland \303\266verm\303\244ttad. Naturlig g\303\266r samma arbete varsammare o"
+   "ch beh\303\245ller tonerna n\303\244rmare k\303\244rnans. Filmisk tonar ned glansen f\303\266r e"
+   "tt filmliknande utseende.",
    "Videodrivrutin att anv\303\244nda. (Kr\303\244ver omstart)",
+   "L\303\245t grafikdrivrutinen synkronisera bildrutor med sen inmatning och en kort k\303\266. Anv"
+   "\303\244nder NVIDIA Reflex (Vulkan VK_NV_low_latency2, D3D11/12 NVAPI eller Vulkan via DXGI) ell"
+   "er Vulkan AMD Anti-Lag (VK_AMD_anti_lag). Se Statistik/Systeminformation f\303\266r status. \342"
+   "\200\235P\303\245 + Boost\342\200\235 h\303\266jer GPU-klockfrekvenserna. Inte tillg\303\244ngli"
+   "g med Scanline Sync. Bildsk\303\244rmssynkronisering med tr\303\245dad video bevarar sk\303\244r"
+   "mens uppdateringsfrekvens; drivrutinen begr\303\244nsar inneh\303\245llshastigheten n\303\244r i"
+   "ngen annan begr\303\244nsa",
+   "re g\303\266r det. Bildf\303\266rdr\303\266jning \303\245sidos\303\244tts n\303\244r funktionen "
+   "\303\244r aktiv.",
+   "Anv\303\244nd en DXGI-swapkedja med flip-modell med drivrutiner f\303\266r Windows glcore och Vu"
+   "lkan. Aktiverar funktioner i bildsk\303\244rmsdrivrutinen, exempelvis NVIDIA Smooth Motion. Fall"
+   "er tillbaka till ursprunglig presentation om det inte st\303\266ds och kan \303\244ndra bildrute"
+   "f\303\266rdr\303\266jningen. Aktivera detta globalt f\303\266r menyer och k\303\244rnor med Smoo"
+   "th Motion. En \303\245sidos\303\244ttning endast f\303\266r k\303\244rnan kan v\303\244xla prese"
+   "ntations-API inom en session och f\303\245 bildsk\303\244rmsdrivrutinen att krascha.",
    "Anv\303\244nd ett CPU-drivet videofilter. Kan inneb\303\244ra en h\303\266g prestandakostnad. Vi"
    "ssa videofilter kanske bara fungerar f\303\266r k\303\244rnor som anv\303\244nder 32-bitars elle"
    "r 16-bitars f\303\244rg.",
@@ -8709,6 +10023,10 @@ static const struct
    "Till\303\244mpa videofilter. Detta \303\244r en rekommendation som videodrivrutinen inte n\303"
    "\266dv\303\244ndigtvis beh\303\266ver f\303\266lja.",
    "St\303\244ng av alla aktiva CPU-drivna videofilter.",
+   "Antalet tr\303\245dar som ett CPU-videofilter f\303\245r anv\303\244nda. \342\200\235Automatiskt"
+   "\342\200\235 anv\303\244nder k\303\244rnor som \303\245terst\303\245r efter emulering, video, lj"
+   "ud och uppgiftstr\303\245dar, h\303\266gst 8. Tunga filter som NTSC har mest nytta av fler tr"
+   "\303\245dar. \303\204ndringen anv\303\244nds direkt av ett aktivt filter.",
    "Visa Sk\303\244rm-meddelanden.",
    "V\303\244lj typsnittet f\303\266r sk\303\244rmmeddelanden.",
    "Ange teckenstorleken i punkter. N\303\244r widgetar anv\303\244nds har denna storlek endast effe"
@@ -8737,6 +10055,8 @@ static const struct
    "ngskedjan p\303\245 kompositorns oberoende v\303\244xlingss\303\266kv\303\244g. \342\200\235Tvin"
    "gat\342\200\235 v\303\244ljer uttryckligen exklusivt l\303\244ge och beh\303\245ller det. Kr\303"
    "\244ver VK_EXT_full_screen_exclusive.",
+   "Katalogen som FidelityFX SDK:s FSR-bibliotek l\303\244ses in fr\303\245n. Standard: \342\200\235"
+   "upscalers/fsr\342\200\235 i RetroArch-katalogen.",
    "Visning i helsk\303\244rm. Kan \303\244ndras vid k\303\266rtid. Kan \303\245sidos\303\244ttas me"
    "d en kommandoradsv\303\244xel.",
    "\303\204ndra inst\303\244llningar f\303\266r helsk\303\244rmsl\303\244ge.",
@@ -8748,9 +10068,9 @@ static const struct
    "Skicka shaders till grafikdrivrutinen som SPIR-V i st\303\244llet f\303\266r att f\303\266rst ko"
    "rskompilera dem till GLSL, vilket kan f\303\266rkorta inl\303\244sningstiden f\303\266r shader-f"
    "\303\266rinst\303\244llningar. Detta \303\244r endast en rekommendation: det kr\303\244ver drivr"
-   "utinstill\303\244gget \342\200\235GL_ARB_gl_spirv\342\200\235, och en shader eller drivrutin som"
-   " inte kan anv\303\244nda det \303\245terg\303\245r tyst till korskompilering. Tr\303\244der i kr"
-   "aft n\303\244sta g\303\245ng en shader-f\303\266rinst\303\244llning l\303\244ses in.",
+   "utinstill\303\244gget \342\200\235GL_ARB_gl_spirv\342\200\235 och en shader eller drivrutin som "
+   "inte kan anv\303\244nda det \303\245terg\303\245r tyst till korskompilering. Tr\303\244der i kra"
+   "ft n\303\244sta g\303\245ng en shader-f\303\266rinst\303\244llning l\303\244ses in.",
    "V\303\244lj vilket grafikkort att anv\303\244nda.",
    "Spela in GPU-skuggade material om tillg\303\244ngligt.",
    "Sk\303\244rmdumpar f\303\245ngar GPU-skuggat material om det finns.",
@@ -8780,10 +10100,22 @@ static const struct
    "nger av st\303\266rre delen av sk\303\244rmen och HDR \303\245terst\303\244ller en del av den f"
    "\303\266rlorade ljusstyrkan. Om du beh\303\266ver mer kontroll \303\266ver dina skanningslinjer "
    "kan du anv\303\244nda de anpassade skuggare som RetroArch tillhandah\303\245ller.",
+   "Informera en Wayland-komposit\303\266r om ljusstyrkeintervallet i bildrutan, s\303\245 att HDR-i"
+   "nneh\303\245ll mappas fr\303\245n bildrutan i st\303\244llet f\303\266r fr\303\245n ett antagand"
+   "e. N\303\244r alternativet \303\244r av beskrivs bildrutan som Windows-scRGB, som tidigare. Verk"
+   "st\303\244lls n\303\244r videodrivrutinen startas om.",
    "\303\204ndra HDR-inst\303\244llningar f\303\266r video.",
    "V\303\244lj din sk\303\244rms subpixel-layout, detta p\303\245verkar endast skanningslinjer. Om "
    "du inte vet vad din sk\303\244rms subpixel-layout \303\244r, se Rtings.com f\303\266r din sk\303"
    "\244rms \342\200\235subpixel-layout\342\200\235",
+   "Anv\303\244nd toppv\303\244rdet f\303\266r ljusstyrka som bildsk\303\244rmen rapporterar i st"
+   "\303\244llet f\303\266r Toppljusstyrka n\303\244r ett v\303\244rde rapporteras: det \303\244r v"
+   "\303\244rdet som rapporteras till k\303\244rnor och skickas som HDR-metadata till bildsk\303\244"
+   "rmen. N\303\244r alternativet \303\244r av anv\303\244nds angivet v\303\244rde f\303\266r Topplj"
+   "usstyrka.",
+   "Avkoda videof\303\266rhandsvisningar p\303\245 GPU:n n\303\244r grafikdrivrutinen kan g\303\266r"
+   "a det (H.264 med Vulkan), s\303\245 att CPU:n avlastas. \342\200\235Av\342\200\235 avkodar dem p"
+   "\303\245 CPU:n. G\303\244ller f\303\266rhandsvisningar som \303\266ppnas fr\303\245n och med nu.",
    "Videolayouter lagras i denna katalog.",
    "S\303\244ger till videodrivrutinen att uttryckligen anv\303\244nda ett specificerat buffringsl"
    "\303\244ge.",
@@ -8807,6 +10139,56 @@ static const struct
    "Ange anpassad X-axelposition f\303\266r sk\303\244rmtext. 0 \303\244r den v\303\244nstra kanten.",
    "Ange anpassad Y-axelposition f\303\266r sk\303\244rmtext. 0 \303\244r den nedre kanten.",
    "V\303\244lj vilken sk\303\244rm som ska anv\303\244ndas.",
+   "Hur headsetets handkontroller anv\303\244nds. Kombinerat g\303\266r b\303\245da till en handkont"
+   "roll f\303\266r spelare 1. Separat g\303\266r v\303\244nster handkontroll till spelare 1 och h"
+   "\303\266ger till spelare 2.",
+   "Hur l\303\245ngt framf\303\266r dig headsetet visar sk\303\244rmarna.",
+   "L\303\244mnar detta mellanrum mellan sk\303\244rmar som m\303\266ts kant mot kant, sida vid sida"
+   ", i ett h\303\266rn eller g\303\245ngj\303\244rnsf\303\244st i en vinkel. En sk\303\244rm f\303"
+   "\244sts vid mellanrummet inom 1 cm; p\303\245 andra st\303\244llen upp till 10 cm stannar mellan"
+   "rummet d\303\244r du placerade det. 0: kanterna ber\303\266r varandra.",
+   "Vad inneh\303\245llet g\303\266r medan Redigera sk\303\244rmar flyttar VR-headsetets sk\303\244r"
+   "mar: forts\303\244tter k\303\266ra eller pausas tills redigeringen avslutas. Redigeringsl\303"
+   "\244get \303\245terupptar bara det som det har pausat.",
+   "Stabiliserar handkontrollernas sikte medan Redigera sk\303\244rmar flyttar sk\303\244rmarna, s"
+   "\303\245 att en sk\303\244rm som h\303\245lls l\303\245ngt bort inte skakar med handen. En l\303"
+   "\245ngsam hand utj\303\244mnas mycket, en snabb hand lite. Av: sikte enligt sp\303\245rningen.",
+   "Riktar in en h\303\245llen sk\303\244rm mot n\303\244rliggande sk\303\244rmar: parallellt med el"
+   "ler vinkelr\303\244tt mot en sk\303\244rm, sedan i samma plan och niv\303\245 eller kant mot kan"
+   "t. Den kan ocks\303\245 g\303\245ngj\303\244rnsf\303\244stas l\303\244ngs en gemensam kant i val"
+   "fri vinkel. Handen som h\303\245ller sk\303\244rmen vibrerar n\303\244r f\303\244stet aktiveras.",
+   "Stannar en sk\303\244rm som den andra handens styrspak vrider eller vinklar vid varje steg av de"
+   "nna vinkel, med en vibration. Vridning r\303\244knas fr\303\245n riktningen mot dig, vinkling fr"
+   "\303\245n uppr\303\244tt l\303\244ge och en g\303\245ngj\303\244rnsf\303\244st sk\303\244rm fr"
+   "\303\245n plant l\303\244ge med grannsk\303\244rmen. F\303\244st mot sk\303\244rmar har f\303"
+   "\266retr\303\244de n\303\244ra en annan sk\303\244rm. Av: styrspaken vrider och vinklar mjukt.",
+   "Visa \303\244ven inneh\303\245llet i ett OpenXR-headset: varje sk\303\244rm som en egen flytande"
+   " sk\303\244rm, stereo 3D med b\303\245da \303\266gonen och menyn framf\303\266r sk\303\244rmarna"
+   ". Vulkan eller OpenGL p\303\245 Linux. F\303\266nstret beh\303\245ller sin vanliga utmatning.",
+   "Var en handkontrolls avtryckare pekar och vidr\303\266r i st\303\244llet f\303\266r att trycka p"
+   "\303\245 L2 eller R2. Automatisk: i menyn n\303\244r den \303\244r \303\266ppen och p\303\245 se"
+   "kund\303\244ra sk\303\244rmar som peksk\303\244rm. Alltid: p\303\245 alla sk\303\244rmar, f\303"
+   "\266r ljuspistoler. Av: ingenstans.",
+   "En tunn linje fr\303\245n varje handkontroll till punkten d\303\244r lasern pekar. Endast redige"
+   "ringsl\303\244ge: medan Redigera sk\303\244rmar flyttar sk\303\244rmarna. Alltid: \303\244ven f"
+   "\303\266r menyn och ljuspistoler. Av: aldrig.",
+   "\303\226ppnar menyn precis framf\303\266r sk\303\244rm 1, med samma orientering, s\303\245 att m"
+   "enyn flyttas med n\303\244r sk\303\244rm 1 flyttas. Av: menyn \303\266ppnas rakt framf\303\266r "
+   "sk\303\244rmarnas f\303\244stpunkt. En meny som placerats med Redigera sk\303\244rmar stannar d"
+   "\303\244r den placerades.",
+   "Be headsetet om dess h\303\266gsta CPU-klockfrekvens, \303\266ver vad den kan uppr\303\244tth"
+   "\303\245lla, s\303\245 att kr\303\244vande inneh\303\245ll h\303\244nger med. Det drar mer batte"
+   "ri och ger h\303\266gre v\303\244rme. Ett varmt headset kan \303\244nd\303\245 sakta ned. Till"
+   "\303\244mpas direkt.",
+   "Var headsetet h\303\245ller sk\303\244rmarna. Fast i rummet: d\303\244r Centrera om placerar dem"
+   ". F\303\266lj huvudet: alltid framf\303\266r dig; p\303\245 en stor sk\303\244rm hamnar kanterna"
+   " d\303\244r linserna g\303\266r bilden suddig. Tr\303\266g f\303\266ljning: sk\303\244rmarna lig"
+   "ger kvar tills du vrider bort huvudet ordentligt och glider sedan tillbaka framf\303\266r dig.",
+   "Uppdateringsfrekvensen som ska beg\303\244ras fr\303\245n headsetet. Automatisk v\303\244ljer de"
+   "n som passar inneh\303\245llet b\303\244st. Headsetets val beg\303\244r aldrig n\303\245gon. Inn"
+   "eh\303\245llet k\303\266rs synkront med headsetet n\303\244r frekvensen passar.",
+   "Bredden p\303\245 huvudsk\303\244rmen i headsetet. \303\226vriga sk\303\244rmar anpassas till de"
+   "n.",
    "\303\204ndra inst\303\244llningar f\303\266r videoutmatning.",
    "Justera besk\303\244rning av \303\266verskanning av sk\303\244rmen genom att minska bildstorleke"
    "n med ett angivet antal skanlinjer (tagen fr\303\245n sk\303\244rmens nedre kant). Kan orsaka sk"
@@ -8821,6 +10203,17 @@ static const struct
    "ssnittets egen klocka. G\303\244ller d\303\244r videodrivrutinen kan rapportera detta; klockan a"
    "nv\303\244nds annars och n\303\244r rapporten blir inaktuell. Inaktivera f\303\266r att alltid a"
    "nv\303\244nda klockan.",
+   "N\303\244r kodaren f\303\266r inspelning eller str\303\266mning inte hinner med, hoppa \303\266v"
+   "er bildrutor och fyll ljudluckor med tystnad i st\303\244llet f\303\266r att sakta ned spelet. I"
+   "naktivera f\303\266r att beh\303\245lla alla bildrutor p\303\245 bekostnad av ryckighet.",
+   "Bildrutor i k\303\266 mellan spelet och kodaren. St\303\266rre v\303\244rden tar upp korta avbro"
+   "tt i kodaren men anv\303\244nder mer minne. G\303\244ller n\303\244sta inspelning.",
+   "Uteslut menyn, aviseringar, sk\303\244rmmeddelanden och \303\266verl\303\244gg fr\303\245n GPU-i"
+   "nspelningar och uteslut tiden i menyn. N\303\244r funktionen \303\244r av spelar inspelningar in"
+   " exakt vad som visas p\303\245 sk\303\244rmen.",
+   "Koda H.264 med en maskinvaruaccelererad kodare n\303\244r en s\303\245dan finns och anv\303\244n"
+   "d annars programvara (libx264). G\303\244ller de inbyggda kvalitetsf\303\266rinst\303\244llninga"
+   "rna, inte egna konfigurationer.",
    "Bildsk\303\244rmens vertikala uppdateringsfrekvens. Anv\303\244nds f\303\266r att ber\303\244kna"
    " en l\303\244mplig ljudinmatningsfrekvens och som den bildsk\303\244rmsperiod som tr\303\245dad "
    "video synkroniseras efter n\303\244r drivrutinen inte kan rapportera en.",
@@ -8840,18 +10233,54 @@ static const struct
    "\245terg\303\245r slutligen till icke-heltalsskalning om underskalningsmarginalerna \303\244r f"
    "\303\266r stora.",
    "\303\204ndra inst\303\244llningar f\303\266r videoskalning.",
+   "Synkronisera videopresentationen med f\303\266ruts\303\244gelse av skannlinjeposition baserat p"
+   "\303\245 k\303\244rntid. Krav: VSync av, bildrutef\303\266rdr\303\266jning av, bildsk\303\244rme"
+   "ns Hz n\303\244ra 1\303\227 k\303\244rnans FPS och GPU med maximal klockfrekvens.",
+   "Justera f\303\266rskjutningen f\303\266r Scanline Sync manuellt. Annars ber\303\244knas f\303"
+   "\266rskjutningen utifr\303\245n storleken p\303\245 vertikal blankning och bildrutekache.",
    "VARNING: Snabbt flimmer kan orsaka bildbest\303\244ndighet p\303\245 vissa sk\303\244rmar. Anv"
    "\303\244nd p\303\245 egen risk // Simulerar en grundl\303\244ggande rullande skanningslinje \303"
    "\266ver flera underrutor genom att dela upp sk\303\244rmen vertikalt och rendera varje del av sk"
    "\303\244rmen beroende p\303\245 hur m\303\245nga underrutor det finns.",
+   "Hur sk\303\244rmarna i system med flera sk\303\244rmar ska ordnas.",
+   "V\303\244lj den flytande sk\303\244rm som ska justeras.",
+   "Kopplad beh\303\245ller sk\303\244rmen tillsammans med de andra. Separat visar den i ett eget f"
+   "\303\266nster eller p\303\245 en egen bildsk\303\244rm. Dold utel\303\244mnar den.",
+   "Var den h\303\244r sk\303\244rmen visas n\303\244r den \303\244r separat. Automatiskt v\303\244l"
+   "jer en andra bildsk\303\244rm. P\303\245 bildsk\303\244rmen d\303\244r RetroArch k\303\266rs beh"
+   "\303\245lls sk\303\244rmen kopplad.",
+   "St\303\244ng menyn och flytta VR-headsetets sk\303\244rmar och meny med handkontrollerna: greppk"
+   "nappen tar tag, avtryckaren vinklar, styrspaken \303\244ndrar avst\303\245nd och storlek, den fr"
+   "ia handens styrspak vrider och vinklar, huvudknappen \303\245terst\303\244ller och V\303\244lj n"
+   "\303\244sta samt V\303\244lj f\303\266reg\303\245ende v\303\244ljer ett objekt.",
+   "Vinkla den h\303\244r sk\303\244rmen upp\303\245t eller ned\303\245t i grader.",
+   "\303\205terst\303\244ll den valda flytande sk\303\244rmens position, rotation, storlek och synli"
+   "ghet.",
+   "\303\205terst\303\244ll alla sk\303\244rmars position, rotation, storlek och synlighet, \303\244"
+   "ven sk\303\244rmar utanf\303\266r den aktuella kartan och \303\245terst\303\244ll menyn till des"
+   "s oplacerade startplats.",
+   "Rotera den h\303\244r sk\303\244rmen i grader.",
+   "\303\204ndra storleken p\303\245 den h\303\244r flytande sk\303\244rmen.",
+   "Visa den h\303\244r flytande sk\303\244rmen. Menyn \303\244r tillg\303\244nglig \303\244ven n"
+   "\303\244r sk\303\244rmarna \303\244r dolda.",
+   "Flytta den h\303\244r sk\303\244rmen \303\245t v\303\244nster eller h\303\266ger i meter.",
+   "Flytta den h\303\244r sk\303\244rmen upp\303\245t eller ned\303\245t i meter.",
+   "Vrid den h\303\244r sk\303\244rmen \303\245t v\303\244nster eller h\303\266ger i grader.",
+   "Flytta den h\303\244r sk\303\244rmen n\303\244rmare eller l\303\244ngre bort fr\303\245n dig i m"
+   "eter.",
    "L\303\245t SDL-f\303\266nstret v\303\244xla mellan bildsk\303\244rmsl\303\244gena som det listar"
    ". \342\200\235Automatiskt\342\200\235 anv\303\244nder detta endast n\303\244r den inbyggda bilds"
    "k\303\244rmsservern inte kan v\303\244xla l\303\244ge. \342\200\235Alltid\342\200\235 \303\245si"
    "dos\303\244tter den inbyggda servern: CRT SwitchRes v\303\244ljer d\303\245 bland de listade l"
-   "\303\244gena, \303\244ven l\303\244gen utan k\303\244nda tidsinst\303\244llningar, och anpassade"
-   " CRT-tidsinst\303\244llningar \303\244r inte tillg\303\244ngliga.",
+   "\303\244gena, \303\244ven l\303\244gen utan k\303\244nda tidsinst\303\244llningar och anpassade "
+   "CRT-tidsinst\303\244llningar \303\244r inte tillg\303\244ngliga.",
    "\303\204ndra inst\303\244llningar f\303\266r videoutmatning.",
    "Aktivera pipeline f\303\266r video shader.",
+#if defined(HAVE_RSLC) && defined(HAVE_GLSLANG)
+   "Kompilator f\303\266r slang-shaders: rslc, som \303\244r inbyggd i RetroArch, eller systemets gl"
+   "slang och SPIRV-Cross. \303\204ndringen b\303\266rjar g\303\244lla n\303\244sta g\303\245ng en s"
+   "haderf\303\266rinst\303\244llning l\303\244ses in.",
+#endif
    "F\303\266rdr\303\266j automatisk inl\303\244sning av Shaders (i ms). Kan kringg\303\245 grafiska"
    " fel n\303\244r programvara f\303\266r sk\303\244rminspelning anv\303\244nds.",
    "GPU-baserade videoshaders lagras i denna katalog.",
@@ -8893,6 +10322,11 @@ static const struct
    "\245ende shader utg\303\245r fr\303\245n den aktuella f\303\266rinst\303\244llningen i st\303"
    "\244llet f\303\266r att v\303\244xla i rotkatalogen f\303\266r \342\200\235Videoshaders\342\200"
    "\235.",
+   "Informera det f\303\266rsta shaderpasset om att bilden har storleken nedan i st\303\244llet f"
+   "\303\266r sin verkliga storlek, s\303\245 att uppl\303\266sningsk\303\244nsliga shaders beter si"
+   "g likadant f\303\266r stora och sm\303\245 bilder.",
+   "H\303\266jden som det f\303\266rsta shaderpasset f\303\245r veta att bilden har.",
+   "Bredden som det f\303\266rsta shaderpasset f\303\245r veta att bilden har.",
    "VARNING: Snabbt flimmer kan orsaka bildbest\303\244ndighet p\303\245 vissa sk\303\244rmar. Anv"
    "\303\244nd p\303\245 egen risk // Simulerar en grundl\303\244ggande rullande skanningslinje \303"
    "\266ver flera underrutor genom att dela upp sk\303\244rmen vertikalt och rendera varje del av sk"
@@ -8902,37 +10336,79 @@ static const struct
    "L\303\244gg till en liten osk\303\244rpa i bilden f\303\266r att mjuka upp h\303\245rda pixelkan"
    "ter. Det h\303\244r alternativet har mycket liten inverkan p\303\245 prestandan. B\303\266r inak"
    "tiveras n\303\244r Shaders anv\303\244nds.",
-   "Bitdjup f\303\266r den slutliga utdataytan n\303\244r HDR \303\244r av. 10 bitar tar bort bandni"
-   "ng som orsakas av shadrar som m\303\266rkar ned bilden kraftigt, till exempel CRT-str\303\245lpr"
-   "ofiler och maskeringsgaller f\303\266r apertur. Faller tillbaka till 8 bitar om bildsk\303\244rm"
-   "en eller kompositorn inte erbjuder det. Ignoreras n\303\244r HDR \303\244r aktiverat, eftersom H"
-   "DR v\303\244ljer eget format.",
+   "Hur b\303\245da \303\266gonen i stereoskopiskt 3D-inneh\303\245ll ska visas. 2D visar endast v"
+   "\303\244nster \303\266ga. Sida vid sida (hel) passar appar f\303\266r headsetvisning och skel"
+   "\303\266gd visning. Sida vid sida (halv) och \303\266verst och nederst passar 3D-tv-apparater.",
+   "\303\204ndra hur stereoskopiskt 3D-inneh\303\245ll och flera sk\303\244rmar fr\303\245n k\303"
+   "\244rnor som har st\303\266d f\303\266r dem visas.",
+   "Byt v\303\244nster och h\303\266ger \303\266gonbild. Anv\303\244nds vid skel\303\266gd visning e"
+   "ller n\303\244r en sk\303\244rm visar \303\266gonen eller raderna omv\303\244nda.",
+   "Bitdjup f\303\266r den slutliga utmatningsytan n\303\244r HDR \303\244r av. 10 bitar minskar ban"
+   "dning som orsakas av shaderprogram som kraftigt m\303\266rkar bilden, till exempel CRT-str\303"
+   "\245lprofiler och aperturgaller. \303\205terg\303\245r till 8 bitar om bildsk\303\244rmen eller "
+   "kompositorn saknar st\303\266d f\303\266r det. Ignoreras n\303\244r HDR \303\244r aktiverat efte"
+   "rsom HDR v\303\244ljer sitt eget format.",
    "Anv\303\244nd ett anpassat bytesintervall f\303\266r VSynk. Minskar effektivt bildsk\303\244rmen"
    "s uppdateringsfrekvens med den angivna faktorn. 'Auto' st\303\244ller in faktorn baserat p\303"
    "\245 k\303\244rnrapporterad bildhastighet, vilket ger f\303\266rb\303\244ttrad bildtakt n\303"
    "\244r du k\303\266r t.ex. 30 fps inneh\303\245ll p\303\245 en 60 Hz sk\303\244rm eller 60 fps in"
    "neh\303\245ll p\303\245 en 120 Hz sk\303\244rm.",
    "\303\204ndra inst\303\244llningar f\303\266r videosynkronisering.",
+   "Skala upp h\303\245rdvarurenderat inneh\303\245ll med temporal uppskalning i Vulkan- och Direct3"
+   "D 12-drivrutinerna, med hj\303\244lp av djup- och r\303\266relsevektorer som k\303\244rnan tillh"
+   "andah\303\245ller. K\303\244rnor som inte tillhandah\303\245ller n\303\245gra vektorer visas uta"
+   "n uppskalning. Varje metod anv\303\244nder tillverkarens bibliotek, som inte ing\303\245r: DLSS "
+   "kr\303\244ver DLSS-k\303\266rtidsmilj\303\266n i DLSS-katalogen och en NVIDIA-drivrutin; FSR kr"
+   "\303\244ver FidelityFX SDK-biblioteket i FSR-katalogen (FSR 4 p\303\245 grafikkort som st\303"
+   "\266der det, annars FSR 3.1); ",
+   "XeSS kr\303\244ver libxess i XeSS-katalogen och fungerar p\303\245 alla grafikkort. Se Systeminf"
+   "ormation f\303\266r status.",
+   "DLSS-modellen som uppskalningen anv\303\244nder (endast DLSS, eller den uppskalningsmetod som Op"
+   "tiScaler ers\303\244tter). Standard l\303\245ter k\303\266rtidsmilj\303\266n v\303\244lja. A til"
+   "l G \303\244r CNN-modellerna i DLSS 2 och 3. K \303\244r transformatormodellen i DLSS 4 och ger "
+   "b\303\244st bild men belastar grafikkortet mer. J \303\244r en besl\303\244ktad modell med mindr"
+   "e eftersl\303\244pning men visst flimmer. Senare bokst\303\244ver tillh\303\266r nyare k\303\266"
+   "rtidsmilj\303\266er. Om den inl\303\244sta k\303\266rtidsmilj\303\266n saknar den valda modellen"
+   " anv\303\244nds Standard. \303\204ndringen b\303\266rjar",
+   " g\303\244lla vid n\303\244sta bildruta.",
+   "Uppskalningsl\303\244ge: hur mycket mindre \303\244n sk\303\244rmen k\303\244rnan renderar. Kval"
+   "itet renderar med cirka 2/3 av utdatauppl\303\266sningen, Balanserad med cirka 58 %, Prestanda m"
+   "ed 1/2 och Ultraprestanda med 1/3 (varje uppskalningsmetod har egna proportioner). Ursprunglig u"
+   "ppl\303\266sning beh\303\245ller utdatauppl\303\266sningen och anv\303\244nder bara kantutj\303"
+   "\244mning. Auto v\303\244ljer Kvalitet, eller Balanserad \303\266ver 1440 linjer. K\303\244rnan "
+   "f\303\245r storleken f\303\266r varje bildruta.",
+   "Sk\303\244rpan som uppskalningsmetoden till\303\244mpar p\303\245 resultatet, i procent. 0 st"
+   "\303\244nger av den. FSR anv\303\244nder sin egen sk\303\244rpning. DLSS 2.5.1 och senare saknar"
+   " sk\303\244rpning och ignorerar inst\303\244llningen, men OptiScaler till\303\244mpar sitt RCAS-"
+   "steg med denna styrka p\303\245 b\303\245de DLSS och XeSS. \303\204ndringen b\303\266rjar g\303"
+   "\244lla vid n\303\244sta bildruta.",
    "K\303\266r k\303\244rnan och videodrivrutinen i separata tr\303\245dar s\303\245 att bildsk\303"
-   "\244rmen beh\303\245ller sin takt n\303\244r k\303\244rnan hackar, och s\303\245 att k\303\244rn"
-   "an \303\266verlappar shaderkedjan och presentationen. Med \342\200\235Tr\303\245dad synkroniseri"
-   "ng av videovisning\342\200\235 startar k\303\244rnan s\303\245 sent som n\303\244sta uppdatering"
-   " till\303\245ter, vilket ger samma latens som bildrutef\303\266rdr\303\266jning. K\303\244rnor s"
-   "om renderar p\303\245 GPU:n k\303\266rs tr\303\245dat med drivrutinerna Vulkan, Direct3D 11, Dir"
-   "ect3D 12 och gl; med andra drivrutiner k\303\266rs de entr\303\245dat oavsett den h\303\244r ",
-   "inst\303\244llningen.",
-   "Med tr\303\245dad video startar varje bildruta fr\303\245n k\303\244rnan s\303\245 sent som n"
-   "\303\244sta bildsk\303\244rmsuppdatering till\303\245ter, utifr\303\245n uppm\303\244tta tider f"
-   "\303\266r k\303\244rna och rendering, i st\303\244llet f\303\266r med en fast timer. Det s\303"
-   "\244nker latensen till samma niv\303\245 som bildrutef\303\266rdr\303\266jning med entr\303\245d"
-   "ad video, och en bildruta som tar f\303\266r l\303\245ng tid upprepas i st\303\244llet f\303\266"
-   "r att missas. Av: timern styr takten som tidigare.",
+   "\244rmen beh\303\245ller sin takt n\303\244r k\303\244rnan hackar och s\303\245 att k\303\244rna"
+   "n \303\266verlappar shaderkedjan och presentationen. Med \342\200\235Tr\303\245dad synkroniserin"
+   "g av videovisning\342\200\235 startar k\303\244rnan s\303\245 sent som n\303\244sta uppdatering "
+   "till\303\245ter, vilket ger samma latens som bildrutef\303\266rdr\303\266jning. K\303\244rnor so"
+   "m renderar med grafikprocessorn k\303\266rs tr\303\245dat med drivrutinerna Vulkan, Direct3D 11,"
+   " Direct3D 12 och GL. Med andra drivrutiner k\303\266rs de entr\303\245dat oavsett",
+   " den h\303\244r inst\303\244llningen.",
+   "Med tr\303\245dad video startas varje bildruta f\303\266r k\303\244rnan s\303\245 sent som n\303"
+   "\244sta sk\303\244rmuppdatering till\303\245ter, baserat p\303\245 uppm\303\244tta tider f\303"
+   "\266r k\303\244rnan och renderingen, i st\303\244llet f\303\266r med en fast timer. Det minskar "
+   "f\303\266rdr\303\266jningen till samma niv\303\245 som Bildf\303\266rdr\303\266jning n\303\245r "
+   "med otr\303\245dad video och en bildruta som tar f\303\266r l\303\245ng tid upprepas i st\303"
+   "\244llet f\303\266r att missas. N\303\244r drivrutinssynkronisering anv\303\244nds sl\303\244ppe"
+   "r drivrutinen varje bildruta och sp\303\244rren h\303\245ller den bara till sk\303\244rmens uppd"
+   "atering. Av: ",
+   "timern synkroniserar som tidigare.",
    "Med tr\303\245dad video forts\303\244tter den senaste bildrutan att visas med bildsk\303\244rmen"
    "s uppdateringsfrekvens n\303\244r k\303\244rnan hamnar efter, i st\303\244llet f\303\266r att de"
    "n tidigare presentationen l\303\244mnas p\303\245 sk\303\244rmen. H\303\245ller ins\303\244ttnin"
    "g av svarta bildrutor och shader-effekter f\303\266r uppdateringsfrekvens stabila n\303\244r k"
    "\303\244rnan hackar. G\303\244ller d\303\244r videodrivrutinen kan upprepa en bildruta, men inte"
    " med shader-delbildrutor.",
+   "Beg\303\244r att operativsystemet schemal\303\244gger tr\303\245den f\303\266r tr\303\245dad vid"
+   "eo f\303\266re vanliga tr\303\245dar utan realtidsschemal\303\244ggning: klassen Games i Windows"
+   ", anv\303\244ndarinteraktiv tj\303\244nstekvalitet i Apple-system och ett l\303\244gre nice-v"
+   "\303\244rde i Linux och Android. Ett system som nekar beh\303\245ller standardprioriteten.",
    "F\303\266rs\303\266k att f\303\266rb\303\244ttra prestandan genom att anv\303\244nda Metal-argum"
    "entbuffertar. Vissa k\303\244rnor kan kr\303\244va detta. Detta kan g\303\266ra att vissa shader"
    "s slutar fungera, s\303\244rskilt p\303\245 \303\244ldre h\303\245rdvara eller operativsystem.",
@@ -8970,6 +10446,8 @@ static const struct
    "Om helsk\303\244rm, f\303\266redrar att anv\303\244nda ett helsk\303\244rmsf\303\266nster som f"
    "\303\266rhindrar att visningsl\303\244ge \303\244ndras.",
    "\303\204ndra inst\303\244llningar f\303\266r f\303\266nsterl\303\244ge.",
+   "Till\303\245t sekund\303\244ra sk\303\244rmar i separata skrivbordsf\303\266nster.",
+   "Visa sekund\303\244ra sk\303\244rmar p\303\245 en annan bildsk\303\244rm.",
    "Ange den maximala h\303\266jden p\303\245 visningsf\303\266nstret n\303\244r storleken \303\244n"
    "dras automatiskt baserat p\303\245 'F\303\266nsterskala'.",
    "Ange den maximala bredden p\303\245 visningsf\303\266nstret n\303\244r storleken \303\244ndras a"
@@ -8991,10 +10469,26 @@ static const struct
    "tstorlek.",
    "Visa f\303\266nstrets titelrad och ramar.",
    "Ange den anpassade bredden f\303\266r visningsf\303\266nstret.",
+   "Katalogen som XeSS-biblioteket (libxess.dll) l\303\244ses in fr\303\245n. Standard: \342\200\235"
+   "upscalers/xess\342\200\235 i RetroArch-katalogen.",
    "Ingen avvikelse fr\303\245n k\303\244rnans efterfr\303\245gade timing. Anv\303\244nd f\303\266r "
    "sk\303\244rmar med variabel uppdateringsfrekvens (G-sync, FreeSync, HDMI 2.1 VRR).",
    "Wi-Fi-drivrutin att anv\303\244nda. (Kr\303\244ver omstart)",
    "S\303\266k efter tr\303\245dl\303\266sa n\303\244tverk och etablera anslutning.",
+   "V\303\244xlar till en kopia av det aktiva energischemat i Windows som h\303\245ller processorn p"
+   "\303\245 full hastighet: l\303\244gsta och h\303\266gsta processortillst\303\245nd \303\244r 100"
+   " %, energipreferensen \303\244r prestanda och inga k\303\244rnor parkeras. Prestandatillst\303"
+   "\245nden utv\303\244rderas p\303\245 nytt var 5:e sekund i st\303\244llet f\303\266r var 15:e mi"
+   "llisekund. PCI Express-anslutningar, USB-portar och USB 3-anslutningar h\303\245lls utanf\303"
+   "\266r energisparl\303\244ge, vilket minskar k\303\244rnans avbrottsaktivitet och f\303\266rdr"
+   "\303\266jningar vid uppvaknande. G\303\244ller endast vid ",
+   "n\303\244tdrift. Det ursprungliga schemat \303\245terst\303\244lls n\303\244r programmet avsluta"
+   "s.",
+   "N\303\244r energischemat med l\303\245g f\303\266rdr\303\266jning \303\244r p\303\245, h\303\245"
+   "ll \303\244ven varje processork\303\244rna utanf\303\266r sina vilol\303\244gen s\303\245 att in"
+   "gen beh\303\266ver vakna innan den k\303\266rs. Processorn drar d\303\245 full effekt och blir v"
+   "arm \303\244ven n\303\244r den inte har n\303\245got att g\303\266ra. G\303\244ller endast n\303"
+   "\244r datorn \303\244r ansluten till n\303\244tstr\303\266m.",
    "\303\204ndra f\303\244rgtemats opacitet i procent.",
    "Aktuell menyikon kan d\303\266ljas, under den horisontella menyn eller i sidhuvudets titel.",
    "Rita ikoner f\303\266r menyposter.",
@@ -9051,6 +10545,14 @@ static const struct
    "Spara tillst\303\245nd automatiskt till",
    "S\303\244kerhetskopierar k\303\244rna: ",
    "Blockerar SRAM-\303\266verskrivning",
+   "Datorns Bluetooth-adapter anv\303\244nder Windows generiska drivrutin, som ofta inte hittar n"
+   "\303\245gra enheter. Installera Bluetooth-drivrutinen fr\303\245n datorns eller moderkortets til"
+   "lverkare.",
+   "\342\200\235%s\342\200\235 har parkopplats.",
+   "Parkopplar \342\200\235%s\342\200\235...",
+   "Det gick inte att parkoppla \342\200\235%s\342\200\235.",
+   "Det gick inte att parkoppla \342\200\235%s\342\200\235. Tryck p\303\245 synkroniseringsknappen o"
+   "ch v\303\244lj sedan enheten igen medan lamporna blinkar.",
    "Parkoppling borttagen. Starta om RetroArch f\303\266r att ansluta/para igen.",
    "Bluetooth-genoms\303\266kning slutf\303\266rd.",
    "Tar upp kommandogr\303\244nssnitt p\303\245 port",
@@ -9092,8 +10594,8 @@ static const struct
    "uell session.",
    "Hardcore-l\303\244get f\303\266r prestationer aktiverades, sparade tillst\303\245nd och tillbaka"
    "spolning inaktiverades.",
-   "Netplay-v\303\244rden beh\303\266ver uppdateras. Hardcore-l\303\244get f\303\266r prestationer i"
-   "naktiverades f\303\266r aktuell session.",
+   "N\303\244tspelsv\303\244rden beh\303\266ver uppdateras. Hardcore-l\303\244get f\303\266r prestat"
+   "ioner inaktiverades f\303\266r aktuell session.",
    "Hardcore pausad. Infogning av svarta bildrutor \303\244r inte till\303\245tet.",
    "Hardcore pausad. Manuell inst\303\244llning av f\303\266rdr\303\266jning av bildrutor f\303\266r"
    " video \303\244r inte till\303\245ten.",
@@ -9184,6 +10686,8 @@ static const struct
    "Dekomprimering p\303\245g\303\245r redan.",
    "Dekomprimeringen misslyckades.",
    "Uppt\303\244ckte visningsomr\303\245de f\303\266r",
+   "%s och tangentbord tilldelade till k\303\244rnport %u",
+   "%s tilldelad till k\303\244rnport %u",
    "%s konfigurerad i port %u",
    "%s kopplades fr\303\245n port %u",
    "%s (%u/%u) inte konfigurerad, faller tillbaka",
@@ -9225,15 +10729,16 @@ static const struct
    "Misslyckades med att acceptera inkommande \303\245sk\303\245dare.",
    "Misslyckades med att tilldela minne f\303\266r korrigerat inneh\303\245ll...",
    "Misslyckades med att l\303\244gga till skivan",
+   "Det gick inte att aktivera energischemat med l\303\245g f\303\266rdr\303\266jning",
    "Misslyckades med att till\303\244mpa shader.",
    "Misslyckades med att till\303\244mpa shader f\303\266rinst\303\244llning:",
    "Misslyckades med att binda uttag.",
    "Misslyckades med att ansluta till klient.",
    "Misslyckades med att ansluta till v\303\244rd.",
    "Misslyckades med att skapa katalogen.",
+   "Det gick inte att inaktivera processorns vilol\303\244gen",
    "Misslyckades med att g\303\245 in i GameMode",
-   "Misslyckades med att g\303\245 in i GameMode - kontrollera att GameMode-daemon \303\244r install"
-   "erad och k\303\266rs",
+   "Det gick inte att aktivera GameMode",
    "Misslyckades med att extrahera inneh\303\245ll fr\303\245n komprimerad fil",
    "Misslyckades med att f\303\245 smeknamn fr\303\245n klient.",
    "Misslyckades med att l\303\244sa.",
@@ -9244,7 +10749,7 @@ static const struct
    "Det gick inte att l\303\244sa in SRAM",
    "Misslyckades med att l\303\244sa in tillst\303\245nd fr\303\245n",
    "Misslyckades med att \303\266ppna libretro-k\303\244rna",
-   "Misslyckades med att patcha",
+   "Misslyckades med att till\303\244mpa korrigeringen",
    "Misslyckades med att ta emot rubrik fr\303\245n klient.",
    "Misslyckades med att ta bort rubrik fr\303\245n v\303\244rd.",
    "Misslyckades med att ta emot smeknamn.",
@@ -9299,18 +10804,65 @@ static const struct
    "Tryck p\303\245 tangentbord, mus eller spelkontroll",
    "Sl\303\244pp tangenter och knappar!",
    "Tidsgr\303\244ns",
+   "Handkontrollen f\303\266r port %u ansluter till den h\303\244r datorn via Bluetooth n\303\244r d"
+   "en kopplas fr\303\245n.",
+   "Det gick inte att para ihop handkontrollen f\303\266r port %u med den h\303\244r datorn.",
    "Mata in fusk",
    "Filnamn f\303\266r inmatningsfusk",
+   "V\303\244lj \303\245tg\303\244rd",
+   "%u%% nedtryckt",
+   "H\303\245ll ned i",
+   "%s sekunder",
+   "Omedelbar",
+   "Tryckdjup",
+   "Knappar som h\303\245lls ned samtidigt och aktiverar en snabbtangent, ett kommando eller ett mak"
+   "ro. H\303\266ger: h\303\245ll ned knapparna som ska anv\303\244ndas och v\303\244lj sedan vad de"
+   " ska g\303\266ra. V\303\244nster: v\303\244lj vad de ska g\303\266ra. OK: skriv den. Start: ta b"
+   "ort den.",
+   "St\303\244ll in knappar",
+   "Handkontroll %u (%04X:%04X) ignoreras och l\303\244ses inte l\303\244ngre.",
+   "Delas med port %u",
+   "Handkontroll %04X:%04X l\303\244ses in igen.",
+   "\303\204ndrar DualShock 3-drivrutinen. Till\303\245t \303\244ndringen i Windows-prompten.",
+   "DualShock 3-drivrutinen \303\244ndrades inte eftersom administrat\303\266rsr\303\244ttigheter in"
+   "te beviljades.",
+   "St\303\266d f\303\266r DualShock 3 har aktiverats. Handkontrollen ansluts igen automatiskt.",
+   "%s (port %u) m\303\245ste aktiveras: Information > Inmatningsinformation > Aktivera st\303\266d "
+   "f\303\266r DualShock 3.",
+   "Det gick inte att \303\244ndra DualShock 3-drivrutinen.",
+   "DualShock 3 \303\245terl\303\244mnades till Windows-drivrutinen.",
    "Ange l\303\266senord",
    "L\303\266senord felaktigt.",
    "L\303\266senord korrekt.",
+   "Drivrutinen f\303\266r GameCube-adaptern \303\244ndras: till\303\245t det i Windows-prompten.",
+   "GameCube-adapterns drivrutin \303\244ndrades inte: administrat\303\266rsbeh\303\266righet bevilj"
+   "ades inte.",
+   "GameCube-adaptern \303\244r aktiverad. Den \303\245teransluter automatiskt.",
+   "Wii U GameCube-adapter hittades, men Windows egen drivrutin kan inte anv\303\244ndas: Informatio"
+   "n > Inmatningsinformation > Aktivera Wii U GameCube-adapter.",
+   "Det gick inte att \303\244ndra GameCube-adapterns drivrutin.",
+   "L\303\266senfras f\303\266r nyckelring",
+   "Ny l\303\266senfras f\303\266r nyckelring (tomt tar bort den)",
    "Ange l\303\266senord",
    "L\303\266senord felaktigt.",
    "L\303\266senord korrekt.",
+   "Knappar som trycks \303\245t dig ett steg i taget. Varje knapp h\303\245lls ned ett antal bildru"
+   "tor i spelet, skrivna som \342\200\235ned 2, ned+h\303\266ger 2, a 4\342\200\235. En kombination"
+   " aktiverar den. Start: ta bort den.",
    "Filnamn f\303\266r inmatnings\303\245sidos\303\244ttning",
    "Filnamn f\303\266r inmatningsf\303\266rval",
    "Filnamn f\303\266r inmatningsommappning",
+   "Tryck p\303\245 en knapp eller f\303\266r en styrspak p\303\245 handkontrollen f\303\266r port %"
+   "u\n(Tidsgr\303\244ns: %u sekunder)",
    "D\303\266p om titel",
+   "Handkontrollens drivrutin f\303\266r ursprunglig Xbox \303\244ndras. Till\303\245t \303\244ndrin"
+   "gen i Windows-prompten.",
+   "Handkontrollens drivrutin f\303\266r ursprunglig Xbox \303\244ndrades inte eftersom administrat"
+   "\303\266rsbeh\303\266righet inte gavs.",
+   "Originalhandkontroll f\303\266r Xbox aktiverad. Den ansluter igen automatiskt.",
+   "En ursprunglig Xbox-handkontroll utan Windows-drivrutin hittades: Information > Inmatningsinform"
+   "ation > Aktivera ursprunglig Xbox-handkontroll.",
+   "Handkontrollens drivrutin f\303\266r ursprunglig Xbox kunde inte \303\244ndras.",
    "Installerar k\303\244rna: ",
    "Gr\303\244nssnitt",
    "Intern lagring",
@@ -9322,6 +10874,14 @@ static const struct
    "i megabytes",
    "Tryckmus \303\244r inaktiverad",
    "Tryckmus \303\244r aktiverad",
+   "Tangentbord tilldelat till k\303\244rnport %u",
+   "L\303\266senfras f\303\266r nyckelring borttagen.",
+   "L\303\266senfras f\303\266r nyckelring inst\303\244lld.",
+   "Felaktig l\303\266senfras f\303\266r nyckelring.",
+   "St\303\244ller in l\303\266senfras f\303\266r nyckelring...",
+   "Nyckelring uppl\303\245st.",
+   "L\303\245ser upp nyckelring...",
+   "Kunde inte uppdatera nyckelfilen f\303\266r l\303\266senfras.",
    "Senaste version redan installerad: ",
    "B\303\244sta: %s",
    "Topplistef\303\266rs\303\266k misslyckades",
@@ -9357,7 +10917,10 @@ static const struct
    "St\303\244dar upp M3U-poster: ",
    "Kontrollerar aktuella poster: ",
    "S\303\266ker igenom inneh\303\245ll: ",
+   "MCP-servern kunde inte lyssna p\303\245 %s:%u. K\303\266rs en annan instans av RetroArch?",
    "Minne",
+   "Inneh\303\245llets bildfrekvens",
+   "Bildsk\303\244rmens uppdateringsfrekvens",
    "Varning: Saknade resurser, anv\303\244nd online-uppdateraren om tillg\303\244nglig.",
    "Filen f\303\266r inmatningsuppspelning \303\244r inte en giltig REPLAY-fil.",
    "Formatet f\303\266r inmatningsuppspelning verkar ha en annan serialiseringsversion. Det kommer s"
@@ -9369,37 +10932,38 @@ static const struct
    "Blockerade klient: \"%s\"",
    "Kan inte v\303\244xla till spell\303\244get",
    "De beg\303\244rda inmatningsenheterna \303\244r inte tillg\303\244ngliga",
-   "Detfinns inga lediga spelarplatser",
+   "Det finns inga lediga spelarplatser",
    "Du har inte beh\303\266righet att spela",
    "Ditt nicknamn \303\244ndrades till \"%s\"",
    "Chatt st\303\266ds",
    "Enheter",
    "Netplay fr\303\245nkopplad",
-   "En netplay-peer k\303\266r en annan k\303\244rna. Det g\303\245r inte att ansluta.",
-   "VARNING: En netplay-peer k\303\266r en annan version av k\303\244rnan. Om problem uppst\303\245r"
-   " ska du anv\303\244nda samma version.",
-   "VARNING: En netplay-peer k\303\266r en annan version av RetroArch. Om problem uppst\303\245r, an"
-   "v\303\244nd samma version.",
-   "Denna k\303\244rna st\303\266der inte netplay mellan dessa plattformar",
+   "En n\303\244tspelspartner k\303\266r en annan k\303\244rna. Det g\303\245r inte att ansluta.",
+   "VARNING: En n\303\244tspelspartner k\303\266r en annan version av k\303\244rnan. Om problem upps"
+   "t\303\245r ska du anv\303\244nda samma version.",
+   "VARNING: En n\303\244tspelspartner k\303\266r en annan version av RetroArch. Om problem uppst"
+   "\303\245r, anv\303\244nd samma version.",
+   "Denna k\303\244rna st\303\266der inte n\303\244tspel mellan dessa plattformar",
    "Ange Netplay-chattmeddelande:",
    "Ange Netplay-serverl\303\266senord:",
-   "Misslyckades med att initiera netplay.",
+   "Misslyckades med att initiera n\303\244tspel.",
    "Misslyckades blockera klient: \"%s\"",
    "Misslyckades sparka klient: \"%s\"",
-   "Netplay-v\303\244rden \303\244r full.",
+   "N\303\244tspelsv\303\244rden \303\244r full.",
    "Felaktigt l\303\266senord",
    "Sparkade klient: \"%s\"",
-   "Letar efter netplay-v\303\244rdar...",
+   "Letar efter n\303\244tspelsv\303\244rdar...",
    "Netplay-s\303\266kning f\303\244rdigst\303\244lld.",
-   "Inneh\303\245llet m\303\245ste l\303\244sas in innan netplay kan startas.",
-   "Ett f\303\266rs\303\266k till Netplay-anslutning misslyckades eftersom motparten inte k\303\266r"
-   " RetroArch eller k\303\266r en gammal version av RetroArch.",
-   "En netplay-peer k\303\266r en gammal version av RetroArch. Det g\303\245r inte att ansluta.",
-   "Netplay-peer \342\200\235%s\342\200\235 pausad",
-   "Denna k\303\244rna st\303\266der inte netplay mellan olika plattformar",
+   "Inneh\303\245llet m\303\245ste l\303\244sas in innan n\303\244tspel kan startas.",
+   "Ett f\303\266rs\303\266k till n\303\244tspelsanslutning misslyckades eftersom motparten inte k"
+   "\303\266r RetroArch eller k\303\266r en gammal version av RetroArch.",
+   "En n\303\244tspelspartner k\303\266r en gammal version av RetroArch. Det g\303\245r inte att ans"
+   "luta.",
+   "N\303\244tspelspartner \342\200\235%s\342\200\235 pausad",
+   "Denna k\303\244rna st\303\266der inte n\303\244tspel mellan olika plattformar",
    "%d spelare",
    "Spelare %.*s har l\303\244mnat spelet",
-   "En netplay-klient har kopplat fr\303\245n",
+   "En n\303\244tspelsklient har kopplat fr\303\245n",
    "\"%s\" har kopplat fr\303\245n",
    "F\303\266rdr\303\266jningar orsakade",
    "%d spelare (%d \303\245sk\303\245dare)",
@@ -9407,7 +10971,7 @@ static const struct
    "\303\205sk\303\245dar",
    "%.*s \303\244r ansluten, som spelare %u",
    "%.*s \303\244r ansluten, med inmatningsenheter %.*s",
-   "K\303\244rnan har inte st\303\266d f\303\266r netplay.",
+   "K\303\244rnan har inte st\303\266d f\303\266r n\303\244tspel.",
    "Du \303\244r ansluten, som spelare %u",
    "Du \303\244r ansluten, med inmatningsenheter %.*s",
    "Du har l\303\244mnat spelet",
@@ -9421,6 +10985,32 @@ static const struct
    "\244r spellisteposten.",
    "K\303\244rnor \303\266verhoppade: ",
    "K\303\244rnor uppdaterade: ",
+   "Redigera sk\303\244rmar kr\303\244ver att inneh\303\245ll k\303\266rs: l\303\244s in inneh\303"
+   "\245ll f\303\266rst.",
+   "Redigering av VR-headsetets sk\303\244rmar har stoppats.",
+   "Redigerar VR-headsetets sk\303\244rmar: greppknappen tar tag, styrspaken flyttar och \303\244ndr"
+   "ar storlek, avtryckaren vinklar sk\303\244rmen med handen, den andra handens styrspak vrider och"
+   " vinklar den, huvudknappen \303\245terst\303\244ller.",
+   "Meny",
+   "Sk\303\244rm %u",
+   "Redigera sk\303\244rmar \303\244r inte tillg\303\244ngligt: VR-headsetets handkontroller kan int"
+   "e anv\303\244ndas f\303\266r det.",
+   "Redigering av VR-headsetets sk\303\244rmar har stoppats. \303\204ndringarna \303\244r inte spara"
+   "de \303\244nnu.",
+   "Headsetutg\303\245ngen kunde inte starta. F\303\266nstret visar utdata.",
+   "Headsetvy: %s",
+   "Platt",
+   "Uppslukande",
+   "Stereoskopisk",
+   "Laserpekare: %s",
+   "Headsetutg\303\245ngen startar n\303\244r inneh\303\245llet har l\303\244sts in igen.",
+   "Headsetet k\303\266rs i %u Hz, vilket inte passar spelets %.2f fps. R\303\266relserna blir rycki"
+   "ga. St\303\244ll in headsetets uppdateringsfrekvens f\303\266r RetroArch p\303\245 en multipel a"
+   "v spelets frekvens (i SteamVR: inst\303\244llningar f\303\266r VR-video).",
+   "Headsetsessionen avslutades. St\303\244ng av headsetutg\303\245ngen och sl\303\245 p\303\245 den"
+   " igen f\303\266r att f\303\266rs\303\266ka igen.",
+   "Headsetutg\303\245ngen \303\244r av: ingen OpenXR-k\303\266rtid eller n\303\245got headset hitta"
+   "des.",
    "Tangentbords\303\266verl\303\244gg \303\244r inte inst\303\244llt.",
    "Sparar inte. \303\205sidos\303\244ttningar aktiva.",
    "Fel vid borttagning av \303\245sidos\303\244ttningar.",
@@ -9463,6 +11053,8 @@ static const struct
    "L\303\244ser f\303\266rsta datasp\303\245ret...",
    "Status f\303\266r intern lagring: Skrivskyddad",
    "Status f\303\266r intern lagring: L\303\244s/skriv",
+   "Den h\303\244r videodrivrutinen kan inte spela in endast spelet: menyn och meddelanden spelas in"
+   ".",
    "Inspelning avslutad p\303\245 grund av storleks\303\244ndring.",
    "Spelar in till",
    "Dirigerar om fuskfil till",
@@ -9558,21 +11150,25 @@ static const struct
    "Hoppar \303\266ver SRAM-inl\303\244sning.",
    "Tillbakaspolning i slow-motion.",
    "Tyv\303\244rr, inte implementerat: k\303\244rnor som inte efterfr\303\245gar inneh\303\245ll kan"
-   " inte delta i netplay.",
+   " inte delta i n\303\244tspel.",
    "SRAM kommer inte att sparas.",
    "Startar uppspelning av film.",
    "Startar filminspelning till",
    "Tillst\303\245ndsstorlek",
    "Tillst\303\245ndsplats",
    "Tar sk\303\244rmdump.",
+   "Verifiering av TLS-certifikat \303\244r inaktiverad. S\303\244kra anslutningar kontrolleras inte"
+   " och kan avlyssnas.",
+   "S\303\244ker anslutning nekades: serverns certifikat kunde inte verifieras. Se loggen eller inst"
+   "\303\244llningen \342\200\235Verifiering av TLS-certifikat\342\200\235.",
    "till",
    "V\303\244xla metadata",
    "Helsk\303\244rmsminiatyrer",
    "\303\205ngrade inl\303\244sningstillst\303\245nd.",
-   "\303\205ngrar sparl\303\244ge\342\200\246",
+   "\303\205ngrar sparl\303\244ge...",
    "Ok\303\244nd",
    "Ok\303\244nd kompilator",
-   "Ok\303\244nt netplay-kommando togs emot",
+   "Ok\303\244nt n\303\244tspelskommando togs emot",
    "Opausad.",
    "Ok\303\244nt kommando \"%s\" togs emot.\n",
    "Videol\303\244get st\303\266ds inte",
@@ -9581,14 +11177,17 @@ static const struct
    "Anv\303\244nder k\303\244rnnamnet f\303\266r ny konfiguration.",
    "Anv\303\244nder libretros dummy-k\303\244rna. Hoppar \303\266ver inspelning.",
    "Anslut enhet fr\303\245n en giltig port.",
+   "Installera uppdatering",
    "Startar om...",
    "St\303\244nger ner...",
    "Version av libretro API",
+   "P\303\245 + f\303\266rst\303\244rkning",
+   "P\303\245",
    "Videofilter: Inaktivera",
    "Videofilter: Aktivera",
    "Videouppdateringsfrekvens \303\244ndrad till %s Hz.",
    "Ber\303\244kningen av visningsomr\303\245dets storlek misslyckades! Forts\303\244tter att anv"
-   "\303\244nda r\303\245data. Det kommer troligen inte att fungera korrekt\342\200\246",
+   "\303\244nda r\303\245data. Det kommer troligen inte att fungera korrekt...",
    "Misslyckades med att st\303\244nga virtuell skivsl\303\244de.",
    "Misslyckades med att mata ut virtuell skivsl\303\244de.",
    "Synkronisera till inneh\303\245llets exakta bildfrekvens inaktiverat.",
@@ -9606,7 +11205,7 @@ static const struct
  * compiler that pads this struct fails here instead of
  * misindexing at runtime. */
 typedef char msg_hash_sv_blob_check[
-      (sizeof(msg_hash_sv_blob) == (193127u
+      (sizeof(msg_hash_sv_blob) == (231302u
 #ifdef ANDROID
        + 361u
 #endif
@@ -9659,6 +11258,9 @@ typedef char msg_hash_sv_blob_check[
 #ifdef ANDROID
        + 26u
 #endif
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+       + 35u
+#endif
 #ifdef GEKKO
        + 9u
 #endif
@@ -9670,6 +11272,11 @@ typedef char msg_hash_sv_blob_check[
 #endif
 #ifdef ANDROID
        + 26u
+       + 14u
+       + 47u
+       + 35u
+       + 28u
+       + 31u
 #endif
 #ifdef UDEV_TOUCH_SUPPORT
        + 29u
@@ -9677,6 +11284,12 @@ typedef char msg_hash_sv_blob_check[
        + 28u
        + 34u
        + 33u
+#endif
+#if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+       + 31u
+       + 49u
+#endif
 #endif
 #ifdef HAVE_LAKKA_SWITCH
        + 32u
@@ -9696,7 +11309,9 @@ typedef char msg_hash_sv_blob_check[
 #endif
 #endif
 #ifdef HAVE_MICROPHONE
+#if defined(RARCH_MOBILE)
        + 23u
+#endif
 #endif
 #ifdef HAVE_MICROPHONE
 #if !defined(RARCH_CONSOLE)
@@ -9722,6 +11337,25 @@ typedef char msg_hash_sv_blob_check[
 #ifdef _3DS
        + 34u
 #endif
+#ifdef HAVE_NFSCLIENT
+       + 22u
+       + 11u
+       + 24u
+       + 32u
+       + 9u
+       + 24u
+       + 11u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_NFSCLIENT
+       + 33u
+#endif
+#endif
+#ifdef HAVE_NFSCLIENT
+       + 17u
+       + 20u
+       + 12u
+#endif
 #ifdef HAVE_QT
        + 648u
 #endif
@@ -9729,23 +11363,66 @@ typedef char msg_hash_sv_blob_check[
        + 15u
 #endif
 #ifdef HAVE_LAKKA
+#ifdef HAVE_LAKKA_SWITCH
+       + 54u
+       + 25u
+#endif
+#endif
+#ifdef HAVE_LAKKA
 #ifdef HAVE_RETROFLAG
        + 77u
 #endif
 #endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
        + 18u
        + 29u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
        + 25u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
        + 20u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+       + 17u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
        + 37u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
        + 14u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+       + 24u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+       + 19u
        + 11u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
        + 33u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
        + 19u
        + 14u
        + 17u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
        + 20u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
        + 18u
        + 16u
 #endif
@@ -9803,6 +11480,9 @@ typedef char msg_hash_sv_blob_check[
 #ifdef HAVE_ODROIDGO2
        + 13u
 #endif
+#if defined(HAVE_RSLC) && defined(HAVE_GLSLANG)
+       + 17u
+#endif
 #if defined(RARCH_MOBILE)
        + 66u
        + 66u
@@ -9853,6 +11533,9 @@ typedef char msg_hash_sv_blob_check[
 #ifdef ANDROID
        + 255u
 #endif
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+       + 292u
+#endif
 #ifdef GEKKO
        + 54u
 #endif
@@ -9867,6 +11550,11 @@ typedef char msg_hash_sv_blob_check[
 #endif
 #ifdef ANDROID
        + 78u
+       + 100u
+       + 335u
+       + 189u
+       + 189u
+       + 179u
 #endif
 #ifdef UDEV_TOUCH_SUPPORT
        + 76u
@@ -9874,6 +11562,12 @@ typedef char msg_hash_sv_blob_check[
        + 66u
        + 74u
        + 107u
+#endif
+#if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+       + 269u
+       + 189u
+#endif
 #endif
 #ifdef HAVE_LAKKA_SWITCH
        + 51u
@@ -9914,10 +11608,35 @@ typedef char msg_hash_sv_blob_check[
 #endif
 #endif
 #ifdef _3DS
-       + 55u
+       + 57u
+#endif
+#ifdef HAVE_NFSCLIENT
+       + 59u
+       + 253u
+       + 59u
+       + 45u
+       + 57u
+       + 343u
+       + 36u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_NFSCLIENT
+       + 46u
+#endif
+#endif
+#ifdef HAVE_NFSCLIENT
+       + 51u
+       + 53u
+       + 241u
 #endif
 #ifdef HAVE_GAME_AI
        + 29u
+#endif
+#ifdef HAVE_LAKKA
+#ifdef HAVE_LAKKA_SWITCH
+       + 190u
+       + 209u
+#endif
 #endif
 #if !(defined(HAVE_DYNAMIC) || defined(HAVE_DYLIB))
        + 245u
@@ -9931,19 +11650,56 @@ typedef char msg_hash_sv_blob_check[
        + 44u
        + 44u
 #endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
 #ifdef HAVE_SMBCLIENT
        + 39u
        + 51u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
        + 53u
-       + 278u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+       + 277u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+       + 102u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
        + 63u
-       + 194u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+       + 193u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+       + 343u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+       + 205u
        + 36u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
        + 54u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
        + 138u
        + 60u
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
        + 37u
-       + 202u
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+       + 201u
        + 63u
 #endif
 #ifdef HAVE_LAKKA
@@ -9993,6 +11749,9 @@ typedef char msg_hash_sv_blob_check[
 #ifdef HAVE_ODROIDGO2
        + 66u
 #endif
+#if defined(HAVE_RSLC) && defined(HAVE_GLSLANG)
+       + 183u
+#endif
 #if defined(RARCH_MOBILE)
        + 195u
        + 165u
@@ -10029,4198 +11788,4796 @@ typedef char msg_hash_sv_blob_check[
 #endif
       )) ? 1 : -1];
 
-static const uint32_t msg_hash_sv_ids[] =
+static const msg_hash_id_t msg_hash_sv_ids[] =
 {
-   (uint32_t)MENU_ENUM_LABEL_AI_SERVICE_BACKEND,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_1,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_16,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_2,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_32,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_4,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_8,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_SEARCH_EQMINUS_VAL,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_SEARCH_EQPLUS_VAL,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_SEARCH_EQ_VAL,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_SEARCH_EXACT_VAL,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_SEARCH_GTE_VAL,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_SEARCH_GT_VAL,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_SEARCH_LTE_VAL,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_SEARCH_LT_VAL,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_SEARCH_NEQ_VAL,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_DECREASE_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_INCREASE_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_EQ,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_GT,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_LT,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_NEQ,
-   (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_SET_TO_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_CHEEVOS_APPEARANCE_PADDING_H,
-   (uint32_t)MENU_ENUM_LABEL_CHEEVOS_APPEARANCE_PADDING_V,
-   (uint32_t)MENU_ENUM_LABEL_CHEEVOS_SERVER_DISCONNECTED,
-   (uint32_t)MENU_ENUM_LABEL_CHEEVOS_SERVER_RECONNECTED,
-   (uint32_t)MENU_ENUM_LABEL_EXPLORE_DELETE_VIEW,
-   (uint32_t)MENU_ENUM_LABEL_EXPLORE_NEW_VIEW,
-   (uint32_t)MENU_ENUM_LABEL_EXPLORE_RANGE_FILTER,
-   (uint32_t)MENU_ENUM_LABEL_EXPLORE_SAVE_VIEW,
-   (uint32_t)MENU_ENUM_LABEL_EXPLORE_VIEW,
-   (uint32_t)MENU_ENUM_LABEL_EXPLORE_VIEW_DELETED,
-   (uint32_t)MENU_ENUM_LABEL_EXPLORE_VIEW_EXISTS,
-   (uint32_t)MENU_ENUM_LABEL_EXPLORE_VIEW_SAVED,
-   (uint32_t)MENU_ENUM_LABEL_HELP_ACCOUNTS_RETRO_ACHIEVEMENTS,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DEVICE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DEVICE_ALSA,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DEVICE_JACK,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DEVICE_OSS,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DEVICE_RSOUND,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_AL,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_ALSA,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_ALSATHREAD,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_DSOUND,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_JACK,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_OSS,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_PIPEWIRE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_PULSE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_ROAR,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_RSOUND,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_SL,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_TINYALSA,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_WASAPI,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_MAX_TIMING_SKEW,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_RATE_CONTROL_DELTA,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_RESAMPLER_DRIVER_CC,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_RESAMPLER_DRIVER_NEAREST,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_RESAMPLER_DRIVER_SINC,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUDIO_VOLUME,
-   (uint32_t)MENU_ENUM_LABEL_HELP_AUTOSAVE_INTERVAL,
-   (uint32_t)MENU_ENUM_LABEL_HELP_CONFIG_SAVE_MINIMAL,
-   (uint32_t)MENU_ENUM_LABEL_HELP_CONFIG_SAVE_ON_EXIT,
-   (uint32_t)MENU_ENUM_LABEL_HELP_CORE_LIST,
-   (uint32_t)MENU_ENUM_LABEL_HELP_DISK_IMAGE_APPEND,
-   (uint32_t)MENU_ENUM_LABEL_HELP_DUMMY_ON_CORE_SHUTDOWN,
-   (uint32_t)MENU_ENUM_LABEL_HELP_ENABLE_HOTKEY,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FASTFORWARD_RATIO,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_CHEAT,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_COMPRESSED_ARCHIVE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_CONFIG,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_CORE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_CORE_SELECT_FROM_COLLECTION,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_CURSOR,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_FONT,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_IMAGE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_IMAGE_OPEN_WITH_VIEWER,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_MOVIE_OPEN,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_MUSIC_OPEN,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_OPEN_UWP_PERMISSIONS,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_OVERLAY,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_PLAIN_FILE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_RDB,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_RECORD_CONFIG,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_REMAP,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_SHADER,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_SHADER_PRESET,
-   (uint32_t)MENU_ENUM_LABEL_HELP_FILE_CONFIG,
-   (uint32_t)MENU_ENUM_LABEL_HELP_GAMEMODE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_INPUT_ADC_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_INPUT_DRIVER_LINUXRAW,
-   (uint32_t)MENU_ENUM_LABEL_HELP_INPUT_DRIVER_NO_DETAILS,
-   (uint32_t)MENU_ENUM_LABEL_HELP_INPUT_DRIVER_UDEV,
-   (uint32_t)MENU_ENUM_LABEL_HELP_INPUT_POLL_TYPE_BEHAVIOR,
-   (uint32_t)MENU_ENUM_LABEL_HELP_INPUT_PREFER_FRONT_TOUCH,
-   (uint32_t)MENU_ENUM_LABEL_HELP_INPUT_RETROPAD_BINDS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_AI_SERVICE_BACKEND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_1,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_16,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_2,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_32,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_4,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_8,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_SEARCH_EQMINUS_VAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_SEARCH_EQPLUS_VAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_SEARCH_EQ_VAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_SEARCH_EXACT_VAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_SEARCH_GTE_VAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_SEARCH_GT_VAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_SEARCH_LTE_VAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_SEARCH_LT_VAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_SEARCH_NEQ_VAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_TYPE_DECREASE_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_TYPE_INCREASE_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_EQ,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_GT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_LT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_NEQ,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEAT_TYPE_SET_TO_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEEVOS_APPEARANCE_PADDING_H,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEEVOS_APPEARANCE_PADDING_V,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEEVOS_SERVER_DISCONNECTED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_CHEEVOS_SERVER_RECONNECTED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_EXPLORE_DELETE_VIEW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_EXPLORE_NEW_VIEW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_EXPLORE_RANGE_FILTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_EXPLORE_SAVE_VIEW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_EXPLORE_VIEW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_EXPLORE_VIEW_DELETED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_EXPLORE_VIEW_EXISTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_EXPLORE_VIEW_SAVED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_ACCOUNTS_RETRO_ACHIEVEMENTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DEVICE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DEVICE_ALSA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DEVICE_JACK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DEVICE_OSS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DEVICE_RSOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_AAUDIO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_AL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_ALSA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_ALSATHREAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_DSOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_JACK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_OSS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_PIPEWIRE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_PULSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_ROAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_RSOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_SL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_TINYALSA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_DRIVER_WASAPI,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_MAX_TIMING_SKEW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_RATE_CONTROL_DELTA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_RESAMPLER_DRIVER_CC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_RESAMPLER_DRIVER_NEAREST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_RESAMPLER_DRIVER_SINC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUDIO_VOLUME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_AUTOSAVE_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_CONFIG_SAVE_MINIMAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_CONFIG_SAVE_ON_EXIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_CORE_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_DISK_IMAGE_APPEND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_DUMMY_ON_CORE_SHUTDOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_ENABLE_HOTKEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FASTFORWARD_RATIO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_CHEAT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_COMPRESSED_ARCHIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_CORE_SELECT_FROM_COLLECTION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_CURSOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_FONT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_IMAGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_IMAGE_OPEN_WITH_VIEWER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_MOVIE_OPEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_MUSIC_OPEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_OPEN_UWP_PERMISSIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_OVERLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_PLAIN_FILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_RDB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_RECORD_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_REMAP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_SHADER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_BROWSER_SHADER_PRESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_FILE_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_GAMEMODE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_INPUT_ADC_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_INPUT_DRIVER_LINUXRAW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_INPUT_DRIVER_NO_DETAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_INPUT_DRIVER_UDEV,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_INPUT_POLL_TYPE_BEHAVIOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_INPUT_PREFER_FRONT_TOUCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_INPUT_RETROPAD_BINDS,
 #ifdef ANDROID
-   (uint32_t)MENU_ENUM_LABEL_HELP_INPUT_SELECT_PHYSICAL_KEYBOARD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_INPUT_SELECT_PHYSICAL_KEYBOARD,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_DINPUT,
-   (uint32_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_HID,
-   (uint32_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_LINUXRAW,
-   (uint32_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_PARPORT,
-   (uint32_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_SDL,
-   (uint32_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_UDEV,
-   (uint32_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_XINPUT,
-   (uint32_t)MENU_ENUM_LABEL_HELP_LIBRETRO_LOG_LEVEL,
-   (uint32_t)MENU_ENUM_LABEL_HELP_LOAD_CONTENT_HISTORY,
-   (uint32_t)MENU_ENUM_LABEL_HELP_LOAD_CONTENT_LIST,
-   (uint32_t)MENU_ENUM_LABEL_HELP_LOAD_STATE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_MENU_DRIVER_MATERIALUI,
-   (uint32_t)MENU_ENUM_LABEL_HELP_MENU_DRIVER_OZONE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_MENU_DRIVER_RGUI,
-   (uint32_t)MENU_ENUM_LABEL_HELP_MENU_DRIVER_XMB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_DINPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_HID,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_LINUXRAW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_PARPORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_SDL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_UDEV,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_JOYPAD_DRIVER_XINPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_LIBRETRO_LOG_LEVEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_LOAD_CONTENT_HISTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_LOAD_CONTENT_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_LOAD_STATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_MENU_DRIVER_MATERIALUI,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_MENU_DRIVER_OZONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_MENU_DRIVER_RGUI,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_MENU_DRIVER_XMB,
 #ifdef HAVE_MICROPHONE
-   (uint32_t)MENU_ENUM_LABEL_HELP_MICROPHONE_DEVICE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_MICROPHONE_DEVICE,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_HELP_MIDI_INPUT,
-   (uint32_t)MENU_ENUM_LABEL_HELP_MIDI_OUTPUT,
-   (uint32_t)MENU_ENUM_LABEL_HELP_NETPLAY_CHECK_FRAMES,
-   (uint32_t)MENU_ENUM_LABEL_HELP_NETPLAY_INPUT_LATENCY_FRAMES_MIN,
-   (uint32_t)MENU_ENUM_LABEL_HELP_NETPLAY_INPUT_LATENCY_FRAMES_RANGE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_NETPLAY_START_AS_SPECTATOR,
-   (uint32_t)MENU_ENUM_LABEL_HELP_PARENT_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_HELP_QUIT_RETROARCH,
-   (uint32_t)MENU_ENUM_LABEL_HELP_REPLAY_CHECKPOINT_DESERIALIZE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_REPLAY_CHECKPOINT_INTERVAL,
-   (uint32_t)MENU_ENUM_LABEL_HELP_SAVEFILE_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_HELP_SAVESTATE_AUTOMATIC_INTERVAL,
-   (uint32_t)MENU_ENUM_LABEL_HELP_SAVE_STATE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_SCAN_THIS_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_HELP_SHADER_APPLY_CHANGES,
-   (uint32_t)MENU_ENUM_LABEL_HELP_SHADER_WATCH_FOR_CHANGES,
-   (uint32_t)MENU_ENUM_LABEL_HELP_SUSPEND_SCREENSAVER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_MIDI_INPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_MIDI_OUTPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_NETPLAY_CHECK_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_NETPLAY_INPUT_LATENCY_FRAMES_MIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_NETPLAY_INPUT_LATENCY_FRAMES_RANGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_NETPLAY_START_AS_SPECTATOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_PARENT_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_QUIT_RETROARCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_REPLAY_CHECKPOINT_DESERIALIZE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_REPLAY_CHECKPOINT_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_SAVEFILE_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_SAVESTATE_AUTOMATIC_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_SAVE_STATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_SCAN_THIS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_SHADER_APPLY_CHANGES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_SHADER_WATCH_FOR_CHANGES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_SUSPEND_SCREENSAVER_ENABLE,
 #ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_LABEL_HELP_TIMEZONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_TIMEZONE,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_HELP_TURBO_MODE_CLASSIC,
-   (uint32_t)MENU_ENUM_LABEL_HELP_TURBO_MODE_CLASSIC_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_TURBO_MODE_SINGLEBUTTON,
-   (uint32_t)MENU_ENUM_LABEL_HELP_TURBO_MODE_SINGLEBUTTON_HOLD,
-   (uint32_t)MENU_ENUM_LABEL_HELP_UI_COMPANION_START_ON_BOOT,
-   (uint32_t)MENU_ENUM_LABEL_HELP_USER_LANGUAGE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_USE_THIS_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_BFI_DARK_FRAMES,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_BLACK_FRAME_INSERTION,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DISABLE_COMPOSITION,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_CACA,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D10,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D11,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D12,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D8,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D9_CG,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D9_HLSL,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_DISPMANX,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_DRM,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_EXYNOS,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_GDI,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_GL,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_GL1,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_GL_CORE,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_METAL,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_NO_DETAILS,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_SDL1,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_SDL2,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_SUNXI,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_SWITCH,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_VG,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_VULKAN,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_WIIU,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_FILTER,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_FILTER_BUILTIN,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_FRAME_DELAY,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_FRAME_DELAY_AUTO,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_HARD_SYNC_FRAMES,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_MAX_SWAPCHAIN_IMAGES,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_MONITOR_INDEX,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_REFRESH_RATE_AUTO,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_SCAN_SUBFRAMES,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_FILTER_PASS,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_NUM_PASSES,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_PASS,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_PRESET,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_SCALE_PASS,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_SUBFRAMES,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VIDEO_THREADED,
-   (uint32_t)MENU_ENUM_LABEL_HELP_VRR_RUNLOOP_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_MIXER_STREAM,
-   (uint32_t)MENU_ENUM_LABEL_RUMBLE_PORT_16,
-   (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_CHANGES,
-   (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_DECREASE,
-   (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_DECREASE_BY_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_DOES_NOT_CHANGE,
-   (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_EQ_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_GT_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_INCREASE,
-   (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_INCREASE_BY_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_LT_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_NEQ_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_ENABLED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_NARRATOR_ENGINE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_NARRATOR_SPEECH_SPEED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACCOUNTS_CHEEVOS_PASSWORD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACCOUNTS_CHEEVOS_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACCOUNTS_CHEEVOS_USERNAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACCOUNTS_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACCOUNTS_LIST_END,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_PAUSE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_PAUSE_CANCEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_RESUME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_RESUME_CANCEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_RESUME_REQUIRES_RELOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_SERVER_UNREACHABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ADD_CONTENT_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ADD_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ADD_TO_FAVORITES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ADD_TO_FAVORITES_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ADD_TO_MIXER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ADD_TO_MIXER_AND_COLLECTION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ADD_TO_MIXER_AND_COLLECTION_AND_PLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ADD_TO_MIXER_AND_PLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ADD_TO_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_BACKEND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_IMAGE_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_NARRATOR_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_PAUSE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_SOURCE_LANG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_SPEECH_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_TARGET_LANG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_URL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ALWAYS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_TURBO_MODE_CLASSIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_TURBO_MODE_CLASSIC_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_TURBO_MODE_SINGLEBUTTON,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_TURBO_MODE_SINGLEBUTTON_HOLD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_UI_COMPANION_START_ON_BOOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_USER_LANGUAGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_USE_THIS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_BFI_DARK_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_BLACK_FRAME_INSERTION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DISABLE_COMPOSITION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_CACA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D10,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D11,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D12,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D8,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D9_CG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_D3D9_HLSL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_DISPMANX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_DRM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_EXYNOS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_GDI,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_GL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_GL1,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_GL_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_METAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_NO_DETAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_SDL1,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_SDL2,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_SUNXI,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_SWITCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_VG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_VULKAN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_DRIVER_WIIU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_FILTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_FILTER_BUILTIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_FRAME_DELAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_FRAME_DELAY_AUTO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_HARD_SYNC_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_MAX_SWAPCHAIN_IMAGES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_MONITOR_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_REFRESH_RATE_AUTO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_SCAN_SUBFRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_FILTER_PASS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_NUM_PASSES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_PASS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_PRESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_SCALE_PASS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_SHADER_SUBFRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VIDEO_THREADED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_HELP_VRR_RUNLOOP_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_MIXER_STREAM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_RUMBLE_PORT_16,
+   (msg_hash_id_t)MENU_ENUM_LABEL_RUMBLE_TYPE_CHANGES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_RUMBLE_TYPE_DECREASE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_RUMBLE_TYPE_DECREASE_BY_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_RUMBLE_TYPE_DOES_NOT_CHANGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_RUMBLE_TYPE_EQ_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_RUMBLE_TYPE_GT_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_RUMBLE_TYPE_INCREASE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_RUMBLE_TYPE_INCREASE_BY_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_RUMBLE_TYPE_LT_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_RUMBLE_TYPE_NEQ_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_ENABLED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_NARRATOR_ENGINE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_NARRATOR_SPEECH_SPEED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACCOUNTS_CHEEVOS_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACCOUNTS_CHEEVOS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACCOUNTS_CHEEVOS_USERNAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACCOUNTS_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACCOUNTS_LIST_END,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_PAUSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_PAUSE_CANCEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_RESUME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_RESUME_CANCEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_RESUME_REQUIRES_RELOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ACHIEVEMENT_SERVER_UNREACHABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ADD_CONTENT_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ADD_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ADD_TO_FAVORITES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ADD_TO_FAVORITES_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ADD_TO_MIXER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ADD_TO_MIXER_AND_COLLECTION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ADD_TO_MIXER_AND_COLLECTION_AND_PLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ADD_TO_MIXER_AND_PLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ADD_TO_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_BACKEND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_IMAGE_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_NARRATOR_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_PAUSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_SOURCE_LANG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_SPEECH_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_TARGET_LANG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AI_SERVICE_URL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ALWAYS,
 #ifndef HAVE_DYNAMIC
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ALWAYS_RELOAD_CORE_ON_RUN_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ALWAYS_RELOAD_CORE_ON_RUN_CONTENT,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ANDROID_INPUT_DISCONNECT_WORKAROUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_APPICON_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ASSETS_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_ASIO_CONTROL_PANEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_ASIO_OUTPUT_CHANNEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_DEVICE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_DSP_PLUGIN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_DSP_PLUGIN_REMOVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTFORWARD_CALLBACK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTFORWARD_MUTE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTFORWARD_SPEEDUP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTPATH_S16,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FILTER_DIR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FORMAT_NEGOTIATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FORMAT_NEGOTIATION_FLOAT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_HEADPHONE_VIRTUAL_SURROUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_LATENCY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_LATENCY_FLOOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_MAX_TIMING_SKEW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_MIXER_MUTE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_MIXER_VOLUME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_MUTE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_OUTPUT_LAYOUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_OUTPUT_RATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_OUTPUT_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_RATE_CONTROL_DELTA,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_RESAMPLER_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_RESAMPLER_HQ_OVERSAMPLING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_RESAMPLER_QUALITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_RESPECT_SILENT_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_REWIND_MUTE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_SINK_RATE_ESTIMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_STREAM_STATE_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_STREAM_STATE_PLAYING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_STREAM_STATE_PLAYING_LOOPED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_STREAM_STATE_PLAYING_SEQUENTIAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_STREAM_STATE_STOPPED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_SYNC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_SYNCHRONIZATION_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_THREADED_PIPELINE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_THREAD_PRIORITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_TIME_STRETCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_TIME_STRETCH_LOWPASS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_VOLUME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_WASAPI_EXCLUSIVE_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_WASAPI_FLOAT_FORMAT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_WASAPI_MMCSS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_WASAPI_SH_BUFFER_LENGTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUTOSAVE_INTERVAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUTO_OVERRIDES_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUTO_REMAPS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_AUTO_SHADERS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_BACK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_CONFIRM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_QUIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_SCROLL_DOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_SCROLL_UP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_START,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_TOGGLE_KEYBOARD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_TOGGLE_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BATTERY_LEVEL_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BLOCK_SRAM_OVERWRITE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ANDROID_INPUT_DISCONNECT_WORKAROUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_APPICON_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ASSETS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_ASIO_CONTROL_PANEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_ASIO_OUTPUT_CHANNEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_DEVICE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_DSP_PLUGIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_DSP_PLUGIN_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTFORWARD_CALLBACK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTFORWARD_MUTE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTFORWARD_SPEEDUP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTPATH_S16,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_FILTER_DIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_FORMAT_NEGOTIATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_FORMAT_NEGOTIATION_FLOAT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_HEADPHONE_VIRTUAL_SURROUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_LATENCY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_LATENCY_FLOOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_MAX_TIMING_SKEW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_MIXER_MUTE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_MIXER_VOLUME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_MUTE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_OUTPUT_LAYOUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_OUTPUT_RATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_OUTPUT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_PIPELINE_FILL_CAP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_RATE_CONTROL_DELTA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_RESAMPLER_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_RESAMPLER_HQ_OVERSAMPLING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_RESAMPLER_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_RESPECT_SILENT_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_REWIND_MUTE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_SINK_RATE_ESTIMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_STREAM_STATE_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_STREAM_STATE_PLAYING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_STREAM_STATE_PLAYING_LOOPED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_STREAM_STATE_PLAYING_SEQUENTIAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_STREAM_STATE_STOPPED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_SYNC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_SYNCHRONIZATION_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_THREADED_PIPELINE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_THREAD_PRIORITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_TIME_STRETCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_TIME_STRETCH_LOWPASS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_VOLUME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_WASAPI_EXCLUSIVE_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_WASAPI_FLOAT_FORMAT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_WASAPI_MMCSS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUDIO_WASAPI_SH_BUFFER_LENGTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUTOSAVE_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUTO_OVERRIDES_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUTO_REMAPS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_AUTO_SHADERS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_BACK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_CONFIRM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_QUIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_SCROLL_DOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_SCROLL_UP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_START,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_TOGGLE_KEYBOARD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BASIC_MENU_CONTROLS_TOGGLE_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BATTERY_LEVEL_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BLOCK_SRAM_OVERWRITE,
 #ifdef HAVE_LAKKA
 #ifdef HAVE_LAKKA_SWITCH
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BLUETOOTH_ERTM_DISABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BLUETOOTH_ERTM_DISABLE,
 #endif
 #endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BLUETOOTH_SCAN,
 #ifdef _3DS
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_ASSETS_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_GREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_OPACITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_SCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BOTTOM_ASSETS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_GREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_SCALE,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BRIGHTNESS_CONTROL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BROWSE_START,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BROWSE_URL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BROWSE_URL_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BT_CONNECTED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BUILDBOT_ASSETS_URL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_BUNDLE_IDENTIFIER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CAMERA_ALLOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CAMERA_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CANNOT_ACTIVATE_ACHIEVEMENTS_WITH_THIS_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADDRESS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADDRESS_BIT_POSITION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADD_MATCHES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADD_NEW_AFTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADD_NEW_BEFORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADD_NEW_BOTTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADD_NEW_TOP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_APPLY_AFTER_LOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_APPLY_AFTER_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_APPLY_CHANGES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_BROWSE_MEMORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_CODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_COPY_AFTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_COPY_BEFORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_COPY_MATCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_DATABASE_PATH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_DELETE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_DELETE_ALL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_DELETE_MATCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_DESC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_DETAILS_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_FILE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_FILE_APPEND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_FILE_LOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_FILE_LOAD_APPEND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_FILE_SAVE_AS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_HANDLER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_MATCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_MEMORY_SEARCH_SIZE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_RELOAD_CHEATS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_REPEAT_ADD_TO_ADDRESS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_REPEAT_ADD_TO_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_REPEAT_COUNT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_PORT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_PRIMARY_DURATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_PRIMARY_STRENGTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_SECONDARY_DURATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_SECONDARY_STRENGTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_EQ,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_EQMINUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_EQPLUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_EXACT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_GT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_GTE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_LT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_LTE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_NEQ,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_START_OR_CONT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_START_OR_RESTART,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_STATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEAT_VALUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_ACTIVE_CHALLENGES_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_ALMOST_THERE_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_BOTTOMCENTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_BOTTOMLEFT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_BOTTOMRIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_TOPCENTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_TOPLEFT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_TOPRIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_PADDING_AUTO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_PADDING_H,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_PADDING_V,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_AUTO_SCREENSHOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_BADGES_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_CHALLENGE_INDICATORS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_FETCHING_GAME_DATA,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_HARDCORE_MODE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_IDENTIFYING_GAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_LEADERBOARDS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_LOCKED_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_NOTIFICATIONS_ONLY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_RECENTLY_UNLOCKED_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_STARTING_SESSION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_START_ACTIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_TEST_UNOFFICIAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_TRACKERS_ONLY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_UNLOCKED_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_UNLOCK_SOUND_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_UNOFFICIAL_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_UNSUPPORTED_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VERBOSE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_ACCOUNT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_LBOARD_CANCEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_LBOARD_START,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_LBOARD_SUBMIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_LBOARD_TRACKERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_MASTERY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_PROGRESS_TRACKER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_SUMMARY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_SUMMARY_ALLGAMES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_SUMMARY_HASCHEEVOS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_UNLOCK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLEAR_SETTING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOSE_CONTENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_ACCESS_KEY_ID,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_DESTRUCTIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_PASSWORD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_RESOLVE_KEEP_LOCAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_RESOLVE_KEEP_SERVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SECRET_ACCESS_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_CONFIGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_MODE_AUTOMATIC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_MODE_MANUAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_NOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_SAVES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_SYSTEM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_THUMBS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_URL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_USERNAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONFIGURATIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONFIGURATIONS_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONFIGURATION_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONFIG_SAVE_MINIMAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONFIG_SAVE_ON_EXIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONFIRM_CLOSE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONFIRM_QUIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONFIRM_RESET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENTLESS_CORES_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_DATABASE_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_FAVORITES_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_FAVORITES_SIZE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_HISTORY_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_HISTORY_SIZE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_IMAGE_HISTORY_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_CHEEVOS_HASH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_CORE_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_DATABASE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_ENTRY_IDX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_LABEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_LAST_PLAYED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_PATH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_RUNTIME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_MUSIC_HISTORY_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_RUNTIME_LOG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_RUNTIME_LOG_AGGREGATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_ADD_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_CONTENTLESS_CORES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_EXPLORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_FAVORITES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_FAVORITES_FIRST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_HISTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_IMAGES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_LATENCY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_MUSIC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_NETPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_OVERLAYS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_PLAYLISTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_PLAYLIST_TABS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_REWIND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_SETTINGS_PASSWORD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_VIDEO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_VIDEO_LAYOUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CONTENT_VIDEO_HISTORY_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_ASSETS_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_CHEAT_OPTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_COUNTERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_CREATE_BACKUP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_DELETE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_DELETE_BACKUP_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BRIGHTNESS_CONTROL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BROWSE_START,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BROWSE_URL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BROWSE_URL_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BT_CONNECTED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BUILDBOT_ASSETS_URL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_BUNDLE_IDENTIFIER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CAMERA_ALLOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CAMERA_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CANNOT_ACTIVATE_ACHIEVEMENTS_WITH_THIS_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADDRESS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADDRESS_BIT_POSITION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADD_MATCHES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADD_NEW_AFTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADD_NEW_BEFORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADD_NEW_BOTTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_ADD_NEW_TOP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_APPLY_AFTER_LOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_APPLY_AFTER_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_APPLY_CHANGES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_BROWSE_MEMORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_CODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_COPY_AFTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_COPY_BEFORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_COPY_MATCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_DATABASE_PATH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_DELETE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_DELETE_ALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_DELETE_MATCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_DESC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_DETAILS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_FILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_FILE_APPEND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_FILE_LOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_FILE_LOAD_APPEND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_FILE_SAVE_AS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_HANDLER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_MATCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_MEMORY_SEARCH_SIZE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_RELOAD_CHEATS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_REPEAT_ADD_TO_ADDRESS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_REPEAT_ADD_TO_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_REPEAT_COUNT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_PORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_PRIMARY_DURATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_PRIMARY_STRENGTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_SECONDARY_DURATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_SECONDARY_STRENGTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_RUMBLE_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_EQ,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_EQMINUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_EQPLUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_EXACT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_GT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_GTE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_LT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_LTE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_NEQ,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_SEARCH_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_START_OR_CONT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_START_OR_RESTART,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_STATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEAT_VALUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_ACTIVE_CHALLENGES_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_ALMOST_THERE_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_BOTTOMCENTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_BOTTOMLEFT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_BOTTOMRIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_TOPCENTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_TOPLEFT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_ANCHOR_TOPRIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_PADDING_AUTO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_PADDING_H,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_PADDING_V,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_APPEARANCE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_AUTO_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_BADGES_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_CHALLENGE_INDICATORS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_FETCHING_GAME_DATA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_HARDCORE_MODE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_IDENTIFYING_GAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_LEADERBOARDS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_LOCKED_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_NOTIFICATIONS_ONLY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_RECENTLY_UNLOCKED_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_STARTING_SESSION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_START_ACTIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_TEST_UNOFFICIAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_TRACKERS_ONLY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_UNLOCKED_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_UNLOCK_SOUND_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_UNOFFICIAL_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_UNSUPPORTED_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VERBOSE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_ACCOUNT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_LBOARD_CANCEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_LBOARD_START,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_LBOARD_SUBMIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_LBOARD_TRACKERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_MASTERY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_PROGRESS_TRACKER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_SUMMARY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_SUMMARY_ALLGAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_SUMMARY_HASCHEEVOS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CHEEVOS_VISIBILITY_UNLOCK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLEAR_SETTING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOSE_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_ACCESS_KEY_ID,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_DESTRUCTIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_NFS_SUBDIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_RESOLVE_KEEP_LOCAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_RESOLVE_KEEP_SERVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SECRET_ACCESS_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_CONFIGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_MODE_AUTOMATIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_MODE_MANUAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_NOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_SAVES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_SYSTEM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_SYNC_THUMBS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_URL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CLOUD_SYNC_USERNAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONFIGURATIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONFIGURATIONS_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONFIGURATION_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONFIG_SAVE_MINIMAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONFIG_SAVE_ON_EXIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONFIRM_CLOSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONFIRM_QUIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONFIRM_RESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENTLESS_CORES_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_DATABASE_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_FAVORITES_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_FAVORITES_SIZE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_HISTORY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_HISTORY_SIZE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_IMAGE_HISTORY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_CHEEVOS_HASH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_CORE_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_DATABASE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_ENTRY_IDX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_LABEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_LAST_PLAYED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_PATH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_INFO_RUNTIME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_MUSIC_HISTORY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_RUNTIME_LOG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_RUNTIME_LOG_AGGREGATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_ADD_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_CONTENTLESS_CORES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_EXPLORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_FAVORITES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_FAVORITES_FIRST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_HISTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_IMAGES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_LATENCY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_MUSIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_NETPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_OVERLAYS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_PLAYLIST_TABS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_REWIND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_SETTINGS_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_VIDEO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_SHOW_VIDEO_LAYOUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CONTENT_VIDEO_HISTORY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_ASSETS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_CHEAT_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_COUNTERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_CREATE_BACKUP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_DELETE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_DELETE_BACKUP_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_ENABLE,
 #ifdef HAVE_GAME_AI
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_GAME_AI_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_GAME_AI_OPTIONS,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFORMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_AUTHORS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CACHE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CATEGORIES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CORE_LABEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CORE_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CORE_PATH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CORE_VERSION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_FIRMWARE_IN_CONTENT_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_FIRMWARE_PATH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_LICENSES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_PERMISSIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_REQUIRED_HW_API,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_BASIC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_BYPASS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_DETERMINISTIC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_DISABLED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_SERIALIZED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_SUPPORT_LEVEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SUPPORTED_EXTENSIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SYSTEM_MANUFACTURER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SYSTEM_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_INPUT_REMAPPING_OPTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_LIST_UNLOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_LOCK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_MANAGER_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_AUTHORS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CACHE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CATEGORIES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CORE_LABEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CORE_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CORE_PATH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_CORE_VERSION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_FIRMWARE_IN_CONTENT_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_FIRMWARE_PATH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_LICENSES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_PERMISSIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_REQUIRED_HW_API,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_BASIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_BYPASS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_DETERMINISTIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_DISABLED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_SERIALIZED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SAVESTATE_SUPPORT_LEVEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SUPPORTED_EXTENSIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SYSTEM_MANUFACTURER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INFO_SYSTEM_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_INPUT_REMAPPING_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_LIST_UNLOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_LOCK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_MANAGER_LIST,
 #ifdef HAVE_MIST
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_MANAGER_STEAM_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_MANAGER_STEAM_LIST,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_OPTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_OPTIONS_FLUSH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_OPTIONS_RESET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_OPTION_CATEGORY_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_OPTION_OVERRIDE_INFO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_OPTION_OVERRIDE_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_RESTORE_BACKUP_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_SET_STANDALONE_EXEMPT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_SET_SUPPORTS_NO_CONTENT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_OPTIONS_FLUSH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_OPTIONS_RESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_OPTION_CATEGORY_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_OPTION_OVERRIDE_INFO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_OPTION_OVERRIDE_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_RESTORE_BACKUP_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_SET_STANDALONE_EXEMPT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_SET_SUPPORTS_NO_CONTENT_ENABLE,
 #ifdef HAVE_MIST
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_STEAM_INSTALL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_STEAM_UNINSTALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_STEAM_INSTALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_STEAM_UNINSTALL,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_SUGGEST_ALWAYS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_AUTO_BACKUP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_AUTO_BACKUP_HISTORY_SIZE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_AUTO_EXTRACT_ARCHIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_BUILDBOT_URL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_SHOW_EXPERIMENTAL_CORES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_ARCHITECTURE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_CORES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_MANAGED_MAX_FREQ,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_MANAGED_MIN_FREQ,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_PERFPOWER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_BALANCED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_MANAGED_PERF,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_MANAGED_PER_CONTEXT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_MANUAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_MAX_PERF,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_MIN_POWER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_POLICY_CORE_GOVERNOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_POLICY_GOVERNOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_POLICY_MAX_FREQ,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_POLICY_MENU_GOVERNOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CPU_POLICY_MIN_FREQ,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CREATE_NEW_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_HIRES_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_PORCH_ADJUST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_RESOLUTION_SUPER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_RESOLUTION_USE_CUSTOM_REFRESH_RATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_VERTICAL_ADJUST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_WRITE_EDID,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_X_AXIS_CENTERING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_SUGGEST_ALWAYS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_AUTO_BACKUP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_AUTO_BACKUP_COMPRESS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_AUTO_BACKUP_HISTORY_SIZE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_AUTO_EXTRACT_ARCHIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_BUILDBOT_URL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CORE_UPDATER_SHOW_EXPERIMENTAL_CORES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_ARCHITECTURE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_CORES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_MANAGED_MAX_FREQ,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_MANAGED_MIN_FREQ,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_PERFPOWER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_BALANCED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_MANAGED_PERF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_MANAGED_PER_CONTEXT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_MANUAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_MAX_PERF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_PERF_MODE_MIN_POWER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_POLICY_CORE_GOVERNOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_POLICY_GOVERNOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_POLICY_MAX_FREQ,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_POLICY_MENU_GOVERNOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_POLICY_MIN_FREQ,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CPU_THREADS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CREATE_NEW_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_HIRES_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_PORCH_ADJUST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_RESOLUTION_SUPER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_RESOLUTION_USE_CUSTOM_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_VERTICAL_ADJUST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_WRITE_EDID,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CRT_SWITCH_X_AXIS_CENTERING,
 #ifdef _3DS
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CTR_VIDEO_MODE_2D_400X240,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CTR_VIDEO_MODE_2D_800X240,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CTR_VIDEO_MODE_2D_400X240,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CTR_VIDEO_MODE_2D_800X240,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CURSOR_MANAGER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_CYCLE_THUMBNAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DATABASE_MANAGER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DELETE_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DELETE_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_ALL_PLAYLISTS_GRID_MAX_COUNT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_ALL_PLAYLISTS_LIST_MAX_COUNT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_ICON_VIEW_ZOOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_LAST_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_SAVE_GEOMETRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_SAVE_LAST_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_SCAN_FINISH_CONFIRM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_SHOW_WELCOME_SCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_SUGGEST_LOADED_CORE_FIRST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_THEME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_THUMBNAIL_CACHE_LIMIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_THUMBNAIL_MAX_SIZE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_THUMBNAIL_QUALITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_THUMBNAIL_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_VIEW_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_WINDOW_HEIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_WINDOW_WIDTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_WINDOW_X,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_WINDOW_Y,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DETECT_CORE_LIST_OK_CURRENT_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DEVICE_RESERVATION_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DEVICE_RESERVATION_PREFERRED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DEVICE_RESERVATION_RESERVED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DIRECTORY_NOT_FOUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DIRECTORY_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISABLED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISCORD_IN_GAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISCORD_IN_GAME_PAUSED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISCORD_IN_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISCORD_STATUS_PAUSED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISCORD_STATUS_PLAYING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFORMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_GENUINE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_RELEASE_DATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_SERIAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TITLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACKS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK_AUDIO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK_DATA_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK_LENGTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK_SIZE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISK_IMAGE_APPEND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISK_INDEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISK_OPTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISK_TRAY_EJECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISK_TRAY_INSERT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CHECKSUM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CHECKSUM_BAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CHROMATICITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CTA_AUDIO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CTA_COLORIMETRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CTA_FLAGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CTA_HDR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CTA_VIDEO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_DATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_DETAILED_TIMING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_DID_SECTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_ESTABLISHED_TIMINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_EXTENSION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_FEATURES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_GAMUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_INPUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_MANUFACTURER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_PREFERRED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_PRODUCT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_RANGE_LIMITS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_SCREEN_SIZE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_SERIAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_SOURCE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_STANDARD_TIMINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_TRUNCATED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_UNAVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_VERSION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFORMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFO_ORIENTATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFO_OUTPUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFO_REFRESH_RATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFO_RESOLUTION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFO_SERVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DONT_CARE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DOWNLOADED_FILE_DETECT_CORE_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DOWNLOAD_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DOWNLOAD_CORE_CONTENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DOWNLOAD_CORE_SYSTEM_FILES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DOWNLOAD_PL_ENTRY_THUMBNAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DOWN_SELECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DOWN_Y_L_R,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DRIVER_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DRIVER_SWITCH_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DUMMY_ON_CORE_SHUTDOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DUMP_DISC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DYNAMIC_WALLPAPER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_DYNAMIC_WALLPAPERS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CURSOR_MANAGER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_CYCLE_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DATABASE_MANAGER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DELETE_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DELETE_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_ALL_PLAYLISTS_GRID_MAX_COUNT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_ALL_PLAYLISTS_LIST_MAX_COUNT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_ICON_VIEW_ZOOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_LAST_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_SAVE_GEOMETRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_SAVE_LAST_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_SCAN_FINISH_CONFIRM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_SHOW_WELCOME_SCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_SUGGEST_LOADED_CORE_FIRST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_THEME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_THUMBNAIL_CACHE_LIMIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_THUMBNAIL_MAX_SIZE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_THUMBNAIL_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_THUMBNAIL_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_VIEW_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_WINDOW_HEIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_WINDOW_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_WINDOW_X,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DESKTOP_MENU_WINDOW_Y,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DETECT_CORE_LIST_OK_CURRENT_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DEVICE_RESERVATION_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DEVICE_RESERVATION_PREFERRED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DEVICE_RESERVATION_RESERVED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DIRECTORY_NOT_FOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DIRECTORY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISABLED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISCORD_IN_GAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISCORD_IN_GAME_PAUSED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISCORD_IN_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISCORD_STATUS_PAUSED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISCORD_STATUS_PLAYING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_GENUINE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_RELEASE_DATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_SERIAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TITLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACKS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK_AUDIO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK_DATA_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK_LENGTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISC_INFO_TRACK_SIZE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISK_IMAGE_APPEND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISK_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISK_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISK_TRAY_EJECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISK_TRAY_INSERT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CHECKSUM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CHECKSUM_BAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CHROMATICITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CTA_AUDIO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CTA_COLORIMETRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CTA_FLAGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CTA_HDR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_CTA_VIDEO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_DATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_DETAILED_TIMING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_DID_SECTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_ESTABLISHED_TIMINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_EXTENSION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_FEATURES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_GAMUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_INPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_MANUFACTURER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_PREFERRED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_PRODUCT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_RANGE_LIMITS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_SCREEN_SIZE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_SERIAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_SOURCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_STANDARD_TIMINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_TRUNCATED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_UNAVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_UNAVAILABLE_ANDROID,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_EDID_VERSION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFO_ORIENTATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFO_OUTPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFO_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFO_RESOLUTION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DISPLAY_INFO_SERVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DONT_CARE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DOWNLOADED_FILE_DETECT_CORE_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DOWNLOAD_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DOWNLOAD_CORE_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DOWNLOAD_CORE_SYSTEM_FILES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DOWNLOAD_PL_ENTRY_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DOWN_SELECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DOWN_Y_L_R,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DRIVER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DRIVER_SWITCH_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DUMMY_ON_CORE_SHUTDOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DUMP_DISC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DYNAMIC_WALLPAPER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_DYNAMIC_WALLPAPERS_DIRECTORY,
 #ifdef HAVE_CDROM
 #ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EJECT_DISC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EJECT_DISC,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ENABLED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ENABLE_DEVICE_VIBRATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_ADDITIONAL_FILTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_ADD_ADDITIONAL_FILTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_ALL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_ACHIEVEMENTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_ARTSTYLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_CATEGORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_CONSOLE_EXCLUSIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_CONTROLS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_DEVELOPER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_FRANCHISE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_GAMEPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_GENRE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_LANGUAGE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_MEDIA,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_NARRATIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_ORIGIN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_PACING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_PERSPECTIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_PLATFORM_EXCLUSIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_PLAYER_COUNT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_PUBLISHER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_REGION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_RELEASE_YEAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_RUMBLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_SCORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_SETTING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_SYSTEM_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_TAG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_VEHICULAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_VISUAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_CATEGORY_PLAYER_COUNT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_CATEGORY_RELEASE_YEAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_CATEGORY_TAG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_INITIALISING_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_ITEMS_COUNT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_SEARCH_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_SHOW_ALL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_EXPLORE_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FACEBOOK_STREAM_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FALSE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FASTFORWARD_FRAMESKIP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FASTFORWARD_RATIO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FAVORITES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FAVORITES_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FILE_BROWSER_OPEN_PICKER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FILE_BROWSER_OPEN_UWP_PERMISSIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FILTER_BY_CURRENT_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FOLDER_SPECIFIC_CORE_OPTIONS_CREATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FOLDER_SPECIFIC_CORE_OPTIONS_REMOVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FPS_SHOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FPS_UPDATE_INTERVAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FRAMECOUNT_SHOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FRAME_THROTTLE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FRAME_TIME_COUNTER_AUTO_RESET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FRAME_TIME_COUNTER_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FRONTEND_COUNTERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_FRONTEND_LOG_LEVEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GAMEMODE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ENABLED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ENABLE_DEVICE_VIBRATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_ADDITIONAL_FILTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_ADD_ADDITIONAL_FILTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_ALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_ACHIEVEMENTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_ARTSTYLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_CATEGORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_CONSOLE_EXCLUSIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_CONTROLS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_DEVELOPER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_FRANCHISE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_GAMEPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_GENRE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_LANGUAGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_MEDIA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_NARRATIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_ORIGIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_PACING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_PERSPECTIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_PLATFORM_EXCLUSIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_PLAYER_COUNT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_PUBLISHER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_REGION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_RELEASE_MONTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_RELEASE_YEAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_RUMBLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_SCORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_SETTING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_SYSTEM_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_TAG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_VEHICULAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_BY_VISUAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_CATEGORY_PLAYER_COUNT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_CATEGORY_RELEASE_YEAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_CATEGORY_TAG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_INITIALISING_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_ITEMS_COUNT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_SEARCH_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_SHOW_ALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_EXPLORE_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FACEBOOK_STREAM_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FALSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FASTFORWARD_FRAMESKIP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FASTFORWARD_RATIO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FAVORITES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FAVORITES_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FILE_BROWSER_OPEN_PICKER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FILE_BROWSER_OPEN_UWP_PERMISSIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FILTER_BY_CURRENT_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FOLDER_SPECIFIC_CORE_OPTIONS_CREATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FOLDER_SPECIFIC_CORE_OPTIONS_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FPS_SHOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FPS_UPDATE_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FRAMECOUNT_SHOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FRAME_THROTTLE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FRAME_TIME_COUNTER_AUTO_RESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FRAME_TIME_COUNTER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FRONTEND_COUNTERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_FRONTEND_LOG_LEVEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GAMEMODE_ENABLE,
 #ifdef HAVE_GAME_AI
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GAME_AI_MENU_OPTION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GAME_AI_OVERRIDE_P1,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GAME_AI_OVERRIDE_P2,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GAME_AI_SHOW_DEBUG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GAME_AI_MENU_OPTION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GAME_AI_OVERRIDE_P1,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GAME_AI_OVERRIDE_P2,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GAME_AI_SHOW_DEBUG,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GAME_SPECIFIC_CORE_OPTIONS_CREATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GAME_SPECIFIC_CORE_OPTIONS_REMOVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GAME_SPECIFIC_OPTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GLOBAL_CORE_OPTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GOTO_CONTENTLESS_CORES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GOTO_EXPLORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GOTO_FAVORITES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GOTO_IMAGES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GOTO_MUSIC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_GOTO_VIDEO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_HACKS_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_HALT_REPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_HELP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_HELP_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_HISTORY_LIST_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_HISTORY_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_HOLD_SELECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_HOLD_START,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_HORIZONTAL_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ICON_THUMBNAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_IMAGES_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INITIAL_DISK_CHANGE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ADC_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ALL_USERS_CONTROL_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_DEADZONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_LEFT_X_MINUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_LEFT_X_PLUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_LEFT_Y_MINUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_LEFT_Y_PLUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_RIGHT_X_MINUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_RIGHT_X_PLUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_RIGHT_Y_MINUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_RIGHT_Y_PLUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GAME_SPECIFIC_CORE_OPTIONS_CREATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GAME_SPECIFIC_CORE_OPTIONS_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GAME_SPECIFIC_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GLOBAL_CORE_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GOTO_CONTENTLESS_CORES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GOTO_EXPLORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GOTO_FAVORITES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GOTO_IMAGES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GOTO_MUSIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_GOTO_VIDEO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_HACKS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_HALT_REPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_HELP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_HELP_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_HISTORY_LIST_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_HISTORY_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_HOLD_SELECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_HOLD_START,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_HORIZONTAL_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ICON_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_IMAGES_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INITIAL_DISK_CHANGE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ADC_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_AIM_STICK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ALL_USERS_CONTROL_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_ANTI_DEADZONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_DEADZONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_LEFT_X_MINUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_LEFT_X_PLUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_LEFT_Y_MINUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_LEFT_Y_PLUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_OUTER_DEADZONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_RESPONSE_CURVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_RIGHT_X_MINUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_RIGHT_X_PLUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_RIGHT_Y_MINUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_RIGHT_Y_PLUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANALOG_TRIGGER_DEADZONE,
 #ifdef ANDROID
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ANDROID_SYSTEM_KEYBOARD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ANDROID_SYSTEM_KEYBOARD,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTODETECT_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS_DETECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS_OFF,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS_ON,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTO_MOUSE_GRAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_BIND_ALL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_BIND_DEFAULT_ALL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_BIND_HOLD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_BIND_TIMEOUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_BLOCK_TIMEOUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_BUTTON_AXIS_THRESHOLD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_DESCRIPTOR_HIDE_UNBOUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_DESCRIPTOR_LABEL_SHOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_DEVICE_INDEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_DEVICE_RESERVATION_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_DEVICE_RESERVED_DEVICE_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_DEVICE_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_INFO_BUTTON,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_LEFT_ANALOG_IN_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_RIGHT_ANALOG_IN_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_SEARCH_BUTTON,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_HAPTIC_FEEDBACK_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_HOLD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_BINDS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_BLOCK_DELAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_DEVICE_MERGE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_FOLLOWS_PLAYER1,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_ICADE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_A,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_B,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_BACKGROUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_DOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_L,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_L2,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_L3,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_LEFT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_R,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_R2,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_R3,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_RIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_SELECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_START,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_UP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_X,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_Y,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_KEYBOARD_GAMEPAD_MAPPING_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_KEYBOARD_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_AUX_A,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_AUX_B,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_AUX_C,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_DPAD_DOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_DPAD_LEFT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_DPAD_RIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_DPAD_UP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_RELOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_SELECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_START,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_TRIGGER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MAX_USERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MENU_ENUM_TOGGLE_GAMEPAD_COMBO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MENU_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_AI_SERVICE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_CHEAT_INDEX_MINUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_CHEAT_INDEX_PLUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_CHEAT_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_CLOSE_CONTENT_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_DISK_EJECT_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_DISK_NEXT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_DISK_PREV,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_ENABLE_HOTKEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_FAST_FORWARD_HOLD_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_FAST_FORWARD_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_FPS_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_FRAMEADVANCE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_FULLSCREEN_TOGGLE_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_GAME_FOCUS_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_GRAB_MOUSE_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_HALT_REPLAY_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_LOAD_STATE_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_MENU_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_MUTE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NETPLAY_FADE_CHAT_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NETPLAY_GAME_WATCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NETPLAY_HOST_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NETPLAY_PING_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NETPLAY_PLAYER_CHAT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NEXT_REPLAY_CHECKPOINT_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_OSK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_OVERLAY_NEXT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_PAUSE_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_PLAY_REPLAY_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_PREEMPT_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_PREV_REPLAY_CHECKPOINT_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_QUIT_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_RECORDING_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_RECORD_REPLAY_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_REPLAY_SLOT_MINUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_REPLAY_SLOT_PLUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_RESET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_RESTART_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_REWIND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_RUNAHEAD_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SAVE_REPLAY_CHECKPOINT_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SAVE_STATE_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SCREENSHOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SHADER_HOLD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SHADER_NEXT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SHADER_PREV,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SHADER_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SLOWMOTION_HOLD_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SLOWMOTION_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_STATE_SLOT_MINUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_STATE_SLOT_PLUS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_STATISTICS_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_STREAMING_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_TURBO_FIRE_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_UI_COMPANION_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_VIDEO_FILTER_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_VOLUME_DOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_VOLUME_UP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_META_VRR_RUNLOOP_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_BUTTON4,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_BUTTON5,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_HORIZ_WHEEL_DOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_HORIZ_WHEEL_UP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_INDEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_LEFT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_MIDDLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_RIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ASSIGN_PORTS_KEYBOARD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ASSIGN_PORTS_KEYBOARD_ASSIGNS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ASSIGN_PORTS_KEYBOARD_WAITS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ASSIGN_PORTS_ON_BUTTON_PRESS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTODETECT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS_DETECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS_OFF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTO_GAME_FOCUS_ON,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_AUTO_MOUSE_GRAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_BIND_ALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_BIND_DEFAULT_ALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_BIND_HOLD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_BIND_TIMEOUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_BLOCK_TIMEOUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_BUTTON_AXIS_THRESHOLD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_COMBO_DEPTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_COMBO_HOLD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_COMBO_HOLD_TIME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_COMBO_TARGET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_DESCRIPTOR_HIDE_UNBOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_DESCRIPTOR_LABEL_SHOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_DEVICE_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_DEVICE_RESERVATION_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_DEVICE_RESERVED_DEVICE_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_DEVICE_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_INFO_BUTTON,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_LEFT_ANALOG_IN_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_RIGHT_ANALOG_IN_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_DISABLE_SEARCH_BUTTON,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_GCA_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_HAPTIC_FEEDBACK_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_HOLD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_BINDS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_BLOCK_DELAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_DEVICE_MERGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_FOLLOWS_PLAYER1,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_HOTKEY_TAP_DELAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ICADE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_IGNORED_DEVICE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_A,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_B,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_BACKGROUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_DOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_L,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_L2,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_L3,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_LEFT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_R,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_R2,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_R3,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_RIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_SELECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_START,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_UP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_X,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_JOYPAD_Y,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_KEY,
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_KEYBOARD_BACKGROUND,
+#endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_KEYBOARD_GAMEPAD_MAPPING_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_KEYBOARD_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_KEYBOARD_INDEX_ABSENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_KEYBOARD_INDEX_ALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_KEYBOARD_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_AUX_A,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_AUX_B,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_AUX_C,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_DPAD_DOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_DPAD_LEFT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_DPAD_RIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_DPAD_UP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_RELOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_SELECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_START,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_LIGHTGUN_TRIGGER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MAX_USERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MENU_ENUM_TOGGLE_GAMEPAD_COMBO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MENU_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_AI_SERVICE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_CHEAT_INDEX_MINUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_CHEAT_INDEX_PLUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_CHEAT_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_CLOSE_CONTENT_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_DISK_EJECT_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_DISK_NEXT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_DISK_PREV,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_ENABLE_HOTKEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_FAST_FORWARD_HOLD_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_FAST_FORWARD_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_FPS_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_FRAMEADVANCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_FULLSCREEN_TOGGLE_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_GAME_FOCUS_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_GRAB_MOUSE_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_HALT_REPLAY_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_HEADSET_EDIT_SCREENS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_HEADSET_RECENTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_HEADSET_VIEW_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_LASER_POINTER_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_LOAD_STATE_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_MENU_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_MUTE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NETPLAY_FADE_CHAT_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NETPLAY_GAME_WATCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NETPLAY_HOST_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NETPLAY_PING_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NETPLAY_PLAYER_CHAT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_NEXT_REPLAY_CHECKPOINT_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_OSK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_OVERLAY_NEXT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_PAUSE_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_PLAY_REPLAY_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_PREEMPT_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_PREV_REPLAY_CHECKPOINT_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_QUIT_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_RECORDING_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_RECORD_REPLAY_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_REPLAY_SLOT_MINUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_REPLAY_SLOT_PLUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_RESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_RESTART_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_REWIND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_RUNAHEAD_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SAVE_REPLAY_CHECKPOINT_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SAVE_STATE_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SHADER_HOLD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SHADER_NEXT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SHADER_PREV,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SHADER_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SLOWMOTION_HOLD_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_SLOWMOTION_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_STATE_SLOT_MINUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_STATE_SLOT_PLUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_STATISTICS_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_STREAMING_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_TURBO_FIRE_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_UI_COMPANION_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_VIDEO_FILTER_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_VOLUME_DOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_VOLUME_UP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_META_VRR_RUNLOOP_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_BUTTON4,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_BUTTON5,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_HORIZ_WHEEL_DOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_HORIZ_WHEEL_UP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_LEFT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_MIDDLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_RIGHT,
 #ifdef GEKKO
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_SCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_SCALE,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_WHEEL_DOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_WHEEL_UP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_WHEEL_DOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_MOUSE_WHEEL_UP,
 #if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_NOWINKEY_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_NOWINKEY_ENABLE,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OSK_OVERLAY_AUTO_SCALE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_ABXY_DIAGONAL_SENSITIVITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_ANALOG_RECENTER_ZONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_AUTO_ROTATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_AUTO_SCALE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_BEHIND_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_DPAD_DIAGONAL_SENSITIVITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_HIDE_IN_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_HIDE_WHEN_GAMEPAD_CONNECTED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_ALLOW_OFFSCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_FOUR_TOUCH_INPUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_PORT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_PORT_ANY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_THREE_TOUCH_INPUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_TRIGGER_DELAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_TRIGGER_ON_TOUCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_TWO_TOUCH_INPUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_ALT_TWO_TOUCH_INPUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_DTAP_MSEC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_DTAP_TO_DRAG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_HOLD_MSEC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_HOLD_TO_DRAG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_SPEED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_SWIPE_THRESHOLD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_POINTER_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_SHOW_INPUTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_SHOW_INPUTS_PHYSICAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_SHOW_INPUTS_PORT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_SHOW_INPUTS_TOUCHED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_SHOW_MOUSE_CURSOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_POLL_TYPE_BEHAVIOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_POLL_TYPE_BEHAVIOR_EARLY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_POLL_TYPE_BEHAVIOR_LATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_PREFER_FRONT_TOUCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_QUIT_GAMEPAD_COMBO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_REMAPPING_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_REMAP_BINDS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_REMAP_PORT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_REMAP_SORT_BY_CONTROLLER_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_RETROPAD_BINDS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_RUMBLE_GAIN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_SAVE_AUTOCONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OSK_OVERLAY_AUTO_SCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_ABXY_DIAGONAL_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_ABXY_METHOD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_ANALOG_RECENTER_ZONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_AUTO_ROTATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_AUTO_SCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_BEHIND_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_CONTACT_SCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_DPAD_DIAGONAL_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_DPAD_METHOD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_HIDE_IN_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_HIDE_WHEN_GAMEPAD_CONNECTED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_ALLOW_OFFSCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_FOUR_TOUCH_INPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_PORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_PORT_ANY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_THREE_TOUCH_INPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_TRIGGER_DELAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_TRIGGER_ON_TOUCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_LIGHTGUN_TWO_TOUCH_INPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_ALT_TWO_TOUCH_INPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_DTAP_MSEC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_DTAP_TO_DRAG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_HOLD_MSEC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_HOLD_TO_DRAG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_SPEED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_MOUSE_SWIPE_THRESHOLD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_POINTER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_SHOW_INPUTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_SHOW_INPUTS_PHYSICAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_SHOW_INPUTS_PORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_SHOW_INPUTS_TOUCHED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_OVERLAY_SHOW_MOUSE_CURSOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_POLL_TYPE_BEHAVIOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_POLL_TYPE_BEHAVIOR_EARLY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_POLL_TYPE_BEHAVIOR_LATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_PREFER_FRONT_TOUCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_QUIT_GAMEPAD_COMBO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_REMAPPING_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_REMAP_BINDS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_REMAP_FIND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_REMAP_PORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_REMAP_SORT_BY_CONTROLLER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_RETROPAD_BINDS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ROTATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_ROTATION_AUTO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_RUMBLE_GAIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SAVE_AUTOCONFIG,
 #ifdef HAVE_SDL3
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_SDL3_SYSTEM_KEYBOARD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SDL3_SYSTEM_KEYBOARD,
 #endif
 #ifdef ANDROID
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_SELECT_PHYSICAL_KEYBOARD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SELECT_PHYSICAL_KEYBOARD,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_SENSORS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_SENSOR_ACCELEROMETER_SENSITIVITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_SENSOR_GYROSCOPE_SENSITIVITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_SENSOR_ORIENTATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_SENSOR_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_SMALL_KEYBOARD_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_SPLIT_JOYCON,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_SCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SENSORS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SENSOR_ACCELEROMETER_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SENSOR_GYROSCOPE_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SENSOR_ORIENTATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SENSOR_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SMALL_KEYBOARD_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SOCD_FIRST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SOCD_HORIZONTAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SOCD_LAST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SOCD_UP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SOCD_VERTICAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SPLIT_JOYCON,
+#ifdef ANDROID
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_STYLUS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_STYLUS_HIDE_OVERLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_STYLUS_HOVER_MOVES_POINTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_STYLUS_PRESSURE_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_STYLUS_REQUIRE_CONTACT_FOR_CLICK,
+#endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_SYSTEM_DEVICE_INFO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCHPAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCHPAD_HALVES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCHPAD_LEFT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCHPAD_MOUSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCHPAD_POINTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCHPAD_RIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_SCALE,
 #ifdef UDEV_TOUCH_SUPPORT
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_VMOUSE_GESTURE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_VMOUSE_MOUSE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_VMOUSE_POINTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_VMOUSE_TOUCHPAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_VMOUSE_TRACKBALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_VMOUSE_GESTURE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_VMOUSE_MOUSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_VMOUSE_POINTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_VMOUSE_TOUCHPAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TOUCH_VMOUSE_TRACKBALL,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_ALLOW_DPAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_BIND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_BUTTON,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_DUTY_CYCLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_FIRE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_PERIOD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_UNIFIED_MENU_CONTROLS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_INPUT_USER_BINDS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_JIT_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_JOYPAD_AUTOCONFIG_DIR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_JOYPAD_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_KEYBOARD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_KICK_STREAM_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LAKKA_SERVICES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TRIGGER_FULL_RANGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_ALLOW_DPAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_BIND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_BUTTON,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_DUTY_CYCLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_FIRE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_TURBO_PERIOD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_UNIFIED_MENU_CONTROLS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_USER_BINDS,
+#if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_WINRAW_PLAYER_LIGHTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_WINRAW_XINPUT_ENABLE,
+#endif
+#endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_INPUT_XID_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_JIT_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_JOYPAD_AUTOCONFIG_DIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_JOYPAD_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_KEYBOARD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_KEYBOARD_DEVICE_INFO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_KEYBOARD_DEVICE_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_KEYBOARD_SYSTEM_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_KEYCHAIN_PASSPHRASE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_KICK_STREAM_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LAKKA_SERVICES,
 #ifdef HAVE_LAKKA_SWITCH
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LAKKA_SWITCH_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LAKKA_SWITCH_OPTIONS,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LATENCY_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LEFTRIGHT_ANALOG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LEFTRIGHT_ANALOG_FORCED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LEFT_ANALOG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LEFT_ANALOG_FORCED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LEFT_THUMBNAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LEFT_THUMBNAILS_MATERIALUI,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LEFT_THUMBNAILS_OZONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LEFT_THUMBNAILS_RGUI,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LIBRETRO_DIR_PATH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LIBRETRO_INFO_PATH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LIBRETRO_LOG_LEVEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LINEAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOAD_ARCHIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOAD_CONTENT_HISTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOAD_CONTENT_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOAD_DISC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOAD_STATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LATENCY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LEFTRIGHT_ANALOG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LEFTRIGHT_ANALOG_FORCED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LEFT_ANALOG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LEFT_ANALOG_FORCED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LEFT_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LEFT_THUMBNAILS_MATERIALUI,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LEFT_THUMBNAILS_OZONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LEFT_THUMBNAILS_RGUI,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LIBRETRO_DIR_PATH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LIBRETRO_INFO_PATH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LIBRETRO_LOG_LEVEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LINEAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOAD_ARCHIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOAD_CONTENT_HISTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOAD_CONTENT_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOAD_DISC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOAD_STATE,
 #ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOCALAP_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOCALAP_ENABLE,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOCATION_ALLOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOCATION_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOGGING_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOG_DIR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOG_TO_FILE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOG_TO_FILE_TIMESTAMP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOG_VERBOSITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOG_VERBOSITY_DEBUG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOG_VERBOSITY_ERROR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_LOG_VERBOSITY_WARNING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MAIN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MAIN_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANAGE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_CORE_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_CORE_NAME_DETECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_DAT_FILE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_DAT_FILE_FILTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_DIR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_FILE_EXTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_OVERWRITE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_SEARCH_ARCHIVES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_SEARCH_RECURSIVELY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_START,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_SYSTEM_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_SYSTEM_NAME_CUSTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_SYSTEM_NAME_USE_AUTO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_VALIDATE_ENTRIES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MAPPING_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_AUTO_ROTATE_NAV_BAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_DUAL_THUMBNAIL_LIST_VIEW_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_ICONS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_LANDSCAPE_LAYOUT_OPTIMIZATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_LANDSCAPE_LAYOUT_OPTIMIZATION_ALWAYS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_LANDSCAPE_LAYOUT_OPTIMIZATION_DISABLED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_LANDSCAPE_LAYOUT_OPTIMIZATION_EXCLUDE_THUMBNAIL_VIEWS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_BLUE_GREY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_CYAN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_GREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_PINK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_PURPLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_DARK_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_GRAY_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_GRAY_LIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_GREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_GRUVBOX_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_MATERIALUI_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_OZONE_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_SOLARIZED_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_YELLOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_THUMBNAIL_VIEW_LANDSCAPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_THUMBNAIL_VIEW_PORTRAIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_TRANSITION_ANIMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_TRANSITION_ANIM_FADE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_TRANSITION_ANIM_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_TRANSITION_ANIM_SLIDE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_PLAYLIST_ICONS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_SHOW_NAV_BAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_SWITCH_ICONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_BACKGROUND_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_LANDSCAPE_DISABLED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_LANDSCAPE_LIST_LARGE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_LANDSCAPE_LIST_MEDIUM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_LANDSCAPE_LIST_SMALL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_PORTRAIT_DISABLED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_PORTRAIT_DUAL_ICON,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_PORTRAIT_LIST_MEDIUM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_PORTRAIT_LIST_SMALL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MEMORY_SHOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MEMORY_UPDATE_INTERVAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_ADD_CONTENT_ENTRY_DISPLAY_MAIN_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_ADD_CONTENT_ENTRY_DISPLAY_PLAYLISTS_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_ALLOW_TABS_BACK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOCATION_ALLOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOCATION_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOGGING_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOG_DIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOG_TO_FILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOG_TO_FILE_TIMESTAMP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOG_VERBOSITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOG_VERBOSITY_DEBUG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOG_VERBOSITY_ERROR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_LOG_VERBOSITY_WARNING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MAIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MAIN_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MAIN_THREAD_PRIORITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANAGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_CORE_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_CORE_NAME_DETECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_DAT_FILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_DAT_FILE_FILTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_DIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_FILE_EXTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_OVERWRITE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_SEARCH_ARCHIVES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_SEARCH_RECURSIVELY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_START,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_SYSTEM_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_SYSTEM_NAME_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_SYSTEM_NAME_USE_AUTO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MANUAL_CONTENT_SCAN_VALIDATE_ENTRIES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MAPPING_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_AUTO_ROTATE_NAV_BAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_DUAL_THUMBNAIL_LIST_VIEW_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_ICONS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_LANDSCAPE_LAYOUT_OPTIMIZATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_LANDSCAPE_LAYOUT_OPTIMIZATION_ALWAYS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_LANDSCAPE_LAYOUT_OPTIMIZATION_DISABLED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_LANDSCAPE_LAYOUT_OPTIMIZATION_EXCLUDE_THUMBNAIL_VIEWS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_BLUE_GREY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_CYAN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_GREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_PINK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_PURPLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_CUTIE_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_DARK_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_GRAY_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_GRAY_LIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_GREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_GRUVBOX_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_MATERIALUI_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_OZONE_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_SOLARIZED_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_COLOR_THEME_YELLOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_THUMBNAIL_VIEW_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_THUMBNAIL_VIEW_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_TRANSITION_ANIMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_TRANSITION_ANIM_FADE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_TRANSITION_ANIM_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_MENU_TRANSITION_ANIM_SLIDE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_PLAYLIST_ICONS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_SHOW_NAV_BAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_SWITCH_ICONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_BACKGROUND_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_LANDSCAPE_DISABLED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_LANDSCAPE_LIST_LARGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_LANDSCAPE_LIST_MEDIUM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_LANDSCAPE_LIST_SMALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_PORTRAIT_DISABLED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_PORTRAIT_DUAL_ICON,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_PORTRAIT_LIST_MEDIUM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MATERIALUI_THUMBNAIL_VIEW_PORTRAIT_LIST_SMALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MCP_SERVER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MCP_SERVER_PORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MCP_SERVER_TOKEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MEDIA_PLAYER_CONTINUOUS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MEDIA_PLAYER_CONTROLS_TIMEOUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MEDIA_PLAYER_CRT_SWITCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MEDIA_PLAYER_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MEDIA_PLAYER_SEEK_SECONDS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MEDIA_PLAYER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MEDIA_PLAYER_SUBTITLES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MEDIA_PLAYER_SUBTITLE_DELAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MEMORY_SHOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MEMORY_UPDATE_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_ADD_CONTENT_ENTRY_DISPLAY_MAIN_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_ADD_CONTENT_ENTRY_DISPLAY_PLAYLISTS_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_ALLOW_TABS_BACK,
 #ifdef _3DS
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_BOTTOM_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_BOTTOM_SETTINGS,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_DISABLE_KIOSK_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_ENABLE_KIOSK_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_ENUM_THROTTLE_FRAMERATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_EXTENSION_DISPLAY_ALWAYS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_EXTENSION_DISPLAY_NEVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_GREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FRAMEBUFFER_OPACITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_HDR_BRIGHTNESS_NITS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_HORIZONTAL_ANIMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_INPUT_SWAP_OK_CANCEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_INPUT_SWAP_SCROLL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_INSERT_DISK_RESUME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_KIOSK_MODE_PASSWORD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_LINEAR_FILTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_REMEMBER_SELECTION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_REMEMBER_SELECTION_ALWAYS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_REMEMBER_SELECTION_MAIN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_REMEMBER_SELECTION_PLAYLISTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_ASPECT_RATIO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_ASPECT_RATIO_LOCK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_BACKGROUND_FILLER_THICKNESS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_BORDER_FILLER_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_BORDER_FILLER_THICKNESS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_EXTENDED_ASCII,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_FULL_WIDTH_LAYOUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_INLINE_THUMBNAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_INTERNAL_UPSCALE_LEVEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_PARTICLE_EFFECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_PARTICLE_EFFECT_SCREENSAVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_PARTICLE_EFFECT_SPEED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_SHADOWS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_SWAP_THUMBNAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_SWITCH_ICONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_THUMBNAIL_DELAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_THUMBNAIL_DITHER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_THUMBNAIL_DOWNSCALER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_TRANSPARENCY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SAVESTATE_RESUME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SCALE_FACTOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_ANIMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_ANIMATION_SNOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_ANIMATION_SPEED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_ANIMATION_STARFIELD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_ANIMATION_VORTEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_TIMEOUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SCROLL_DELAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SCROLL_FAST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CONFIGURATIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CONFIRM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_DISABLE_KIOSK_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_ENABLE_KIOSK_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_EXTENSION_DISPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_EXTENSION_DISPLAY_ALWAYS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_EXTENSION_DISPLAY_DUPLICATES_ONLY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_EXTENSION_DISPLAY_NEVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_GREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_FRAMEBUFFER_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_FRAME_RATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_HDR_BRIGHTNESS_NITS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_HORIZONTAL_ANIMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_INPUT_SWAP_OK_CANCEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_INPUT_SWAP_SCROLL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_INSERT_DISK_RESUME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_KIOSK_MODE_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_LINEAR_FILTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_REMEMBER_SELECTION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_REMEMBER_SELECTION_ALWAYS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_REMEMBER_SELECTION_MAIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_REMEMBER_SELECTION_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_ASPECT_RATIO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_ASPECT_RATIO_LOCK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_BACKGROUND_FILLER_THICKNESS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_BORDER_FILLER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_BORDER_FILLER_THICKNESS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_EXTENDED_ASCII,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_FULL_WIDTH_LAYOUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_INLINE_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_INTERNAL_UPSCALE_LEVEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_PARTICLE_EFFECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_PARTICLE_EFFECT_SCREENSAVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_PARTICLE_EFFECT_SPEED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_SHADOWS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_SWAP_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_SWITCH_ICONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_THUMBNAIL_DELAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_THUMBNAIL_DITHER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_THUMBNAIL_DOWNSCALER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_TRANSPARENCY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SAVESTATE_RESUME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SCALE_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_ANIMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_ANIMATION_SNOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_ANIMATION_SPEED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_ANIMATION_STARFIELD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_ANIMATION_VORTEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SCREENSAVER_TIMEOUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SCROLL_DELAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SCROLL_FAST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CONFIGURATIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CONFIRM,
 #ifdef HAVE_MIST
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CORE_MANAGER_STEAM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CORE_MANAGER_STEAM,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CORE_UPDATER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_DUMP_DISC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CORE_UPDATER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_DUMP_DISC,
 #ifdef HAVE_CDROM
 #ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_EJECT_DISC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_EJECT_DISC,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_FULL_PATHS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_HELP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_INFORMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CONTENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CONTENT_ANIMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_DISC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_ONLINE_UPDATER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_QUIT_RETROARCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_REBOOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_RESTART_RETROARCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_SHUTDOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_SUBLABELS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_SUBLABELS_CURRENT_SELECTION_ONLY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SINGLECLICK_PLAYLISTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SOUNDS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_BGM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_CANCEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_NOTICE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_OK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_SCROLL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_STARTUP_PAGE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_BACKGROUND_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_PREVIEW_AUDIO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_PREVIEW_THREADS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_UPSCALE_THRESHOLD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_SMOOTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_SPEED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_TYPE_BOUNCE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_TYPE_LOOP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_USE_PREFERRED_SYSTEM_COLOR_THEME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_VIEWS_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WALLPAPER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WALLPAPER_OPACITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGETS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_AUTO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_FACTOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_FACTOR_FULLSCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_FACTOR_WINDOWED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_ANIMATION_HORIZONTAL_HIGHLIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_ANIMATION_MOVE_UP_DOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_ANIMATION_OPENING_MAIN_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_SHOW_HORIZONTAL_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_SHOW_TITLE_HEADER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_THUMBNAIL_SCALE_FACTOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_TITLE_MARGIN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_TITLE_MARGIN_HORIZONTAL_OFFSET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_VERTICAL_FADE_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_FULL_PATHS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CONTENT_ANIMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_DISC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_ONLINE_UPDATER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_QUIT_RETROARCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_REBOOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_RESTART_RETROARCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_SHUTDOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_SUBLABELS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_SUBLABELS_CURRENT_SELECTION_ONLY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SINGLECLICK_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SOUNDS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_BGM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_CANCEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_NOTICE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_OK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_SCROLL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_STARTUP_PAGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_BACKGROUND_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_PREVIEW_AUDIO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_PREVIEW_THREADS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_UPSCALE_THRESHOLD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_SMOOTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_SPEED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_TYPE_BOUNCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_TYPE_LOOP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_USE_PREFERRED_SYSTEM_COLOR_THEME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_VIEWS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_WALLPAPER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_WALLPAPER_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGETS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_AUTO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_FACTOR_FULLSCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_FACTOR_WINDOWED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_ANIMATION_HORIZONTAL_HIGHLIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_ANIMATION_MOVE_UP_DOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_ANIMATION_OPENING_MAIN_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_SHOW_HORIZONTAL_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_SHOW_TITLE_HEADER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_THUMBNAIL_SCALE_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_TITLE_MARGIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_TITLE_MARGIN_HORIZONTAL_OFFSET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_VERTICAL_FADE_FACTOR,
 #ifdef HAVE_MICROPHONE
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_BLOCK_FRAMES,
+#if defined(RARCH_MOBILE)
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_BLOCK_FRAMES,
+#endif
 #endif
 #ifdef HAVE_MICROPHONE
 #if !defined(RARCH_CONSOLE)
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_DEVICE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_DEVICE,
 #endif
 #endif
 #ifdef HAVE_MICROPHONE
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_INPUT_RATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_LATENCY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_RESAMPLER_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_RESAMPLER_QUALITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_INPUT_RATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_LATENCY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_RESAMPLER_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_RESAMPLER_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_SETTINGS,
 #endif
 #ifdef HAVE_MICROPHONE
 #ifdef HAVE_WASAPI
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_WASAPI_EXCLUSIVE_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_WASAPI_FLOAT_FORMAT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_WASAPI_SH_BUFFER_LENGTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_WASAPI_EXCLUSIVE_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_WASAPI_FLOAT_FORMAT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MICROPHONE_WASAPI_SH_BUFFER_LENGTH,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MIDI_INPUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MIDI_OUTPUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MIDI_VOLUME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MISSING_OPTIONAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MISSING_REQUIRED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_PLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_PLAY_LOOPED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_PLAY_SEQUENTIAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_REMOVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_STOP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_VOLUME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MOUSE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_MUSIC_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NAVIGATION_BROWSER_FILTER_SUPPORTED_EXTENSIONS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NAVIGATION_WRAPAROUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NEAREST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_ALLOW_PAUSING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_ALLOW_SLAVES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_BAN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_CHAT_COLOR_MSG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_CHAT_COLOR_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_CHECK_FRAMES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_COMPAT_CONTENT_FOUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_COMPAT_CONTENT_LOOK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_COMPAT_CONTENT_NOT_FOUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_COMPAT_CONTENT_NO_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_COMPAT_CONTENT_NO_PLAYLISTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_CUSTOM_MITM_SERVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_DISABLE_HOST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_DISCONNECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_ENABLE_CLIENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_ENABLE_HOST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_FADE_CHAT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_INPUT_LATENCY_FRAMES_MIN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_INPUT_LATENCY_FRAMES_RANGE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_IP_ADDRESS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_KICK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_LOAD_CONTENT_MANUALLY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_LOBBY_FILTERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MAX_CONNECTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MAX_PING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER_LOCATION_1,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER_LOCATION_2,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER_LOCATION_3,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER_LOCATION_4,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER_LOCATION_CUSTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_NAT_TRAVERSAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_NICKNAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_PASSWORD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_PING_SHOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_PUBLIC_ANNOUNCE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_REFRESH_LAN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_REFRESH_ROOMS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_REQUEST_DEVICE_I,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_REQUIRE_SLAVES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_ROOM_NICKNAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_ANALOG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_ANALOG_AVERAGE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_DIGITAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_DIGITAL_OR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_DIGITAL_VOTE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_NO_PREFERENCE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHOW_ONLY_CONNECTABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHOW_ONLY_INSTALLED_CORES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHOW_PASSWORDED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SPECTATE_PASSWORD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_START_AS_SPECTATOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_START_WHEN_LOADED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_TCP_UDP_PORT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETPLAY_USE_MITM_SERVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETWORK_CMD_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETWORK_CMD_PORT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETWORK_ERROR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETWORK_HOSTING_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETWORK_INFORMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETWORK_ON_DEMAND_THUMBNAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETWORK_REMOTE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETWORK_REMOTE_PORT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETWORK_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NETWORK_USER_REMOTE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MIDI_INPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MIDI_OUTPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MIDI_VOLUME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MISSING_OPTIONAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MISSING_REQUIRED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_PLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_PLAY_LOOPED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_PLAY_SEQUENTIAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_STOP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MIXER_ACTION_VOLUME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MOUSE_DEVICE_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MOUSE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MOUSE_SYSTEM_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_MUSIC_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NAVIGATION_BROWSER_FILTER_SUPPORTED_EXTENSIONS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NAVIGATION_WRAPAROUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NEAREST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_ALLOW_PAUSING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_ALLOW_SLAVES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_ANALOG_JOYPADS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_BAN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_CHAT_COLOR_MSG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_CHAT_COLOR_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_CHECK_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_COMPAT_CONTENT_FOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_COMPAT_CONTENT_LOOK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_COMPAT_CONTENT_NOT_FOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_COMPAT_CONTENT_NO_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_COMPAT_CONTENT_NO_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_CUSTOM_MITM_SERVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_DISABLE_HOST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_DISCONNECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_ENABLE_CLIENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_ENABLE_HOST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_FADE_CHAT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_INPUT_LATENCY_FRAMES_MIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_INPUT_LATENCY_FRAMES_RANGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_IP_ADDRESS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_KICK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_LOAD_CONTENT_MANUALLY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_LOBBY_FILTERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_LOCKSTEP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MAX_CONNECTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MAX_PING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER_LOCATION_1,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER_LOCATION_2,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER_LOCATION_3,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER_LOCATION_4,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_MITM_SERVER_LOCATION_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_NAT_TRAVERSAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_NICKNAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_PING_SHOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_PUBLIC_ANNOUNCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_REFRESH_LAN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_REFRESH_ROOMS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_REQUEST_DEVICES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_REQUEST_DEVICE_I,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_REQUIRE_SLAVES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_ROOM_NICKNAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_ANALOG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_ANALOG_AVERAGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_DIGITAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_DIGITAL_OR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_DIGITAL_VOTE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHARE_NO_PREFERENCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHOW_ONLY_CONNECTABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHOW_ONLY_INSTALLED_CORES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SHOW_PASSWORDED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_SPECTATE_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_START_AS_SPECTATOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_START_WHEN_LOADED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_TCP_UDP_PORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETPLAY_USE_MITM_SERVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_CMD_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_CMD_PORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_ERROR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_HOSTING_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_ON_DEMAND_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_REMOTE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_REMOTE_FIRST_SENDER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_REMOTE_INFO_HEARD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_REMOTE_INFO_WAITING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_REMOTE_PORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_REMOTE_USERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NETWORK_USER_REMOTE_ENABLE,
 #ifdef _3DS
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NEW3DS_SPEEDUP_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NEW3DS_SPEEDUP_ENABLE,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_AUTOCONFIG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_AUTOCONFIG_FAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_CHEATS_APPLIED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_CONFIG_OVERRIDE_LOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_DISK_CONTROL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_FAST_FORWARD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_NETPLAY_EXTRA,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_PATCH_APPLIED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_REFRESH_RATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_REMAP_LOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SAVE_STATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_DURATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_DURATION_FAST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_DURATION_INSTANT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_DURATION_VERY_FAST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_FLASH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_FLASH_FAST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_FLASH_NORMAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SET_INITIAL_DISK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_WHEN_MENU_IS_ALIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NOT_LOGGED_IN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_ACHIEVEMENTS_TO_DISPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_BT_DEVICES_FOUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_CORES_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_CORE_BACKUPS_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_CORE_INFORMATION_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_CORE_OPTIONS_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_DISK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_ENTRIES_TO_DISPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_FAVORITES_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_HISTORY_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_IMAGES_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_INFORMATION_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_ITEMS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_MUSIC_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_NETPLAY_CLIENTS_FOUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_NETPLAY_HOSTS_FOUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_NETWORKS_FOUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_PERFORMANCE_COUNTERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_PLAYLISTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_PLAYLIST_ENTRIES_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_PRESETS_FOUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_SETTINGS_FOUND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_SHADER_PARAMETERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_NO_VIDEOS_AVAILABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OFF,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ON,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ONLINE_UPDATER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ONSCREEN_DISPLAY_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ONSCREEN_NOTIFICATIONS_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ONSCREEN_NOTIFICATIONS_VIEWS_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ONSCREEN_OVERLAY_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_ONSCREEN_VIDEO_LAYOUT_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OPEN_ARCHIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OSK_OVERLAY_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OSK_OVERLAY_OPACITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OSK_OVERLAY_PRESET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OSK_OVERLAY_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_ASPECT_ADJUST_LANDSCAPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_ASPECT_ADJUST_PORTRAIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_AUTOLOAD_PREFERRED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_LIGHTGUN_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_MOUSE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_OPACITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_PRESET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_SCALE_LANDSCAPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_SCALE_PORTRAIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_X_OFFSET_LANDSCAPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_X_OFFSET_PORTRAIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_X_SEPARATION_LANDSCAPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_X_SEPARATION_PORTRAIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_Y_OFFSET_LANDSCAPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_Y_OFFSET_PORTRAIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_Y_SEPARATION_LANDSCAPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERLAY_Y_SEPARATION_PORTRAIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERRIDE_FILE_INFO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERRIDE_FILE_LOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERRIDE_FILE_SAVE_AS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OVERRIDE_UNLOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_COLLAPSE_SIDEBAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_BASIC_BLACK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_BASIC_WHITE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_GRAY_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_GRAY_LIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_GRUVBOX_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_SOLARIZED_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_SOLARIZED_LIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_FOOTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_GLOBAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_LABEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_SIDEBAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_SUBLABEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_TIME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_TITLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_GLOBAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_SEPARATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_ICON,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_ICON_DYNAMIC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_ICON_FIXED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_ICON_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_SEPARATOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_SEPARATOR_MAXIMUM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_SEPARATOR_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_MENU_COLOR_THEME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_PADDING_FACTOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_SCROLL_CONTENT_METADATA,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_SHOW_SIDEBAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_SORT_AFTER_TRUNCATE_PLAYLIST_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_THUMBNAIL_SCALE_FACTOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_TRUNCATE_PLAYLIST_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PAL60_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PARENT_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PAUSE_LIBRETRO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PAUSE_NONACTIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PAUSE_ON_DISCONNECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PERFCNT_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PERFORMANCE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLISTS_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ALLOW_NON_PNG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_COMPRESSION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_REMOVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_REMOVE_ENABLE_ALL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_REMOVE_ENABLE_HIST_FAV,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_REMOVE_ENABLE_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_RENAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_FUZZY_ARCHIVE_MATCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_INLINE_CORE_DISPLAY_ALWAYS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_INLINE_CORE_DISPLAY_HIST_FAV,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_INLINE_CORE_DISPLAY_NEVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_CLEAN_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_DEFAULT_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_DEFAULT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_KEEP_DISC_INDEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_KEEP_REGION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_KEEP_REGION_AND_DISC_INDEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_REMOVE_BRACKETS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_REMOVE_PARENS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_REMOVE_PARENS_AND_BRACKETS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_REFRESH_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_RESET_CORES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_SORT_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_SORT_MODE_ALPHABETICAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_SORT_MODE_DEFAULT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_SORT_MODE_OFF,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_THUMBNAIL_MODE_DEFAULT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_PORTABLE_PATHS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_RUNTIME_AGGREGATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_RUNTIME_PER_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SHOW_ENTRY_IDX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SHOW_HISTORY_ICONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SHOW_INLINE_CORE_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SHOW_SUBLABELS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SORT_ALPHABETICAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED_STYLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_PLAY_COUNT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_RUNTIME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_RUNTIME_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_USE_FILENAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_USE_OLD_FORMAT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PLAY_REPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PL_THUMBNAILS_UPDATER_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_POINTER_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PORT_DEVICE_INFO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PORT_DEVICE_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_POWER_MANAGEMENT_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PREEMPT_FRAMES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PRESENT_OPTIONAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PRESENT_REQUIRED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_PRIVACY_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_ADDING_FILES_TO_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_ADD_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_ADD_FILES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_ADD_FOLDER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_ALL_PLAYLISTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_APPLY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_ASSOCIATE_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_CANNOT_ADD_TO_ALL_PLAYLISTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_CHOOSE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_CONFIRM_DELETE_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_CONFIRM_DELETE_PLAYLIST_ITEM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_CORE_INFO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_CORE_OPTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_CORE_SELECTION_ASK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_COULD_NOT_DELETE_FILE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_COULD_NOT_RENAME_FILE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_COULD_NOT_UPDATE_PLAYLIST_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_CURRENT_SHADER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_CUSTOM_THEME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_DELETE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_DELETE_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_DONT_SHOW_AGAIN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_ALL_THUMBNAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_ALL_THUMBNAILS_ENTIRE_SYSTEM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_ALL_THUMBNAILS_THIS_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_ALREADY_IN_PROGRESS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_PLAYLIST_THUMBNAIL_PROGRESS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_THUMBNAIL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_DROP_IMAGE_HERE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_EDIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_ENTER_NEW_PLAYLIST_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_ERROR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_FIELD_MULTIPLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_FILE_DOES_NOT_EXIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_FILE_IS_EMPTY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_FILE_PATH_IS_BLANK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_FILE_READ_OPEN_FAILED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_FILE_WRITE_OPEN_FAILED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_FOR_THUMBNAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_GATHERING_LIST_OF_FILES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_HIDDEN_PLAYLISTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_HIDE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_ITEMS_COUNT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_LOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_LOADING_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_LOAD_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_LOAD_CUSTOM_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_LOG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_DOCK_CONTENT_BROWSER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_EDIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_EDIT_SEARCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_FILE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_FILE_EXIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_FILE_LOAD_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_FILE_UNLOAD_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_HELP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_HELP_ABOUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_HELP_DOCUMENTATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_SEARCH_CLEAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_TOOLS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_CLOSED_DOCKS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_ALL_PLAYLISTS_GRID_MAX_COUNT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_ALL_PLAYLISTS_LIST_MAX_COUNT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_HIGHLIGHT_COLOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_SAVE_DOCK_POSITIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_SAVE_GEOMETRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_SAVE_LAST_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_SHOW_HIDDEN_FILES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_STARTUP_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_SUGGEST_LOADED_CORE_FIRST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THEME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THEME_CUSTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THEME_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THUMBNAIL_CACHE_LIMIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THUMBNAIL_DROP_SIZE_LIMIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THUMBNAIL_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_TITLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_SHADER_PARAMS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MOVE_DOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_MOVE_UP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_NETWORK_ERROR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_NEW_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_DATABASE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_EXTENSIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_EXTENSIONS_PLACEHOLDER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_FILTER_INSIDE_ARCHIVES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_PATH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_PLEASE_FILL_OUT_REQUIRED_FIELDS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_PROGRESS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_QUESTION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_REMOVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_REMOVE_PASSES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_RENAME_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_RESET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_RESET_ALL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_RESET_ALL_PASSES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_RESET_PARAMETER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_RESET_PASS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_RESTART_TO_TAKE_EFFECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_SAVE,
+#ifdef HAVE_NFSCLIENT
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NFS_CLIENT_BROWSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NFS_CLIENT_EXPORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NFS_CLIENT_MOUNT_PORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NFS_CLIENT_NUM_CONTEXTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NFS_CLIENT_PORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NFS_CLIENT_READAHEAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NFS_CLIENT_SERVER,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_NFSCLIENT
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NFS_CLIENT_SETTINGS,
+#endif
+#endif
+#ifdef HAVE_NFSCLIENT
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NFS_CLIENT_SUBDIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NFS_CLIENT_TIMEOUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NFS_CLIENT_VERSION,
+#endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_AUTOCONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_AUTOCONFIG_FAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_CHEATS_APPLIED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_CONFIG_OVERRIDE_LOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_DISK_CONTROL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_FAST_FORWARD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_NETPLAY_EXTRA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_PATCH_APPLIED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_REMAP_LOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SAVE_STATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_DURATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_DURATION_FAST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_DURATION_INSTANT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_DURATION_VERY_FAST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_FLASH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_FLASH_FAST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SCREENSHOT_FLASH_NORMAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_SET_INITIAL_DISK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOTIFICATION_SHOW_WHEN_MENU_IS_ALIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NOT_LOGGED_IN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_ACHIEVEMENTS_TO_DISPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_BT_DEVICES_FOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_CORES_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_CORE_BACKUPS_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_CORE_INFORMATION_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_CORE_OPTIONS_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_DISK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_ENTRIES_TO_DISPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_EXTENSION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_FAVORITES_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_HISTORY_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_IMAGES_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_INFORMATION_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_ITEMS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_MUSIC_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_NETPLAY_CLIENTS_FOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_NETPLAY_HOSTS_FOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_NETWORKS_FOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_PERFORMANCE_COUNTERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_PLAYLIST_ENTRIES_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_PRESETS_FOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_SETTINGS_FOUND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_SHADER_PARAMETERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_NO_VIDEOS_AVAILABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OFF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ON,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ONLINE_UPDATER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ONSCREEN_DISPLAY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ONSCREEN_NOTIFICATIONS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ONSCREEN_NOTIFICATIONS_VIEWS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ONSCREEN_OVERLAY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_ONSCREEN_VIDEO_LAYOUT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OPEN_ARCHIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OSK_OVERLAY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OSK_OVERLAY_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OSK_OVERLAY_PRESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OSK_OVERLAY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_ASPECT_ADJUST_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_ASPECT_ADJUST_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_AUTOLOAD_PREFERRED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_CONTACT_METHOD_AREA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_CONTACT_METHOD_BOTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_CONTACT_METHOD_VECTOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_LIGHTGUN_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_MOUSE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_PRESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_SCALE_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_SCALE_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_X_OFFSET_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_X_OFFSET_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_X_SEPARATION_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_X_SEPARATION_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_Y_OFFSET_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_Y_OFFSET_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_Y_SEPARATION_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERLAY_Y_SEPARATION_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERRIDE_FILE_INFO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERRIDE_FILE_LOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERRIDE_FILE_SAVE_AS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OVERRIDE_UNLOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_COLLAPSE_SIDEBAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_BASIC_BLACK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_BASIC_WHITE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_GRAY_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_GRAY_LIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_GRUVBOX_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_SOLARIZED_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_COLOR_THEME_SOLARIZED_LIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_FOOTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_GLOBAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_LABEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_SIDEBAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_SUBLABEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_TIME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_FACTOR_TITLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_GLOBAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_FONT_SCALE_SEPARATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_ICON,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_ICON_DYNAMIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_ICON_FIXED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_ICON_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_SEPARATOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_SEPARATOR_MAXIMUM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_HEADER_SEPARATOR_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_MENU_COLOR_THEME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_PADDING_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_SCROLL_CONTENT_METADATA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_SHOW_SIDEBAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_SORT_AFTER_TRUNCATE_PLAYLIST_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_THUMBNAIL_SCALE_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_OZONE_TRUNCATE_PLAYLIST_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PAL60_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PARENT_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PAUSE_LIBRETRO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PAUSE_NONACTIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PAUSE_ON_DISCONNECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PERFCNT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PERFORMANCE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLISTS_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ALLOW_NON_PNG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_COMPRESSION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_REMOVE_ENABLE_ALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_REMOVE_ENABLE_HIST_FAV,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_REMOVE_ENABLE_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_ENTRY_RENAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_FUZZY_ARCHIVE_MATCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_INLINE_CORE_DISPLAY_ALWAYS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_INLINE_CORE_DISPLAY_HIST_FAV,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_INLINE_CORE_DISPLAY_NEVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_CLEAN_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_DEFAULT_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_DEFAULT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_KEEP_DISC_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_KEEP_REGION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_KEEP_REGION_AND_DISC_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_REMOVE_BRACKETS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_REMOVE_PARENS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE_REMOVE_PARENS_AND_BRACKETS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_REFRESH_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_RESET_CORES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_SORT_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_SORT_MODE_ALPHABETICAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_SORT_MODE_DEFAULT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_SORT_MODE_OFF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_MANAGER_THUMBNAIL_MODE_DEFAULT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_PORTABLE_PATHS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_RUNTIME_AGGREGATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_RUNTIME_PER_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SHOW_ENTRY_IDX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SHOW_HISTORY_ICONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SHOW_INLINE_CORE_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SHOW_SUBLABELS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SORT_ALPHABETICAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_LAST_PLAYED_STYLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_PLAY_COUNT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_RUNTIME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_SUBLABEL_RUNTIME_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_USE_FILENAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAYLIST_USE_OLD_FORMAT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PLAY_REPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PL_THUMBNAILS_UPDATER_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_POINTER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PORT_BT_HOST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PORT_BT_HOST_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PORT_BT_HOST_THIS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PORT_BT_PAIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PORT_DEVICE_INFO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PORT_DEVICE_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PORT_DEVICE_NO_PROFILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PORT_DS3_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PORT_DS3_RESTORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PORT_IGNORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_POWER_MANAGEMENT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PREEMPT_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PRESENT_OPTIONAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PRESENT_REQUIRED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_PRIVACY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_ADDING_FILES_TO_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_ADD_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_ADD_FILES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_ADD_FOLDER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_ALL_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_APPLY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_ASSOCIATE_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_CANNOT_ADD_TO_ALL_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_CHOOSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_CONFIRM_DELETE_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_CONFIRM_DELETE_PLAYLIST_ITEM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_CORE_INFO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_CORE_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_CORE_SELECTION_ASK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_COULD_NOT_DELETE_FILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_COULD_NOT_RENAME_FILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_COULD_NOT_UPDATE_PLAYLIST_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_CURRENT_SHADER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_CUSTOM_THEME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_DELETE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_DELETE_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_DONT_SHOW_AGAIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_ALL_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_ALL_THUMBNAILS_ENTIRE_SYSTEM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_ALL_THUMBNAILS_THIS_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_ALREADY_IN_PROGRESS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_PLAYLIST_THUMBNAIL_PROGRESS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_DOWNLOAD_THUMBNAIL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_DROP_IMAGE_HERE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_EDIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_ENTER_NEW_PLAYLIST_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_ERROR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_FIELD_MULTIPLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_FILE_DOES_NOT_EXIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_FILE_IS_EMPTY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_FILE_PATH_IS_BLANK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_FILE_READ_OPEN_FAILED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_FILE_WRITE_OPEN_FAILED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_FOR_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_GATHERING_LIST_OF_FILES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_HIDDEN_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_HIDE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_ITEMS_COUNT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_LOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_LOADING_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_LOAD_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_LOAD_CUSTOM_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_LOG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_DOCK_CONTENT_BROWSER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_EDIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_EDIT_SEARCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_FILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_FILE_EXIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_FILE_LOAD_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_FILE_UNLOAD_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_HELP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_HELP_ABOUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_HELP_DOCUMENTATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_SEARCH_CLEAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_TOOLS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_CLOSED_DOCKS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_CONTROLLER_SHORTCUTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_ALL_PLAYLISTS_GRID_MAX_COUNT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_ALL_PLAYLISTS_LIST_MAX_COUNT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_HIGHLIGHT_COLOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_SAVE_DOCK_POSITIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_SAVE_GEOMETRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_SAVE_LAST_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_SHOW_HIDDEN_FILES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_STARTUP_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_SUGGEST_LOADED_CORE_FIRST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THEME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THEME_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THEME_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THUMBNAIL_CACHE_LIMIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THUMBNAIL_DROP_SIZE_LIMIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_THUMBNAIL_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_OPTIONS_TITLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MENU_VIEW_SHADER_PARAMS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MOVE_DOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_MOVE_UP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_NETWORK_ERROR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_NEW_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_DATABASE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_EXTENSIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_EXTENSIONS_PLACEHOLDER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_FILTER_INSIDE_ARCHIVES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_PLAYLIST_ENTRY_PATH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_PLEASE_FILL_OUT_REQUIRED_FIELDS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_PROGRESS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_QUESTION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_REMOVE_PASSES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_RENAME_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_RESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_RESET_ALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_RESET_ALL_PASSES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_RESET_PARAMETER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_RESET_PASS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_RESTART_TO_TAKE_EFFECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_SAVE,
 #ifdef HAVE_QT
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_SCAN_FINISHED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_SCAN_FINISHED,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_SELECT_COLOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_SELECT_FILES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_SELECT_FOLDER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_SELECT_THEME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_SHADER_ADD_PASS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_SHADER_CLEAR_ALL_PASSES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_SHADER_NO_PASSES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_STOP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_TAB_FILE_BROWSER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_TAB_FILE_BROWSER_TOP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_TAB_FILE_BROWSER_UP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_TAB_PLAYLISTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_THUMBNAIL_BOXART,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_THUMBNAIL_LOGO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_THUMBNAIL_PACK_DOWNLOADED_SUCCESSFULLY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_THUMBNAIL_SCREENSHOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_THUMBNAIL_TITLE_SCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_UPDATE_RETROARCH_FAILED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_UPDATE_RETROARCH_FINISHED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_UPDATE_RETROARCH_NIGHTLY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_VIEW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_VIEW_TYPE_ICONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_VIEW_TYPE_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QT_WARNING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_OVERRIDE_OPTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_ADD_TO_FAVORITES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_ADD_TO_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CHEATS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CLOSE_CONTENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CONTROLS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CORE_OPTIONS_FLUSH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_DOWNLOAD_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_SELECT_COLOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_SELECT_FILES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_SELECT_FOLDER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_SELECT_THEME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_SHADER_ADD_PASS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_SHADER_CLEAR_ALL_PASSES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_SHADER_NO_PASSES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_STOP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_TAB_FILE_BROWSER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_TAB_FILE_BROWSER_TOP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_TAB_FILE_BROWSER_UP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_TAB_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_THUMBNAIL_BOXART,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_THUMBNAIL_LOGO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_THUMBNAIL_PACK_DOWNLOADED_SUCCESSFULLY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_THUMBNAIL_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_THUMBNAIL_TITLE_SCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_UPDATE_RETROARCH_FAILED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_UPDATE_RETROARCH_FINISHED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_UPDATE_RETROARCH_NIGHTLY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_VIEW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_VIEW_TYPE_ICONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_VIEW_TYPE_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QT_WARNING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_OVERRIDE_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_ADD_TO_FAVORITES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_ADD_TO_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CHEATS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CLOSE_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CONTROLS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_CORE_OPTIONS_FLUSH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_DOWNLOAD_THUMBNAILS,
 #ifdef HAVE_GAME_AI
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_GAME_AI,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_GAME_AI,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_INFORMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_OPTIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_REPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_RESET_CORE_ASSOCIATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_RESTART_CONTENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_RESUME_CONTENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVESTATE_SUBMENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVE_CONTENT_DIR_OVERRIDES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVE_CORE_OVERRIDES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVE_GAME_OVERRIDES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVE_LOAD_STATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SET_CORE_ASSOCIATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SHADERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_START_RECORDING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_START_STREAMING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_TAKE_SCREENSHOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_UNDO_SAVE_LOAD_STATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_START_RECORDING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_START_STREAMING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_STOP_RECORDING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_STOP_STREAMING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_VIEWS_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUIT_ON_CLOSE_CONTENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_QUIT_RETROARCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RANDOM_SELECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ACHIEVEMENTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ANALOG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ARTSTYLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_BBFC_RATING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_CATEGORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_CERO_RATING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_CONSOLE_EXCLUSIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_CONTROLS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_COOP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_DESCRIPTION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_DETAIL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_DEVELOPER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_EDGE_MAGAZINE_ISSUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_EDGE_MAGAZINE_RATING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_EDGE_MAGAZINE_REVIEW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ELSPA_RATING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ENHANCEMENT_HW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ESRB_RATING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_FAMITSU_MAGAZINE_RATING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_GAMEPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_LANGUAGE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_NARRATIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ORIGIN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_PACING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_PEGI_RATING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_PERSPECTIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_PLATFORM_EXCLUSIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_PUBLISHER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_MONTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_YEAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RUMBLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_SCORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_SERIAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_SETTING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_TGDB_RATING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_VEHICULAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_VISUAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REBOOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RECORDING_CONFIG_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RECORDING_OUTPUT_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RECORDING_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RECORD_CONFIG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RECORD_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RECORD_REPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_FLUSH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_INFO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_LOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_MANAGER_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_REMOVE_CONTENT_DIR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_REMOVE_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_REMOVE_GAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_RESET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_SAVE_AS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_SAVE_CONTENT_DIR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_SAVE_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_SAVE_GAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMAP_SAVE_ON_EXIT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMOVE_CURRENT_CONFIG_OVERRIDE_CONTENT_DIR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMOVE_CURRENT_CONFIG_OVERRIDE_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REMOVE_CURRENT_CONFIG_OVERRIDE_GAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RENAME_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REPLAY_AUTO_INDEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REPLAY_CHECKPOINT_DESERIALIZE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REPLAY_CHECKPOINT_INTERVAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REPLAY_MAX_KEEP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REPLAY_SLOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RESET_CORE_ASSOCIATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RESET_TO_DEFAULT_CONFIG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RESTART_CONTENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RESTART_RETROARCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RESUME_CONTENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RETROPAD_WITH_ANALOG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RETRO_ACHIEVEMENTS_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REWIND_BUFFER_SIZE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REWIND_BUFFER_SIZE_STEP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REWIND_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REWIND_GRANULARITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_REWIND_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_16_10_CENTRE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_16_9_CENTRE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_21_9_CENTRE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_3_2_CENTRE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_5_3_CENTRE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_LOCK_FILL_SCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_LOCK_FIT_SCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_LOCK_INTEGER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_LOCK_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_BROWSER_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_CONFIG_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_APPLE_GREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_GREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_GREY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_ORANGE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_VIOLET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_YELLOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CUSTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_DARK_PURPLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_ELECTRIC_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_GOLDEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_GRAY_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_GRAY_LIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_GRUVBOX_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_GRUVBOX_LIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_LEGACY_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_MIDNIGHT_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_SOLARIZED_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_SOLARIZED_LIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_TANGO_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_TANGO_LIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_VOLCANIC_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_THEME_PRESET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_RAIN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_SNOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_SNOW_ALT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_STARFIELD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_VORTEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_SHOW_START_SCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_THUMB_SCALE_BILINEAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_THUMB_SCALE_POINT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_THUMB_SCALE_SINC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RGUI_UPSCALE_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RIGHT_ANALOG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RIGHT_ANALOG_FORCED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RUN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RUNAHEAD_MODE_PREEMPTIVE_FRAMES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RUNAHEAD_MODE_SECOND_INSTANCE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RUNAHEAD_MODE_SINGLE_INSTANCE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RUNTIME_LOG_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RUN_AHEAD_FRAMES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RUN_AHEAD_HIDE_WARNINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RUN_AHEAD_UNSUPPORTED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_RUN_MUSIC,
-#ifdef HAVE_LAKKA
-#ifdef HAVE_RETROFLAG
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAFESHUTDOWN_ENABLE,
-#endif
-#endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVEFILES_IN_CONTENT_DIR_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVEFILE_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATES_IN_CONTENT_DIR_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTOMATIC_INTERVAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTO_INDEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTO_LOAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTO_SAVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_FILE_COMPRESSION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_MAX_KEEP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_THUMBNAIL_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVE_AS_CONFIG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVE_COMPRESSION_CODEC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVE_CURRENT_CONFIG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVE_CURRENT_CONFIG_OVERRIDE_CONTENT_DIR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVE_CURRENT_CONFIG_OVERRIDE_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVE_CURRENT_CONFIG_OVERRIDE_GAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVE_FILE_COMPRESSION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVE_MAIN_CONFIG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVE_NEW_CONFIG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVE_STATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVING_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCALE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_DB_SELECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_DB_SELECT_AUTO_ANY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_DB_SELECT_AUTO_FIRST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_FILE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_METHOD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_METHOD_AUTO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_METHOD_CUSTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_OMIT_DB_REF,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_SERIAL_AND_CRC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_SINGLE_FILE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_TARGET_PLAYLIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_TARGET_PLAYLIST_AUTO_ANY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB_CUSTOM_DAT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB_CUSTOM_DAT_LOOSE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB_LOOSE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB_STRICT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCAN_WITHOUT_CORE_MATCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCREENSHOTS_IN_CONTENT_DIR_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCREENSHOT_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCREEN_ORIENTATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCREEN_RESOLUTION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SCROLL_FAST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SEARCH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SECONDS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SELECT_FILE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_ACCESSIBILITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_ACHIEVEMENTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_AI_SERVICE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_AUDIO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_CONFIGURATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_DRIVERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_FILE_BROWSER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_FRAME_THROTTLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_INPUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_LATENCY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_LOGGING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_NETWORK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_ONSCREEN_DISPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_PLAYLISTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_POWER_MANAGEMENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_RECORDING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_SAVING,
-#ifdef HAVE_SMBCLIENT
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_SMB_CLIENT,
-#endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_STEAM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_USER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_USER_INTERFACE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_VIDEO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SETTINGS_VIEWS_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SET_CORE_ASSOCIATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHADER_APPLY_CHANGES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHADER_PIPELINE_RIBBON_SIMPLIFIED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHADER_PIPELINE_SIMPLE_SNOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHADER_PIPELINE_SNOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHADER_PIPELINE_SNOWFLAKE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHADER_WATCH_FOR_CHANGES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHOW_ADVANCED_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHOW_CONTENTLESS_CORES_ALL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHOW_CONTENTLESS_CORES_CUSTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHOW_CONTENTLESS_CORES_SINGLE_PURPOSE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHOW_HIDDEN_FILES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHOW_WIMP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SHUTDOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SIDELOAD_CORE_ERROR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SIDELOAD_CORE_LIST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SIDELOAD_CORE_SUCCESS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SLOWMOTION_RATIO,
-#ifdef HAVE_SMBCLIENT
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_AUTH_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_BROWSE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_NUM_CONTEXTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_PASSWORD,
-#endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SEC_KRB_OR_NTLM,
-#ifdef HAVE_SMBCLIENT
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SERVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SHARE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SMB_SHARE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SUBDIR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_TIMEOUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_USERNAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_WORKGROUP,
-#endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SORT_SAVEFILES_BY_CONTENT_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SORT_SAVEFILES_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SORT_SAVESTATES_BY_CONTENT_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SORT_SAVESTATES_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SORT_SCREENSHOTS_BY_CONTENT_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SOUND_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_START_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_START_NET_RETROPAD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_START_VIDEO_PROCESSOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STATE_SLOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STATISTICS_HIDE_IN_MENU,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STATISTICS_SHOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STDIN_CMD_ENABLE,
-#ifdef HAVE_MIST
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_CONTENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_CONTENT_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_CONTENT_SYSTEM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_CONTENT_SYSTEM_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_SYSTEM,
-#endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STORAGE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STREAMING_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STREAMING_TITLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_STREAM_CONFIG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SUBSYSTEM_CONTENT_INFO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SUBSYSTEM_LOAD_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SUBSYSTEM_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SUBSYSTEM_START_ENTRY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SUPPORTED_CORES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SUSPEND_SCREENSAVER_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SUSTAINED_PERFORMANCE_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_REPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_RESET_CORE_ASSOCIATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_RESTART_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_RESUME_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVESTATE_SUBMENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVE_CONTENT_DIR_OVERRIDES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVE_CORE_OVERRIDES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVE_GAME_OVERRIDES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SAVE_LOAD_STATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SET_CORE_ASSOCIATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_SHADERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_START_RECORDING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_START_STREAMING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_TAKE_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_SHOW_UNDO_SAVE_LOAD_STATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_START_RECORDING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_START_STREAMING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_STOP_RECORDING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_STOP_STREAMING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUICK_MENU_VIEWS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUIT_ON_CLOSE_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_QUIT_RETROARCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RANDOM_SELECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ACHIEVEMENTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ANALOG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ARTSTYLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_BBFC_RATING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_CATEGORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_CERO_RATING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_CONSOLE_EXCLUSIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_CONTROLS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_COOP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_DESCRIPTION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_DETAIL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_DEVELOPER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_EDGE_MAGAZINE_ISSUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_EDGE_MAGAZINE_RATING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_EDGE_MAGAZINE_REVIEW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ELSPA_RATING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ENHANCEMENT_HW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ESRB_RATING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_FAMITSU_MAGAZINE_RATING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_GAMEPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_LANGUAGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_NARRATIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_ORIGIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_PACING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_PEGI_RATING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_PERSPECTIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_PLATFORM_EXCLUSIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_PUBLISHER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_MONTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_MONTH_AUGUST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_MONTH_FEBRUARY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_MONTH_JANUARY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_MONTH_JULY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_MONTH_JUNE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_MONTH_MARCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_MONTH_MAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_MONTH_OCTOBER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RELEASE_YEAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_RUMBLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_SCORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_SERIAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_SETTING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_TGDB_RATING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_VEHICULAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RDB_ENTRY_VISUAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REBOOT,
 #ifdef HAVE_LAKKA
 #ifdef HAVE_LAKKA_SWITCH
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SWITCH_CEC_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REBOOT_FORCE_SELF_ON_UPDATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REBOOT_PAYLOAD,
+#endif
+#endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RECORDING_CONFIG_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RECORDING_OUTPUT_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RECORDING_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RECORD_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RECORD_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RECORD_REPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_FLUSH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_INFO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_LOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_MANAGER_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_REMOVE_CONTENT_DIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_REMOVE_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_REMOVE_GAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_RESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_SAVE_AS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_SAVE_CONTENT_DIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_SAVE_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_FILE_SAVE_GAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMAP_SAVE_ON_EXIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMOVE_CURRENT_CONFIG_OVERRIDE_CONTENT_DIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMOVE_CURRENT_CONFIG_OVERRIDE_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REMOVE_CURRENT_CONFIG_OVERRIDE_GAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RENAME_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REPLAY_AUTO_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REPLAY_CHECKPOINT_DESERIALIZE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REPLAY_CHECKPOINT_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REPLAY_MAX_KEEP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REPLAY_SLOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RESET_CORE_ASSOCIATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RESET_TO_DEFAULT_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RESTART_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RESTART_RETROARCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RESUME_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RETROPAD_WITH_ANALOG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RETRO_ACHIEVEMENTS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REWIND_BUFFER_SIZE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REWIND_BUFFER_SIZE_STEP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REWIND_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REWIND_GRANULARITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_REWIND_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_16_10_CENTRE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_16_9_CENTRE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_21_9_CENTRE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_3_2_CENTRE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_5_3_CENTRE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_LOCK_FILL_SCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_LOCK_FIT_SCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_LOCK_INTEGER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_ASPECT_RATIO_LOCK_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_BROWSER_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_CONFIG_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_APPLE_GREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_GREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_GREY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_ORANGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_VIOLET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CLASSIC_YELLOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_DARK_PURPLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_ELECTRIC_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_GOLDEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_GRAY_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_GRAY_LIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_GRUVBOX_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_GRUVBOX_LIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_LEGACY_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_MIDNIGHT_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_SOLARIZED_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_SOLARIZED_LIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_TANGO_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_TANGO_LIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_COLOR_THEME_VOLCANIC_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_MENU_THEME_PRESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_RAIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_SNOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_SNOW_ALT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_STARFIELD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_PARTICLE_EFFECT_VORTEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_SHOW_START_SCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_THUMB_SCALE_BILINEAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_THUMB_SCALE_POINT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_THUMB_SCALE_SINC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RGUI_UPSCALE_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RIGHT_ANALOG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RIGHT_ANALOG_FORCED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RUN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RUNAHEAD_MODE_PREEMPTIVE_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RUNAHEAD_MODE_SECOND_INSTANCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RUNAHEAD_MODE_SINGLE_INSTANCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RUNTIME_LOG_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RUN_AHEAD_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RUN_AHEAD_HIDE_WARNINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RUN_AHEAD_UNSUPPORTED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_RUN_MUSIC,
+#ifdef HAVE_LAKKA
+#ifdef HAVE_RETROFLAG
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAFESHUTDOWN_ENABLE,
+#endif
+#endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVEFILES_IN_CONTENT_DIR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVEFILE_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVESTATES_IN_CONTENT_DIR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTOMATIC_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTO_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTO_LOAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTO_SAVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_FILE_COMPRESSION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_MAX_KEEP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_THUMBNAIL_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVE_AS_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVE_COMPRESSION_CODEC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVE_CURRENT_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVE_CURRENT_CONFIG_OVERRIDE_CONTENT_DIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVE_CURRENT_CONFIG_OVERRIDE_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVE_CURRENT_CONFIG_OVERRIDE_GAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVE_FILE_COMPRESSION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVE_MAIN_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVE_NEW_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVE_STATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SAVING_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_DB_SELECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_DB_SELECT_AUTO_ANY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_DB_SELECT_AUTO_FIRST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_FILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_METHOD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_METHOD_AUTO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_METHOD_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_OMIT_DB_REF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_SERIAL_AND_CRC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_TARGET_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_TARGET_PLAYLIST_AUTO_ANY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB_CUSTOM_DAT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB_CUSTOM_DAT_LOOSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB_LOOSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_USE_DB_STRICT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCAN_WITHOUT_CORE_MATCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCREENSHOTS_IN_CONTENT_DIR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCREENSHOT_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCREEN_ORIENTATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCREEN_RESOLUTION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SCROLL_FAST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SEARCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SECONDS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SELECT_FILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_ACCESSIBILITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_ACHIEVEMENTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_AI_SERVICE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_AUDIO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_CONFIGURATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_DRIVERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_FILE_BROWSER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_FRAME_THROTTLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_INPUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_LATENCY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_LOGGING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_NETWORK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_ONSCREEN_DISPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_POWER_MANAGEMENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_RECORDING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_SAVING,
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_SMB_CLIENT,
+#endif
+#endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_STEAM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_USER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_USER_INTERFACE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_SHOW_VIDEO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SETTINGS_VIEWS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SET_CORE_ASSOCIATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHADER_APPLY_CHANGES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHADER_PIPELINE_RIBBON_SIMPLIFIED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHADER_PIPELINE_SIMPLE_SNOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHADER_PIPELINE_SNOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHADER_PIPELINE_SNOWFLAKE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHADER_WATCH_FOR_CHANGES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHOW_ADVANCED_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHOW_CONTENTLESS_CORES_ALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHOW_CONTENTLESS_CORES_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHOW_CONTENTLESS_CORES_SINGLE_PURPOSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHOW_HIDDEN_FILES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHOW_WIMP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SHUTDOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SIDELOAD_CORE_ERROR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SIDELOAD_CORE_LIST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SIDELOAD_CORE_SUCCESS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SLOWMOTION_RATIO,
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_AUTH_MODE,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_BROWSE,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_ENABLE,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_KDC,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_NUM_CONTEXTS,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_PASSWORD,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_READAHEAD,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_REALM,
+#endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SEC_KRB_OR_NTLM,
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SERVER,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SETTINGS,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SHARE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SMB_SHARE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_SUBDIR,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_TIMEOUT,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_USERNAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SMB_CLIENT_WORKGROUP,
+#endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SORT_SAVEFILES_BY_CONTENT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SORT_SAVEFILES_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SORT_SAVESTATES_BY_CONTENT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SORT_SAVESTATES_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SORT_SCREENSHOTS_BY_CONTENT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SOUND_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_START_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_START_NET_RETROPAD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_START_VIDEO_PROCESSOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STATE_SLOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STATISTICS_HIDE_IN_MENU,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STATISTICS_SHOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STDIN_CMD_ENABLE,
+#ifdef HAVE_MIST
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_CONTENT_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_CONTENT_SYSTEM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_CONTENT_SYSTEM_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STEAM_RICH_PRESENCE_FORMAT_SYSTEM,
+#endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STORAGE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STREAMING_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STREAMING_TITLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_STREAM_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SUBSYSTEM_CONTENT_INFO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SUBSYSTEM_LOAD_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SUBSYSTEM_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SUBSYSTEM_START_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SUPPORTED_CORES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SUSPEND_SCREENSAVER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SUSTAINED_PERFORMANCE_MODE,
+#ifdef HAVE_LAKKA
+#ifdef HAVE_LAKKA_SWITCH
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SWITCH_CEC_ENABLE,
 #endif
 #endif
 #ifdef HAVE_LIBNX
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SWITCH_CPU_PROFILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SWITCH_CPU_PROFILE,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SWITCH_INSTALLED_CORES_PFD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SWITCH_INSTALLED_CORES_PFD,
 #ifdef HAVE_LAKKA
 #ifdef HAVE_LAKKA_SWITCH
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SWITCH_OC_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SWITCH_OC_ENABLE,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEMFILES_IN_CONTENT_DIR_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFORMATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_BUILD_DATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_CPU_FEATURES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_CPU_MODEL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_DISPLAY_METRIC_DPI,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_DISPLAY_METRIC_MM_HEIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_DISPLAY_METRIC_MM_WIDTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_FRONTEND_IDENTIFIER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_FRONTEND_NAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_GIT_VERSION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_MOLTENVK_VERSION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_PACING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_CHARGED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_CHARGING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_DISCHARGING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_NO_SOURCE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_RETROARCH_VERSION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_VIDEO_CONTEXT_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TAKE_SCREENSHOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_THREADED_DATA_RUNLOOP_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_THREAD_PREFER_FAST_CORES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_THUMBNAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_THUMBNAILS_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_THUMBNAILS_MATERIALUI,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_THUMBNAILS_RGUI,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_THUMBNAIL_MODE_BOXARTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_THUMBNAIL_MODE_LOGOS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_THUMBNAIL_MODE_SCREENSHOTS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_THUMBNAIL_MODE_TITLE_SCREENS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIMEDATE_AGO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIMEDATE_DATE_SEPARATOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIMEDATE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIMEDATE_STYLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEMFILES_IN_CONTENT_DIR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_BUILD_DATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_CPU_FEATURES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_CPU_MODEL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_DISPLAY_METRIC_DPI,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_DISPLAY_METRIC_MM_HEIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_DISPLAY_METRIC_MM_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_DRIVER_PACING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_FRONTEND_IDENTIFIER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_FRONTEND_NAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_GIT_VERSION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_MOLTENVK_VERSION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_PACING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_CHARGED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_CHARGING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_DISCHARGING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_NO_SOURCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_RETROARCH_VERSION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_TEMPORAL_UPSCALER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_VIDEO_CONTEXT_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TAKE_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_THREADED_DATA_RUNLOOP_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_THREAD_PREFER_FAST_CORES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_THUMBNAILS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_THUMBNAILS_MATERIALUI,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_THUMBNAILS_RGUI,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_THUMBNAIL_MODE_BOXARTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_THUMBNAIL_MODE_LOGOS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_THUMBNAIL_MODE_SCREENSHOTS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_THUMBNAIL_MODE_TITLE_SCREENS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIMEDATE_AGO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIMEDATE_DATE_SEPARATOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIMEDATE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIMEDATE_STYLE,
 #ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIMEZONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIMEZONE,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_SHOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_AGO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_DAYS_PLURAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_DAYS_SINGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_HOURS_PLURAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_HOURS_SINGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_MINUTES_PLURAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_MINUTES_SINGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_MONTHS_PLURAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_MONTHS_SINGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_SECONDS_PLURAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_SECONDS_SINGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_WEEKS_PLURAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_WEEKS_SINGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_YEARS_PLURAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_YEARS_SINGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TRUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TURBO_DUTY_CYCLE_HALF,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TURBO_MODE_CLASSIC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TURBO_MODE_CLASSIC_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TURBO_MODE_SINGLEBUTTON,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TURBO_MODE_SINGLEBUTTON_HOLD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TWINSTICK_ANALOG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TWINSTICK_ANALOG_FORCED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_TWITCH_STREAM_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UDP_STREAM_PORT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UI_COMPANION_DRIVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UI_COMPANION_START_ON_BOOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UI_COMPANION_TOGGLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UI_MENUBAR_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UNABLE_TO_READ_COMPRESSED_FILE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UNDO_LOAD_STATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UNDO_SAVE_STATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UNKNOWN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UNKNOWN_GAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATER_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATE_ASSETS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATE_AUTOCONFIG_PROFILES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATE_CG_SHADERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATE_CHEATS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATE_CORE_INFO_FILES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATE_DATABASES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATE_GLSL_SHADERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATE_INSTALLED_CORES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATE_LAKKA,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATE_OVERLAYS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_UPDATE_SLANG_SHADERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_USER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_USER_INTERFACE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_USER_LANGUAGE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_USER_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_USE_BUILTIN_IMAGE_VIEWER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_USE_BUILTIN_PLAYER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_USE_LAST_START_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIBRATE_ON_KEYPRESS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_SHOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_AGO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_DAYS_PLURAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_DAYS_SINGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_HOURS_PLURAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_HOURS_SINGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_MINUTES_PLURAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_MINUTES_SINGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_MONTHS_PLURAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_MONTHS_SINGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_SECONDS_PLURAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_SECONDS_SINGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_WEEKS_PLURAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_WEEKS_SINGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_YEARS_PLURAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_YEARS_SINGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TLS_VERIFY_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TLS_VERIFY_MODE_DISABLED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TLS_VERIFY_MODE_OPTIONAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TLS_VERIFY_MODE_REQUIRED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TRUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TURBO_DUTY_CYCLE_HALF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TURBO_MODE_CLASSIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TURBO_MODE_CLASSIC_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TURBO_MODE_SINGLEBUTTON,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TURBO_MODE_SINGLEBUTTON_HOLD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TWINSTICK_ANALOG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TWINSTICK_ANALOG_FORCED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_TWITCH_STREAM_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UDP_STREAM_PORT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UI_COMPANION_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UI_COMPANION_START_ON_BOOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UI_COMPANION_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UI_MENUBAR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UNABLE_TO_READ_COMPRESSED_FILE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UNDO_LOAD_STATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UNDO_SAVE_STATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UNKNOWN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UNKNOWN_GAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATE_ASSETS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATE_AUTOCONFIG_PROFILES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATE_CG_SHADERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATE_CHEATS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATE_CORE_INFO_FILES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATE_DATABASES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATE_GLSL_SHADERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATE_INSTALLED_CORES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATE_LAKKA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATE_OVERLAYS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_UPDATE_SLANG_SHADERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_USER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_USER_INTERFACE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_USER_LANGUAGE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_USER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_USE_BUILTIN_IMAGE_VIEWER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_USE_BUILTIN_PLAYER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_USE_LAST_START_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIBRATE_ON_KEYPRESS,
 #ifdef _3DS
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_3DS_DISPLAY_MODE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_3DS_LCD_BOTTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_3DS_DISPLAY_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_3DS_LCD_BOTTOM,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ADAPTIVE_VSYNC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ALLOW_ROTATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_CONFIG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_CORE_PROVIDED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_CUSTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_INDEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_AUTOSWITCH_PAL_THRESHOLD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_AUTOSWITCH_REFRESH_RATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_AUTOSWITCH_REFRESH_RATE_ALL_FULLSCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_AUTOSWITCH_REFRESH_RATE_EXCLUSIVE_FULLSCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_AUTOSWITCH_REFRESH_RATE_WINDOWED_FULLSCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_BFI_DARK_FRAMES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_CROP_OVERSCAN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ADAPTIVE_VSYNC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ALLOW_ROTATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_CORE_PROVIDED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ASPECT_RATIO_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_AUTOSWITCH_PAL_THRESHOLD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_AUTOSWITCH_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_AUTOSWITCH_REFRESH_RATE_ALL_FULLSCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_AUTOSWITCH_REFRESH_RATE_EXCLUSIVE_FULLSCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_AUTOSWITCH_REFRESH_RATE_WINDOWED_FULLSCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_BFI_DARK_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_BLACK_FRAME_INSERTION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_CROP_OVERSCAN,
 #ifdef HAVE_ODROIDGO2
 #else
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_CTX_SCALING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_CTX_SCALING,
 #endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_D3D9EX_PRESENT,
 #if defined(DINGUX)
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_FILTER_BICUBIC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_FILTER_BILINEAR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_FILTER_NEAREST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_FILTER_TYPE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_KEEP_ASPECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_FILTER_BICUBIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_FILTER_BILINEAR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_FILTER_NEAREST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_FILTER_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_IPU_KEEP_ASPECT,
 #endif
 #if defined(DINGUX) && defined(DINGUX_BETA)
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_REFRESH_RATE,
 #endif
 #if defined(DINGUX)
 #if defined(RS90) || defined(MIYOO)
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_BRESENHAM_HORZ,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_POINT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_TYPE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_BRESENHAM_HORZ,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_POINT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DINGUX_RS90_SOFTFILTER_TYPE,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_DISABLE_COMPOSITION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_DRIVER_FALLBACK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FILTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FILTER_DIR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FILTER_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FILTER_FLICKER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FILTER_REMOVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FONT_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FONT_PATH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FONT_SIZE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FORCE_RESOLUTION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FORCE_SRGB_DISABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_DELAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_DELAY_AUTO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_DELAY_EFFECTIVE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_TIME_SAMPLE_FROM_DISPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_TIME_SAMPLE_GATED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FSE_FORCED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FSE_NEGOTIATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FSE_RELAXED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN_MODE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN_X,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN_Y,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_GAMMA,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_GL_DIRECT_SPIRV,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_GPU_INDEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_GPU_RECORD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_GPU_SCREENSHOT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HARD_SYNC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HARD_SYNC_FRAMES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT_ACCURATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT_EXPANDED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT_WIDE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_MAX_NITS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_MODE_OFF,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_PAPER_WHITE_NITS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_SCANLINES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_SUBPIXEL_LAYOUT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_LAYOUT_DIRECTORY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MAX_FRAME_LATENCY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MAX_SWAPCHAIN_IMAGES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_BGCOLOR_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_BGCOLOR_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_BGCOLOR_GREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_BGCOLOR_OPACITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_BGCOLOR_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_COLOR_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_COLOR_GREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_COLOR_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_POS_X,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_POS_Y,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_MONITOR_INDEX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_NOTCH_WRITE_OVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ORIENTATION_FLIPPED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ORIENTATION_FLIPPED_ROTATED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ORIENTATION_VERTICAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_OUTPUT_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_OVERSCAN_CORRECTION_BOTTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_OVERSCAN_CORRECTION_TOP,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_POST_FILTER_RECORD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_PRESENT_TIMING_FROM_DISPLAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_CUSTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_HIGH_QUALITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_LOSSLESS_QUALITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_LOW_QUALITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_WEBM_FAST,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_WEBM_HIGH_QUALITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_STREAMING_CUSTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_STREAMING_HIGH_QUALITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_STREAMING_LOW_QUALITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_QUALITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_THREADS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_REFRESH_RATE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_REFRESH_RATE_AUTO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_REFRESH_RATE_POLLED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DISABLE_COMPOSITION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_AUTO_MASK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_INTENSITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_LOCAL_STRUCTURE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_LOCAL_TONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_PRESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_PRESET_1,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_PRESET_2,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_PRESET_3,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_PRESET_DEFAULT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_SKIN_STRUCTURE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_SKIN_STRUCTURE_FOLLOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_STYLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_STYLE_CINEMATIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_STYLE_DEFAULT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DLSS_NR_STYLE_NATURAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DRIVER_FALLBACK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DRIVER_PACING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_DXGI_PRESENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FILTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FILTER_DIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FILTER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FILTER_FLICKER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FILTER_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FILTER_THREADS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FONT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FONT_PATH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FONT_SIZE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FORCE_RESOLUTION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FORCE_SRGB_DISABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_DELAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_DELAY_AUTO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_DELAY_EFFECTIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_TIME_SAMPLE_FROM_DISPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FRAME_TIME_SAMPLE_GATED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FSE_FORCED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FSE_NEGOTIATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FSE_RELAXED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FSR_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN_MODE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN_X,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN_Y,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_GAMMA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_GL_DIRECT_SPIRV,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_GPU_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_GPU_RECORD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_GPU_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HARD_SYNC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HARD_SYNC_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT_ACCURATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT_EXPANDED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT_WIDE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_MAX_NITS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_MODE_OFF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_PAPER_WHITE_NITS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_SCANLINES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_SEND_LUMINANCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_SUBPIXEL_LAYOUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_USE_DISPLAY_PEAK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_HW_DECODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_LAYOUT_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MAX_FRAME_LATENCY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MAX_SWAPCHAIN_IMAGES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_BGCOLOR_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_BGCOLOR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_BGCOLOR_GREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_BGCOLOR_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_BGCOLOR_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_COLOR_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_COLOR_GREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_COLOR_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_POS_X,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MESSAGE_POS_Y,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_MONITOR_INDEX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_NOTCH_WRITE_OVER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_CONTROLLERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_CONTROLLERS_COMBINED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_CONTROLLERS_SEPARATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_DISTANCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_EDIT_HINGE_GAP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_EDIT_PAUSE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_EDIT_PAUSE_OFF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_EDIT_PAUSE_ON,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_EDIT_SMOOTHING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_EDIT_SMOOTHING_HIGH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_EDIT_SMOOTHING_LOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_EDIT_SMOOTHING_OFF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_EDIT_SNAP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_EDIT_SNAP_ANGLES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_EDIT_SNAP_ANGLES_OFF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_LASER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_LASER_ALWAYS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_LASER_BEAM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_LASER_BEAM_ALWAYS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_LASER_BEAM_EDIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_LASER_BEAM_OFF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_LASER_OFF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_MENU_FOLLOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_PERF_BOOST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_PLACEMENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_PLACEMENT_FIXED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_PLACEMENT_FOLLOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_PLACEMENT_LAZY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_REFRESH_HEADSET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OPENXR_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ORIENTATION_FLIPPED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ORIENTATION_FLIPPED_ROTATED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ORIENTATION_VERTICAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OUTPUT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OVERSCAN_CORRECTION_BOTTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_OVERSCAN_CORRECTION_TOP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_POST_FILTER_RECORD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_PRESENT_TIMING_FROM_DISPLAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_ALLOW_FRAME_DROP,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_HIGH_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_LOSSLESS_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_LOW_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_WEBM_FAST,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_RECORDING_WEBM_HIGH_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_STREAMING_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_STREAMING_HIGH_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_CONFIG_TYPE_STREAMING_LOW_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_FIFO_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_GAME_ONLY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_HW_ENCODER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RECORD_THREADS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_REFRESH_RATE_AUTO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_REFRESH_RATE_POLLED,
 #ifdef HAVE_ODROIDGO2
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_RGA_SCALING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_RGA_SCALING,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ROTATION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ROTATION_180_DEG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ROTATION_270_DEG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_ROTATION_90_DEG,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER_AXIS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER_SCALING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER_SCALING_OVERSCALE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER_SCALING_UNDERSCALE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALING_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCANLINE_SYNC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCAN_SUBFRAMES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SDL_DISPLAY_SERVER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_DELAY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_NUM_PASSES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PARAMETERS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_APPEND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_FILE_INFO,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_MANAGER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_PREPEND,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_REMOVE_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_REMOVE_GAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_REMOVE_GLOBAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_REMOVE_PARENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_AS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_CORE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_CURRENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_GAME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_GLOBAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_PARENT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_REFERENCE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_REMEMBER_LAST_DIR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHARED_CONTEXT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SMOOTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SOFT_FILTER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAMING_MODE_CUSTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAMING_MODE_LOCAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAM_QUALITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAPCHAIN_BIT_DEPTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAP_INTERVAL,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SYNCHRONIZATION_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_TAB,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_THREADED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_THREADED_DISPLAY_PACING,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_THREADED_PRESENT_REPEAT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_USE_METAL_ARG_BUFFERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ROTATION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ROTATION_180_DEG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ROTATION_270_DEG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_ROTATION_90_DEG,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER_AXIS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER_SCALING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER_SCALING_OVERSCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALE_INTEGER_SCALING_UNDERSCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCALING_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCANLINE_SYNC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCANLINE_SYNC_OFFSET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCAN_SUBFRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_LAYOUT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_LAYOUT_HORIZONTAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_LAYOUT_VERTICAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_SELECTED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_WINDOW_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_WINDOW_MONITOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_XR_EDIT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_XR_PITCH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_XR_RESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_XR_RESET_ALL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_XR_ROLL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_XR_SCALE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_XR_VISIBLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_XR_X,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_XR_Y,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_XR_YAW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SCREEN_XR_Z,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SDL_DISPLAY_SERVER,
+#if defined(HAVE_RSLC) && defined(HAVE_GLSLANG)
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_COMPILER,
+#endif
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_DELAY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_NUM_PASSES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PARAMETERS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_APPEND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_FILE_INFO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_MANAGER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_PREPEND,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_REMOVE_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_REMOVE_GAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_REMOVE_GLOBAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_REMOVE_PARENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_AS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_CORE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_CURRENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_GAME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_GLOBAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_PARENT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_PRESET_SAVE_REFERENCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_REMEMBER_LAST_DIR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SIMULATED_INPUT_RES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SIMULATED_INPUT_RES_HEIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SIMULATED_INPUT_RES_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHADER_SUBFRAMES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SHARED_CONTEXT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SMOOTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SOFT_FILTER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_STEREO_MODE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_STEREO_MODE_ANAGLYPH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_STEREO_MODE_INTERLACED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_STEREO_MODE_SBS_FULL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_STEREO_MODE_SBS_HALF,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_STEREO_MODE_TOP_BOTTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_STEREO_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_STEREO_SWAP_EYES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAMING_MODE_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAMING_MODE_LOCAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAM_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAPCHAIN_BIT_DEPTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAP_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_SYNCHRONIZATION_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TAB,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_A,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_B,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_C,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_D,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_DEFAULT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_E,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_F,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_G,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_H,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_I,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_J,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_K,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_L,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_M,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_N,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_NOT_IN_RUNTIME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_PRESET_O,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_QUALITY_BALANCED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_QUALITY_NATIVE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_QUALITY_PERFORMANCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_QUALITY_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_QUALITY_ULTRA_PERFORMANCE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_TEMPORAL_UPSCALER_SHARPNESS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_THREADED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_THREADED_DISPLAY_PACING,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_THREADED_PRESENT_REPEAT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_THREAD_PRIORITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_USE_METAL_ARG_BUFFERS,
 #if defined(RARCH_MOBILE)
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_BIAS_PORTRAIT_X,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_BIAS_PORTRAIT_Y,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_BIAS_PORTRAIT_X,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_BIAS_PORTRAIT_Y,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_BIAS_X,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_BIAS_Y,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_HEIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_WIDTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_X,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_Y,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_VI_WIDTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_VSYNC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WAITABLE_SWAPCHAINS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_BIAS_X,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_BIAS_Y,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_HEIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_X,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_VIEWPORT_CUSTOM_Y,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_VI_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_VSYNC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WAITABLE_SWAPCHAINS,
 #if defined (WIIU)
 #ifdef WIIU
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WIIU_PREFER_DRC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WIIU_PREFER_DRC,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOWED_FULLSCREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOWED_MODE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_WIDTH_MAX,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_HEIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OFFSET_X,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OFFSET_Y,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OPACITY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_SAVE_POSITION,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_SHOW_DECORATIONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_WIDTH,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_VRR_RUNLOOP_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_WASAPI_SH_BUFFER_AUDIO_LATENCY,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_WASAPI_SH_BUFFER_CLIENT_BUFFER,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_WASAPI_SH_BUFFER_DEVICE_PERIOD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_WIFI_DISCONNECT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_WIFI_ENABLED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_WIFI_NETWORKS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_WIFI_NETWORK_SCAN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ALPHA_FACTOR,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON_NONE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON_TITLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ENTRY_ICONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_FONT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_AUTOMATIC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_AUTOMATIC_INVERTED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_CUSTOM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_MONOCHROME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_MONOCHROME_INVERTED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_SYSTEMATIC,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_LAYOUT_CONSOLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_LAYOUT_HANDHELD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MAIN_MENU_ENABLE_SETTINGS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_APPLE_GREEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_DARK_PURPLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_ELECTRIC_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_FAMICOM_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_GAMECUBE_PURPLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_GOLDEN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_GRAY_DARK,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_GRAY_LIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_ICE_COLD,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_LEGACY_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_LIGHT,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_LIME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_MIDNIGHT_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_MORNING_BLUE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_PIKACHU_YELLOW,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_PLAIN,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_SUNBEAM,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_UNDERSEA,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_VOLCANIC_RED,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_RIBBON_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_SHADOWS_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_SWITCH_ICONS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_THEME,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_VERTICAL_THUMBNAILS,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_YES,
-   (uint32_t)MENU_ENUM_LABEL_VALUE_YOUTUBE_STREAM_KEY,
-   (uint32_t)MENU_ENUM_LABEL_VIDEO_HDR_ENABLE,
-   (uint32_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_APPEND_TWO,
-   (uint32_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_PREPEND_TWO,
-   (uint32_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_TWO,
-   (uint32_t)MENU_ENUM_LABEL_VIDEO_SWAPCHAIN_BIT_DEPTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOWED_FULLSCREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOWED_MODE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOWS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_ATTACHED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_AUTO_WIDTH_MAX,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_HEIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_HIDDEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OFFSET_X,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OFFSET_Y,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_SAVE_POSITION,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_SEPARATE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_SHOW_DECORATIONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_WINDOW_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VIDEO_XESS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_VRR_RUNLOOP_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_WASAPI_SH_BUFFER_AUDIO_LATENCY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_WASAPI_SH_BUFFER_CLIENT_BUFFER,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_WASAPI_SH_BUFFER_DEVICE_PERIOD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_WIFI_DISCONNECT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_WIFI_ENABLED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_WIFI_NETWORKS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_WIFI_NETWORK_SCAN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_WIN32_POWER_PLAN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_WIN32_POWER_PLAN_IDLE_DISABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_ALPHA_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON_NONE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON_TITLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_ENTRY_ICONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_FONT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_AUTOMATIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_AUTOMATIC_INVERTED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_MONOCHROME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_MONOCHROME_INVERTED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_SYSTEMATIC,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_LAYOUT_CONSOLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_LAYOUT_HANDHELD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MAIN_MENU_ENABLE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_APPLE_GREEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_DARK_PURPLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_ELECTRIC_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_FAMICOM_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_GAMECUBE_PURPLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_GOLDEN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_GRAY_DARK,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_GRAY_LIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_ICE_COLD,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_LEGACY_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_LIGHT,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_LIME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_MIDNIGHT_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_MORNING_BLUE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_PIKACHU_YELLOW,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_PLAIN,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_SUNBEAM,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_UNDERSEA,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_MENU_COLOR_THEME_VOLCANIC_RED,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_RIBBON_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_SHADOWS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_SWITCH_ICONS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_THEME,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_XMB_VERTICAL_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_YES,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VALUE_YOUTUBE_STREAM_KEY,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VIDEO_HDR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_APPEND_TWO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_PREPEND_TWO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_TWO,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VIDEO_SWAPCHAIN_BIT_DEPTH,
 #if defined(RARCH_MOBILE)
-   (uint32_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_X,
-   (uint32_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_Y,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_X,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_Y,
 #endif
-   (uint32_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_X,
-   (uint32_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_Y,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_ENABLED,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_NARRATOR_ENGINE,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_NARRATOR_SPEECH_SPEED,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACCOUNTS_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACCOUNTS_RETRO_ACHIEVEMENTS,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_PAUSE,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_PAUSE_CANCEL,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_RESUME,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_RESUME_CANCEL,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_RESUME_REQUIRES_RELOAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_SERVER_UNREACHABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_ADD_CONTENT_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_ADD_TO_FAVORITES,
-   (uint32_t)MENU_ENUM_SUBLABEL_ADD_TO_FAVORITES_PLAYLIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_ADD_TO_MIXER,
-   (uint32_t)MENU_ENUM_SUBLABEL_ADD_TO_MIXER_AND_PLAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_ADD_TO_PLAYLIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_AI_SERVICE_BACKEND,
-   (uint32_t)MENU_ENUM_SUBLABEL_AI_SERVICE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AI_SERVICE_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AI_SERVICE_PAUSE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AI_SERVICE_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_AI_SERVICE_SOURCE_LANG,
-   (uint32_t)MENU_ENUM_SUBLABEL_AI_SERVICE_TARGET_LANG,
-   (uint32_t)MENU_ENUM_SUBLABEL_AI_SERVICE_URL,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_X,
+   (msg_hash_id_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_Y,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_ENABLED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_NARRATOR_ENGINE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_NARRATOR_SPEECH_SPEED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACCOUNTS_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACCOUNTS_RETRO_ACHIEVEMENTS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_PAUSE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_PAUSE_CANCEL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_RESUME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_RESUME_CANCEL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_RESUME_REQUIRES_RELOAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ACHIEVEMENT_SERVER_UNREACHABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ADD_CONTENT_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ADD_TO_FAVORITES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ADD_TO_FAVORITES_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ADD_TO_MIXER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ADD_TO_MIXER_AND_PLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ADD_TO_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AI_SERVICE_BACKEND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AI_SERVICE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AI_SERVICE_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AI_SERVICE_PAUSE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AI_SERVICE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AI_SERVICE_SOURCE_LANG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AI_SERVICE_TARGET_LANG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AI_SERVICE_URL,
 #ifndef HAVE_DYNAMIC
-   (uint32_t)MENU_ENUM_SUBLABEL_ALWAYS_RELOAD_CORE_ON_RUN_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ALWAYS_RELOAD_CORE_ON_RUN_CONTENT,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_ANDROID_INPUT_DISCONNECT_WORKAROUND,
-   (uint32_t)MENU_ENUM_SUBLABEL_APPICON_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_ASSETS_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_ASIO_CONTROL_PANEL,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_ASIO_OUTPUT_CHANNEL,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_DEVICE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_DSP_PLUGIN,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_DSP_PLUGIN_REMOVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_ENABLE_MENU,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FASTFORWARD_CALLBACK,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FASTFORWARD_MUTE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FASTFORWARD_SPEEDUP,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FASTPATH_S16,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FILTER_DIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FORMAT_NEGOTIATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_HEADPHONE_VIRTUAL_SURROUND,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_LATENCY,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_LATENCY_FLOOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_MAX_TIMING_SKEW,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_MIXER_MUTE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_MIXER_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_MIXER_VOLUME,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_MUTE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_OUTPUT_LAYOUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_OUTPUT_RATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_OUTPUT_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_RATE_CONTROL_DELTA,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_RESAMPLER_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_RESAMPLER_HQ_OVERSAMPLING,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_RESAMPLER_QUALITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_RESPECT_SILENT_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_REWIND_MUTE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_SINK_RATE_ESTIMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_SYNC,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_SYNCHRONIZATION_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_THREADED_PIPELINE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_THREAD_PRIORITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_TIME_STRETCH,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_TIME_STRETCH_LOWPASS,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_VOLUME,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_WASAPI_EXCLUSIVE_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_WASAPI_FLOAT_FORMAT,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_WASAPI_MMCSS,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_WASAPI_SH_BUFFER_LENGTH,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUTOSAVE_INTERVAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUTO_OVERRIDES_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_AUTO_REMAPS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_BATTERY_LEVEL_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_BLOCK_SRAM_OVERWRITE,
-   (uint32_t)MENU_ENUM_SUBLABEL_BLUETOOTH_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ANDROID_INPUT_DISCONNECT_WORKAROUND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_APPICON_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ASSETS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_ASIO_CONTROL_PANEL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_ASIO_OUTPUT_CHANNEL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_DEVICE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_DSP_PLUGIN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_DSP_PLUGIN_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_ENABLE_MENU,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_FASTFORWARD_CALLBACK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_FASTFORWARD_MUTE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_FASTFORWARD_SPEEDUP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_FASTPATH_S16,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_FILTER_DIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_FORMAT_NEGOTIATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_HEADPHONE_VIRTUAL_SURROUND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_LATENCY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_LATENCY_FLOOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_MAX_TIMING_SKEW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_MIXER_MUTE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_MIXER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_MIXER_VOLUME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_MUTE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_OUTPUT_LAYOUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_OUTPUT_RATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_OUTPUT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_PIPELINE_FILL_CAP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_RATE_CONTROL_DELTA,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_RESAMPLER_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_RESAMPLER_HQ_OVERSAMPLING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_RESAMPLER_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_RESPECT_SILENT_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_REWIND_MUTE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_SINK_RATE_ESTIMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_SYNC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_SYNCHRONIZATION_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_THREADED_PIPELINE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_THREAD_PRIORITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_TIME_STRETCH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_TIME_STRETCH_LOWPASS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_VOLUME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_WASAPI_EXCLUSIVE_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_WASAPI_FLOAT_FORMAT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_WASAPI_MMCSS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUDIO_WASAPI_SH_BUFFER_LENGTH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUTOSAVE_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUTO_OVERRIDES_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_AUTO_REMAPS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BATTERY_LEVEL_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BLOCK_SRAM_OVERWRITE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BLUETOOTH_DRIVER,
 #ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_SUBLABEL_BLUETOOTH_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BLUETOOTH_ENABLE,
 #endif
 #ifdef HAVE_LAKKA
 #ifdef HAVE_LAKKA_SWITCH
-   (uint32_t)MENU_ENUM_SUBLABEL_BLUETOOTH_ERTM_DISABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BLUETOOTH_ERTM_DISABLE,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_BLUETOOTH_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BLUETOOTH_SETTINGS,
 #ifdef _3DS
-   (uint32_t)MENU_ENUM_SUBLABEL_BOTTOM_ASSETS_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_COLOR_BLUE,
-   (uint32_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_COLOR_GREEN,
-   (uint32_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_COLOR_OPACITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_COLOR_RED,
-   (uint32_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_SCALE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BOTTOM_ASSETS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_COLOR_BLUE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_COLOR_GREEN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_COLOR_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_COLOR_RED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BOTTOM_FONT_SCALE,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_BRIGHTNESS_CONTROL,
-   (uint32_t)MENU_ENUM_SUBLABEL_BUILDBOT_ASSETS_URL,
-   (uint32_t)MENU_ENUM_SUBLABEL_CACHE_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CAMERA_ALLOW,
-   (uint32_t)MENU_ENUM_SUBLABEL_CAMERA_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_ADDRESS_BIT_POSITION,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_ADD_NEW_BOTTOM,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_ADD_NEW_TOP,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_APPLY_AFTER_LOAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_APPLY_AFTER_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_APPLY_CHANGES,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_BIG_ENDIAN,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_DATABASE_PATH,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_DELETE_ALL,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_FILE_LOAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_FILE_LOAD_APPEND,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_FILE_SAVE_AS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_IDX,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_RELOAD_CHEATS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_REPEAT_ADD_TO_ADDRESS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_REPEAT_ADD_TO_VALUE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_REPEAT_COUNT,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_SEARCH_EQMINUS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_SEARCH_EQPLUS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_SEARCH_EXACT,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_START_OR_CONT,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_START_OR_RESTART,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_APPEARANCE_ANCHOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_APPEARANCE_PADDING_AUTO,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_APPEARANCE_PADDING_H,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_APPEARANCE_PADDING_V,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_APPEARANCE_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_AUTO_SCREENSHOT,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_BADGES_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_CHALLENGE_INDICATORS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_HARDCORE_MODE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_PASSWORD,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_RICHPRESENCE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_START_ACTIVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_TEST_UNOFFICIAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_UNLOCK_SOUND_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_USERNAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VERBOSE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_ACCOUNT,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_LBOARD_CANCEL,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_LBOARD_START,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_LBOARD_SUBMIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_LBOARD_TRACKERS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_MASTERY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_PROGRESS_TRACKER,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_SUMMARY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_UNLOCK,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOSE_CONTENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_ACCESS_KEY_ID,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_DESTRUCTIVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_PASSWORD,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_RESOLVE_KEEP_LOCAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_RESOLVE_KEEP_SERVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_S3_URL,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SECRET_ACCESS_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_CONFIGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_NOW,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_SAVES,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_SYSTEM,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_THUMBS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_URL,
-   (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_USERNAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONFIGURATIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONFIGURATIONS_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONFIGURATION_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONFIG_SAVE_MINIMAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONFIG_SAVE_ON_EXIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONFIRM_CLOSE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONFIRM_QUIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONFIRM_RESET,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_DATABASE_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_FAVORITES_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_FAVORITES_SIZE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_HISTORY_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_HISTORY_SIZE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_IMAGE_HISTORY_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_MUSIC_HISTORY_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_RUNTIME_LOG,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_RUNTIME_LOG_AGGREGATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_ADD_ENTRY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_CONTENTLESS_CORES,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_EXPLORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_FAVORITES,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_FAVORITES_FIRST,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_HISTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_IMAGES,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_LATENCY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_MUSIC,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_NETPLAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_OVERLAYS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_PLAYLISTS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_PLAYLIST_TABS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_REWIND,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_SETTINGS_PASSWORD,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_VIDEO,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_VIDEO_LAYOUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_CONTENT_VIDEO_HISTORY_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_ASSETS_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_CHEAT_OPTIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_CREATE_BACKUP,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_DELETE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_DELETE_BACKUP_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_INFORMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_INFO_CACHE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_INFO_SAVESTATE_BYPASS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_INPUT_REMAPPING_OPTIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_LIST_UNLOAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_LOCK,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_MANAGER_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BRIGHTNESS_CONTROL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_BUILDBOT_ASSETS_URL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CACHE_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CAMERA_ALLOW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CAMERA_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_ADDRESS_BIT_POSITION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_ADD_NEW_BOTTOM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_ADD_NEW_TOP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_APPLY_AFTER_LOAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_APPLY_AFTER_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_APPLY_CHANGES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_BIG_ENDIAN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_DATABASE_PATH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_DELETE_ALL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_FILE_LOAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_FILE_LOAD_APPEND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_FILE_SAVE_AS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_IDX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_RELOAD_CHEATS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_REPEAT_ADD_TO_ADDRESS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_REPEAT_ADD_TO_VALUE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_REPEAT_COUNT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_SEARCH_EQMINUS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_SEARCH_EQPLUS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_SEARCH_EXACT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_START_OR_CONT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEAT_START_OR_RESTART,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_APPEARANCE_ANCHOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_APPEARANCE_PADDING_AUTO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_APPEARANCE_PADDING_H,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_APPEARANCE_PADDING_V,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_APPEARANCE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_AUTO_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_BADGES_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_CHALLENGE_INDICATORS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_HARDCORE_MODE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_RICHPRESENCE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_START_ACTIVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_TEST_UNOFFICIAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_UNLOCK_SOUND_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_USERNAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_VERBOSE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_ACCOUNT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_LBOARD_CANCEL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_LBOARD_START,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_LBOARD_SUBMIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_LBOARD_TRACKERS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_MASTERY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_PROGRESS_TRACKER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_SUMMARY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_UNLOCK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOSE_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_ACCESS_KEY_ID,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_DESTRUCTIVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_NFS_SUBDIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_RESOLVE_KEEP_LOCAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_RESOLVE_KEEP_SERVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_S3_URL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SECRET_ACCESS_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_CONFIGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_NOW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_SAVES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_SYSTEM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_SYNC_THUMBS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_URL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_USERNAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONFIGURATIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONFIGURATIONS_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONFIGURATION_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONFIG_SAVE_MINIMAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONFIG_SAVE_ON_EXIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONFIRM_CLOSE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONFIRM_QUIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONFIRM_RESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_DATABASE_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_FAVORITES_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_FAVORITES_SIZE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_HISTORY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_HISTORY_SIZE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_IMAGE_HISTORY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_MUSIC_HISTORY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_RUNTIME_LOG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_RUNTIME_LOG_AGGREGATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_ADD_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_CONTENTLESS_CORES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_EXPLORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_FAVORITES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_FAVORITES_FIRST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_HISTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_IMAGES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_LATENCY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_MUSIC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_NETPLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_OVERLAYS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_PLAYLIST_TABS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_REWIND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_SETTINGS_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_VIDEO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_SHOW_VIDEO_LAYOUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CONTENT_VIDEO_HISTORY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_ASSETS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_CHEAT_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_CREATE_BACKUP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_DELETE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_DELETE_BACKUP_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_INFO_CACHE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_INFO_SAVESTATE_BYPASS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_INPUT_REMAPPING_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_LIST_UNLOAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_LOCK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_MANAGER_LIST,
 #ifdef HAVE_MIST
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_MANAGER_STEAM_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_MANAGER_STEAM_LIST,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_OPTIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_OPTIONS_FLUSH,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_OPTIONS_RESET,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_OPTION_CATEGORY_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_OPTION_OVERRIDE_INFO,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_OPTION_OVERRIDE_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_RESTORE_BACKUP_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_SET_STANDALONE_EXEMPT,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_SUGGEST_ALWAYS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_AUTO_BACKUP,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_AUTO_BACKUP_HISTORY_SIZE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_AUTO_EXTRACT_ARCHIVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_BUILDBOT_URL,
-   (uint32_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_SHOW_EXPERIMENTAL_CORES,
-   (uint32_t)MENU_ENUM_SUBLABEL_CREATE_NEW_PLAYLIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_CRT_SWITCHRES_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_HIRES_MENU,
-   (uint32_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_PORCH_ADJUST,
-   (uint32_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_RESOLUTION_SUPER,
-   (uint32_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_RESOLUTION_USE_CUSTOM_REFRESH_RATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_VERTICAL_ADJUST,
-   (uint32_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_WRITE_EDID,
-   (uint32_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_X_AXIS_CENTERING,
-   (uint32_t)MENU_ENUM_SUBLABEL_CURSOR_MANAGER,
-   (uint32_t)MENU_ENUM_SUBLABEL_DATABASE_MANAGER,
-   (uint32_t)MENU_ENUM_SUBLABEL_DELETE_ENTRY,
-   (uint32_t)MENU_ENUM_SUBLABEL_DELETE_PLAYLIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_ALL_PLAYLISTS_GRID_MAX_COUNT,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_ALL_PLAYLISTS_LIST_MAX_COUNT,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_ICON_VIEW_ZOOM,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_LAST_TAB,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_THEME,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_THUMBNAIL_CACHE_LIMIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_THUMBNAIL_MAX_SIZE,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_THUMBNAIL_QUALITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_THUMBNAIL_TYPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_VIEW_TYPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_WINDOW_HEIGHT,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_WINDOW_WIDTH,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_WINDOW_X,
-   (uint32_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_WINDOW_Y,
-   (uint32_t)MENU_ENUM_SUBLABEL_DIRECTORY_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_DISCORD_ALLOW,
-   (uint32_t)MENU_ENUM_SUBLABEL_DISC_INFORMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_DISK_IMAGE_APPEND,
-   (uint32_t)MENU_ENUM_SUBLABEL_DISK_INDEX,
-   (uint32_t)MENU_ENUM_SUBLABEL_DISK_OPTIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_DISK_TRAY_EJECT,
-   (uint32_t)MENU_ENUM_SUBLABEL_DISK_TRAY_INSERT,
-   (uint32_t)MENU_ENUM_SUBLABEL_DISPLAY_EDID_INFORMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_DISPLAY_INFORMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_DOWNLOAD_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_DOWNLOAD_CORE_CONTENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_DOWNLOAD_CORE_SYSTEM_FILES,
-   (uint32_t)MENU_ENUM_SUBLABEL_DOWNLOAD_PL_ENTRY_THUMBNAILS,
-   (uint32_t)MENU_ENUM_SUBLABEL_DRIVER_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_DRIVER_SWITCH_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_DUMMY_ON_CORE_SHUTDOWN,
-   (uint32_t)MENU_ENUM_SUBLABEL_DUMP_DISC,
-   (uint32_t)MENU_ENUM_SUBLABEL_DYNAMIC_WALLPAPER,
-   (uint32_t)MENU_ENUM_SUBLABEL_DYNAMIC_WALLPAPERS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_OPTIONS_FLUSH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_OPTIONS_RESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_OPTION_CATEGORY_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_OPTION_OVERRIDE_INFO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_OPTION_OVERRIDE_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_RESTORE_BACKUP_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_SET_STANDALONE_EXEMPT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_SUGGEST_ALWAYS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_AUTO_BACKUP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_AUTO_BACKUP_COMPRESS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_AUTO_BACKUP_HISTORY_SIZE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_AUTO_EXTRACT_ARCHIVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_BUILDBOT_URL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_SHOW_EXPERIMENTAL_CORES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CREATE_NEW_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CRT_SWITCHRES_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_HIRES_MENU,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_PORCH_ADJUST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_RESOLUTION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_RESOLUTION_SUPER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_RESOLUTION_USE_CUSTOM_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_VERTICAL_ADJUST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_WRITE_EDID,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_X_AXIS_CENTERING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_CURSOR_MANAGER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DATABASE_MANAGER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DELETE_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DELETE_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_ALL_PLAYLISTS_GRID_MAX_COUNT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_ALL_PLAYLISTS_LIST_MAX_COUNT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_ICON_VIEW_ZOOM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_LAST_TAB,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_THEME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_THUMBNAIL_CACHE_LIMIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_THUMBNAIL_MAX_SIZE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_THUMBNAIL_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_THUMBNAIL_TYPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_VIEW_TYPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_WINDOW_HEIGHT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_WINDOW_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_WINDOW_X,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DESKTOP_MENU_WINDOW_Y,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DIRECTORY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DISCORD_ALLOW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DISC_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DISK_IMAGE_APPEND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DISK_INDEX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DISK_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DISK_TRAY_EJECT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DISK_TRAY_INSERT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DISPLAY_EDID_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DISPLAY_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DOWNLOAD_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DOWNLOAD_CORE_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DOWNLOAD_CORE_SYSTEM_FILES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DOWNLOAD_PL_ENTRY_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DRIVER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DRIVER_SWITCH_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DUMMY_ON_CORE_SHUTDOWN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DUMP_DISC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DYNAMIC_WALLPAPER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_DYNAMIC_WALLPAPERS_DIRECTORY,
 #ifdef HAVE_CDROM
 #ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_SUBLABEL_EJECT_DISC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_EJECT_DISC,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_FASTFORWARD_FRAMESKIP,
-   (uint32_t)MENU_ENUM_SUBLABEL_FASTFORWARD_RATIO,
-   (uint32_t)MENU_ENUM_SUBLABEL_FILE_BROWSER_OPEN_PICKER,
-   (uint32_t)MENU_ENUM_SUBLABEL_FILE_BROWSER_OPEN_UWP_PERMISSIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_FILTER_BY_CURRENT_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_FOLDER_SPECIFIC_CORE_OPTIONS_CREATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_FOLDER_SPECIFIC_CORE_OPTIONS_REMOVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_FPS_SHOW,
-   (uint32_t)MENU_ENUM_SUBLABEL_FPS_UPDATE_INTERVAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_FRAMECOUNT_SHOW,
-   (uint32_t)MENU_ENUM_SUBLABEL_FRAME_THROTTLE_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_FRAME_TIME_COUNTER_AUTO_RESET,
-   (uint32_t)MENU_ENUM_SUBLABEL_FRAME_TIME_COUNTER_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_FRONTEND_LOG_LEVEL,
-   (uint32_t)MENU_ENUM_SUBLABEL_GAMEMODE_ENABLE_LINUX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FASTFORWARD_FRAMESKIP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FASTFORWARD_RATIO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FILE_BROWSER_OPEN_PICKER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FILE_BROWSER_OPEN_UWP_PERMISSIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FILTER_BY_CURRENT_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FOLDER_SPECIFIC_CORE_OPTIONS_CREATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FOLDER_SPECIFIC_CORE_OPTIONS_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FPS_SHOW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FPS_UPDATE_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FRAMECOUNT_SHOW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FRAME_THROTTLE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FRAME_TIME_COUNTER_AUTO_RESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FRAME_TIME_COUNTER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_FRONTEND_LOG_LEVEL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GAMEMODE_ENABLE_LINUX,
 #ifdef HAVE_GAME_AI
-   (uint32_t)MENU_ENUM_SUBLABEL_GAME_AI_MENU_OPTION,
-   (uint32_t)MENU_ENUM_SUBLABEL_GAME_AI_OVERRIDE_P1,
-   (uint32_t)MENU_ENUM_SUBLABEL_GAME_AI_OVERRIDE_P2,
-   (uint32_t)MENU_ENUM_SUBLABEL_GAME_AI_SHOW_DEBUG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GAME_AI_MENU_OPTION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GAME_AI_OVERRIDE_P1,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GAME_AI_OVERRIDE_P2,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GAME_AI_SHOW_DEBUG,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_GAME_SPECIFIC_CORE_OPTIONS_CREATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_GAME_SPECIFIC_CORE_OPTIONS_REMOVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_GAME_SPECIFIC_OPTIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_GLOBAL_CORE_OPTIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_GOTO_CONTENTLESS_CORES,
-   (uint32_t)MENU_ENUM_SUBLABEL_GOTO_EXPLORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_GOTO_FAVORITES,
-   (uint32_t)MENU_ENUM_SUBLABEL_GOTO_IMAGES,
-   (uint32_t)MENU_ENUM_SUBLABEL_GOTO_MUSIC,
-   (uint32_t)MENU_ENUM_SUBLABEL_GOTO_VIDEO,
-   (uint32_t)MENU_ENUM_SUBLABEL_HALT_REPLAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_HELP_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_HISTORY_LIST_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_ICON_THUMBNAILS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INFORMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_INFORMATION_LIST_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_INITIAL_DISK_CHANGE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_ADC_TYPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_ALL_USERS_CONTROL_MENU,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_ANALOG_DEADZONE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_ANALOG_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GAME_SPECIFIC_CORE_OPTIONS_CREATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GAME_SPECIFIC_CORE_OPTIONS_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GAME_SPECIFIC_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GLOBAL_CORE_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GOTO_CONTENTLESS_CORES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GOTO_EXPLORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GOTO_FAVORITES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GOTO_IMAGES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GOTO_MUSIC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_GOTO_VIDEO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_HALT_REPLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_HELP_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_HISTORY_LIST_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ICON_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INFORMATION_LIST_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INITIAL_DISK_CHANGE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ADC_TYPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_AIM_STICK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ALL_USERS_CONTROL_MENU,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ANALOG_ANTI_DEADZONE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ANALOG_DEADZONE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ANALOG_OUTER_DEADZONE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ANALOG_RESPONSE_CURVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ANALOG_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ANALOG_TRIGGER_DEADZONE,
 #ifdef ANDROID
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_ANDROID_SYSTEM_KEYBOARD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ANDROID_SYSTEM_KEYBOARD,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_AUTODETECT_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_AUTO_GAME_FOCUS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_AUTO_MOUSE_GRAB,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_BIND_ALL,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_BIND_DEFAULTS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_BIND_HOLD,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_BIND_TIMEOUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_BLOCK_TIMEOUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_BUTTON_AXIS_THRESHOLD,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_DEVICE_INDEX,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_DEVICE_RESERVATION_TYPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_DEVICE_RESERVED_DEVICE_NAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_DEVICE_TYPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_DISABLE_INFO_BUTTON,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_DISABLE_LEFT_ANALOG_IN_MENU,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_DISABLE_RIGHT_ANALOG_IN_MENU,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_DISABLE_SEARCH_BUTTON,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_HAPTIC_FEEDBACK_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_HOTKEY_BINDS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_HOTKEY_BLOCK_DELAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_HOTKEY_DEVICE_MERGE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_HOTKEY_FOLLOWS_PLAYER1,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_JOYPAD_BACKGROUND,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_MAX_USERS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_MENU_ENUM_TOGGLE_GAMEPAD_COMBO,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_MENU_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_AI_SERVICE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_CHEAT_INDEX_MINUS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_CHEAT_INDEX_PLUS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_CHEAT_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_CLOSE_CONTENT_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_DISK_EJECT_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_DISK_NEXT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_DISK_PREV,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_ENABLE_HOTKEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_FAST_FORWARD_HOLD_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_FAST_FORWARD_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_FPS_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_FRAMEADVANCE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_FULLSCREEN_TOGGLE_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_GAME_FOCUS_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_GRAB_MOUSE_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_HALT_REPLAY_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_LOAD_STATE_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_MENU_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_MUTE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_FADE_CHAT_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_GAME_WATCH,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_HOST_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_PING_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_PLAYER_CHAT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_NEXT_REPLAY_CHECKPOINT_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_OSK,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_OVERLAY_NEXT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_PAUSE_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_PLAY_REPLAY_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_PREEMPT_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_PREV_REPLAY_CHECKPOINT_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_QUIT_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_RECORDING_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_RECORD_REPLAY_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_REPLAY_SLOT_MINUS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_REPLAY_SLOT_PLUS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_RESET,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_RESTART_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_REWIND,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_RUNAHEAD_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_SAVE_REPLAY_CHECKPOINT_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_SAVE_STATE_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_SCREENSHOT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_SHADER_HOLD,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_SHADER_NEXT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_SHADER_PREV,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_SHADER_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_SLOWMOTION_HOLD_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_SLOWMOTION_KEY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_STATE_SLOT_MINUS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_STATE_SLOT_PLUS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_STATISTICS_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_STREAMING_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_TURBO_FIRE_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_UI_COMPANION_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_VIDEO_FILTER_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_VOLUME_DOWN,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_VOLUME_UP,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_META_VRR_RUNLOOP_TOGGLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_MOUSE_INDEX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ASSIGN_PORTS_KEYBOARD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ASSIGN_PORTS_ON_BUTTON_PRESS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_AUTODETECT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_AUTO_GAME_FOCUS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_AUTO_MOUSE_GRAB,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_BIND_ALL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_BIND_DEFAULTS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_BIND_HOLD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_BIND_TIMEOUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_BLOCK_TIMEOUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_BUTTON_AXIS_THRESHOLD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_COMBO_DEPTH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_COMBO_HOLD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_COMBO_HOLD_TIME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_COMBO_TARGET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_DEVICE_INDEX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_DEVICE_RESERVATION_TYPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_DEVICE_RESERVED_DEVICE_NAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_DEVICE_TYPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_DISABLE_INFO_BUTTON,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_DISABLE_LEFT_ANALOG_IN_MENU,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_DISABLE_RIGHT_ANALOG_IN_MENU,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_DISABLE_SEARCH_BUTTON,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_HAPTIC_FEEDBACK_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_HOTKEY_BINDS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_HOTKEY_BLOCK_DELAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_HOTKEY_DEVICE_MERGE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_HOTKEY_FOLLOWS_PLAYER1,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_HOTKEY_TAP_DELAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_JOYPAD_BACKGROUND,
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_KEYBOARD_BACKGROUND,
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_KEYBOARD_INDEX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_MAX_USERS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_MENU_ENUM_TOGGLE_GAMEPAD_COMBO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_MENU_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_AI_SERVICE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_CHEAT_INDEX_MINUS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_CHEAT_INDEX_PLUS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_CHEAT_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_CLOSE_CONTENT_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_DISK_EJECT_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_DISK_NEXT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_DISK_PREV,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_ENABLE_HOTKEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_FAST_FORWARD_HOLD_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_FAST_FORWARD_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_FPS_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_FRAMEADVANCE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_FULLSCREEN_TOGGLE_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_GAME_FOCUS_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_GRAB_MOUSE_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_HALT_REPLAY_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_HEADSET_EDIT_SCREENS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_HEADSET_RECENTER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_HEADSET_VIEW_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_LASER_POINTER_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_LOAD_STATE_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_MENU_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_MUTE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_FADE_CHAT_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_GAME_WATCH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_HOST_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_PING_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_NETPLAY_PLAYER_CHAT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_NEXT_REPLAY_CHECKPOINT_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_OSK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_OVERLAY_NEXT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_PAUSE_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_PLAY_REPLAY_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_PREEMPT_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_PREV_REPLAY_CHECKPOINT_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_QUIT_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_RECORDING_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_RECORD_REPLAY_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_REPLAY_SLOT_MINUS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_REPLAY_SLOT_PLUS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_RESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_RESTART_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_REWIND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_RUNAHEAD_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_SAVE_REPLAY_CHECKPOINT_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_SAVE_STATE_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_SHADER_HOLD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_SHADER_NEXT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_SHADER_PREV,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_SHADER_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_SLOWMOTION_HOLD_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_SLOWMOTION_KEY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_STATE_SLOT_MINUS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_STATE_SLOT_PLUS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_STATISTICS_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_STREAMING_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_TURBO_FIRE_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_UI_COMPANION_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_VIDEO_FILTER_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_VOLUME_DOWN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_VOLUME_UP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_META_VRR_RUNLOOP_TOGGLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_MOUSE_INDEX,
 #ifdef GEKKO
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_MOUSE_SCALE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_MOUSE_SCALE,
 #endif
 #if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_NOWINKEY_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_NOWINKEY_ENABLE,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OSK_OVERLAY_AUTO_SCALE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_ABXY_DIAGONAL_SENSITIVITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_ANALOG_RECENTER_ZONE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_AUTO_ROTATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_AUTO_SCALE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_BEHIND_MENU,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_DPAD_DIAGONAL_SENSITIVITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_HIDE_IN_MENU,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_HIDE_WHEN_GAMEPAD_CONNECTED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OSK_OVERLAY_AUTO_SCALE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_ABXY_DIAGONAL_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_ABXY_METHOD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_ANALOG_RECENTER_ZONE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_AUTO_ROTATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_AUTO_SCALE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_BEHIND_MENU,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_CONTACT_SCALE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_DPAD_DIAGONAL_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_DPAD_METHOD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_HIDE_IN_MENU,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_HIDE_WHEN_GAMEPAD_CONNECTED,
 #if defined(ANDROID)
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_HIDE_WHEN_GAMEPAD_CONNECTED_ANDROID,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_HIDE_WHEN_GAMEPAD_CONNECTED_ANDROID,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_ALLOW_OFFSCREEN,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_FOUR_TOUCH_INPUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_PORT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_THREE_TOUCH_INPUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_TRIGGER_DELAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_TRIGGER_ON_TOUCH,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_TWO_TOUCH_INPUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_ALT_TWO_TOUCH_INPUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_DTAP_MSEC,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_DTAP_TO_DRAG,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_HOLD_MSEC,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_HOLD_TO_DRAG,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_SPEED,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_SWIPE_THRESHOLD,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_POINTER_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_SHOW_INPUTS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_SHOW_INPUTS_PORT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_SHOW_MOUSE_CURSOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_POLL_TYPE_BEHAVIOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_QUIT_GAMEPAD_COMBO,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_REMAPPING_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_REMAP_BINDS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_REMAP_PORT,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_REMAP_SORT_BY_CONTROLLER_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_RETROPAD_BINDS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_RUMBLE_GAIN,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_SAVE_AUTOCONFIG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_ALLOW_OFFSCREEN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_FOUR_TOUCH_INPUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_PORT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_THREE_TOUCH_INPUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_TRIGGER_DELAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_TRIGGER_ON_TOUCH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_LIGHTGUN_TWO_TOUCH_INPUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_ALT_TWO_TOUCH_INPUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_DTAP_MSEC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_DTAP_TO_DRAG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_HOLD_MSEC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_HOLD_TO_DRAG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_SPEED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_MOUSE_SWIPE_THRESHOLD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_POINTER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_SHOW_INPUTS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_SHOW_INPUTS_PORT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_OVERLAY_SHOW_MOUSE_CURSOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_POLL_TYPE_BEHAVIOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_QUIT_GAMEPAD_COMBO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_REMAPPING_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_REMAP_BINDS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_REMAP_FIND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_REMAP_PORT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_REMAP_SORT_BY_CONTROLLER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_RETROPAD_BINDS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_ROTATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_RUMBLE_GAIN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_SAVE_AUTOCONFIG,
 #ifdef HAVE_SDL3
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_SDL3_SYSTEM_KEYBOARD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_SDL3_SYSTEM_KEYBOARD,
 #endif
 #ifdef ANDROID
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_SELECT_PHYSICAL_KEYBOARD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_SELECT_PHYSICAL_KEYBOARD,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_SENSORS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_SENSOR_ACCELEROMETER_SENSITIVITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_SENSOR_GYROSCOPE_SENSITIVITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_SENSOR_ORIENTATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_SENSOR_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_SCALE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_SENSORS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_SENSOR_ACCELEROMETER_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_SENSOR_GYROSCOPE_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_SENSOR_ORIENTATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_SENSOR_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_SOCD_HORIZONTAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_SOCD_VERTICAL,
+#ifdef ANDROID
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_STYLUS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_STYLUS_HIDE_OVERLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_STYLUS_HOVER_MOVES_POINTER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_STYLUS_PRESSURE_SENSITIVITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_STYLUS_REQUIRE_CONTACT_FOR_CLICK,
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TOUCHPAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TOUCHPAD_LEFT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TOUCHPAD_RIGHT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_SCALE,
 #ifdef UDEV_TOUCH_SUPPORT
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_VMOUSE_GESTURE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_VMOUSE_MOUSE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_VMOUSE_POINTER,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_VMOUSE_TOUCHPAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_VMOUSE_TRACKBALL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_VMOUSE_GESTURE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_VMOUSE_MOUSE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_VMOUSE_POINTER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_VMOUSE_TOUCHPAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TOUCH_VMOUSE_TRACKBALL,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_ALLOW_DPAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_BIND,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_BUTTON,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_DUTY_CYCLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_FIRE_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_PERIOD,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_UNIFIED_MENU_CONTROLS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_USER_BINDS,
-   (uint32_t)MENU_ENUM_SUBLABEL_INPUT_USER_REMAPS,
-   (uint32_t)MENU_ENUM_SUBLABEL_JOYPAD_AUTOCONFIG_DIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_JOYPAD_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TRIGGER_FULL_RANGE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_ALLOW_DPAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_BIND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_BUTTON,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_DUTY_CYCLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_FIRE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_TURBO_PERIOD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_UNIFIED_MENU_CONTROLS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_USER_BINDS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_USER_REMAPS,
+#if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
+#if defined(_WIN32) && defined(HAVE_WINRAWINPUT)
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_WINRAW_PLAYER_LIGHTS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_INPUT_WINRAW_XINPUT_ENABLE,
+#endif
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_JOYPAD_AUTOCONFIG_DIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_JOYPAD_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_KEYCHAIN_PASSPHRASE,
 #ifdef HAVE_LAKKA_SWITCH
-   (uint32_t)MENU_ENUM_SUBLABEL_LAKKA_SWITCH_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LAKKA_SWITCH_OPTIONS,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_LATENCY_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_LEFT_THUMBNAILS,
-   (uint32_t)MENU_ENUM_SUBLABEL_LEFT_THUMBNAILS_MATERIALUI,
-   (uint32_t)MENU_ENUM_SUBLABEL_LEFT_THUMBNAILS_OZONE,
-   (uint32_t)MENU_ENUM_SUBLABEL_LEFT_THUMBNAILS_RGUI,
-   (uint32_t)MENU_ENUM_SUBLABEL_LIBRETRO_DIR_PATH,
-   (uint32_t)MENU_ENUM_SUBLABEL_LIBRETRO_INFO_PATH,
-   (uint32_t)MENU_ENUM_SUBLABEL_LIBRETRO_LOG_LEVEL,
-   (uint32_t)MENU_ENUM_SUBLABEL_LOAD_CONTENT_HISTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_LOAD_CONTENT_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_LOAD_DISC,
-   (uint32_t)MENU_ENUM_SUBLABEL_LOAD_STATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LATENCY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LEFT_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LEFT_THUMBNAILS_MATERIALUI,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LEFT_THUMBNAILS_OZONE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LEFT_THUMBNAILS_RGUI,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LIBRETRO_DIR_PATH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LIBRETRO_INFO_PATH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LIBRETRO_LOG_LEVEL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOAD_CONTENT_HISTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOAD_CONTENT_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOAD_DISC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOAD_STATE,
 #ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_SUBLABEL_LOCALAP_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOCALAP_ENABLE,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_LOCATION_ALLOW,
-   (uint32_t)MENU_ENUM_SUBLABEL_LOCATION_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_LOGGING_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_LOG_DIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_LOG_TO_FILE,
-   (uint32_t)MENU_ENUM_SUBLABEL_LOG_TO_FILE_TIMESTAMP,
-   (uint32_t)MENU_ENUM_SUBLABEL_LOG_VERBOSITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_CORE_NAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_DAT_FILE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_DAT_FILE_FILTER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_DIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_FILE_EXTS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_OVERWRITE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_SEARCH_ARCHIVES,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_SEARCH_RECURSIVELY,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_START,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_SYSTEM_NAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_SYSTEM_NAME_CUSTOM,
-   (uint32_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_VALIDATE_ENTRIES,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_AUTO_ROTATE_NAV_BAR,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_DUAL_THUMBNAIL_LIST_VIEW_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_ICONS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_LANDSCAPE_LAYOUT_OPTIMIZATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_MENU_COLOR_THEME,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_MENU_THUMBNAIL_VIEW_LANDSCAPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_MENU_THUMBNAIL_VIEW_PORTRAIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_MENU_TRANSITION_ANIMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_PLAYLIST_ICONS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_SHOW_NAV_BAR,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_SWITCH_ICONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MATERIALUI_THUMBNAIL_BACKGROUND_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MEMORY_SHOW,
-   (uint32_t)MENU_ENUM_SUBLABEL_MEMORY_UPDATE_INTERVAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_ALLOW_TABS_BACK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOCATION_ALLOW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOCATION_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOGGING_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOG_DIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOG_TO_FILE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOG_TO_FILE_TIMESTAMP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_LOG_VERBOSITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MAIN_THREAD_PRIORITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_CORE_NAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_DAT_FILE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_DAT_FILE_FILTER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_DIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_FILE_EXTS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_OVERWRITE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_SEARCH_ARCHIVES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_SEARCH_RECURSIVELY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_START,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_SYSTEM_NAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_SYSTEM_NAME_CUSTOM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MANUAL_CONTENT_SCAN_VALIDATE_ENTRIES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_AUTO_ROTATE_NAV_BAR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_DUAL_THUMBNAIL_LIST_VIEW_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_ICONS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_LANDSCAPE_LAYOUT_OPTIMIZATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_MENU_COLOR_THEME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_MENU_THUMBNAIL_VIEW_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_MENU_THUMBNAIL_VIEW_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_MENU_TRANSITION_ANIMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_PLAYLIST_ICONS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_SHOW_NAV_BAR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_SWITCH_ICONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MATERIALUI_THUMBNAIL_BACKGROUND_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MCP_SERVER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MCP_SERVER_PORT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MCP_SERVER_TOKEN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MEDIA_PLAYER_CONTINUOUS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MEDIA_PLAYER_CONTROLS_TIMEOUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MEDIA_PLAYER_CRT_SWITCH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MEDIA_PLAYER_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MEDIA_PLAYER_SEEK_SECONDS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MEDIA_PLAYER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MEDIA_PLAYER_SUBTITLES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MEDIA_PLAYER_SUBTITLE_DELAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MEMORY_SHOW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MEMORY_UPDATE_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_ALLOW_TABS_BACK,
 #ifdef _3DS
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_BOTTOM_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_BOTTOM_SETTINGS,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_DISABLE_KIOSK_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_ENABLE_KIOSK_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_ENUM_THROTTLE_FRAMERATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_FILE_BROWSER_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_FRAMEBUFFER_OPACITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_HDR_BRIGHTNESS_NITS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_HORIZONTAL_ANIMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_INPUT_SWAP_OK_CANCEL,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_INPUT_SWAP_SCROLL,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_INSERT_DISK_RESUME,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_KIOSK_MODE_PASSWORD,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_LINEAR_FILTER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_REMEMBER_SELECTION,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_ASPECT_RATIO,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_ASPECT_RATIO_LOCK,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_BACKGROUND_FILLER_THICKNESS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_BORDER_FILLER_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_BORDER_FILLER_THICKNESS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_EXTENDED_ASCII,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_FULL_WIDTH_LAYOUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_INLINE_THUMBNAILS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_INTERNAL_UPSCALE_LEVEL,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_PARTICLE_EFFECT,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_PARTICLE_EFFECT_SCREENSAVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_PARTICLE_EFFECT_SPEED,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_SHADOWS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_SWAP_THUMBNAILS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_SWITCH_ICONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_THUMBNAIL_DELAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_THUMBNAIL_DITHER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_THUMBNAIL_DOWNSCALER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_TRANSPARENCY,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SAVESTATE_RESUME,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SCALE_FACTOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SCREENSAVER_ANIMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SCREENSAVER_ANIMATION_SPEED,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SCREENSAVER_TIMEOUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SCROLL_DELAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SCROLL_FAST,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_CONFIGURATIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_CONFIRM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_DISABLE_KIOSK_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_ENABLE_KIOSK_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_FILE_BROWSER_EXTENSION_DISPLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_FILE_BROWSER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_FRAMEBUFFER_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_FRAME_RATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_HDR_BRIGHTNESS_NITS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_HORIZONTAL_ANIMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_INPUT_SWAP_OK_CANCEL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_INPUT_SWAP_SCROLL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_INSERT_DISK_RESUME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_KIOSK_MODE_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_LINEAR_FILTER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_REMEMBER_SELECTION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_ASPECT_RATIO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_ASPECT_RATIO_LOCK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_BACKGROUND_FILLER_THICKNESS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_BORDER_FILLER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_BORDER_FILLER_THICKNESS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_EXTENDED_ASCII,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_FULL_WIDTH_LAYOUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_INLINE_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_INTERNAL_UPSCALE_LEVEL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_PARTICLE_EFFECT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_PARTICLE_EFFECT_SCREENSAVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_PARTICLE_EFFECT_SPEED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_SHADOWS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_SWAP_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_SWITCH_ICONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_THUMBNAIL_DELAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_THUMBNAIL_DITHER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_THUMBNAIL_DOWNSCALER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_RGUI_TRANSPARENCY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SAVESTATE_RESUME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SCALE_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SCREENSAVER_ANIMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SCREENSAVER_ANIMATION_SPEED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SCREENSAVER_TIMEOUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SCROLL_DELAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SCROLL_FAST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_CONFIGURATIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_CONFIRM,
 #ifdef HAVE_MIST
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_CORE_MANAGER_STEAM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_CORE_MANAGER_STEAM,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_CORE_UPDATER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_DUMP_DISC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_CORE_UPDATER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_DUMP_DISC,
 #ifdef HAVE_CDROM
 #ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_EJECT_DISC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_EJECT_DISC,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_FULL_PATHS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_HELP,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_INFORMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_CONTENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_CONTENT_ANIMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_DISC,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_ONLINE_UPDATER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_QUIT_RETROARCH,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_REBOOT,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_RESTART_RETROARCH,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_SHUTDOWN,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_SUBLABELS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_SUBLABELS_CURRENT_SELECTION_ONLY,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SINGLECLICK_PLAYLISTS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SOUNDS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_STARTUP_PAGE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_TEXTURE_MIPMAPPING,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_BACKGROUND_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_PREVIEW_AUDIO,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_UPSCALE_THRESHOLD,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_TICKER_SMOOTH,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_TICKER_SPEED,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_TICKER_TYPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_USE_PREFERRED_SYSTEM_COLOR_THEME,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_VIEWS_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_WALLPAPER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_WALLPAPER_OPACITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_WIDGETS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_AUTO,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_FACTOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_FACTOR_FULLSCREEN,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_FACTOR_WINDOWED,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_HORIZONTAL_HIGHLIGHT,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_MOVE_UP_DOWN,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_OPENING_MAIN_MENU,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_SHOW_HORIZONTAL_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_SHOW_TITLE_HEADER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_THUMBNAIL_SCALE_FACTOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_TITLE_MARGIN,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_TITLE_MARGIN_HORIZONTAL_OFFSET,
-   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_VERTICAL_FADE_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_FULL_PATHS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_CONTENT_ANIMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_DISC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_ONLINE_UPDATER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_QUIT_RETROARCH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_REBOOT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_RESTART_RETROARCH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_SHUTDOWN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_SUBLABELS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SHOW_SUBLABELS_CURRENT_SELECTION_ONLY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SINGLECLICK_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_SOUNDS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_STARTUP_PAGE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_TEXTURE_MIPMAPPING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_BACKGROUND_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_PREVIEW_AUDIO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_PREVIEW_THREADS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_UPSCALE_THRESHOLD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_TICKER_SMOOTH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_TICKER_SPEED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_TICKER_TYPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_USE_PREFERRED_SYSTEM_COLOR_THEME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_VIEWS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_WALLPAPER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_WALLPAPER_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_WIDGETS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_AUTO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_FACTOR_FULLSCREEN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_FACTOR_WINDOWED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_HORIZONTAL_HIGHLIGHT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_MOVE_UP_DOWN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_OPENING_MAIN_MENU,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_XMB_SHOW_HORIZONTAL_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_XMB_SHOW_TITLE_HEADER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_XMB_THUMBNAIL_SCALE_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_XMB_TITLE_MARGIN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_XMB_TITLE_MARGIN_HORIZONTAL_OFFSET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MENU_XMB_VERTICAL_FADE_FACTOR,
 #ifdef HAVE_MICROPHONE
 #if !defined(RARCH_CONSOLE)
-   (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_DEVICE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MICROPHONE_DEVICE,
 #endif
 #endif
 #ifdef HAVE_MICROPHONE
-   (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_INPUT_RATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_LATENCY,
-   (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_RESAMPLER_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_RESAMPLER_QUALITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MICROPHONE_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MICROPHONE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MICROPHONE_INPUT_RATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MICROPHONE_LATENCY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MICROPHONE_RESAMPLER_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MICROPHONE_RESAMPLER_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MICROPHONE_SETTINGS,
 #endif
 #ifdef HAVE_MICROPHONE
 #ifdef HAVE_WASAPI
-   (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_WASAPI_EXCLUSIVE_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_WASAPI_FLOAT_FORMAT,
-   (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_WASAPI_SH_BUFFER_LENGTH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MICROPHONE_WASAPI_EXCLUSIVE_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MICROPHONE_WASAPI_FLOAT_FORMAT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MICROPHONE_WASAPI_SH_BUFFER_LENGTH,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_MIDI_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_MIDI_INPUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_MIDI_OUTPUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_MIDI_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_MIDI_VOLUME,
-   (uint32_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_PLAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_PLAY_LOOPED,
-   (uint32_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_PLAY_SEQUENTIAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_REMOVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_STOP,
-   (uint32_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_VOLUME,
-   (uint32_t)MENU_ENUM_SUBLABEL_MOUSE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_NAVIGATION_BROWSER_FILTER_SUPPORTED_EXTENSIONS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_NAVIGATION_WRAPAROUND,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_ALLOW_PAUSING,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_ALLOW_SLAVES,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_BAN,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_CHAT_COLOR_MSG,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_CHAT_COLOR_NAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_CHECK_FRAMES,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_CUSTOM_MITM_SERVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_DISCONNECT,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_ENABLE_CLIENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_ENABLE_HOST,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_FADE_CHAT,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_INPUT_LATENCY_FRAMES_MIN,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_INPUT_LATENCY_FRAMES_RANGE,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_IP_ADDRESS,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_KICK,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_MAX_CONNECTIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_MAX_PING,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_MITM_SERVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_NAT_TRAVERSAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_NICKNAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_PASSWORD,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_PING_SHOW,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_PUBLIC_ANNOUNCE,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_REFRESH_LAN,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_REFRESH_ROOMS,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_REQUEST_DEVICE_I,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_REQUIRE_SLAVES,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_SPECTATE_PASSWORD,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_START_AS_SPECTATOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_TCP_UDP_PORT,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETPLAY_USE_MITM_SERVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETWORK_INFORMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETWORK_ON_DEMAND_THUMBNAILS,
-   (uint32_t)MENU_ENUM_SUBLABEL_NETWORK_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MIDI_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MIDI_INPUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MIDI_OUTPUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MIDI_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MIDI_VOLUME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_PLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_PLAY_LOOPED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_PLAY_SEQUENTIAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_STOP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MIXER_ACTION_VOLUME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_MOUSE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NAVIGATION_BROWSER_FILTER_SUPPORTED_EXTENSIONS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NAVIGATION_WRAPAROUND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_ALLOW_PAUSING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_ALLOW_SLAVES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_ANALOG_JOYPADS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_BAN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_CHAT_COLOR_MSG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_CHAT_COLOR_NAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_CHECK_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_CUSTOM_MITM_SERVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_DISCONNECT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_ENABLE_CLIENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_ENABLE_HOST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_FADE_CHAT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_INPUT_LATENCY_FRAMES_MIN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_INPUT_LATENCY_FRAMES_RANGE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_IP_ADDRESS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_KICK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_LOCKSTEP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_MAX_CONNECTIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_MAX_PING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_MITM_SERVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_NAT_TRAVERSAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_NICKNAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_PING_SHOW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_PUBLIC_ANNOUNCE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_REFRESH_LAN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_REFRESH_ROOMS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_REQUEST_DEVICES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_REQUEST_DEVICE_I,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_REQUIRE_SLAVES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_SHARE_ANALOG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_SHARE_DIGITAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_SPECTATE_PASSWORD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_START_AS_SPECTATOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_TCP_UDP_PORT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETPLAY_USE_MITM_SERVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETWORK_CMD_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETWORK_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETWORK_ON_DEMAND_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETWORK_REMOTE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETWORK_REMOTE_FIRST_SENDER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETWORK_REMOTE_USERS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NETWORK_SETTINGS,
 #ifdef _3DS
-   (uint32_t)MENU_ENUM_SUBLABEL_NEW3DS_SPEEDUP_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NEW3DS_SPEEDUP_ENABLE,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_AUTOCONFIG,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_AUTOCONFIG_FAILS,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_CHEATS_APPLIED,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_CONFIG_OVERRIDE_LOAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_DISK_CONTROL,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_FAST_FORWARD,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_NETPLAY_EXTRA,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_PATCH_APPLIED,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_REFRESH_RATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_REMAP_LOAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_SAVE_STATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_SCREENSHOT,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_SCREENSHOT_DURATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_SCREENSHOT_FLASH,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_SET_INITIAL_DISK,
-   (uint32_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_WHEN_MENU_IS_ALIVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_ONLINE_UPDATER,
-   (uint32_t)MENU_ENUM_SUBLABEL_ONSCREEN_DISPLAY_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_ONSCREEN_NOTIFICATIONS_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_ONSCREEN_NOTIFICATIONS_VIEWS_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_ONSCREEN_OVERLAY_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_ONSCREEN_VIDEO_LAYOUT_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_OSK_OVERLAY_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_OSK_OVERLAY_OPACITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_OSK_OVERLAY_PRESET,
-   (uint32_t)MENU_ENUM_SUBLABEL_OSK_OVERLAY_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_ASPECT_ADJUST_LANDSCAPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_ASPECT_ADJUST_PORTRAIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_AUTOLOAD_PREFERRED,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_LIGHTGUN_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_MOUSE_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_OPACITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_PRESET,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_SCALE_LANDSCAPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_SCALE_PORTRAIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_X_OFFSET_LANDSCAPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_X_OFFSET_PORTRAIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_X_SEPARATION_LANDSCAPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_X_SEPARATION_PORTRAIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_Y_OFFSET_LANDSCAPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_Y_OFFSET_PORTRAIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_Y_SEPARATION_LANDSCAPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERLAY_Y_SEPARATION_PORTRAIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERRIDE_FILE_INFO,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERRIDE_FILE_LOAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERRIDE_FILE_SAVE_AS,
-   (uint32_t)MENU_ENUM_SUBLABEL_OVERRIDE_UNLOAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_COLLAPSE_SIDEBAR,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_FONT,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_FOOTER,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_GLOBAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_LABEL,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_SIDEBAR,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_SUBLABEL,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_TIME,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_TITLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_HEADER_ICON,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_HEADER_SEPARATOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_MENU_COLOR_THEME,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_PADDING_FACTOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_SCROLL_CONTENT_METADATA,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_SHOW_SIDEBAR,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_SORT_AFTER_TRUNCATE_PLAYLIST_NAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_THUMBNAIL_SCALE_FACTOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_TRUNCATE_PLAYLIST_NAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_PAUSE_LIBRETRO,
-   (uint32_t)MENU_ENUM_SUBLABEL_PAUSE_NONACTIVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_PAUSE_ON_DISCONNECT,
-   (uint32_t)MENU_ENUM_SUBLABEL_PERFCNT_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLISTS_TAB,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_ALLOW_NON_PNG,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_COMPRESSION,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_ENTRY_REMOVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_ENTRY_RENAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_FUZZY_ARCHIVE_MATCH,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_CLEAN_PLAYLIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_DEFAULT_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_REFRESH_PLAYLIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_RESET_CORES,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_SORT_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_PORTABLE_PATHS,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_ENTRY_IDX,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_HISTORY_ICONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_INLINE_CORE_NAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_SUBLABELS,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SORT_ALPHABETICAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SUBLABEL_LAST_PLAYED_STYLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SUBLABEL_RUNTIME_TYPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_USE_FILENAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_USE_OLD_FORMAT,
-   (uint32_t)MENU_ENUM_SUBLABEL_PLAY_REPLAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_PL_THUMBNAILS_UPDATER_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_POINTER_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_POWER_MANAGEMENT_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_PREEMPT_FRAMES,
-   (uint32_t)MENU_ENUM_SUBLABEL_PRIVACY_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_ALL_PLAYLISTS_GRID_MAX_COUNT,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_ALL_PLAYLISTS_LIST_MAX_COUNT,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_CUSTOM_THEME,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_HIGHLIGHT_COLOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_SAVE_GEOMETRY,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_SAVE_LAST_TAB,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_SCAN_FINISH_CONFIRM,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_SHOW_HIDDEN_FILES,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_STARTUP_PLAYLIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_SUGGEST_LOADED_CORE_FIRST,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_THEME,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_THUMBNAIL_CACHE_LIMIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_THUMBNAIL_DROP_SIZE_LIMIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_OVERRIDE_OPTIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_ADD_TO_FAVORITES,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_ADD_TO_PLAYLIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_CHEATS,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_CLOSE_CONTENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_CONTROLS,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_CORE_OPTIONS_FLUSH,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_DOWNLOAD_THUMBNAILS,
+#ifdef HAVE_NFSCLIENT
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NFS_CLIENT_BROWSE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NFS_CLIENT_EXPORT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NFS_CLIENT_MOUNT_PORT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NFS_CLIENT_NUM_CONTEXTS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NFS_CLIENT_PORT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NFS_CLIENT_READAHEAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NFS_CLIENT_SERVER,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_NFSCLIENT
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NFS_CLIENT_SETTINGS,
+#endif
+#endif
+#ifdef HAVE_NFSCLIENT
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NFS_CLIENT_SUBDIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NFS_CLIENT_TIMEOUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NFS_CLIENT_VERSION,
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_AUTOCONFIG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_AUTOCONFIG_FAILS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_CHEATS_APPLIED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_CONFIG_OVERRIDE_LOAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_DISK_CONTROL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_FAST_FORWARD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_NETPLAY_EXTRA,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_PATCH_APPLIED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_REMAP_LOAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_SAVE_STATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_SCREENSHOT_DURATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_SCREENSHOT_FLASH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_SET_INITIAL_DISK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_NOTIFICATION_SHOW_WHEN_MENU_IS_ALIVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ONLINE_UPDATER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ONSCREEN_DISPLAY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ONSCREEN_NOTIFICATIONS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ONSCREEN_NOTIFICATIONS_VIEWS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ONSCREEN_OVERLAY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_ONSCREEN_VIDEO_LAYOUT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OSK_OVERLAY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OSK_OVERLAY_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OSK_OVERLAY_PRESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OSK_OVERLAY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_ASPECT_ADJUST_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_ASPECT_ADJUST_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_AUTOLOAD_PREFERRED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_LIGHTGUN_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_MOUSE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_PRESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_SCALE_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_SCALE_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_X_OFFSET_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_X_OFFSET_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_X_SEPARATION_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_X_SEPARATION_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_Y_OFFSET_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_Y_OFFSET_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_Y_SEPARATION_LANDSCAPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERLAY_Y_SEPARATION_PORTRAIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERRIDE_FILE_INFO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERRIDE_FILE_LOAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERRIDE_FILE_SAVE_AS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OVERRIDE_UNLOAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_COLLAPSE_SIDEBAR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_FONT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_FOOTER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_GLOBAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_LABEL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_SIDEBAR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_SUBLABEL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_TIME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_FONT_SCALE_FACTOR_TITLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_HEADER_ICON,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_HEADER_SEPARATOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_MENU_COLOR_THEME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_PADDING_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_SCROLL_CONTENT_METADATA,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_SHOW_SIDEBAR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_SORT_AFTER_TRUNCATE_PLAYLIST_NAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_THUMBNAIL_SCALE_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_OZONE_TRUNCATE_PLAYLIST_NAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PAUSE_LIBRETRO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PAUSE_NONACTIVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PAUSE_ON_DISCONNECT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PERFCNT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLISTS_TAB,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_ALLOW_NON_PNG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_COMPRESSION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_ENTRY_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_ENTRY_RENAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_FUZZY_ARCHIVE_MATCH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_CLEAN_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_DEFAULT_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_LABEL_DISPLAY_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_REFRESH_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_RESET_CORES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_MANAGER_SORT_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_PORTABLE_PATHS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_ENTRY_IDX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_HISTORY_ICONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_INLINE_CORE_NAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_SUBLABELS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_SORT_ALPHABETICAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_SUBLABEL_LAST_PLAYED_STYLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_SUBLABEL_RUNTIME_TYPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_USE_FILENAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAYLIST_USE_OLD_FORMAT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PLAY_REPLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PL_THUMBNAILS_UPDATER_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_POINTER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_POWER_MANAGEMENT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PREEMPT_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_PRIVACY_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_ALL_PLAYLISTS_GRID_MAX_COUNT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_ALL_PLAYLISTS_LIST_MAX_COUNT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_CUSTOM_THEME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_HIGHLIGHT_COLOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_SAVE_GEOMETRY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_SAVE_LAST_TAB,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_SCAN_FINISH_CONFIRM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_SHOW_HIDDEN_FILES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_STARTUP_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_SUGGEST_LOADED_CORE_FIRST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_THEME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_THUMBNAIL_CACHE_LIMIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QT_MENU_VIEW_OPTIONS_THUMBNAIL_DROP_SIZE_LIMIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_OVERRIDE_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_ADD_TO_FAVORITES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_ADD_TO_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_CHEATS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_CLOSE_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_CONTROLS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_CORE_OPTIONS_FLUSH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_DOWNLOAD_THUMBNAILS,
 #ifdef HAVE_GAME_AI
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_GAME_AI,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_GAME_AI,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_INFORMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_OPTIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_REPLAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_RESET_CORE_ASSOCIATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_RESTART_CONTENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_RESUME_CONTENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVESTATE_SUBMENU,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVE_CONTENT_DIR_OVERRIDES,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVE_CORE_OVERRIDES,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVE_GAME_OVERRIDES,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVE_LOAD_STATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SET_CORE_ASSOCIATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SHADERS,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_START_RECORDING,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_START_STREAMING,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_TAKE_SCREENSHOT,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_UNDO_SAVE_LOAD_STATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_START_RECORDING,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_START_STREAMING,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_STOP_RECORDING,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_STOP_STREAMING,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_VIEWS_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUIT_ON_CLOSE_CONTENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUIT_RETROARCH,
-   (uint32_t)MENU_ENUM_SUBLABEL_QUIT_RETROARCH_NOSAVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_RDB_ENTRY_DETAIL,
-   (uint32_t)MENU_ENUM_SUBLABEL_RECORDING_CONFIG_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_RECORDING_OUTPUT_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_RECORDING_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_RECORD_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_RECORD_REPLAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_FLUSH,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_INFO,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_LOAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_MANAGER_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_REMOVE_CONTENT_DIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_REMOVE_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_REMOVE_GAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_RESET,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_SAVE_AS,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_SAVE_CONTENT_DIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_SAVE_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_FILE_SAVE_GAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMAP_SAVE_ON_EXIT,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMOVE_CURRENT_CONFIG_OVERRIDE_CONTENT_DIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMOVE_CURRENT_CONFIG_OVERRIDE_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_REMOVE_CURRENT_CONFIG_OVERRIDE_GAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_RENAME_ENTRY,
-   (uint32_t)MENU_ENUM_SUBLABEL_REPLAY_AUTO_INDEX,
-   (uint32_t)MENU_ENUM_SUBLABEL_REPLAY_CHECKPOINT_DESERIALIZE,
-   (uint32_t)MENU_ENUM_SUBLABEL_REPLAY_CHECKPOINT_INTERVAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_REPLAY_MAX_KEEP,
-   (uint32_t)MENU_ENUM_SUBLABEL_REPLAY_SLOT,
-   (uint32_t)MENU_ENUM_SUBLABEL_RESET_CORE_ASSOCIATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_RESET_TO_DEFAULT_CONFIG,
-   (uint32_t)MENU_ENUM_SUBLABEL_RESTART_CONTENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_RESTART_RETROARCH,
-   (uint32_t)MENU_ENUM_SUBLABEL_RESUME_CONTENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_RETRO_ACHIEVEMENTS_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_REWIND_BUFFER_SIZE,
-   (uint32_t)MENU_ENUM_SUBLABEL_REWIND_BUFFER_SIZE_STEP,
-   (uint32_t)MENU_ENUM_SUBLABEL_REWIND_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_REWIND_GRANULARITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_REWIND_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_RGUI_BROWSER_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_RGUI_CONFIG_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_RGUI_MENU_COLOR_THEME,
-   (uint32_t)MENU_ENUM_SUBLABEL_RGUI_MENU_THEME_PRESET,
-   (uint32_t)MENU_ENUM_SUBLABEL_RGUI_SHOW_START_SCREEN,
-   (uint32_t)MENU_ENUM_SUBLABEL_RUN,
-   (uint32_t)MENU_ENUM_SUBLABEL_RUNAHEAD_MODE,
-#if !(defined(HAVE_DYNAMIC) || defined(HAVE_DYLIB))
-   (uint32_t)MENU_ENUM_SUBLABEL_RUNAHEAD_MODE_NO_SECOND_INSTANCE,
-#endif
-   (uint32_t)MENU_ENUM_SUBLABEL_RUNTIME_LOG_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_RUN_AHEAD_FRAMES,
-   (uint32_t)MENU_ENUM_SUBLABEL_RUN_AHEAD_HIDE_WARNINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_RUN_AHEAD_UNSUPPORTED,
-#ifdef HAVE_LAKKA
-#ifdef HAVE_RETROFLAG
-   (uint32_t)MENU_ENUM_SUBLABEL_SAFESHUTDOWN_ENABLE,
-#endif
-#endif
-#ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_SUBLABEL_SAMBA_ENABLE,
-#endif
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVEFILES_IN_CONTENT_DIR_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVEFILE_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATES_IN_CONTENT_DIR_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTOMATIC_INTERVAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTO_INDEX,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTO_LOAD,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTO_SAVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_FILE_COMPRESSION,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_MAX_KEEP,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_THUMBNAIL_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVE_AS_CONFIG,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVE_COMPRESSION_CODEC,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVE_CURRENT_CONFIG,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVE_CURRENT_CONFIG_OVERRIDE_CONTENT_DIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVE_CURRENT_CONFIG_OVERRIDE_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVE_CURRENT_CONFIG_OVERRIDE_GAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVE_FILE_COMPRESSION,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVE_MAIN_CONFIG,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVE_NEW_CONFIG,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVE_STATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SAVING_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCAN_DB_SELECT,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCAN_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCAN_FILE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCAN_METHOD,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCAN_OMIT_DB_REF,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCAN_SERIAL_AND_CRC,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCAN_SINGLE_FILE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCAN_TARGET_PLAYLIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCAN_USE_DB,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCAN_WITHOUT_CORE_MATCH,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCREENSHOTS_IN_CONTENT_DIR_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCREENSHOT_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCREEN_ORIENTATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_SCREEN_RESOLUTION,
-#ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_SUBLABEL_SERVICES_SETTINGS,
-#endif
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_ACCESSIBILITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_ACHIEVEMENTS,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_AI_SERVICE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_AUDIO,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_CONFIGURATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_DRIVERS,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_FILE_BROWSER,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_FRAME_THROTTLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_INPUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_LATENCY,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_LOGGING,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_NETWORK,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_ONSCREEN_DISPLAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_PLAYLISTS,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_POWER_MANAGEMENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_RECORDING,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_SAVING,
-#ifdef HAVE_SMBCLIENT
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_SMB_CLIENT,
-#endif
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_STEAM,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_USER,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_USER_INTERFACE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_VIDEO,
-   (uint32_t)MENU_ENUM_SUBLABEL_SETTINGS_VIEWS_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_SET_CORE_ASSOCIATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_SHADER_APPLY_CHANGES,
-   (uint32_t)MENU_ENUM_SUBLABEL_SHADER_OPTIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_SHADER_WATCH_FOR_CHANGES,
-   (uint32_t)MENU_ENUM_SUBLABEL_SHOW_ADVANCED_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_SHOW_HIDDEN_FILES,
-   (uint32_t)MENU_ENUM_SUBLABEL_SHOW_WIMP,
-   (uint32_t)MENU_ENUM_SUBLABEL_SIDELOAD_CORE_LIST,
-   (uint32_t)MENU_ENUM_SUBLABEL_SLOWMOTION_RATIO,
-#ifdef HAVE_SMBCLIENT
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_AUTH_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_BROWSE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_NUM_CONTEXTS,
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_PASSWORD,
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_SERVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_SHARE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_SUBDIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_TIMEOUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_USERNAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_WORKGROUP,
-#endif
-   (uint32_t)MENU_ENUM_SUBLABEL_SORT_SAVEFILES_BY_CONTENT_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SORT_SAVEFILES_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SORT_SAVESTATES_BY_CONTENT_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SORT_SAVESTATES_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SORT_SCREENSHOTS_BY_CONTENT_ENABLE,
-#ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_SUBLABEL_SSH_ENABLE,
-#endif
-   (uint32_t)MENU_ENUM_SUBLABEL_START_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_STATE_SLOT,
-   (uint32_t)MENU_ENUM_SUBLABEL_STATISTICS_HIDE_IN_MENU,
-   (uint32_t)MENU_ENUM_SUBLABEL_STATISTICS_SHOW,
-   (uint32_t)MENU_ENUM_SUBLABEL_STDIN_CMD_ENABLE,
-#ifdef HAVE_MIST
-   (uint32_t)MENU_ENUM_SUBLABEL_STEAM_RICH_PRESENCE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_STEAM_RICH_PRESENCE_FORMAT,
-   (uint32_t)MENU_ENUM_SUBLABEL_STEAM_SETTINGS,
-#endif
-   (uint32_t)MENU_ENUM_SUBLABEL_SUBSYSTEM_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_SUSPEND_SCREENSAVER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_REPLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_RESET_CORE_ASSOCIATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_RESTART_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_RESUME_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVESTATE_SUBMENU,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVE_CONTENT_DIR_OVERRIDES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVE_CORE_OVERRIDES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVE_GAME_OVERRIDES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SAVE_LOAD_STATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SET_CORE_ASSOCIATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_SHADERS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_START_RECORDING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_START_STREAMING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_TAKE_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_UNDO_SAVE_LOAD_STATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_START_RECORDING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_START_STREAMING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_STOP_RECORDING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_STOP_STREAMING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUICK_MENU_VIEWS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUIT_ON_CLOSE_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUIT_RETROARCH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_QUIT_RETROARCH_NOSAVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RDB_ENTRY_DETAIL,
 #ifdef HAVE_LAKKA
 #ifdef HAVE_LAKKA_SWITCH
-   (uint32_t)MENU_ENUM_SUBLABEL_SWITCH_CEC_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REBOOT_FORCE_SELF_ON_UPDATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REBOOT_PAYLOAD,
+#endif
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RECORDING_CONFIG_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RECORDING_OUTPUT_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RECORDING_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RECORD_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RECORD_REPLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_FLUSH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_INFO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_LOAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_MANAGER_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_REMOVE_CONTENT_DIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_REMOVE_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_REMOVE_GAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_RESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_SAVE_AS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_SAVE_CONTENT_DIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_SAVE_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_FILE_SAVE_GAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMAP_SAVE_ON_EXIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMOVE_CURRENT_CONFIG_OVERRIDE_CONTENT_DIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMOVE_CURRENT_CONFIG_OVERRIDE_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REMOVE_CURRENT_CONFIG_OVERRIDE_GAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RENAME_ENTRY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REPLAY_AUTO_INDEX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REPLAY_CHECKPOINT_DESERIALIZE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REPLAY_CHECKPOINT_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REPLAY_MAX_KEEP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REPLAY_SLOT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RESET_CORE_ASSOCIATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RESET_TO_DEFAULT_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RESTART_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RESTART_RETROARCH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RESUME_CONTENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RETRO_ACHIEVEMENTS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REWIND_BUFFER_SIZE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REWIND_BUFFER_SIZE_STEP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REWIND_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REWIND_GRANULARITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_REWIND_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RGUI_BROWSER_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RGUI_CONFIG_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RGUI_MENU_COLOR_THEME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RGUI_MENU_THEME_PRESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RGUI_SHOW_START_SCREEN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RUN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RUNAHEAD_MODE,
+#if !(defined(HAVE_DYNAMIC) || defined(HAVE_DYLIB))
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RUNAHEAD_MODE_NO_SECOND_INSTANCE,
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RUNTIME_LOG_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RUN_AHEAD_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RUN_AHEAD_HIDE_WARNINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_RUN_AHEAD_UNSUPPORTED,
+#ifdef HAVE_LAKKA
+#ifdef HAVE_RETROFLAG
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAFESHUTDOWN_ENABLE,
+#endif
+#endif
+#ifdef HAVE_LAKKA
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAMBA_ENABLE,
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVEFILES_IN_CONTENT_DIR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVEFILE_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVESTATES_IN_CONTENT_DIR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTOMATIC_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTO_INDEX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTO_LOAD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTO_SAVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVESTATE_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVESTATE_FILE_COMPRESSION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVESTATE_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVESTATE_MAX_KEEP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVESTATE_THUMBNAIL_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVE_AS_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVE_COMPRESSION_CODEC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVE_CURRENT_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVE_CURRENT_CONFIG_OVERRIDE_CONTENT_DIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVE_CURRENT_CONFIG_OVERRIDE_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVE_CURRENT_CONFIG_OVERRIDE_GAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVE_FILE_COMPRESSION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVE_MAIN_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVE_NEW_CONFIG,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVE_STATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SAVING_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCAN_DB_SELECT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCAN_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCAN_FILE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCAN_METHOD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCAN_OMIT_DB_REF,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCAN_SERIAL_AND_CRC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCAN_TARGET_PLAYLIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCAN_USE_DB,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCAN_WITHOUT_CORE_MATCH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCREENSHOTS_IN_CONTENT_DIR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCREENSHOT_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCREEN_ORIENTATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SCREEN_RESOLUTION,
+#ifdef HAVE_LAKKA
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SERVICES_SETTINGS,
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_ACCESSIBILITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_ACHIEVEMENTS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_AI_SERVICE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_AUDIO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_CONFIGURATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_DRIVERS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_FILE_BROWSER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_FRAME_THROTTLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_INPUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_LATENCY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_LOGGING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_NETWORK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_ONSCREEN_DISPLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_PLAYLISTS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_POWER_MANAGEMENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_RECORDING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_SAVING,
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_SMB_CLIENT,
+#endif
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_STEAM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_USER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_USER_INTERFACE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_SHOW_VIDEO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SETTINGS_VIEWS_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SET_CORE_ASSOCIATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SHADER_APPLY_CHANGES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SHADER_OPTIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SHADER_WATCH_FOR_CHANGES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SHOW_ADVANCED_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SHOW_HIDDEN_FILES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SHOW_WIMP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SIDELOAD_CORE_LIST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SLOWMOTION_RATIO,
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_AUTH_MODE,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_BROWSE,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_ENABLE,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_KDC,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_NUM_CONTEXTS,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_PASSWORD,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_READAHEAD,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_REALM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_SERVER,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_SETTINGS,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_SHARE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_SUBDIR,
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+#ifdef HAVE_SMBCLIENT
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_TIMEOUT,
+#endif
+#endif
+#if defined(HAVE_SMBCLIENT) || defined(HAVE_NFSCLIENT)
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_USERNAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SMB_CLIENT_WORKGROUP,
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SORT_SAVEFILES_BY_CONTENT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SORT_SAVEFILES_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SORT_SAVESTATES_BY_CONTENT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SORT_SAVESTATES_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SORT_SCREENSHOTS_BY_CONTENT_ENABLE,
+#ifdef HAVE_LAKKA
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SSH_ENABLE,
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_START_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_STATE_SLOT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_STATISTICS_HIDE_IN_MENU,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_STATISTICS_SHOW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_STDIN_CMD_ENABLE,
+#ifdef HAVE_MIST
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_STEAM_RICH_PRESENCE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_STEAM_RICH_PRESENCE_FORMAT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_STEAM_SETTINGS,
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SUBSYSTEM_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SUSPEND_SCREENSAVER_ENABLE,
+#ifdef HAVE_LAKKA
+#ifdef HAVE_LAKKA_SWITCH
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SWITCH_CEC_ENABLE,
 #endif
 #endif
 #ifdef HAVE_LIBNX
-   (uint32_t)MENU_ENUM_SUBLABEL_SWITCH_CPU_PROFILE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SWITCH_CPU_PROFILE,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_SWITCH_INSTALLED_CORES_PFD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SWITCH_INSTALLED_CORES_PFD,
 #ifdef HAVE_LAKKA
 #ifdef HAVE_LAKKA_SWITCH
-   (uint32_t)MENU_ENUM_SUBLABEL_SWITCH_OC_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SWITCH_OC_ENABLE,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_SYSTEMFILES_IN_CONTENT_DIR_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_SYSTEM_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_SYSTEM_INFORMATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_TAKE_SCREENSHOT,
-   (uint32_t)MENU_ENUM_SUBLABEL_THREADED_DATA_RUNLOOP_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_THREAD_PREFER_FAST_CORES,
-   (uint32_t)MENU_ENUM_SUBLABEL_THUMBNAILS,
-   (uint32_t)MENU_ENUM_SUBLABEL_THUMBNAILS_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_THUMBNAILS_MATERIALUI,
-   (uint32_t)MENU_ENUM_SUBLABEL_THUMBNAILS_RGUI,
-   (uint32_t)MENU_ENUM_SUBLABEL_TIMEDATE_DATE_SEPARATOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_TIMEDATE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_TIMEDATE_STYLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SYSTEMFILES_IN_CONTENT_DIR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SYSTEM_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_SYSTEM_INFORMATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_TAKE_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_THREADED_DATA_RUNLOOP_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_THREAD_PREFER_FAST_CORES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_THUMBNAILS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_THUMBNAILS_MATERIALUI,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_THUMBNAILS_RGUI,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_TIMEDATE_DATE_SEPARATOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_TIMEDATE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_TIMEDATE_STYLE,
 #ifdef HAVE_LAKKA
-   (uint32_t)MENU_ENUM_SUBLABEL_TIMEZONE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_TIMEZONE,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_TIME_SHOW,
-   (uint32_t)MENU_ENUM_SUBLABEL_UI_COMPANION_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_UI_MENUBAR_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_UNDO_LOAD_STATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_UNDO_SAVE_STATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_UPDATER_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_UPDATE_INSTALLED_CORES,
-   (uint32_t)MENU_ENUM_SUBLABEL_USER_INTERFACE_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_USER_LANGUAGE,
-   (uint32_t)MENU_ENUM_SUBLABEL_USER_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_USE_BUILTIN_IMAGE_VIEWER,
-   (uint32_t)MENU_ENUM_SUBLABEL_USE_BUILTIN_PLAYER,
-   (uint32_t)MENU_ENUM_SUBLABEL_USE_LAST_START_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_BALANCED,
-   (uint32_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_MANAGED_PERF,
-   (uint32_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_MANAGED_PER_CONTEXT,
-   (uint32_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_MANUAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_MAX_PERF,
-   (uint32_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_MIN_POWER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_TIME_SHOW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_TLS_VERIFY_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_UI_COMPANION_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_UI_MENUBAR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_UNDO_LOAD_STATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_UNDO_SAVE_STATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_UPDATER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_UPDATE_INSTALLED_CORES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_USER_INTERFACE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_USER_LANGUAGE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_USER_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_USE_BUILTIN_IMAGE_VIEWER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_USE_BUILTIN_PLAYER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_USE_LAST_START_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_BALANCED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_MANAGED_PERF,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_MANAGED_PER_CONTEXT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_MANUAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_MAX_PERF,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VALUE_CPU_PERF_MODE_MIN_POWER,
 #ifdef _3DS
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_3DS_DISPLAY_MODE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_3DS_LCD_BOTTOM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_3DS_DISPLAY_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_3DS_LCD_BOTTOM,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_ADAPTIVE_VSYNC,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_ALLOW_ROTATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_ASPECT_RATIO,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_ASPECT_RATIO_INDEX,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_AUTOSWITCH_PAL_THRESHOLD,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_AUTOSWITCH_REFRESH_RATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_BFI_DARK_FRAMES,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_BLACK_FRAME_INSERTION,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_CROP_OVERSCAN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_ADAPTIVE_VSYNC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_ALLOW_ROTATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_ASPECT_RATIO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_ASPECT_RATIO_INDEX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_AUTOSWITCH_PAL_THRESHOLD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_AUTOSWITCH_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_BFI_DARK_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_BLACK_FRAME_INSERTION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_CROP_OVERSCAN,
 #ifdef HAVE_ODROIDGO2
 #else
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_CTX_SCALING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_CTX_SCALING,
 #endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_D3D9EX_PRESENT,
 #if defined(DINGUX)
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_DINGUX_IPU_FILTER_TYPE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_DINGUX_IPU_KEEP_ASPECT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DINGUX_IPU_FILTER_TYPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DINGUX_IPU_KEEP_ASPECT,
 #endif
 #if defined(DINGUX) && defined(DINGUX_BETA)
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_DINGUX_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DINGUX_REFRESH_RATE,
 #endif
 #if defined(DINGUX)
 #if defined(RS90) || defined(MIYOO)
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_DINGUX_RS90_SOFTFILTER_TYPE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DINGUX_RS90_SOFTFILTER_TYPE,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_DISABLE_COMPOSITION,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FILTER,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FILTER_DIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FILTER_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FILTER_REMOVE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FONT_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FONT_PATH,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FONT_SIZE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FORCE_RESOLUTION,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FORCE_SRGB_DISABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FRAME_DELAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FRAME_DELAY_AUTO,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FRAME_TIME_SAMPLE_FROM_DISPLAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FRAME_TIME_SAMPLE_GATED,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FSE_NEGOTIATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN_MODE_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN_X,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN_Y,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_GL_DIRECT_SPIRV,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_GPU_INDEX,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_GPU_RECORD,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_GPU_SCREENSHOT,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HARD_SYNC,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HARD_SYNC_FRAMES,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_EXPAND_GAMUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_MAX_NITS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_PAPER_WHITE_NITS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_SCANLINES,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_SUBPIXEL_LAYOUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_LAYOUT_DIRECTORY,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MAX_FRAME_LATENCY,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MAX_SWAPCHAIN_IMAGES,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_BGCOLOR_BLUE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_BGCOLOR_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_BGCOLOR_GREEN,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_BGCOLOR_OPACITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_BGCOLOR_RED,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_COLOR_BLUE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_COLOR_GREEN,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_COLOR_RED,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_POS_X,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_POS_Y,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_MONITOR_INDEX,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_OUTPUT_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_OVERSCAN_CORRECTION_BOTTOM,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_OVERSCAN_CORRECTION_TOP,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_POST_FILTER_RECORD,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_PRESENT_TIMING_FROM_DISPLAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_REFRESH_RATE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_REFRESH_RATE_AUTO,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_REFRESH_RATE_POLLED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DISABLE_COMPOSITION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DLSS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DLSS_NR_AUTO_MASK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DLSS_NR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DLSS_NR_INTENSITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DLSS_NR_LOCAL_STRUCTURE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DLSS_NR_LOCAL_TONE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DLSS_NR_PRESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DLSS_NR_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DLSS_NR_SKIN_STRUCTURE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DLSS_NR_STYLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DRIVER_PACING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_DXGI_PRESENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FILTER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FILTER_DIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FILTER_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FILTER_REMOVE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FILTER_THREADS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FONT_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FONT_PATH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FONT_SIZE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FORCE_RESOLUTION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FORCE_SRGB_DISABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FRAME_DELAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FRAME_DELAY_AUTO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FRAME_TIME_SAMPLE_FROM_DISPLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FRAME_TIME_SAMPLE_GATED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FSE_NEGOTIATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FSR_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN_MODE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN_X,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_FULLSCREEN_Y,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_GL_DIRECT_SPIRV,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_GPU_INDEX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_GPU_RECORD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_GPU_SCREENSHOT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HARD_SYNC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HARD_SYNC_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_EXPAND_GAMUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_MAX_NITS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_PAPER_WHITE_NITS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_SCANLINES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_SEND_LUMINANCE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_SUBPIXEL_LAYOUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_USE_DISPLAY_PEAK,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_HW_DECODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_LAYOUT_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MAX_FRAME_LATENCY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MAX_SWAPCHAIN_IMAGES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_BGCOLOR_BLUE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_BGCOLOR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_BGCOLOR_GREEN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_BGCOLOR_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_BGCOLOR_RED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_COLOR_BLUE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_COLOR_GREEN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_COLOR_RED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_POS_X,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MESSAGE_POS_Y,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_MONITOR_INDEX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_CONTROLLERS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_DISTANCE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_EDIT_HINGE_GAP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_EDIT_PAUSE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_EDIT_SMOOTHING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_EDIT_SNAP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_EDIT_SNAP_ANGLES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_LASER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_LASER_BEAM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_MENU_FOLLOW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_PERF_BOOST,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_PLACEMENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OPENXR_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OUTPUT_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OVERSCAN_CORRECTION_BOTTOM,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_OVERSCAN_CORRECTION_TOP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_POST_FILTER_RECORD,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_PRESENT_TIMING_FROM_DISPLAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_RECORD_ALLOW_FRAME_DROP,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_RECORD_FIFO_FRAMES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_RECORD_GAME_ONLY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_RECORD_HW_ENCODER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_REFRESH_RATE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_REFRESH_RATE_AUTO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_REFRESH_RATE_POLLED,
 #ifdef HAVE_ODROIDGO2
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_RGA_SCALING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_RGA_SCALING,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_ROTATION,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SCALE_INTEGER,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SCALE_INTEGER_AXIS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SCALE_INTEGER_SCALING,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SCALING_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SCAN_SUBFRAMES,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SDL_DISPLAY_SERVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADERS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_DELAY,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_DIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_NUM_PASSES,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PARAMETERS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_APPEND,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_FILE_INFO,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_MANAGER,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_PARAMETERS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_PREPEND,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_REMOVE_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_REMOVE_GAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_REMOVE_GLOBAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_REMOVE_PARENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_AS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_CORE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_CURRENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_GAME,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_GLOBAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_PARENT,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_REFERENCE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_REMEMBER_LAST_DIR,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_SUBFRAMES,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHARED_CONTEXT,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SMOOTH,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SWAPCHAIN_BIT_DEPTH,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SWAP_INTERVAL,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SYNCHRONIZATION_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_THREADED,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_THREADED_DISPLAY_PACING,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_THREADED_PRESENT_REPEAT,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_USE_METAL_ARG_BUFFERS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_ROTATION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCALE_INTEGER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCALE_INTEGER_AXIS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCALE_INTEGER_SCALING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCALING_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCANLINE_SYNC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCANLINE_SYNC_OFFSET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCAN_SUBFRAMES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_LAYOUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_SELECTED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_WINDOW_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_WINDOW_MONITOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_XR_EDIT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_XR_PITCH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_XR_RESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_XR_RESET_ALL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_XR_ROLL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_XR_SCALE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_XR_VISIBLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_XR_X,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_XR_Y,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_XR_YAW,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SCREEN_XR_Z,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SDL_DISPLAY_SERVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADERS_ENABLE,
+#if defined(HAVE_RSLC) && defined(HAVE_GLSLANG)
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_COMPILER,
+#endif
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_DELAY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_DIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_NUM_PASSES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PARAMETERS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_APPEND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_FILE_INFO,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_MANAGER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_PARAMETERS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_PREPEND,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_REMOVE_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_REMOVE_GAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_REMOVE_GLOBAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_REMOVE_PARENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_AS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_CORE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_CURRENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_GAME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_GLOBAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_PARENT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_PRESET_SAVE_REFERENCE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_REMEMBER_LAST_DIR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_SIMULATED_INPUT_RES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_SIMULATED_INPUT_RES_HEIGHT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_SIMULATED_INPUT_RES_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_SUBFRAMES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SHARED_CONTEXT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SMOOTH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_STEREO_MODE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_STEREO_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_STEREO_SWAP_EYES,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SWAPCHAIN_BIT_DEPTH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SWAP_INTERVAL,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_SYNCHRONIZATION_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_TEMPORAL_UPSCALER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_TEMPORAL_UPSCALER_PRESET,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_TEMPORAL_UPSCALER_QUALITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_TEMPORAL_UPSCALER_SHARPNESS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_THREADED,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_THREADED_DISPLAY_PACING,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_THREADED_PRESENT_REPEAT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_THREAD_PRIORITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_USE_METAL_ARG_BUFFERS,
 #if defined(RARCH_MOBILE)
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_X,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_Y,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_X,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_Y,
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_BIAS_X,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_BIAS_Y,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_HEIGHT,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_WIDTH,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_X,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_Y,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_VSYNC,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WAITABLE_SWAPCHAINS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_BIAS_X,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_BIAS_Y,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_HEIGHT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_X,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_VIEWPORT_CUSTOM_Y,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_VSYNC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WAITABLE_SWAPCHAINS,
 #if defined (WIIU)
 #ifdef WIIU
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WIIU_PREFER_DRC,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WIIU_PREFER_DRC,
 #endif
 #endif
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOWED_FULLSCREEN,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOWED_MODE_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_AUTO_WIDTH_MAX,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_HEIGHT,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OFFSET_X,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OFFSET_Y,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OPACITY,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SAVE_POSITION,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SCALE,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SHOW_DECORATIONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_WIDTH,
-   (uint32_t)MENU_ENUM_SUBLABEL_VRR_RUNLOOP_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_WIFI_DRIVER,
-   (uint32_t)MENU_ENUM_SUBLABEL_WIFI_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_ALPHA_FACTOR,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_CURRENT_MENU_ICON,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_ENTRY_ICONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_FONT,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_LAYOUT,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_MAIN_MENU_ENABLE_SETTINGS,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_MENU_COLOR_THEME,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_RIBBON_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_SHADOWS_ENABLE,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_SWITCH_ICONS,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_THEME,
-   (uint32_t)MENU_ENUM_SUBLABEL_XMB_VERTICAL_THUMBNAILS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOWED_FULLSCREEN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOWED_MODE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOWS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOWS_ENABLE_ANDROID,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_AUTO_HEIGHT_MAX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_AUTO_WIDTH_MAX,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_CUSTOM_SIZE_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_HEIGHT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OFFSET_X,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OFFSET_Y,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_OPACITY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SAVE_POSITION,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SCALE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_SHOW_DECORATIONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_WINDOW_WIDTH,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VIDEO_XESS_DIRECTORY,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_VRR_RUNLOOP_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_WIFI_DRIVER,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_WIFI_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_WIN32_POWER_PLAN,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_WIN32_POWER_PLAN_IDLE_DISABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_ALPHA_FACTOR,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_CURRENT_MENU_ICON,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_ENTRY_ICONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_FONT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_LAYOUT,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_MAIN_MENU_ENABLE_SETTINGS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_MENU_COLOR_THEME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_RIBBON_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_SHADOWS_ENABLE,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_SWITCH_ICONS,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_THEME,
+   (msg_hash_id_t)MENU_ENUM_SUBLABEL_XMB_VERTICAL_THUMBNAILS,
 #ifdef _3DS
-   (uint32_t)MSG_3DS_BOTTOM_MENU_ASSET_NOT_FOUND,
-   (uint32_t)MSG_3DS_BOTTOM_MENU_DEFAULT,
-   (uint32_t)MSG_3DS_BOTTOM_MENU_LOAD_STATE,
-   (uint32_t)MSG_3DS_BOTTOM_MENU_NO_STATE_DATA,
-   (uint32_t)MSG_3DS_BOTTOM_MENU_NO_STATE_THUMBNAIL,
-   (uint32_t)MSG_3DS_BOTTOM_MENU_RESUME,
-   (uint32_t)MSG_3DS_BOTTOM_MENU_SAVE_STATE,
+   (msg_hash_id_t)MSG_3DS_BOTTOM_MENU_ASSET_NOT_FOUND,
+   (msg_hash_id_t)MSG_3DS_BOTTOM_MENU_DEFAULT,
+   (msg_hash_id_t)MSG_3DS_BOTTOM_MENU_LOAD_STATE,
+   (msg_hash_id_t)MSG_3DS_BOTTOM_MENU_NO_STATE_DATA,
+   (msg_hash_id_t)MSG_3DS_BOTTOM_MENU_NO_STATE_THUMBNAIL,
+   (msg_hash_id_t)MSG_3DS_BOTTOM_MENU_RESUME,
+   (msg_hash_id_t)MSG_3DS_BOTTOM_MENU_SAVE_STATE,
 #endif
-   (uint32_t)MSG_ACCESSIBILITY_STARTUP,
-   (uint32_t)MSG_ACHIEVEMENT_UNLOCKED,
-   (uint32_t)MSG_ADDED_TO_FAVORITES,
-   (uint32_t)MSG_ADDED_TO_PLAYLIST,
-   (uint32_t)MSG_ADD_TO_FAVORITES_FAILED,
-   (uint32_t)MSG_ADD_TO_PLAYLIST_FAILED,
-   (uint32_t)MSG_AI_SERVICE_STOPPED,
-   (uint32_t)MSG_ALL_CORES_SWITCHED_PFD,
-   (uint32_t)MSG_ALL_CORES_UPDATED,
-   (uint32_t)MSG_APPENDED_DISK,
-   (uint32_t)MSG_APPLICATION_DIR,
-   (uint32_t)MSG_APPLYING_CHEAT,
-   (uint32_t)MSG_APPLYING_PATCH,
-   (uint32_t)MSG_APPLYING_SHADER,
-   (uint32_t)MSG_AUDIO_ASIO_NOT_RUNNING,
-   (uint32_t)MSG_AUDIO_MIXER_VOLUME,
-   (uint32_t)MSG_AUDIO_MUTED,
-   (uint32_t)MSG_AUDIO_UNMUTED,
-   (uint32_t)MSG_AUDIO_VOLUME,
-   (uint32_t)MSG_AUTOCONFIG_FILE_ERROR_SAVING,
-   (uint32_t)MSG_AUTOCONFIG_FILE_SAVED_SUCCESSFULLY_NAMED,
-   (uint32_t)MSG_AUTODETECT,
-   (uint32_t)MSG_AUTOLOADING_SAVESTATE_FAILED,
-   (uint32_t)MSG_AUTOLOADING_SAVESTATE_FROM,
-   (uint32_t)MSG_AUTOLOADING_SAVESTATE_SUCCEEDED,
-   (uint32_t)MSG_AUTOSAVE_FAILED,
-   (uint32_t)MSG_AUTO_SAVE_STATE_TO,
-   (uint32_t)MSG_BACKING_UP_CORE,
-   (uint32_t)MSG_BLOCKING_SRAM_OVERWRITE,
-   (uint32_t)MSG_BLUETOOTH_PAIRING_REMOVED,
-   (uint32_t)MSG_BLUETOOTH_SCAN_COMPLETE,
-   (uint32_t)MSG_BRINGING_UP_COMMAND_INTERFACE_ON_PORT,
-   (uint32_t)MSG_CANNOT_INFER_NEW_CONFIG_PATH,
-   (uint32_t)MSG_CAPABILITIES,
-   (uint32_t)MSG_CHANGE_THUMBNAIL_TYPE,
-   (uint32_t)MSG_CHEAT_ADD_AFTER_SUCCESS,
-   (uint32_t)MSG_CHEAT_ADD_BEFORE_SUCCESS,
-   (uint32_t)MSG_CHEAT_ADD_BOTTOM_SUCCESS,
-   (uint32_t)MSG_CHEAT_ADD_TOP_SUCCESS,
-   (uint32_t)MSG_CHEAT_COPY_AFTER_SUCCESS,
-   (uint32_t)MSG_CHEAT_COPY_BEFORE_SUCCESS,
-   (uint32_t)MSG_CHEAT_DELETE_ALL_INSTRUCTIONS,
-   (uint32_t)MSG_CHEAT_DELETE_ALL_SUCCESS,
-   (uint32_t)MSG_CHEAT_DELETE_SUCCESS,
-   (uint32_t)MSG_CHEAT_INIT_FAIL,
-   (uint32_t)MSG_CHEAT_INIT_SUCCESS,
-   (uint32_t)MSG_CHEAT_RELOAD_ALL_SUCCESS,
-   (uint32_t)MSG_CHEAT_SEARCH_ADDED_MATCHES_FAIL,
-   (uint32_t)MSG_CHEAT_SEARCH_ADDED_MATCHES_SUCCESS,
-   (uint32_t)MSG_CHEAT_SEARCH_ADDED_MATCHES_TOO_MANY,
-   (uint32_t)MSG_CHEAT_SEARCH_ADD_MATCH_FAIL,
-   (uint32_t)MSG_CHEAT_SEARCH_ADD_MATCH_SUCCESS,
-   (uint32_t)MSG_CHEAT_SEARCH_DELETE_MATCH_SUCCESS,
-   (uint32_t)MSG_CHEAT_SEARCH_FOUND_MATCHES,
-   (uint32_t)MSG_CHEAT_SEARCH_NOT_INITIALIZED,
-   (uint32_t)MSG_CHECKING_CORE,
-   (uint32_t)MSG_CHEEVOS_ALL_ACHIEVEMENTS_ACTIVATED,
-   (uint32_t)MSG_CHEEVOS_CASUAL_MODE,
-   (uint32_t)MSG_CHEEVOS_CHANGE_MEDIA_FAILED,
-   (uint32_t)MSG_CHEEVOS_COMPLETED_GAME,
-   (uint32_t)MSG_CHEEVOS_GAME_HAS_NO_ACHIEVEMENTS,
-   (uint32_t)MSG_CHEEVOS_GAME_LOAD_FAILED,
-   (uint32_t)MSG_CHEEVOS_GAME_NOT_IDENTIFIED,
-   (uint32_t)MSG_CHEEVOS_HARDCORE_MODE_CHANGED_BY_HOST,
-   (uint32_t)MSG_CHEEVOS_HARDCORE_MODE_DISABLED,
-   (uint32_t)MSG_CHEEVOS_HARDCORE_MODE_DISABLED_CHEAT,
-   (uint32_t)MSG_CHEEVOS_HARDCORE_MODE_ENABLE,
-   (uint32_t)MSG_CHEEVOS_HARDCORE_MODE_REQUIRES_NEWER_HOST,
-   (uint32_t)MSG_CHEEVOS_HARDCORE_PAUSED_BLACK_FRAME_INSERTION,
-   (uint32_t)MSG_CHEEVOS_HARDCORE_PAUSED_MANUAL_FRAME_DELAY,
-   (uint32_t)MSG_CHEEVOS_HARDCORE_PAUSED_SETTING_NOT_ALLOWED,
-   (uint32_t)MSG_CHEEVOS_HARDCORE_PAUSED_SYSTEM_NOT_FOR_CORE,
-   (uint32_t)MSG_CHEEVOS_HARDCORE_PAUSED_VSYNC_SWAP_INTERVAL,
-   (uint32_t)MSG_CHEEVOS_LOAD_SAVEFILE_PREVENTED_BY_HARDCORE_MODE,
-   (uint32_t)MSG_CHEEVOS_LOAD_STATE_PREVENTED_BY_HARDCORE_MODE,
-   (uint32_t)MSG_CHEEVOS_LOGGED_IN_AS_USER,
-   (uint32_t)MSG_CHEEVOS_LOGIN_TOKEN_EXPIRED,
-   (uint32_t)MSG_CHEEVOS_MASTERED_GAME,
-   (uint32_t)MSG_CHEEVOS_NUMBER_ACHIEVEMENTS_UNLOCKED,
-   (uint32_t)MSG_CHEEVOS_RICH_PRESENCE_SPECTATING,
-   (uint32_t)MSG_CHEEVOS_UNOFFICIAL_ACHIEVEMENTS_ACTIVATED,
-   (uint32_t)MSG_CHEEVOS_UNSUPPORTED_COUNT,
-   (uint32_t)MSG_CHEEVOS_UNSUPPORTED_WARNING,
-   (uint32_t)MSG_COMPARING_WITH_KNOWN_MAGIC_NUMBERS,
-   (uint32_t)MSG_COMPILED_AGAINST_API,
-   (uint32_t)MSG_COMPILER,
-   (uint32_t)MSG_CONFIG_DIRECTORY_NOT_SET,
-   (uint32_t)MSG_CONFIG_OVERRIDE_LOADED,
-   (uint32_t)MSG_CONNECTED_TO,
-   (uint32_t)MSG_CONNECTING_TO_NETPLAY_HOST,
-   (uint32_t)MSG_CONNECTING_TO_PORT,
-   (uint32_t)MSG_CONNECTION_SLOT,
-   (uint32_t)MSG_CONTENT_CRC32S_DIFFER,
-   (uint32_t)MSG_CONTENT_LOADING_SKIPPED_IMPLEMENTATION_WILL_DO_IT,
-   (uint32_t)MSG_CONTENT_NETPACKET_CRC32S_DIFFER,
-   (uint32_t)MSG_CORE_BACKUP_ALREADY_EXISTS,
-   (uint32_t)MSG_CORE_BACKUP_COMPLETE,
-   (uint32_t)MSG_CORE_BACKUP_FAILED,
-   (uint32_t)MSG_CORE_BACKUP_SCANNING_CORE,
-   (uint32_t)MSG_CORE_DELETE_DISABLED,
-   (uint32_t)MSG_CORE_DOES_NOT_SUPPORT_DISK_OPTIONS,
-   (uint32_t)MSG_CORE_DOES_NOT_SUPPORT_SAVESTATES,
-   (uint32_t)MSG_CORE_DOES_NOT_SUPPORT_SAVESTATE_UNDO,
-   (uint32_t)MSG_CORE_INFO_CACHE_UNSUPPORTED,
-   (uint32_t)MSG_CORE_INSTALLATION_ALREADY_INSTALLED,
-   (uint32_t)MSG_CORE_INSTALLATION_COMPLETE,
-   (uint32_t)MSG_CORE_INSTALLATION_DISABLED,
-   (uint32_t)MSG_CORE_INSTALLATION_FAILED,
-   (uint32_t)MSG_CORE_INSTALLED,
-   (uint32_t)MSG_CORE_INSTALL_FAILED,
-   (uint32_t)MSG_CORE_LIST_FAILED,
-   (uint32_t)MSG_CORE_LOCK_FAILED,
-   (uint32_t)MSG_CORE_OPTIONS_FILE_CREATED_SUCCESSFULLY,
-   (uint32_t)MSG_CORE_OPTIONS_FILE_REMOVED_SUCCESSFULLY,
-   (uint32_t)MSG_CORE_OPTIONS_FLUSHED,
-   (uint32_t)MSG_CORE_OPTIONS_FLUSH_FAILED,
-   (uint32_t)MSG_CORE_OPTIONS_RESET,
-   (uint32_t)MSG_CORE_REMAP_FILE_LOADED,
-   (uint32_t)MSG_CORE_RESTORATION_ALREADY_INSTALLED,
-   (uint32_t)MSG_CORE_RESTORATION_COMPLETE,
-   (uint32_t)MSG_CORE_RESTORATION_DISABLED,
-   (uint32_t)MSG_CORE_RESTORATION_FAILED,
-   (uint32_t)MSG_CORE_RESTORATION_INVALID_CONTENT,
-   (uint32_t)MSG_CORE_SET_STANDALONE_EXEMPT_FAILED,
+   (msg_hash_id_t)MSG_ACCESSIBILITY_STARTUP,
+   (msg_hash_id_t)MSG_ACHIEVEMENT_UNLOCKED,
+   (msg_hash_id_t)MSG_ADDED_TO_FAVORITES,
+   (msg_hash_id_t)MSG_ADDED_TO_PLAYLIST,
+   (msg_hash_id_t)MSG_ADD_TO_FAVORITES_FAILED,
+   (msg_hash_id_t)MSG_ADD_TO_PLAYLIST_FAILED,
+   (msg_hash_id_t)MSG_AI_SERVICE_STOPPED,
+   (msg_hash_id_t)MSG_ALL_CORES_SWITCHED_PFD,
+   (msg_hash_id_t)MSG_ALL_CORES_UPDATED,
+   (msg_hash_id_t)MSG_APPENDED_DISK,
+   (msg_hash_id_t)MSG_APPLICATION_DIR,
+   (msg_hash_id_t)MSG_APPLYING_CHEAT,
+   (msg_hash_id_t)MSG_APPLYING_PATCH,
+   (msg_hash_id_t)MSG_APPLYING_SHADER,
+   (msg_hash_id_t)MSG_AUDIO_ASIO_NOT_RUNNING,
+   (msg_hash_id_t)MSG_AUDIO_MIXER_VOLUME,
+   (msg_hash_id_t)MSG_AUDIO_MUTED,
+   (msg_hash_id_t)MSG_AUDIO_UNMUTED,
+   (msg_hash_id_t)MSG_AUDIO_VOLUME,
+   (msg_hash_id_t)MSG_AUTOCONFIG_FILE_ERROR_SAVING,
+   (msg_hash_id_t)MSG_AUTOCONFIG_FILE_SAVED_SUCCESSFULLY_NAMED,
+   (msg_hash_id_t)MSG_AUTODETECT,
+   (msg_hash_id_t)MSG_AUTOLOADING_SAVESTATE_FAILED,
+   (msg_hash_id_t)MSG_AUTOLOADING_SAVESTATE_FROM,
+   (msg_hash_id_t)MSG_AUTOLOADING_SAVESTATE_SUCCEEDED,
+   (msg_hash_id_t)MSG_AUTOSAVE_FAILED,
+   (msg_hash_id_t)MSG_AUTO_SAVE_STATE_TO,
+   (msg_hash_id_t)MSG_BACKING_UP_CORE,
+   (msg_hash_id_t)MSG_BLOCKING_SRAM_OVERWRITE,
+   (msg_hash_id_t)MSG_BLUETOOTH_ADAPTER_GENERIC_DRIVER,
+   (msg_hash_id_t)MSG_BLUETOOTH_PAIRED,
+   (msg_hash_id_t)MSG_BLUETOOTH_PAIRING,
+   (msg_hash_id_t)MSG_BLUETOOTH_PAIRING_FAILED,
+   (msg_hash_id_t)MSG_BLUETOOTH_PAIRING_FAILED_WII,
+   (msg_hash_id_t)MSG_BLUETOOTH_PAIRING_REMOVED,
+   (msg_hash_id_t)MSG_BLUETOOTH_SCAN_COMPLETE,
+   (msg_hash_id_t)MSG_BRINGING_UP_COMMAND_INTERFACE_ON_PORT,
+   (msg_hash_id_t)MSG_CANNOT_INFER_NEW_CONFIG_PATH,
+   (msg_hash_id_t)MSG_CAPABILITIES,
+   (msg_hash_id_t)MSG_CHANGE_THUMBNAIL_TYPE,
+   (msg_hash_id_t)MSG_CHEAT_ADD_AFTER_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_ADD_BEFORE_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_ADD_BOTTOM_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_ADD_TOP_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_COPY_AFTER_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_COPY_BEFORE_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_DELETE_ALL_INSTRUCTIONS,
+   (msg_hash_id_t)MSG_CHEAT_DELETE_ALL_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_DELETE_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_INIT_FAIL,
+   (msg_hash_id_t)MSG_CHEAT_INIT_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_RELOAD_ALL_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_SEARCH_ADDED_MATCHES_FAIL,
+   (msg_hash_id_t)MSG_CHEAT_SEARCH_ADDED_MATCHES_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_SEARCH_ADDED_MATCHES_TOO_MANY,
+   (msg_hash_id_t)MSG_CHEAT_SEARCH_ADD_MATCH_FAIL,
+   (msg_hash_id_t)MSG_CHEAT_SEARCH_ADD_MATCH_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_SEARCH_DELETE_MATCH_SUCCESS,
+   (msg_hash_id_t)MSG_CHEAT_SEARCH_FOUND_MATCHES,
+   (msg_hash_id_t)MSG_CHEAT_SEARCH_NOT_INITIALIZED,
+   (msg_hash_id_t)MSG_CHECKING_CORE,
+   (msg_hash_id_t)MSG_CHEEVOS_ALL_ACHIEVEMENTS_ACTIVATED,
+   (msg_hash_id_t)MSG_CHEEVOS_CASUAL_MODE,
+   (msg_hash_id_t)MSG_CHEEVOS_CHANGE_MEDIA_FAILED,
+   (msg_hash_id_t)MSG_CHEEVOS_COMPLETED_GAME,
+   (msg_hash_id_t)MSG_CHEEVOS_GAME_HAS_NO_ACHIEVEMENTS,
+   (msg_hash_id_t)MSG_CHEEVOS_GAME_LOAD_FAILED,
+   (msg_hash_id_t)MSG_CHEEVOS_GAME_NOT_IDENTIFIED,
+   (msg_hash_id_t)MSG_CHEEVOS_HARDCORE_MODE_CHANGED_BY_HOST,
+   (msg_hash_id_t)MSG_CHEEVOS_HARDCORE_MODE_DISABLED,
+   (msg_hash_id_t)MSG_CHEEVOS_HARDCORE_MODE_DISABLED_CHEAT,
+   (msg_hash_id_t)MSG_CHEEVOS_HARDCORE_MODE_ENABLE,
+   (msg_hash_id_t)MSG_CHEEVOS_HARDCORE_MODE_REQUIRES_NEWER_HOST,
+   (msg_hash_id_t)MSG_CHEEVOS_HARDCORE_PAUSED_BLACK_FRAME_INSERTION,
+   (msg_hash_id_t)MSG_CHEEVOS_HARDCORE_PAUSED_MANUAL_FRAME_DELAY,
+   (msg_hash_id_t)MSG_CHEEVOS_HARDCORE_PAUSED_SETTING_NOT_ALLOWED,
+   (msg_hash_id_t)MSG_CHEEVOS_HARDCORE_PAUSED_SYSTEM_NOT_FOR_CORE,
+   (msg_hash_id_t)MSG_CHEEVOS_HARDCORE_PAUSED_VSYNC_SWAP_INTERVAL,
+   (msg_hash_id_t)MSG_CHEEVOS_LOAD_SAVEFILE_PREVENTED_BY_HARDCORE_MODE,
+   (msg_hash_id_t)MSG_CHEEVOS_LOAD_STATE_PREVENTED_BY_HARDCORE_MODE,
+   (msg_hash_id_t)MSG_CHEEVOS_LOGGED_IN_AS_USER,
+   (msg_hash_id_t)MSG_CHEEVOS_LOGIN_TOKEN_EXPIRED,
+   (msg_hash_id_t)MSG_CHEEVOS_MASTERED_GAME,
+   (msg_hash_id_t)MSG_CHEEVOS_NUMBER_ACHIEVEMENTS_UNLOCKED,
+   (msg_hash_id_t)MSG_CHEEVOS_RICH_PRESENCE_SPECTATING,
+   (msg_hash_id_t)MSG_CHEEVOS_UNOFFICIAL_ACHIEVEMENTS_ACTIVATED,
+   (msg_hash_id_t)MSG_CHEEVOS_UNSUPPORTED_COUNT,
+   (msg_hash_id_t)MSG_CHEEVOS_UNSUPPORTED_WARNING,
+   (msg_hash_id_t)MSG_COMPARING_WITH_KNOWN_MAGIC_NUMBERS,
+   (msg_hash_id_t)MSG_COMPILED_AGAINST_API,
+   (msg_hash_id_t)MSG_COMPILER,
+   (msg_hash_id_t)MSG_CONFIG_DIRECTORY_NOT_SET,
+   (msg_hash_id_t)MSG_CONFIG_OVERRIDE_LOADED,
+   (msg_hash_id_t)MSG_CONNECTED_TO,
+   (msg_hash_id_t)MSG_CONNECTING_TO_NETPLAY_HOST,
+   (msg_hash_id_t)MSG_CONNECTING_TO_PORT,
+   (msg_hash_id_t)MSG_CONNECTION_SLOT,
+   (msg_hash_id_t)MSG_CONTENT_CRC32S_DIFFER,
+   (msg_hash_id_t)MSG_CONTENT_LOADING_SKIPPED_IMPLEMENTATION_WILL_DO_IT,
+   (msg_hash_id_t)MSG_CONTENT_NETPACKET_CRC32S_DIFFER,
+   (msg_hash_id_t)MSG_CORE_BACKUP_ALREADY_EXISTS,
+   (msg_hash_id_t)MSG_CORE_BACKUP_COMPLETE,
+   (msg_hash_id_t)MSG_CORE_BACKUP_FAILED,
+   (msg_hash_id_t)MSG_CORE_BACKUP_SCANNING_CORE,
+   (msg_hash_id_t)MSG_CORE_DELETE_DISABLED,
+   (msg_hash_id_t)MSG_CORE_DOES_NOT_SUPPORT_DISK_OPTIONS,
+   (msg_hash_id_t)MSG_CORE_DOES_NOT_SUPPORT_SAVESTATES,
+   (msg_hash_id_t)MSG_CORE_DOES_NOT_SUPPORT_SAVESTATE_UNDO,
+   (msg_hash_id_t)MSG_CORE_INFO_CACHE_UNSUPPORTED,
+   (msg_hash_id_t)MSG_CORE_INSTALLATION_ALREADY_INSTALLED,
+   (msg_hash_id_t)MSG_CORE_INSTALLATION_COMPLETE,
+   (msg_hash_id_t)MSG_CORE_INSTALLATION_DISABLED,
+   (msg_hash_id_t)MSG_CORE_INSTALLATION_FAILED,
+   (msg_hash_id_t)MSG_CORE_INSTALLED,
+   (msg_hash_id_t)MSG_CORE_INSTALL_FAILED,
+   (msg_hash_id_t)MSG_CORE_LIST_FAILED,
+   (msg_hash_id_t)MSG_CORE_LOCK_FAILED,
+   (msg_hash_id_t)MSG_CORE_OPTIONS_FILE_CREATED_SUCCESSFULLY,
+   (msg_hash_id_t)MSG_CORE_OPTIONS_FILE_REMOVED_SUCCESSFULLY,
+   (msg_hash_id_t)MSG_CORE_OPTIONS_FLUSHED,
+   (msg_hash_id_t)MSG_CORE_OPTIONS_FLUSH_FAILED,
+   (msg_hash_id_t)MSG_CORE_OPTIONS_RESET,
+   (msg_hash_id_t)MSG_CORE_REMAP_FILE_LOADED,
+   (msg_hash_id_t)MSG_CORE_RESTORATION_ALREADY_INSTALLED,
+   (msg_hash_id_t)MSG_CORE_RESTORATION_COMPLETE,
+   (msg_hash_id_t)MSG_CORE_RESTORATION_DISABLED,
+   (msg_hash_id_t)MSG_CORE_RESTORATION_FAILED,
+   (msg_hash_id_t)MSG_CORE_RESTORATION_INVALID_CONTENT,
+   (msg_hash_id_t)MSG_CORE_SET_STANDALONE_EXEMPT_FAILED,
 #ifdef HAVE_MIST
-   (uint32_t)MSG_CORE_STEAM_CURRENTLY_DOWNLOADING,
-   (uint32_t)MSG_CORE_STEAM_INSTALLING,
-   (uint32_t)MSG_CORE_STEAM_UNINSTALLED,
+   (msg_hash_id_t)MSG_CORE_STEAM_CURRENTLY_DOWNLOADING,
+   (msg_hash_id_t)MSG_CORE_STEAM_INSTALLING,
+   (msg_hash_id_t)MSG_CORE_STEAM_UNINSTALLED,
 #endif
-   (uint32_t)MSG_CORE_UNLOCK_FAILED,
-   (uint32_t)MSG_CORE_UNSET_STANDALONE_EXEMPT_FAILED,
-   (uint32_t)MSG_CORE_UPDATE_DISABLED,
-   (uint32_t)MSG_COULD_NOT_FIND_ANY_NEXT_DRIVER,
-   (uint32_t)MSG_COULD_NOT_FIND_COMPATIBLE_SYSTEM,
-   (uint32_t)MSG_COULD_NOT_FIND_VALID_DATA_TRACK,
-   (uint32_t)MSG_COULD_NOT_OPEN_DATA_TRACK,
-   (uint32_t)MSG_COULD_NOT_READ_CONTENT_FILE,
-   (uint32_t)MSG_COULD_NOT_READ_MOVIE_HEADER,
-   (uint32_t)MSG_COULD_NOT_READ_STATE_FROM_MOVIE,
-   (uint32_t)MSG_CRC32_CHECKSUM_MISMATCH,
-   (uint32_t)MSG_CRT_SWITCH_EDID_FAILED,
-   (uint32_t)MSG_CRT_SWITCH_EDID_WRITTEN,
-   (uint32_t)MSG_CUSTOM_TIMING_GIVEN,
-   (uint32_t)MSG_DECOMPRESSION_ALREADY_IN_PROGRESS,
-   (uint32_t)MSG_DECOMPRESSION_FAILED,
-   (uint32_t)MSG_DETECTED_VIEWPORT_OF,
-   (uint32_t)MSG_DEVICE_CONFIGURED_IN_PORT_NR,
-   (uint32_t)MSG_DEVICE_DISCONNECTED_FROM_PORT_NR,
-   (uint32_t)MSG_DEVICE_NOT_CONFIGURED_FALLBACK_NR,
-   (uint32_t)MSG_DEVICE_NOT_CONFIGURED_NR,
-   (uint32_t)MSG_DID_NOT_FIND_A_VALID_CONTENT_PATCH,
-   (uint32_t)MSG_DIRECTORY_REMAP_FILE_LOADED,
-   (uint32_t)MSG_DISABLING_WIRELESS,
-   (uint32_t)MSG_DISCONNECTING_WIRELESS,
-   (uint32_t)MSG_DISCONNECT_DEVICE_FROM_A_VALID_PORT,
-   (uint32_t)MSG_DISCORD_CONNECTION_REQUEST,
-   (uint32_t)MSG_DISC_DUMP_FAILED_TO_READ_FROM_DRIVE,
-   (uint32_t)MSG_DISC_DUMP_FAILED_TO_WRITE_TO_DISK,
-   (uint32_t)MSG_DISK_CLOSED,
-   (uint32_t)MSG_DISK_EJECTED,
-   (uint32_t)MSG_DOWNLOADING,
-   (uint32_t)MSG_DOWNLOADING_CORE,
-   (uint32_t)MSG_DOWNLOAD_FAILED,
-   (uint32_t)MSG_DRIVE_NUMBER,
-   (uint32_t)MSG_DUMPING_DISC,
-   (uint32_t)MSG_ENABLING_WIRELESS,
-   (uint32_t)MSG_ERROR,
-   (uint32_t)MSG_ERROR_LIBRETRO_CORE_REQUIRES_CONTENT,
-   (uint32_t)MSG_ERROR_LIBRETRO_CORE_REQUIRES_SPECIAL_CONTENT,
-   (uint32_t)MSG_ERROR_LIBRETRO_CORE_REQUIRES_VFS,
-   (uint32_t)MSG_ERROR_PARSING_ARGUMENTS,
-   (uint32_t)MSG_ERROR_REMOVING_CORE_OPTIONS_FILE,
-   (uint32_t)MSG_ERROR_REMOVING_REMAP_FILE,
-   (uint32_t)MSG_ERROR_REMOVING_SHADER_PRESET,
-   (uint32_t)MSG_ERROR_SAVING_CORE_OPTIONS_FILE,
-   (uint32_t)MSG_ERROR_SAVING_REMAP_FILE,
-   (uint32_t)MSG_ERROR_SAVING_SHADER_PRESET,
-   (uint32_t)MSG_EXTERNAL_APPLICATION_DIR,
-   (uint32_t)MSG_EXTRACTING,
-   (uint32_t)MSG_EXTRACTING_CORE,
-   (uint32_t)MSG_EXTRACTING_FILE,
-   (uint32_t)MSG_FAILED_SAVING_CONFIG_TO,
-   (uint32_t)MSG_FAILED_TO_ACCEPT_INCOMING_SPECTATOR,
-   (uint32_t)MSG_FAILED_TO_ALLOCATE_MEMORY_FOR_PATCHED_CONTENT,
-   (uint32_t)MSG_FAILED_TO_APPEND_DISK,
-   (uint32_t)MSG_FAILED_TO_APPLY_SHADER,
-   (uint32_t)MSG_FAILED_TO_APPLY_SHADER_PRESET,
-   (uint32_t)MSG_FAILED_TO_BIND_SOCKET,
-   (uint32_t)MSG_FAILED_TO_CONNECT_TO_CLIENT,
-   (uint32_t)MSG_FAILED_TO_CONNECT_TO_HOST,
-   (uint32_t)MSG_FAILED_TO_CREATE_THE_DIRECTORY,
-   (uint32_t)MSG_FAILED_TO_ENTER_GAMEMODE,
-   (uint32_t)MSG_FAILED_TO_ENTER_GAMEMODE_LINUX,
-   (uint32_t)MSG_FAILED_TO_EXTRACT_CONTENT_FROM_COMPRESSED_FILE,
-   (uint32_t)MSG_FAILED_TO_GET_NICKNAME_FROM_CLIENT,
-   (uint32_t)MSG_FAILED_TO_LOAD,
-   (uint32_t)MSG_FAILED_TO_LOAD_CONTENT,
-   (uint32_t)MSG_FAILED_TO_LOAD_FROM_PLAYLIST,
-   (uint32_t)MSG_FAILED_TO_LOAD_MOVIE_FILE,
-   (uint32_t)MSG_FAILED_TO_LOAD_OVERLAY,
-   (uint32_t)MSG_FAILED_TO_LOAD_SRAM,
-   (uint32_t)MSG_FAILED_TO_LOAD_STATE,
-   (uint32_t)MSG_FAILED_TO_OPEN_LIBRETRO_CORE,
-   (uint32_t)MSG_FAILED_TO_PATCH,
-   (uint32_t)MSG_FAILED_TO_RECEIVE_HEADER_FROM_CLIENT,
-   (uint32_t)MSG_FAILED_TO_RECEIVE_HEADER_FROM_HOST,
-   (uint32_t)MSG_FAILED_TO_RECEIVE_NICKNAME,
-   (uint32_t)MSG_FAILED_TO_RECEIVE_NICKNAME_FROM_HOST,
-   (uint32_t)MSG_FAILED_TO_RECEIVE_NICKNAME_SIZE_FROM_HOST,
-   (uint32_t)MSG_FAILED_TO_RECEIVE_SRAM_DATA_FROM_HOST,
-   (uint32_t)MSG_FAILED_TO_REMOVE_DISK_FROM_TRAY,
-   (uint32_t)MSG_FAILED_TO_REMOVE_TEMPORARY_FILE,
-   (uint32_t)MSG_FAILED_TO_SAVE_SRAM,
-   (uint32_t)MSG_FAILED_TO_SAVE_STATE_TO,
-   (uint32_t)MSG_FAILED_TO_SEND_NICKNAME,
-   (uint32_t)MSG_FAILED_TO_SEND_NICKNAME_SIZE,
-   (uint32_t)MSG_FAILED_TO_SEND_NICKNAME_TO_CLIENT,
-   (uint32_t)MSG_FAILED_TO_SEND_NICKNAME_TO_HOST,
-   (uint32_t)MSG_FAILED_TO_SEND_SRAM_DATA_TO_CLIENT,
-   (uint32_t)MSG_FAILED_TO_SET_DISK,
-   (uint32_t)MSG_FAILED_TO_SET_INITIAL_DISK,
-   (uint32_t)MSG_FAILED_TO_START_AUDIO_DRIVER,
-   (uint32_t)MSG_FAILED_TO_START_MOVIE_RECORD,
-   (uint32_t)MSG_FAILED_TO_START_RECORDING,
-   (uint32_t)MSG_FAILED_TO_TAKE_SCREENSHOT,
-   (uint32_t)MSG_FAILED_TO_UNDO_LOAD_STATE,
-   (uint32_t)MSG_FAILED_TO_UNDO_SAVE_STATE,
-   (uint32_t)MSG_FAILED_TO_UNMUTE_AUDIO,
-   (uint32_t)MSG_FAST_FORWARD,
-   (uint32_t)MSG_FATAL_ERROR_RECEIVED_IN,
-   (uint32_t)MSG_FETCHING_CORE_LIST,
-   (uint32_t)MSG_FILE_ALREADY_EXISTS_SAVING_TO_BACKUP_BUFFER,
-   (uint32_t)MSG_FILE_NOT_FOUND,
-   (uint32_t)MSG_FIRMWARE,
-   (uint32_t)MSG_FOLDER_SPECIFIC_CORE_OPTIONS_FOUND_AT,
-   (uint32_t)MSG_FOUND_AUTO_SAVESTATE_IN,
-   (uint32_t)MSG_FOUND_DISK_LABEL,
-   (uint32_t)MSG_FOUND_ENTRY_STATE_IN,
-   (uint32_t)MSG_FOUND_FIRST_DATA_TRACK_ON_FILE,
-   (uint32_t)MSG_FOUND_LAST_REPLAY_SLOT,
-   (uint32_t)MSG_FOUND_LAST_STATE_SLOT,
-   (uint32_t)MSG_FOUND_SHADER,
-   (uint32_t)MSG_FRAMES,
-   (uint32_t)MSG_GAME_FOCUS_OFF,
-   (uint32_t)MSG_GAME_FOCUS_ON,
-   (uint32_t)MSG_GAME_REMAP_FILE_LOADED,
-   (uint32_t)MSG_GAME_SPECIFIC_CORE_OPTIONS_FOUND_AT,
-   (uint32_t)MSG_GOT_CONNECTION_FROM,
-   (uint32_t)MSG_GOT_CONNECTION_FROM_NAME,
-   (uint32_t)MSG_GOT_INVALID_DISK_INDEX,
-   (uint32_t)MSG_GRAB_MOUSE_STATE,
-   (uint32_t)MSG_HW_RENDERED_MUST_USE_POSTSHADED_RECORDING,
-   (uint32_t)MSG_INFLATED_CHECKSUM_DID_NOT_MATCH_CRC32,
-   (uint32_t)MSG_INPUT_BIND_HOLD,
-   (uint32_t)MSG_INPUT_BIND_PRESS,
-   (uint32_t)MSG_INPUT_BIND_RELEASE,
-   (uint32_t)MSG_INPUT_BIND_TIMEOUT,
-   (uint32_t)MSG_INPUT_CHEAT,
-   (uint32_t)MSG_INPUT_CHEAT_FILENAME,
-   (uint32_t)MSG_INPUT_ENABLE_SETTINGS_PASSWORD,
-   (uint32_t)MSG_INPUT_ENABLE_SETTINGS_PASSWORD_NOK,
-   (uint32_t)MSG_INPUT_ENABLE_SETTINGS_PASSWORD_OK,
-   (uint32_t)MSG_INPUT_KIOSK_MODE_PASSWORD,
-   (uint32_t)MSG_INPUT_KIOSK_MODE_PASSWORD_NOK,
-   (uint32_t)MSG_INPUT_KIOSK_MODE_PASSWORD_OK,
-   (uint32_t)MSG_INPUT_OVERRIDE_FILENAME,
-   (uint32_t)MSG_INPUT_PRESET_FILENAME,
-   (uint32_t)MSG_INPUT_REMAP_FILENAME,
-   (uint32_t)MSG_INPUT_RENAME_ENTRY,
-   (uint32_t)MSG_INSTALLING_CORE,
-   (uint32_t)MSG_INTERFACE,
-   (uint32_t)MSG_INTERNAL_STORAGE,
-   (uint32_t)MSG_INTERNET_NOT_CONNECTABLE,
-   (uint32_t)MSG_INTERNET_RELAY,
-   (uint32_t)MSG_INVALID_NICKNAME_SIZE,
-   (uint32_t)MSG_IN_BYTES,
-   (uint32_t)MSG_IN_GIGABYTES,
-   (uint32_t)MSG_IN_MEGABYTES,
-   (uint32_t)MSG_IOS_TOUCH_MOUSE_DISABLED,
-   (uint32_t)MSG_IOS_TOUCH_MOUSE_ENABLED,
-   (uint32_t)MSG_LATEST_CORE_INSTALLED,
-   (uint32_t)MSG_LEADERBOARD_BEST,
-   (uint32_t)MSG_LEADERBOARD_FAILED,
-   (uint32_t)MSG_LEADERBOARD_STARTED,
-   (uint32_t)MSG_LEADERBOARD_SUBMISSION,
-   (uint32_t)MSG_LIBRETRO_ABI_BREAK,
-   (uint32_t)MSG_LIBRETRO_FRONTEND,
-   (uint32_t)MSG_LOADED_STATE_FROM_SLOT,
-   (uint32_t)MSG_LOADED_STATE_FROM_SLOT_AUTO,
-   (uint32_t)MSG_LOADING,
-   (uint32_t)MSG_LOADING_CONTENT_FILE,
-   (uint32_t)MSG_LOADING_ENTRY_STATE_FROM,
-   (uint32_t)MSG_LOADING_FAVORITES_FILE,
-   (uint32_t)MSG_LOADING_HISTORY_FILE,
-   (uint32_t)MSG_LOADING_STATE,
-   (uint32_t)MSG_LOAD_CORE_FIRST,
-   (uint32_t)MSG_LOCAL,
+   (msg_hash_id_t)MSG_CORE_UNLOCK_FAILED,
+   (msg_hash_id_t)MSG_CORE_UNSET_STANDALONE_EXEMPT_FAILED,
+   (msg_hash_id_t)MSG_CORE_UPDATE_DISABLED,
+   (msg_hash_id_t)MSG_COULD_NOT_FIND_ANY_NEXT_DRIVER,
+   (msg_hash_id_t)MSG_COULD_NOT_FIND_COMPATIBLE_SYSTEM,
+   (msg_hash_id_t)MSG_COULD_NOT_FIND_VALID_DATA_TRACK,
+   (msg_hash_id_t)MSG_COULD_NOT_OPEN_DATA_TRACK,
+   (msg_hash_id_t)MSG_COULD_NOT_READ_CONTENT_FILE,
+   (msg_hash_id_t)MSG_COULD_NOT_READ_MOVIE_HEADER,
+   (msg_hash_id_t)MSG_COULD_NOT_READ_STATE_FROM_MOVIE,
+   (msg_hash_id_t)MSG_CRC32_CHECKSUM_MISMATCH,
+   (msg_hash_id_t)MSG_CRT_SWITCH_EDID_FAILED,
+   (msg_hash_id_t)MSG_CRT_SWITCH_EDID_WRITTEN,
+   (msg_hash_id_t)MSG_CUSTOM_TIMING_GIVEN,
+   (msg_hash_id_t)MSG_DECOMPRESSION_ALREADY_IN_PROGRESS,
+   (msg_hash_id_t)MSG_DECOMPRESSION_FAILED,
+   (msg_hash_id_t)MSG_DETECTED_VIEWPORT_OF,
+   (msg_hash_id_t)MSG_DEVICE_AND_KEYBOARD_ASSIGNED_TO_CORE_PORT_NR,
+   (msg_hash_id_t)MSG_DEVICE_ASSIGNED_TO_CORE_PORT_NR,
+   (msg_hash_id_t)MSG_DEVICE_CONFIGURED_IN_PORT_NR,
+   (msg_hash_id_t)MSG_DEVICE_DISCONNECTED_FROM_PORT_NR,
+   (msg_hash_id_t)MSG_DEVICE_NOT_CONFIGURED_FALLBACK_NR,
+   (msg_hash_id_t)MSG_DEVICE_NOT_CONFIGURED_NR,
+   (msg_hash_id_t)MSG_DID_NOT_FIND_A_VALID_CONTENT_PATCH,
+   (msg_hash_id_t)MSG_DIRECTORY_REMAP_FILE_LOADED,
+   (msg_hash_id_t)MSG_DISABLING_WIRELESS,
+   (msg_hash_id_t)MSG_DISCONNECTING_WIRELESS,
+   (msg_hash_id_t)MSG_DISCONNECT_DEVICE_FROM_A_VALID_PORT,
+   (msg_hash_id_t)MSG_DISCORD_CONNECTION_REQUEST,
+   (msg_hash_id_t)MSG_DISC_DUMP_FAILED_TO_READ_FROM_DRIVE,
+   (msg_hash_id_t)MSG_DISC_DUMP_FAILED_TO_WRITE_TO_DISK,
+   (msg_hash_id_t)MSG_DISK_CLOSED,
+   (msg_hash_id_t)MSG_DISK_EJECTED,
+   (msg_hash_id_t)MSG_DOWNLOADING,
+   (msg_hash_id_t)MSG_DOWNLOADING_CORE,
+   (msg_hash_id_t)MSG_DOWNLOAD_FAILED,
+   (msg_hash_id_t)MSG_DRIVE_NUMBER,
+   (msg_hash_id_t)MSG_DUMPING_DISC,
+   (msg_hash_id_t)MSG_ENABLING_WIRELESS,
+   (msg_hash_id_t)MSG_ERROR,
+   (msg_hash_id_t)MSG_ERROR_LIBRETRO_CORE_REQUIRES_CONTENT,
+   (msg_hash_id_t)MSG_ERROR_LIBRETRO_CORE_REQUIRES_SPECIAL_CONTENT,
+   (msg_hash_id_t)MSG_ERROR_LIBRETRO_CORE_REQUIRES_VFS,
+   (msg_hash_id_t)MSG_ERROR_PARSING_ARGUMENTS,
+   (msg_hash_id_t)MSG_ERROR_REMOVING_CORE_OPTIONS_FILE,
+   (msg_hash_id_t)MSG_ERROR_REMOVING_REMAP_FILE,
+   (msg_hash_id_t)MSG_ERROR_REMOVING_SHADER_PRESET,
+   (msg_hash_id_t)MSG_ERROR_SAVING_CORE_OPTIONS_FILE,
+   (msg_hash_id_t)MSG_ERROR_SAVING_REMAP_FILE,
+   (msg_hash_id_t)MSG_ERROR_SAVING_SHADER_PRESET,
+   (msg_hash_id_t)MSG_EXTERNAL_APPLICATION_DIR,
+   (msg_hash_id_t)MSG_EXTRACTING,
+   (msg_hash_id_t)MSG_EXTRACTING_CORE,
+   (msg_hash_id_t)MSG_EXTRACTING_FILE,
+   (msg_hash_id_t)MSG_FAILED_SAVING_CONFIG_TO,
+   (msg_hash_id_t)MSG_FAILED_TO_ACCEPT_INCOMING_SPECTATOR,
+   (msg_hash_id_t)MSG_FAILED_TO_ALLOCATE_MEMORY_FOR_PATCHED_CONTENT,
+   (msg_hash_id_t)MSG_FAILED_TO_APPEND_DISK,
+   (msg_hash_id_t)MSG_FAILED_TO_APPLY_POWER_PLAN,
+   (msg_hash_id_t)MSG_FAILED_TO_APPLY_SHADER,
+   (msg_hash_id_t)MSG_FAILED_TO_APPLY_SHADER_PRESET,
+   (msg_hash_id_t)MSG_FAILED_TO_BIND_SOCKET,
+   (msg_hash_id_t)MSG_FAILED_TO_CONNECT_TO_CLIENT,
+   (msg_hash_id_t)MSG_FAILED_TO_CONNECT_TO_HOST,
+   (msg_hash_id_t)MSG_FAILED_TO_CREATE_THE_DIRECTORY,
+   (msg_hash_id_t)MSG_FAILED_TO_DISABLE_IDLE_STATES,
+   (msg_hash_id_t)MSG_FAILED_TO_ENTER_GAMEMODE,
+   (msg_hash_id_t)MSG_FAILED_TO_ENTER_GAMEMODE_LINUX,
+   (msg_hash_id_t)MSG_FAILED_TO_EXTRACT_CONTENT_FROM_COMPRESSED_FILE,
+   (msg_hash_id_t)MSG_FAILED_TO_GET_NICKNAME_FROM_CLIENT,
+   (msg_hash_id_t)MSG_FAILED_TO_LOAD,
+   (msg_hash_id_t)MSG_FAILED_TO_LOAD_CONTENT,
+   (msg_hash_id_t)MSG_FAILED_TO_LOAD_FROM_PLAYLIST,
+   (msg_hash_id_t)MSG_FAILED_TO_LOAD_MOVIE_FILE,
+   (msg_hash_id_t)MSG_FAILED_TO_LOAD_OVERLAY,
+   (msg_hash_id_t)MSG_FAILED_TO_LOAD_SRAM,
+   (msg_hash_id_t)MSG_FAILED_TO_LOAD_STATE,
+   (msg_hash_id_t)MSG_FAILED_TO_OPEN_LIBRETRO_CORE,
+   (msg_hash_id_t)MSG_FAILED_TO_PATCH,
+   (msg_hash_id_t)MSG_FAILED_TO_RECEIVE_HEADER_FROM_CLIENT,
+   (msg_hash_id_t)MSG_FAILED_TO_RECEIVE_HEADER_FROM_HOST,
+   (msg_hash_id_t)MSG_FAILED_TO_RECEIVE_NICKNAME,
+   (msg_hash_id_t)MSG_FAILED_TO_RECEIVE_NICKNAME_FROM_HOST,
+   (msg_hash_id_t)MSG_FAILED_TO_RECEIVE_NICKNAME_SIZE_FROM_HOST,
+   (msg_hash_id_t)MSG_FAILED_TO_RECEIVE_SRAM_DATA_FROM_HOST,
+   (msg_hash_id_t)MSG_FAILED_TO_REMOVE_DISK_FROM_TRAY,
+   (msg_hash_id_t)MSG_FAILED_TO_REMOVE_TEMPORARY_FILE,
+   (msg_hash_id_t)MSG_FAILED_TO_SAVE_SRAM,
+   (msg_hash_id_t)MSG_FAILED_TO_SAVE_STATE_TO,
+   (msg_hash_id_t)MSG_FAILED_TO_SEND_NICKNAME,
+   (msg_hash_id_t)MSG_FAILED_TO_SEND_NICKNAME_SIZE,
+   (msg_hash_id_t)MSG_FAILED_TO_SEND_NICKNAME_TO_CLIENT,
+   (msg_hash_id_t)MSG_FAILED_TO_SEND_NICKNAME_TO_HOST,
+   (msg_hash_id_t)MSG_FAILED_TO_SEND_SRAM_DATA_TO_CLIENT,
+   (msg_hash_id_t)MSG_FAILED_TO_SET_DISK,
+   (msg_hash_id_t)MSG_FAILED_TO_SET_INITIAL_DISK,
+   (msg_hash_id_t)MSG_FAILED_TO_START_AUDIO_DRIVER,
+   (msg_hash_id_t)MSG_FAILED_TO_START_MOVIE_RECORD,
+   (msg_hash_id_t)MSG_FAILED_TO_START_RECORDING,
+   (msg_hash_id_t)MSG_FAILED_TO_TAKE_SCREENSHOT,
+   (msg_hash_id_t)MSG_FAILED_TO_UNDO_LOAD_STATE,
+   (msg_hash_id_t)MSG_FAILED_TO_UNDO_SAVE_STATE,
+   (msg_hash_id_t)MSG_FAILED_TO_UNMUTE_AUDIO,
+   (msg_hash_id_t)MSG_FAST_FORWARD,
+   (msg_hash_id_t)MSG_FATAL_ERROR_RECEIVED_IN,
+   (msg_hash_id_t)MSG_FETCHING_CORE_LIST,
+   (msg_hash_id_t)MSG_FILE_ALREADY_EXISTS_SAVING_TO_BACKUP_BUFFER,
+   (msg_hash_id_t)MSG_FILE_NOT_FOUND,
+   (msg_hash_id_t)MSG_FIRMWARE,
+   (msg_hash_id_t)MSG_FOLDER_SPECIFIC_CORE_OPTIONS_FOUND_AT,
+   (msg_hash_id_t)MSG_FOUND_AUTO_SAVESTATE_IN,
+   (msg_hash_id_t)MSG_FOUND_DISK_LABEL,
+   (msg_hash_id_t)MSG_FOUND_ENTRY_STATE_IN,
+   (msg_hash_id_t)MSG_FOUND_FIRST_DATA_TRACK_ON_FILE,
+   (msg_hash_id_t)MSG_FOUND_LAST_REPLAY_SLOT,
+   (msg_hash_id_t)MSG_FOUND_LAST_STATE_SLOT,
+   (msg_hash_id_t)MSG_FOUND_SHADER,
+   (msg_hash_id_t)MSG_FRAMES,
+   (msg_hash_id_t)MSG_GAME_FOCUS_OFF,
+   (msg_hash_id_t)MSG_GAME_FOCUS_ON,
+   (msg_hash_id_t)MSG_GAME_REMAP_FILE_LOADED,
+   (msg_hash_id_t)MSG_GAME_SPECIFIC_CORE_OPTIONS_FOUND_AT,
+   (msg_hash_id_t)MSG_GOT_CONNECTION_FROM,
+   (msg_hash_id_t)MSG_GOT_CONNECTION_FROM_NAME,
+   (msg_hash_id_t)MSG_GOT_INVALID_DISK_INDEX,
+   (msg_hash_id_t)MSG_GRAB_MOUSE_STATE,
+   (msg_hash_id_t)MSG_HW_RENDERED_MUST_USE_POSTSHADED_RECORDING,
+   (msg_hash_id_t)MSG_INFLATED_CHECKSUM_DID_NOT_MATCH_CRC32,
+   (msg_hash_id_t)MSG_INPUT_BIND_HOLD,
+   (msg_hash_id_t)MSG_INPUT_BIND_PRESS,
+   (msg_hash_id_t)MSG_INPUT_BIND_RELEASE,
+   (msg_hash_id_t)MSG_INPUT_BIND_TIMEOUT,
+   (msg_hash_id_t)MSG_INPUT_BT_PAIRED,
+   (msg_hash_id_t)MSG_INPUT_BT_PAIR_FAILED,
+   (msg_hash_id_t)MSG_INPUT_CHEAT,
+   (msg_hash_id_t)MSG_INPUT_CHEAT_FILENAME,
+   (msg_hash_id_t)MSG_INPUT_COMBO_CHOOSE_ACTION,
+   (msg_hash_id_t)MSG_INPUT_COMBO_DEPTH_PERCENT,
+   (msg_hash_id_t)MSG_INPUT_COMBO_HOLD_FOR,
+   (msg_hash_id_t)MSG_INPUT_COMBO_HOLD_SECONDS,
+   (msg_hash_id_t)MSG_INPUT_COMBO_INSTANT,
+   (msg_hash_id_t)MSG_INPUT_COMBO_PRESS_DEPTH,
+   (msg_hash_id_t)MSG_INPUT_COMBO_ROW_SUBLABEL,
+   (msg_hash_id_t)MSG_INPUT_COMBO_SET_BUTTONS,
+   (msg_hash_id_t)MSG_INPUT_DEVICE_IGNORED,
+   (msg_hash_id_t)MSG_INPUT_DEVICE_INDEX_SHARED,
+   (msg_hash_id_t)MSG_INPUT_DEVICE_UNIGNORED,
+   (msg_hash_id_t)MSG_INPUT_DS3_ASKING,
+   (msg_hash_id_t)MSG_INPUT_DS3_DECLINED,
+   (msg_hash_id_t)MSG_INPUT_DS3_ENABLED,
+   (msg_hash_id_t)MSG_INPUT_DS3_NEEDS_ENABLING,
+   (msg_hash_id_t)MSG_INPUT_DS3_NOT_CHANGED,
+   (msg_hash_id_t)MSG_INPUT_DS3_RESTORED,
+   (msg_hash_id_t)MSG_INPUT_ENABLE_SETTINGS_PASSWORD,
+   (msg_hash_id_t)MSG_INPUT_ENABLE_SETTINGS_PASSWORD_NOK,
+   (msg_hash_id_t)MSG_INPUT_ENABLE_SETTINGS_PASSWORD_OK,
+   (msg_hash_id_t)MSG_INPUT_GCA_ASKING,
+   (msg_hash_id_t)MSG_INPUT_GCA_DECLINED,
+   (msg_hash_id_t)MSG_INPUT_GCA_ENABLED,
+   (msg_hash_id_t)MSG_INPUT_GCA_NEEDS_ENABLING,
+   (msg_hash_id_t)MSG_INPUT_GCA_NOT_CHANGED,
+   (msg_hash_id_t)MSG_INPUT_KEYCHAIN_PASSPHRASE,
+   (msg_hash_id_t)MSG_INPUT_KEYCHAIN_PASSPHRASE_NEW,
+   (msg_hash_id_t)MSG_INPUT_KIOSK_MODE_PASSWORD,
+   (msg_hash_id_t)MSG_INPUT_KIOSK_MODE_PASSWORD_NOK,
+   (msg_hash_id_t)MSG_INPUT_KIOSK_MODE_PASSWORD_OK,
+   (msg_hash_id_t)MSG_INPUT_MACRO_ROW_SUBLABEL,
+   (msg_hash_id_t)MSG_INPUT_OVERRIDE_FILENAME,
+   (msg_hash_id_t)MSG_INPUT_PRESET_FILENAME,
+   (msg_hash_id_t)MSG_INPUT_REMAP_FILENAME,
+   (msg_hash_id_t)MSG_INPUT_REMAP_FIND_PRESS,
+   (msg_hash_id_t)MSG_INPUT_RENAME_ENTRY,
+   (msg_hash_id_t)MSG_INPUT_XID_ASKING,
+   (msg_hash_id_t)MSG_INPUT_XID_DECLINED,
+   (msg_hash_id_t)MSG_INPUT_XID_ENABLED,
+   (msg_hash_id_t)MSG_INPUT_XID_NEEDS_ENABLING,
+   (msg_hash_id_t)MSG_INPUT_XID_NOT_CHANGED,
+   (msg_hash_id_t)MSG_INSTALLING_CORE,
+   (msg_hash_id_t)MSG_INTERFACE,
+   (msg_hash_id_t)MSG_INTERNAL_STORAGE,
+   (msg_hash_id_t)MSG_INTERNET_NOT_CONNECTABLE,
+   (msg_hash_id_t)MSG_INTERNET_RELAY,
+   (msg_hash_id_t)MSG_INVALID_NICKNAME_SIZE,
+   (msg_hash_id_t)MSG_IN_BYTES,
+   (msg_hash_id_t)MSG_IN_GIGABYTES,
+   (msg_hash_id_t)MSG_IN_MEGABYTES,
+   (msg_hash_id_t)MSG_IOS_TOUCH_MOUSE_DISABLED,
+   (msg_hash_id_t)MSG_IOS_TOUCH_MOUSE_ENABLED,
+   (msg_hash_id_t)MSG_KEYBOARD_ASSIGNED_TO_CORE_PORT_NR,
+   (msg_hash_id_t)MSG_KEYCHAIN_PASSPHRASE_REMOVED,
+   (msg_hash_id_t)MSG_KEYCHAIN_PASSPHRASE_SET,
+   (msg_hash_id_t)MSG_KEYCHAIN_PASSPHRASE_WRONG,
+   (msg_hash_id_t)MSG_KEYCHAIN_SETTING_PASSPHRASE,
+   (msg_hash_id_t)MSG_KEYCHAIN_UNLOCKED,
+   (msg_hash_id_t)MSG_KEYCHAIN_UNLOCKING,
+   (msg_hash_id_t)MSG_KEYCHAIN_WRITE_FAILED,
+   (msg_hash_id_t)MSG_LATEST_CORE_INSTALLED,
+   (msg_hash_id_t)MSG_LEADERBOARD_BEST,
+   (msg_hash_id_t)MSG_LEADERBOARD_FAILED,
+   (msg_hash_id_t)MSG_LEADERBOARD_STARTED,
+   (msg_hash_id_t)MSG_LEADERBOARD_SUBMISSION,
+   (msg_hash_id_t)MSG_LIBRETRO_ABI_BREAK,
+   (msg_hash_id_t)MSG_LIBRETRO_FRONTEND,
+   (msg_hash_id_t)MSG_LOADED_STATE_FROM_SLOT,
+   (msg_hash_id_t)MSG_LOADED_STATE_FROM_SLOT_AUTO,
+   (msg_hash_id_t)MSG_LOADING,
+   (msg_hash_id_t)MSG_LOADING_CONTENT_FILE,
+   (msg_hash_id_t)MSG_LOADING_ENTRY_STATE_FROM,
+   (msg_hash_id_t)MSG_LOADING_FAVORITES_FILE,
+   (msg_hash_id_t)MSG_LOADING_HISTORY_FILE,
+   (msg_hash_id_t)MSG_LOADING_STATE,
+   (msg_hash_id_t)MSG_LOAD_CORE_FIRST,
+   (msg_hash_id_t)MSG_LOCAL,
 #ifdef HAVE_LAKKA
-   (uint32_t)MSG_LOCALAP_ALREADY_RUNNING,
-   (uint32_t)MSG_LOCALAP_ERROR_CONFIG_CREATE,
-   (uint32_t)MSG_LOCALAP_ERROR_CONFIG_PARSE,
-   (uint32_t)MSG_LOCALAP_NOT_RUNNING,
-   (uint32_t)MSG_LOCALAP_STARTING,
-   (uint32_t)MSG_LOCALAP_SWITCHING_OFF,
+   (msg_hash_id_t)MSG_LOCALAP_ALREADY_RUNNING,
+   (msg_hash_id_t)MSG_LOCALAP_ERROR_CONFIG_CREATE,
+   (msg_hash_id_t)MSG_LOCALAP_ERROR_CONFIG_PARSE,
+   (msg_hash_id_t)MSG_LOCALAP_NOT_RUNNING,
+   (msg_hash_id_t)MSG_LOCALAP_STARTING,
+   (msg_hash_id_t)MSG_LOCALAP_SWITCHING_OFF,
 #endif
-   (uint32_t)MSG_MANUAL_CONTENT_SCAN_DAT_FILE_INVALID,
-   (uint32_t)MSG_MANUAL_CONTENT_SCAN_DAT_FILE_LOAD_ERROR,
-   (uint32_t)MSG_MANUAL_CONTENT_SCAN_DAT_FILE_TOO_LARGE,
-   (uint32_t)MSG_MANUAL_CONTENT_SCAN_END,
-   (uint32_t)MSG_MANUAL_CONTENT_SCAN_INVALID_CONFIG,
-   (uint32_t)MSG_MANUAL_CONTENT_SCAN_INVALID_CONTENT,
-   (uint32_t)MSG_MANUAL_CONTENT_SCAN_IN_PROGRESS,
-   (uint32_t)MSG_MANUAL_CONTENT_SCAN_M3U_CLEANUP,
-   (uint32_t)MSG_MANUAL_CONTENT_SCAN_PLAYLIST_CLEANUP,
-   (uint32_t)MSG_MANUAL_CONTENT_SCAN_START,
-   (uint32_t)MSG_MEMORY,
-   (uint32_t)MSG_MISSING_ASSETS,
-   (uint32_t)MSG_MOVIE_FILE_IS_NOT_A_VALID_REPLAY_FILE,
-   (uint32_t)MSG_MOVIE_FORMAT_DIFFERENT_SERIALIZER_VERSION,
-   (uint32_t)MSG_MOVIE_PLAYBACK_ENDED,
-   (uint32_t)MSG_MOVIE_RECORD_STOPPED,
-   (uint32_t)MSG_NATIVE,
-   (uint32_t)MSG_NETPLAY_BANNED,
-   (uint32_t)MSG_NETPLAY_BANNED_CLIENT_S,
-   (uint32_t)MSG_NETPLAY_CANNOT_PLAY,
-   (uint32_t)MSG_NETPLAY_CANNOT_PLAY_NOT_AVAILABLE,
-   (uint32_t)MSG_NETPLAY_CANNOT_PLAY_NO_SLOTS,
-   (uint32_t)MSG_NETPLAY_CANNOT_PLAY_UNPRIVILEGED,
-   (uint32_t)MSG_NETPLAY_CHANGED_NICK,
-   (uint32_t)MSG_NETPLAY_CHAT_SUPPORTED,
-   (uint32_t)MSG_NETPLAY_CLIENT_DEVICES,
-   (uint32_t)MSG_NETPLAY_CLIENT_HANGUP,
-   (uint32_t)MSG_NETPLAY_DIFFERENT_CORES,
-   (uint32_t)MSG_NETPLAY_DIFFERENT_CORE_VERSIONS,
-   (uint32_t)MSG_NETPLAY_DIFFERENT_VERSIONS,
-   (uint32_t)MSG_NETPLAY_ENDIAN_DEPENDENT,
-   (uint32_t)MSG_NETPLAY_ENTER_CHAT,
-   (uint32_t)MSG_NETPLAY_ENTER_PASSWORD,
-   (uint32_t)MSG_NETPLAY_FAILED,
-   (uint32_t)MSG_NETPLAY_FAILED_TO_BAN_CLIENT_S,
-   (uint32_t)MSG_NETPLAY_FAILED_TO_KICK_CLIENT_S,
-   (uint32_t)MSG_NETPLAY_HOST_FULL,
-   (uint32_t)MSG_NETPLAY_INCORRECT_PASSWORD,
-   (uint32_t)MSG_NETPLAY_KICKED_CLIENT_S,
-   (uint32_t)MSG_NETPLAY_LAN_SCANNING,
-   (uint32_t)MSG_NETPLAY_LAN_SCAN_COMPLETE,
-   (uint32_t)MSG_NETPLAY_NEED_CONTENT_LOADED,
-   (uint32_t)MSG_NETPLAY_NOT_RETROARCH,
-   (uint32_t)MSG_NETPLAY_OUT_OF_DATE,
-   (uint32_t)MSG_NETPLAY_PEER_PAUSED,
-   (uint32_t)MSG_NETPLAY_PLATFORM_DEPENDENT,
-   (uint32_t)MSG_NETPLAY_PLAYERS_INFO,
-   (uint32_t)MSG_NETPLAY_PLAYER_S_LEFT,
-   (uint32_t)MSG_NETPLAY_SERVER_HANGUP,
-   (uint32_t)MSG_NETPLAY_SERVER_NAMED_HANGUP,
-   (uint32_t)MSG_NETPLAY_SLOWDOWNS_CAUSED,
-   (uint32_t)MSG_NETPLAY_SPECTATORS_INFO,
-   (uint32_t)MSG_NETPLAY_STATUS_PLAYING,
-   (uint32_t)MSG_NETPLAY_STATUS_SPECTATING,
-   (uint32_t)MSG_NETPLAY_S_HAS_JOINED_AS_PLAYER_N,
-   (uint32_t)MSG_NETPLAY_S_HAS_JOINED_WITH_INPUT_DEVICES_S,
-   (uint32_t)MSG_NETPLAY_UNSUPPORTED,
-   (uint32_t)MSG_NETPLAY_YOU_HAVE_JOINED_AS_PLAYER_N,
-   (uint32_t)MSG_NETPLAY_YOU_HAVE_JOINED_WITH_INPUT_DEVICES_S,
-   (uint32_t)MSG_NETPLAY_YOU_HAVE_LEFT_THE_GAME,
-   (uint32_t)MSG_NO_ARGUMENTS_SUPPLIED_AND_NO_MENU_BUILTIN,
-   (uint32_t)MSG_NO_CONTENT_STARTING_DUMMY_CORE,
-   (uint32_t)MSG_NO_DISC_INSERTED,
-   (uint32_t)MSG_NO_SAVE_STATE_HAS_BEEN_OVERWRITTEN_YET,
-   (uint32_t)MSG_NO_STATE_HAS_BEEN_LOADED_YET,
-   (uint32_t)MSG_NO_THUMBNAIL_AVAILABLE,
-   (uint32_t)MSG_NO_THUMBNAIL_DOWNLOAD_POSSIBLE,
-   (uint32_t)MSG_NUM_CORES_LOCKED,
-   (uint32_t)MSG_NUM_CORES_UPDATED,
-   (uint32_t)MSG_OSK_OVERLAY_NOT_SET,
-   (uint32_t)MSG_OVERRIDES_ACTIVE_NOT_SAVING,
-   (uint32_t)MSG_OVERRIDES_ERROR_REMOVING,
-   (uint32_t)MSG_OVERRIDES_ERROR_SAVING,
-   (uint32_t)MSG_OVERRIDES_NOT_SAVED,
-   (uint32_t)MSG_OVERRIDES_REMOVED_SUCCESSFULLY,
-   (uint32_t)MSG_OVERRIDES_SAVED_SUCCESSFULLY,
-   (uint32_t)MSG_OVERRIDES_UNLOADED_SUCCESSFULLY,
-   (uint32_t)MSG_PAUSED,
-   (uint32_t)MSG_PING_TOO_HIGH,
-   (uint32_t)MSG_PLAYLIST_MANAGER_CLEANING_PLAYLIST,
-   (uint32_t)MSG_PLAYLIST_MANAGER_CORES_RESET,
-   (uint32_t)MSG_PLAYLIST_MANAGER_PLAYLIST_CLEANED,
-   (uint32_t)MSG_PLAYLIST_MANAGER_REFRESH_DAT_FILE_TOO_LARGE,
-   (uint32_t)MSG_PLAYLIST_MANAGER_REFRESH_INVALID_CONTENT_DIR,
-   (uint32_t)MSG_PLAYLIST_MANAGER_REFRESH_INVALID_CORE,
-   (uint32_t)MSG_PLAYLIST_MANAGER_REFRESH_INVALID_DAT_FILE,
-   (uint32_t)MSG_PLAYLIST_MANAGER_REFRESH_INVALID_SYSTEM_NAME,
-   (uint32_t)MSG_PLAYLIST_MANAGER_REFRESH_MISSING_CONFIG,
-   (uint32_t)MSG_PLAYLIST_MANAGER_RESETTING_CORES,
-   (uint32_t)MSG_PREEMPT_CORE_DOES_NOT_SUPPORT_PREEMPT,
-   (uint32_t)MSG_PREEMPT_CORE_DOES_NOT_SUPPORT_SAVESTATES,
-   (uint32_t)MSG_PREEMPT_DISABLED,
-   (uint32_t)MSG_PREEMPT_ENABLED,
-   (uint32_t)MSG_PREEMPT_FAILED_TO_ALLOCATE,
-   (uint32_t)MSG_PREEMPT_FAILED_TO_LOAD_STATE,
-   (uint32_t)MSG_PREEMPT_FAILED_TO_SAVE_STATE,
-   (uint32_t)MSG_PREPARING_FOR_CONTENT_SCAN,
-   (uint32_t)MSG_PRESS_AGAIN_TO_CLOSE_CONTENT,
-   (uint32_t)MSG_PRESS_AGAIN_TO_QUIT,
-   (uint32_t)MSG_PRESS_AGAIN_TO_RESET,
-   (uint32_t)MSG_PRIVATE_OR_SHARED_ADDRESS,
-   (uint32_t)MSG_PRUNING_CORE_BACKUP_HISTORY,
-   (uint32_t)MSG_PUBLIC_ADDRESS,
-   (uint32_t)MSG_RARE_ACHIEVEMENT_UNLOCKED,
-   (uint32_t)MSG_READING_FIRST_DATA_TRACK,
-   (uint32_t)MSG_READ_ONLY,
-   (uint32_t)MSG_READ_WRITE,
-   (uint32_t)MSG_RECORDING_TERMINATED_DUE_TO_RESIZE,
-   (uint32_t)MSG_RECORDING_TO,
-   (uint32_t)MSG_REDIRECTING_CHEATFILE_TO,
-   (uint32_t)MSG_REDIRECTING_SAVEFILE_TO,
-   (uint32_t)MSG_REDIRECTING_SAVESTATE_TO,
-   (uint32_t)MSG_REMAP_FILE_FLUSHED,
-   (uint32_t)MSG_REMAP_FILE_FLUSH_FAILED,
-   (uint32_t)MSG_REMAP_FILE_REMOVED_SUCCESSFULLY,
-   (uint32_t)MSG_REMAP_FILE_RESET,
-   (uint32_t)MSG_REMAP_FILE_SAVED_SUCCESSFULLY,
-   (uint32_t)MSG_REMOVABLE_STORAGE,
-   (uint32_t)MSG_REMOVED_DISK_FROM_TRAY,
-   (uint32_t)MSG_REMOVING_TEMPORARY_CONTENT_FILE,
-   (uint32_t)MSG_REPLAY_LOAD_STATE_FAILED_FUTURE_STATE,
-   (uint32_t)MSG_REPLAY_LOAD_STATE_FAILED_INCOMPAT,
-   (uint32_t)MSG_REPLAY_LOAD_STATE_FAILED_WRONG_TIMELINE,
-   (uint32_t)MSG_REPLAY_LOAD_STATE_HALT_INCOMPAT,
-   (uint32_t)MSG_REPLAY_LOAD_STATE_OVERWRITING_REPLAY,
-   (uint32_t)MSG_REPLAY_SEEK_TO_FRAME,
-   (uint32_t)MSG_REPLAY_SEEK_TO_FRAME_FAILED,
-   (uint32_t)MSG_REPLAY_SEEK_TO_NEXT_CHECKPOINT,
-   (uint32_t)MSG_REPLAY_SEEK_TO_NEXT_CHECKPOINT_FAILED,
-   (uint32_t)MSG_REPLAY_SEEK_TO_PREV_CHECKPOINT,
-   (uint32_t)MSG_REPLAY_SEEK_TO_PREV_CHECKPOINT_FAILED,
-   (uint32_t)MSG_REPLAY_SLOT,
-   (uint32_t)MSG_RESAMPLER_QUALITY_HIGHER,
-   (uint32_t)MSG_RESAMPLER_QUALITY_HIGHEST,
-   (uint32_t)MSG_RESAMPLER_QUALITY_LOWER,
-   (uint32_t)MSG_RESAMPLER_QUALITY_LOWEST,
-   (uint32_t)MSG_RESET,
-   (uint32_t)MSG_RESET_CORE_ASSOCIATION,
-   (uint32_t)MSG_RESTARTING_RECORDING_DUE_TO_DRIVER_REINIT,
-   (uint32_t)MSG_RESTORED_OLD_SAVE_STATE,
-   (uint32_t)MSG_RESTORING_CORE,
-   (uint32_t)MSG_RESTORING_DEFAULT_SHADER_PRESET_TO,
-   (uint32_t)MSG_REVERTING_SAVEFILE_DIRECTORY_TO,
-   (uint32_t)MSG_REVERTING_SAVESTATE_DIRECTORY_TO,
-   (uint32_t)MSG_REWINDING,
-   (uint32_t)MSG_REWIND_BUFFER_CAPACITY_INSUFFICIENT,
-   (uint32_t)MSG_REWIND_INIT,
-   (uint32_t)MSG_REWIND_INIT_FAILED,
-   (uint32_t)MSG_REWIND_INIT_FAILED_THREADED_AUDIO,
-   (uint32_t)MSG_REWIND_REACHED_END,
-   (uint32_t)MSG_REWIND_UNSUPPORTED,
-   (uint32_t)MSG_RGUI_INVALID_LANGUAGE,
-   (uint32_t)MSG_RGUI_MISSING_FONTS,
-   (uint32_t)MSG_ROOM_NOT_CONNECTABLE,
-   (uint32_t)MSG_ROOM_PASSWORDED,
-   (uint32_t)MSG_RUNAHEAD_CORE_DOES_NOT_SUPPORT_RUNAHEAD,
-   (uint32_t)MSG_RUNAHEAD_CORE_DOES_NOT_SUPPORT_SAVESTATES,
-   (uint32_t)MSG_RUNAHEAD_DISABLED,
-   (uint32_t)MSG_RUNAHEAD_ENABLED,
-   (uint32_t)MSG_RUNAHEAD_ENABLED_WITH_SECOND_INSTANCE,
-   (uint32_t)MSG_RUNAHEAD_FAILED_TO_CREATE_SECONDARY_INSTANCE,
-   (uint32_t)MSG_RUNAHEAD_FAILED_TO_LOAD_STATE,
-   (uint32_t)MSG_RUNAHEAD_FAILED_TO_SAVE_STATE,
-   (uint32_t)MSG_SAVED_NEW_CONFIG_TO,
-   (uint32_t)MSG_SAVED_STATE_TO_SLOT,
-   (uint32_t)MSG_SAVED_STATE_TO_SLOT_AUTO,
-   (uint32_t)MSG_SAVED_SUCCESSFULLY_TO,
-   (uint32_t)MSG_SAVING_RAM_TYPE,
-   (uint32_t)MSG_SAVING_STATE,
-   (uint32_t)MSG_SCANNING,
-   (uint32_t)MSG_SCANNING_BLUETOOTH_DEVICES,
-   (uint32_t)MSG_SCANNING_CORES,
-   (uint32_t)MSG_SCANNING_NO_DATABASE,
-   (uint32_t)MSG_SCANNING_OF_DIRECTORY_FINISHED,
-   (uint32_t)MSG_SCANNING_OF_FILE_FINISHED,
-   (uint32_t)MSG_SCANNING_WIRELESS_NETWORKS,
-   (uint32_t)MSG_SCREENSHOT_SAVED,
-   (uint32_t)MSG_SCREEN_RESOLUTION_APPLYING_DEFAULT,
-   (uint32_t)MSG_SCREEN_RESOLUTION_APPLYING_DESC,
-   (uint32_t)MSG_SCREEN_RESOLUTION_APPLYING_NO_DESC,
-   (uint32_t)MSG_SCREEN_RESOLUTION_DEFAULT,
-   (uint32_t)MSG_SCREEN_RESOLUTION_DESC,
-   (uint32_t)MSG_SCREEN_RESOLUTION_NO_DESC,
-   (uint32_t)MSG_SCREEN_RESOLUTION_RESETTING_DEFAULT,
-   (uint32_t)MSG_SCREEN_RESOLUTION_RESETTING_DESC,
-   (uint32_t)MSG_SCREEN_RESOLUTION_RESETTING_NO_DESC,
-   (uint32_t)MSG_SDL2_MIC_NEEDS_SDL2_AUDIO,
-   (uint32_t)MSG_SENDING_COMMAND,
-   (uint32_t)MSG_SETTING_DISK_IN_TRAY,
-   (uint32_t)MSG_SET_CORE_ASSOCIATION,
-   (uint32_t)MSG_SEVERAL_PATCHES_ARE_EXPLICITLY_DEFINED,
-   (uint32_t)MSG_SHADER_PRESET_REMOVED_SUCCESSFULLY,
-   (uint32_t)MSG_SHADER_PRESET_SAVED_SUCCESSFULLY,
-   (uint32_t)MSG_SKIPPING_SRAM_LOAD,
-   (uint32_t)MSG_SLOW_MOTION_REWIND,
-   (uint32_t)MSG_SORRY_UNIMPLEMENTED_CORES_DONT_DEMAND_CONTENT_NETPLAY,
-   (uint32_t)MSG_SRAM_WILL_NOT_BE_SAVED,
-   (uint32_t)MSG_STARTING_MOVIE_PLAYBACK,
-   (uint32_t)MSG_STARTING_MOVIE_RECORD_TO,
-   (uint32_t)MSG_STATE_SIZE,
-   (uint32_t)MSG_STATE_SLOT,
-   (uint32_t)MSG_TAKING_SCREENSHOT,
-   (uint32_t)MSG_TO,
-   (uint32_t)MSG_TOGGLE_CONTENT_METADATA,
-   (uint32_t)MSG_TOGGLE_FULLSCREEN_THUMBNAILS,
-   (uint32_t)MSG_UNDID_LOAD_STATE,
-   (uint32_t)MSG_UNDOING_SAVE_STATE,
-   (uint32_t)MSG_UNKNOWN,
-   (uint32_t)MSG_UNKNOWN_COMPILER,
-   (uint32_t)MSG_UNKNOWN_NETPLAY_COMMAND_RECEIVED,
-   (uint32_t)MSG_UNPAUSED,
-   (uint32_t)MSG_UNRECOGNIZED_COMMAND,
-   (uint32_t)MSG_UNSUPPORTED_VIDEO_MODE,
-   (uint32_t)MSG_UPDATING_CORE,
-   (uint32_t)MSG_UPNP_FAILED,
-   (uint32_t)MSG_USING_CORE_NAME_FOR_NEW_CONFIG,
-   (uint32_t)MSG_USING_LIBRETRO_DUMMY_CORE_RECORDING_SKIPPED,
-   (uint32_t)MSG_VALUE_CONNECT_DEVICE_FROM_A_VALID_PORT,
-   (uint32_t)MSG_VALUE_REBOOTING,
-   (uint32_t)MSG_VALUE_SHUTTING_DOWN,
-   (uint32_t)MSG_VERSION_OF_LIBRETRO_API,
-   (uint32_t)MSG_VIDEO_FILTER_ENABLE_OFF,
-   (uint32_t)MSG_VIDEO_FILTER_ENABLE_ON,
-   (uint32_t)MSG_VIDEO_REFRESH_RATE_CHANGED,
-   (uint32_t)MSG_VIEWPORT_SIZE_CALCULATION_FAILED,
-   (uint32_t)MSG_VIRTUAL_DISK_TRAY_CLOSE,
-   (uint32_t)MSG_VIRTUAL_DISK_TRAY_EJECT,
-   (uint32_t)MSG_VRR_RUNLOOP_DISABLED,
-   (uint32_t)MSG_VRR_RUNLOOP_ENABLED,
-   (uint32_t)MSG_WAITING_FOR_CLIENT,
+   (msg_hash_id_t)MSG_MANUAL_CONTENT_SCAN_DAT_FILE_INVALID,
+   (msg_hash_id_t)MSG_MANUAL_CONTENT_SCAN_DAT_FILE_LOAD_ERROR,
+   (msg_hash_id_t)MSG_MANUAL_CONTENT_SCAN_DAT_FILE_TOO_LARGE,
+   (msg_hash_id_t)MSG_MANUAL_CONTENT_SCAN_END,
+   (msg_hash_id_t)MSG_MANUAL_CONTENT_SCAN_INVALID_CONFIG,
+   (msg_hash_id_t)MSG_MANUAL_CONTENT_SCAN_INVALID_CONTENT,
+   (msg_hash_id_t)MSG_MANUAL_CONTENT_SCAN_IN_PROGRESS,
+   (msg_hash_id_t)MSG_MANUAL_CONTENT_SCAN_M3U_CLEANUP,
+   (msg_hash_id_t)MSG_MANUAL_CONTENT_SCAN_PLAYLIST_CLEANUP,
+   (msg_hash_id_t)MSG_MANUAL_CONTENT_SCAN_START,
+   (msg_hash_id_t)MSG_MCP_SERVER_NOT_LISTENING,
+   (msg_hash_id_t)MSG_MEMORY,
+   (msg_hash_id_t)MSG_MENU_FRAME_RATE_CONTENT,
+   (msg_hash_id_t)MSG_MENU_FRAME_RATE_DISPLAY,
+   (msg_hash_id_t)MSG_MISSING_ASSETS,
+   (msg_hash_id_t)MSG_MOVIE_FILE_IS_NOT_A_VALID_REPLAY_FILE,
+   (msg_hash_id_t)MSG_MOVIE_FORMAT_DIFFERENT_SERIALIZER_VERSION,
+   (msg_hash_id_t)MSG_MOVIE_PLAYBACK_ENDED,
+   (msg_hash_id_t)MSG_MOVIE_RECORD_STOPPED,
+   (msg_hash_id_t)MSG_NATIVE,
+   (msg_hash_id_t)MSG_NETPLAY_BANNED,
+   (msg_hash_id_t)MSG_NETPLAY_BANNED_CLIENT_S,
+   (msg_hash_id_t)MSG_NETPLAY_CANNOT_PLAY,
+   (msg_hash_id_t)MSG_NETPLAY_CANNOT_PLAY_NOT_AVAILABLE,
+   (msg_hash_id_t)MSG_NETPLAY_CANNOT_PLAY_NO_SLOTS,
+   (msg_hash_id_t)MSG_NETPLAY_CANNOT_PLAY_UNPRIVILEGED,
+   (msg_hash_id_t)MSG_NETPLAY_CHANGED_NICK,
+   (msg_hash_id_t)MSG_NETPLAY_CHAT_SUPPORTED,
+   (msg_hash_id_t)MSG_NETPLAY_CLIENT_DEVICES,
+   (msg_hash_id_t)MSG_NETPLAY_CLIENT_HANGUP,
+   (msg_hash_id_t)MSG_NETPLAY_DIFFERENT_CORES,
+   (msg_hash_id_t)MSG_NETPLAY_DIFFERENT_CORE_VERSIONS,
+   (msg_hash_id_t)MSG_NETPLAY_DIFFERENT_VERSIONS,
+   (msg_hash_id_t)MSG_NETPLAY_ENDIAN_DEPENDENT,
+   (msg_hash_id_t)MSG_NETPLAY_ENTER_CHAT,
+   (msg_hash_id_t)MSG_NETPLAY_ENTER_PASSWORD,
+   (msg_hash_id_t)MSG_NETPLAY_FAILED,
+   (msg_hash_id_t)MSG_NETPLAY_FAILED_TO_BAN_CLIENT_S,
+   (msg_hash_id_t)MSG_NETPLAY_FAILED_TO_KICK_CLIENT_S,
+   (msg_hash_id_t)MSG_NETPLAY_HOST_FULL,
+   (msg_hash_id_t)MSG_NETPLAY_INCORRECT_PASSWORD,
+   (msg_hash_id_t)MSG_NETPLAY_KICKED_CLIENT_S,
+   (msg_hash_id_t)MSG_NETPLAY_LAN_SCANNING,
+   (msg_hash_id_t)MSG_NETPLAY_LAN_SCAN_COMPLETE,
+   (msg_hash_id_t)MSG_NETPLAY_NEED_CONTENT_LOADED,
+   (msg_hash_id_t)MSG_NETPLAY_NOT_RETROARCH,
+   (msg_hash_id_t)MSG_NETPLAY_OUT_OF_DATE,
+   (msg_hash_id_t)MSG_NETPLAY_PEER_PAUSED,
+   (msg_hash_id_t)MSG_NETPLAY_PLATFORM_DEPENDENT,
+   (msg_hash_id_t)MSG_NETPLAY_PLAYERS_INFO,
+   (msg_hash_id_t)MSG_NETPLAY_PLAYER_S_LEFT,
+   (msg_hash_id_t)MSG_NETPLAY_SERVER_HANGUP,
+   (msg_hash_id_t)MSG_NETPLAY_SERVER_NAMED_HANGUP,
+   (msg_hash_id_t)MSG_NETPLAY_SLOWDOWNS_CAUSED,
+   (msg_hash_id_t)MSG_NETPLAY_SPECTATORS_INFO,
+   (msg_hash_id_t)MSG_NETPLAY_STATUS_PLAYING,
+   (msg_hash_id_t)MSG_NETPLAY_STATUS_SPECTATING,
+   (msg_hash_id_t)MSG_NETPLAY_S_HAS_JOINED_AS_PLAYER_N,
+   (msg_hash_id_t)MSG_NETPLAY_S_HAS_JOINED_WITH_INPUT_DEVICES_S,
+   (msg_hash_id_t)MSG_NETPLAY_UNSUPPORTED,
+   (msg_hash_id_t)MSG_NETPLAY_YOU_HAVE_JOINED_AS_PLAYER_N,
+   (msg_hash_id_t)MSG_NETPLAY_YOU_HAVE_JOINED_WITH_INPUT_DEVICES_S,
+   (msg_hash_id_t)MSG_NETPLAY_YOU_HAVE_LEFT_THE_GAME,
+   (msg_hash_id_t)MSG_NO_ARGUMENTS_SUPPLIED_AND_NO_MENU_BUILTIN,
+   (msg_hash_id_t)MSG_NO_CONTENT_STARTING_DUMMY_CORE,
+   (msg_hash_id_t)MSG_NO_DISC_INSERTED,
+   (msg_hash_id_t)MSG_NO_SAVE_STATE_HAS_BEEN_OVERWRITTEN_YET,
+   (msg_hash_id_t)MSG_NO_STATE_HAS_BEEN_LOADED_YET,
+   (msg_hash_id_t)MSG_NO_THUMBNAIL_AVAILABLE,
+   (msg_hash_id_t)MSG_NO_THUMBNAIL_DOWNLOAD_POSSIBLE,
+   (msg_hash_id_t)MSG_NUM_CORES_LOCKED,
+   (msg_hash_id_t)MSG_NUM_CORES_UPDATED,
+   (msg_hash_id_t)MSG_OPENXR_EDIT_NO_CONTENT,
+   (msg_hash_id_t)MSG_OPENXR_EDIT_OFF,
+   (msg_hash_id_t)MSG_OPENXR_EDIT_ON,
+   (msg_hash_id_t)MSG_OPENXR_EDIT_TAG_MENU,
+   (msg_hash_id_t)MSG_OPENXR_EDIT_TAG_SCREEN,
+   (msg_hash_id_t)MSG_OPENXR_EDIT_UNAVAILABLE,
+   (msg_hash_id_t)MSG_OPENXR_EDIT_UNSAVED,
+   (msg_hash_id_t)MSG_OPENXR_FAILED,
+   (msg_hash_id_t)MSG_OPENXR_HEADSET_VIEW,
+   (msg_hash_id_t)MSG_OPENXR_HEADSET_VIEW_FLAT,
+   (msg_hash_id_t)MSG_OPENXR_HEADSET_VIEW_IMMERSIVE,
+   (msg_hash_id_t)MSG_OPENXR_HEADSET_VIEW_STEREOSCOPIC,
+   (msg_hash_id_t)MSG_OPENXR_LASER_POINTER,
+   (msg_hash_id_t)MSG_OPENXR_NEEDS_RELOAD,
+   (msg_hash_id_t)MSG_OPENXR_RATE_MISFIT,
+   (msg_hash_id_t)MSG_OPENXR_SESSION_ENDED,
+   (msg_hash_id_t)MSG_OPENXR_UNAVAILABLE,
+   (msg_hash_id_t)MSG_OSK_OVERLAY_NOT_SET,
+   (msg_hash_id_t)MSG_OVERRIDES_ACTIVE_NOT_SAVING,
+   (msg_hash_id_t)MSG_OVERRIDES_ERROR_REMOVING,
+   (msg_hash_id_t)MSG_OVERRIDES_ERROR_SAVING,
+   (msg_hash_id_t)MSG_OVERRIDES_NOT_SAVED,
+   (msg_hash_id_t)MSG_OVERRIDES_REMOVED_SUCCESSFULLY,
+   (msg_hash_id_t)MSG_OVERRIDES_SAVED_SUCCESSFULLY,
+   (msg_hash_id_t)MSG_OVERRIDES_UNLOADED_SUCCESSFULLY,
+   (msg_hash_id_t)MSG_PAUSED,
+   (msg_hash_id_t)MSG_PING_TOO_HIGH,
+   (msg_hash_id_t)MSG_PLAYLIST_MANAGER_CLEANING_PLAYLIST,
+   (msg_hash_id_t)MSG_PLAYLIST_MANAGER_CORES_RESET,
+   (msg_hash_id_t)MSG_PLAYLIST_MANAGER_PLAYLIST_CLEANED,
+   (msg_hash_id_t)MSG_PLAYLIST_MANAGER_REFRESH_DAT_FILE_TOO_LARGE,
+   (msg_hash_id_t)MSG_PLAYLIST_MANAGER_REFRESH_INVALID_CONTENT_DIR,
+   (msg_hash_id_t)MSG_PLAYLIST_MANAGER_REFRESH_INVALID_CORE,
+   (msg_hash_id_t)MSG_PLAYLIST_MANAGER_REFRESH_INVALID_DAT_FILE,
+   (msg_hash_id_t)MSG_PLAYLIST_MANAGER_REFRESH_INVALID_SYSTEM_NAME,
+   (msg_hash_id_t)MSG_PLAYLIST_MANAGER_REFRESH_MISSING_CONFIG,
+   (msg_hash_id_t)MSG_PLAYLIST_MANAGER_RESETTING_CORES,
+   (msg_hash_id_t)MSG_PREEMPT_CORE_DOES_NOT_SUPPORT_PREEMPT,
+   (msg_hash_id_t)MSG_PREEMPT_CORE_DOES_NOT_SUPPORT_SAVESTATES,
+   (msg_hash_id_t)MSG_PREEMPT_DISABLED,
+   (msg_hash_id_t)MSG_PREEMPT_ENABLED,
+   (msg_hash_id_t)MSG_PREEMPT_FAILED_TO_ALLOCATE,
+   (msg_hash_id_t)MSG_PREEMPT_FAILED_TO_LOAD_STATE,
+   (msg_hash_id_t)MSG_PREEMPT_FAILED_TO_SAVE_STATE,
+   (msg_hash_id_t)MSG_PREPARING_FOR_CONTENT_SCAN,
+   (msg_hash_id_t)MSG_PRESS_AGAIN_TO_CLOSE_CONTENT,
+   (msg_hash_id_t)MSG_PRESS_AGAIN_TO_QUIT,
+   (msg_hash_id_t)MSG_PRESS_AGAIN_TO_RESET,
+   (msg_hash_id_t)MSG_PRIVATE_OR_SHARED_ADDRESS,
+   (msg_hash_id_t)MSG_PRUNING_CORE_BACKUP_HISTORY,
+   (msg_hash_id_t)MSG_PUBLIC_ADDRESS,
+   (msg_hash_id_t)MSG_RARE_ACHIEVEMENT_UNLOCKED,
+   (msg_hash_id_t)MSG_READING_FIRST_DATA_TRACK,
+   (msg_hash_id_t)MSG_READ_ONLY,
+   (msg_hash_id_t)MSG_READ_WRITE,
+   (msg_hash_id_t)MSG_RECORDING_GAME_ONLY_UNSUPPORTED,
+   (msg_hash_id_t)MSG_RECORDING_TERMINATED_DUE_TO_RESIZE,
+   (msg_hash_id_t)MSG_RECORDING_TO,
+   (msg_hash_id_t)MSG_REDIRECTING_CHEATFILE_TO,
+   (msg_hash_id_t)MSG_REDIRECTING_SAVEFILE_TO,
+   (msg_hash_id_t)MSG_REDIRECTING_SAVESTATE_TO,
+   (msg_hash_id_t)MSG_REMAP_FILE_FLUSHED,
+   (msg_hash_id_t)MSG_REMAP_FILE_FLUSH_FAILED,
+   (msg_hash_id_t)MSG_REMAP_FILE_REMOVED_SUCCESSFULLY,
+   (msg_hash_id_t)MSG_REMAP_FILE_RESET,
+   (msg_hash_id_t)MSG_REMAP_FILE_SAVED_SUCCESSFULLY,
+   (msg_hash_id_t)MSG_REMOVABLE_STORAGE,
+   (msg_hash_id_t)MSG_REMOVED_DISK_FROM_TRAY,
+   (msg_hash_id_t)MSG_REMOVING_TEMPORARY_CONTENT_FILE,
+   (msg_hash_id_t)MSG_REPLAY_LOAD_STATE_FAILED_FUTURE_STATE,
+   (msg_hash_id_t)MSG_REPLAY_LOAD_STATE_FAILED_INCOMPAT,
+   (msg_hash_id_t)MSG_REPLAY_LOAD_STATE_FAILED_WRONG_TIMELINE,
+   (msg_hash_id_t)MSG_REPLAY_LOAD_STATE_HALT_INCOMPAT,
+   (msg_hash_id_t)MSG_REPLAY_LOAD_STATE_OVERWRITING_REPLAY,
+   (msg_hash_id_t)MSG_REPLAY_SEEK_TO_FRAME,
+   (msg_hash_id_t)MSG_REPLAY_SEEK_TO_FRAME_FAILED,
+   (msg_hash_id_t)MSG_REPLAY_SEEK_TO_NEXT_CHECKPOINT,
+   (msg_hash_id_t)MSG_REPLAY_SEEK_TO_NEXT_CHECKPOINT_FAILED,
+   (msg_hash_id_t)MSG_REPLAY_SEEK_TO_PREV_CHECKPOINT,
+   (msg_hash_id_t)MSG_REPLAY_SEEK_TO_PREV_CHECKPOINT_FAILED,
+   (msg_hash_id_t)MSG_REPLAY_SLOT,
+   (msg_hash_id_t)MSG_RESAMPLER_QUALITY_HIGHER,
+   (msg_hash_id_t)MSG_RESAMPLER_QUALITY_HIGHEST,
+   (msg_hash_id_t)MSG_RESAMPLER_QUALITY_LOWER,
+   (msg_hash_id_t)MSG_RESAMPLER_QUALITY_LOWEST,
+   (msg_hash_id_t)MSG_RESET,
+   (msg_hash_id_t)MSG_RESET_CORE_ASSOCIATION,
+   (msg_hash_id_t)MSG_RESTARTING_RECORDING_DUE_TO_DRIVER_REINIT,
+   (msg_hash_id_t)MSG_RESTORED_OLD_SAVE_STATE,
+   (msg_hash_id_t)MSG_RESTORING_CORE,
+   (msg_hash_id_t)MSG_RESTORING_DEFAULT_SHADER_PRESET_TO,
+   (msg_hash_id_t)MSG_REVERTING_SAVEFILE_DIRECTORY_TO,
+   (msg_hash_id_t)MSG_REVERTING_SAVESTATE_DIRECTORY_TO,
+   (msg_hash_id_t)MSG_REWINDING,
+   (msg_hash_id_t)MSG_REWIND_BUFFER_CAPACITY_INSUFFICIENT,
+   (msg_hash_id_t)MSG_REWIND_INIT,
+   (msg_hash_id_t)MSG_REWIND_INIT_FAILED,
+   (msg_hash_id_t)MSG_REWIND_INIT_FAILED_THREADED_AUDIO,
+   (msg_hash_id_t)MSG_REWIND_REACHED_END,
+   (msg_hash_id_t)MSG_REWIND_UNSUPPORTED,
+   (msg_hash_id_t)MSG_RGUI_INVALID_LANGUAGE,
+   (msg_hash_id_t)MSG_RGUI_MISSING_FONTS,
+   (msg_hash_id_t)MSG_ROOM_NOT_CONNECTABLE,
+   (msg_hash_id_t)MSG_ROOM_PASSWORDED,
+   (msg_hash_id_t)MSG_RUNAHEAD_CORE_DOES_NOT_SUPPORT_RUNAHEAD,
+   (msg_hash_id_t)MSG_RUNAHEAD_CORE_DOES_NOT_SUPPORT_SAVESTATES,
+   (msg_hash_id_t)MSG_RUNAHEAD_DISABLED,
+   (msg_hash_id_t)MSG_RUNAHEAD_ENABLED,
+   (msg_hash_id_t)MSG_RUNAHEAD_ENABLED_WITH_SECOND_INSTANCE,
+   (msg_hash_id_t)MSG_RUNAHEAD_FAILED_TO_CREATE_SECONDARY_INSTANCE,
+   (msg_hash_id_t)MSG_RUNAHEAD_FAILED_TO_LOAD_STATE,
+   (msg_hash_id_t)MSG_RUNAHEAD_FAILED_TO_SAVE_STATE,
+   (msg_hash_id_t)MSG_SAVED_NEW_CONFIG_TO,
+   (msg_hash_id_t)MSG_SAVED_STATE_TO_SLOT,
+   (msg_hash_id_t)MSG_SAVED_STATE_TO_SLOT_AUTO,
+   (msg_hash_id_t)MSG_SAVED_SUCCESSFULLY_TO,
+   (msg_hash_id_t)MSG_SAVING_RAM_TYPE,
+   (msg_hash_id_t)MSG_SAVING_STATE,
+   (msg_hash_id_t)MSG_SCANNING,
+   (msg_hash_id_t)MSG_SCANNING_BLUETOOTH_DEVICES,
+   (msg_hash_id_t)MSG_SCANNING_CORES,
+   (msg_hash_id_t)MSG_SCANNING_NO_DATABASE,
+   (msg_hash_id_t)MSG_SCANNING_OF_DIRECTORY_FINISHED,
+   (msg_hash_id_t)MSG_SCANNING_OF_FILE_FINISHED,
+   (msg_hash_id_t)MSG_SCANNING_WIRELESS_NETWORKS,
+   (msg_hash_id_t)MSG_SCREENSHOT_SAVED,
+   (msg_hash_id_t)MSG_SCREEN_RESOLUTION_APPLYING_DEFAULT,
+   (msg_hash_id_t)MSG_SCREEN_RESOLUTION_APPLYING_DESC,
+   (msg_hash_id_t)MSG_SCREEN_RESOLUTION_APPLYING_NO_DESC,
+   (msg_hash_id_t)MSG_SCREEN_RESOLUTION_DEFAULT,
+   (msg_hash_id_t)MSG_SCREEN_RESOLUTION_DESC,
+   (msg_hash_id_t)MSG_SCREEN_RESOLUTION_NO_DESC,
+   (msg_hash_id_t)MSG_SCREEN_RESOLUTION_RESETTING_DEFAULT,
+   (msg_hash_id_t)MSG_SCREEN_RESOLUTION_RESETTING_DESC,
+   (msg_hash_id_t)MSG_SCREEN_RESOLUTION_RESETTING_NO_DESC,
+   (msg_hash_id_t)MSG_SDL2_MIC_NEEDS_SDL2_AUDIO,
+   (msg_hash_id_t)MSG_SENDING_COMMAND,
+   (msg_hash_id_t)MSG_SETTING_DISK_IN_TRAY,
+   (msg_hash_id_t)MSG_SET_CORE_ASSOCIATION,
+   (msg_hash_id_t)MSG_SEVERAL_PATCHES_ARE_EXPLICITLY_DEFINED,
+   (msg_hash_id_t)MSG_SHADER_PRESET_REMOVED_SUCCESSFULLY,
+   (msg_hash_id_t)MSG_SHADER_PRESET_SAVED_SUCCESSFULLY,
+   (msg_hash_id_t)MSG_SKIPPING_SRAM_LOAD,
+   (msg_hash_id_t)MSG_SLOW_MOTION_REWIND,
+   (msg_hash_id_t)MSG_SORRY_UNIMPLEMENTED_CORES_DONT_DEMAND_CONTENT_NETPLAY,
+   (msg_hash_id_t)MSG_SRAM_WILL_NOT_BE_SAVED,
+   (msg_hash_id_t)MSG_STARTING_MOVIE_PLAYBACK,
+   (msg_hash_id_t)MSG_STARTING_MOVIE_RECORD_TO,
+   (msg_hash_id_t)MSG_STATE_SIZE,
+   (msg_hash_id_t)MSG_STATE_SLOT,
+   (msg_hash_id_t)MSG_TAKING_SCREENSHOT,
+   (msg_hash_id_t)MSG_TLS_VERIFY_DISABLED,
+   (msg_hash_id_t)MSG_TLS_VERIFY_FAILED,
+   (msg_hash_id_t)MSG_TO,
+   (msg_hash_id_t)MSG_TOGGLE_CONTENT_METADATA,
+   (msg_hash_id_t)MSG_TOGGLE_FULLSCREEN_THUMBNAILS,
+   (msg_hash_id_t)MSG_UNDID_LOAD_STATE,
+   (msg_hash_id_t)MSG_UNDOING_SAVE_STATE,
+   (msg_hash_id_t)MSG_UNKNOWN,
+   (msg_hash_id_t)MSG_UNKNOWN_COMPILER,
+   (msg_hash_id_t)MSG_UNKNOWN_NETPLAY_COMMAND_RECEIVED,
+   (msg_hash_id_t)MSG_UNPAUSED,
+   (msg_hash_id_t)MSG_UNRECOGNIZED_COMMAND,
+   (msg_hash_id_t)MSG_UNSUPPORTED_VIDEO_MODE,
+   (msg_hash_id_t)MSG_UPDATING_CORE,
+   (msg_hash_id_t)MSG_UPNP_FAILED,
+   (msg_hash_id_t)MSG_USING_CORE_NAME_FOR_NEW_CONFIG,
+   (msg_hash_id_t)MSG_USING_LIBRETRO_DUMMY_CORE_RECORDING_SKIPPED,
+   (msg_hash_id_t)MSG_VALUE_CONNECT_DEVICE_FROM_A_VALID_PORT,
+   (msg_hash_id_t)MSG_VALUE_INSTALL_UPDATE,
+   (msg_hash_id_t)MSG_VALUE_REBOOTING,
+   (msg_hash_id_t)MSG_VALUE_SHUTTING_DOWN,
+   (msg_hash_id_t)MSG_VERSION_OF_LIBRETRO_API,
+   (msg_hash_id_t)MSG_VIDEO_DRIVER_PACING_BOOST,
+   (msg_hash_id_t)MSG_VIDEO_DRIVER_PACING_ON,
+   (msg_hash_id_t)MSG_VIDEO_FILTER_ENABLE_OFF,
+   (msg_hash_id_t)MSG_VIDEO_FILTER_ENABLE_ON,
+   (msg_hash_id_t)MSG_VIDEO_REFRESH_RATE_CHANGED,
+   (msg_hash_id_t)MSG_VIEWPORT_SIZE_CALCULATION_FAILED,
+   (msg_hash_id_t)MSG_VIRTUAL_DISK_TRAY_CLOSE,
+   (msg_hash_id_t)MSG_VIRTUAL_DISK_TRAY_EJECT,
+   (msg_hash_id_t)MSG_VRR_RUNLOOP_DISABLED,
+   (msg_hash_id_t)MSG_VRR_RUNLOOP_ENABLED,
+   (msg_hash_id_t)MSG_WAITING_FOR_CLIENT,
 #ifdef HAVE_LAKKA
-   (uint32_t)MSG_WIFI_CONNECTING_TO,
-   (uint32_t)MSG_WIFI_DISCONNECT_FROM,
-   (uint32_t)MSG_WIFI_EMPTY_SSID,
+   (msg_hash_id_t)MSG_WIFI_CONNECTING_TO,
+   (msg_hash_id_t)MSG_WIFI_DISCONNECT_FROM,
+   (msg_hash_id_t)MSG_WIFI_EMPTY_SSID,
 #endif
-   (uint32_t)MSG_WIFI_SCAN_COMPLETE,
+   (msg_hash_id_t)MSG_WIFI_SCAN_COMPLETE,
 };

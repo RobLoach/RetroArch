@@ -39,8 +39,8 @@ static int file_archive_get_file_list_cb(
       const char *valid_exts,
       const uint8_t *cdata,
       unsigned cmode,
-      uint32_t csize,
-      uint32_t size,
+      uint64_t csize,
+      uint64_t size,
       uint32_t checksum,
       struct archive_extract_userdata *userdata)
 {
@@ -93,7 +93,7 @@ static int file_archive_get_file_list_cb(
 
 static int file_archive_extract_cb(const char *name, const char *valid_exts,
       const uint8_t *cdata,
-      unsigned cmode, uint32_t csize, uint32_t size,
+      unsigned cmode, uint64_t csize, uint64_t size,
       uint32_t checksum, struct archive_extract_userdata *userdata)
 {
    const char *ext                   = path_get_extension(name);
@@ -140,12 +140,49 @@ static int file_archive_extract_cb(const char *name, const char *valid_exts,
    return 1;
 }
 
+/* The largest archive a 32-bit host maps whole. */
+#define ARCHIVE_MAP_CEILING_32 (256 * 1024 * 1024)
+
+/* Ask the VFS to map the archive. A 64-bit host maps it whatever its
+ * size, since pages are only faulted in as they are touched; a 32-bit
+ * one keeps the mapping to ARCHIVE_MAP_CEILING_32 so a huge archive
+ * cannot take the address space the core needs, and reads it through
+ * the stream instead. A URL scheme or a failed map just leaves no
+ * mapping, which every backend reads through the stream as well. */
+unsigned file_archive_open_hints(int64_t size)
+{
+   return (size > 0 && (sizeof(size_t) >= 8
+            || size <= ARCHIVE_MAP_CEILING_32))
+      ? RETRO_VFS_FILE_ACCESS_HINT_FREQUENT_ACCESS
+      : RETRO_VFS_FILE_ACCESS_HINT_NONE;
+}
+
+const uint8_t *file_archive_whole(RFILE *file, int64_t size, void **owned)
+{
+   const uint8_t *src = NULL;
+   *owned = NULL;
+   filestream_seek(file, 0, RETRO_VFS_SEEK_POSITION_START);
+   if (filestream_view(file, size, &src) == size)
+      return src;
+   if (!(*owned = malloc((size_t)size)))
+      return NULL;
+   filestream_seek(file, 0, RETRO_VFS_SEEK_POSITION_START);
+   if (filestream_read(file, *owned, size) != size)
+   {
+      free(*owned);
+      *owned = NULL;
+      return NULL;
+   }
+   return (const uint8_t*)*owned;
+}
+
 static int file_archive_parse_file_init(file_archive_transfer_t *state,
       const char *file)
 {
    char path[PATH_MAX_LENGTH];
    char *last                 = NULL;
 
+   state->torrentzip = false;
    strlcpy(path, file, sizeof(path));
 
    if ((last = (char*)path_get_archive_delim(path)))
@@ -154,23 +191,11 @@ static int file_archive_parse_file_init(file_archive_transfer_t *state,
    if (!(state->backend = file_archive_get_file_backend(path)))
       return -1;
 
-   /* Ask the VFS to map the archive, as the private mmap() over a
-    * second open() of the path used to: same 256 MiB ceiling, so a
-    * huge archive is still streamed rather than mapped whole.  The
-    * VFS handles what that code had to special-case - a URL scheme
-    * or a failed map just leaves no mapping - and it maps on Win32
-    * too, which the private mmap() never did. */
-   {
-      int64_t  sz    = path_get_size(path);
-      unsigned hints = (sz > 0 && sz <= (256 * 1024 * 1024))
-            ? RETRO_VFS_FILE_ACCESS_HINT_FREQUENT_ACCESS
-            : RETRO_VFS_FILE_ACCESS_HINT_NONE;
-
-      /* Failed to open archive. */
-      if (!(state->archive_file = filestream_open(path,
-            RETRO_VFS_FILE_ACCESS_READ, hints)))
-         return -1;
-   }
+   /* Failed to open archive. */
+   if (!(state->archive_file = filestream_open(path,
+         RETRO_VFS_FILE_ACCESS_READ,
+         file_archive_open_hints(path_get_size(path)))))
+      return -1;
 
    state->archive_size = filestream_get_size(state->archive_file);
 
@@ -189,6 +214,43 @@ static int file_archive_parse_file_init(file_archive_transfer_t *state,
    state->step_total   = 0;
 
    return state->backend->archive_parse_file_init(state, path);
+}
+
+int64_t file_archive_read_at(void *ud, uint64_t off, void *dst, size_t len)
+{
+   RFILE   *f    = (RFILE*)ud;
+   uint8_t *out  = (uint8_t*)dst;
+   size_t   done = 0;
+
+   if (     !f
+         || (int64_t)off < 0
+         || filestream_seek(f, (int64_t)off,
+               RETRO_VFS_SEEK_POSITION_START) < 0)
+      return -1;
+
+   while (done < len)
+   {
+      int64_t r = filestream_read(f, out + done, (int64_t)(len - done));
+      if (r < 0)
+         return -1;
+      if (r == 0)
+         break;
+      done += (size_t)r;
+   }
+
+   return (int64_t)done;
+}
+
+/* Drops the output of a member that will not complete: the temporary
+ * file beside the target goes, and the target is left as it was. */
+static void file_archive_pending_abandon(file_archive_transfer_t *state)
+{
+   if (state->pending_sink)
+   {
+      filestream_commit_atomic(state->pending_sink,
+            state->pending_path, false);
+      state->pending_sink = NULL;
+   }
 }
 
 void file_archive_parse_file_iterate_stop(file_archive_transfer_t *state)
@@ -309,6 +371,13 @@ deinit_error:
          if (returnerr)
             *returnerr = false;
       case ARCHIVE_TRANSFER_DEINIT:
+         /* A member still parked here is being dropped */
+         if (state->pending_active)
+         {
+            state->pending_active = false;
+            file_archive_pending_abandon(state);
+         }
+
          if (state->context)
          {
             if (state->backend->archive_parse_file_free)
@@ -414,6 +483,7 @@ bool file_archive_extract_file(
    userdata.list                            = NULL;
    userdata.found_file                      = false;
    userdata.list_only                       = false;
+   userdata.crc_wanted                      = false;
    userdata.crc                             = 0;
    userdata.transfer                        = NULL;
    userdata.dec                             = NULL;
@@ -468,6 +538,7 @@ bool file_archive_get_file_list_noalloc(struct string_list *list,
    userdata.list                            = list;
    userdata.found_file                      = false;
    userdata.list_only                       = true;
+   userdata.crc_wanted                      = false;
    userdata.crc                             = 0;
    userdata.transfer                        = NULL;
    userdata.dec                             = NULL;
@@ -502,6 +573,7 @@ struct string_list *file_archive_get_file_list(const char *path,
    userdata.list                            = string_list_new();
    userdata.found_file                      = false;
    userdata.list_only                       = true;
+   userdata.crc_wanted                      = false;
    userdata.crc                             = 0;
    userdata.transfer                        = NULL;
    userdata.dec                             = NULL;
@@ -523,6 +595,110 @@ struct string_list *file_archive_get_file_list(const char *path,
    if (userdata.ext)
       string_list_free(userdata.ext);
    return userdata.list;
+}
+
+
+/* Copies a complete temporary file over a target it could not be
+ * renamed onto, and removes it.  Only for filesystems that refuse the
+ * rename; an atomic replacement is no longer possible there, which is
+ * what writing the member in place always meant. */
+static bool file_archive_pending_copy_in_place(const char *temp_path,
+      const char *path)
+{
+   bool ok      = true;
+   uint8_t *buf;
+   RFILE *in;
+   RFILE *out;
+
+   if (!(buf = (uint8_t*)malloc(65536)))
+      return false;
+   if (!(in = filestream_open(temp_path, RETRO_VFS_FILE_ACCESS_READ,
+               RETRO_VFS_FILE_ACCESS_HINT_NONE)))
+   {
+      free(buf);
+      return false;
+   }
+   if (!(out = filestream_open(path, RETRO_VFS_FILE_ACCESS_WRITE,
+               RETRO_VFS_FILE_ACCESS_HINT_NONE)))
+   {
+      filestream_close(in);
+      free(buf);
+      return false;
+   }
+
+   for (;;)
+   {
+      int64_t rd = filestream_read(in, buf, 65536);
+      if (rd < 0)
+         ok = false;
+      if (rd <= 0)
+         break;
+      if (filestream_write(out, buf, rd) != rd)
+      {
+         ok = false;
+         break;
+      }
+   }
+
+   filestream_close(in);
+   if (filestream_close(out) != 0)
+      ok = false;
+   free(buf);
+   return ok;
+}
+
+/* Puts a completed member in place.  Written beside the file and
+ * renamed over it: an update stopped part way leaves the old file
+ * whole, and whoever has the old file open or mapped keeps reading
+ * what was there.  Where a file cannot be renamed into place, it is
+ * written in place as before.  Returns 1 or -1, as the step does. */
+static int file_archive_pending_commit(file_archive_transfer_t *state)
+{
+   int ret;
+   bool ok          = true;
+   RFILE *sink      = state->pending_sink;
+
+   state->pending_sink = NULL;
+
+   /* No temporary file could be opened: the whole member is in hand,
+    * so write it as the one-shot path always did */
+   if (!sink)
+   {
+      if (!state->pending_handle.data)
+         return -1;
+      if (     !filestream_write_file_atomic(state->pending_path,
+                  state->pending_handle.data, state->pending_size)
+            && !filestream_write_file(state->pending_path,
+                  state->pending_handle.data, state->pending_size))
+         return -1;
+      return 1;
+   }
+
+   /* A backend that decoded the whole member at once */
+   if (state->pending_handle.data)
+      ok = filestream_write(sink, state->pending_handle.data,
+            state->pending_size) == (int64_t)state->pending_size;
+
+   if ((ret = filestream_commit_atomic(sink, state->pending_path, ok)) == 0)
+      return 1;
+   if (ret == -1)
+      return -1;
+
+   /* Complete, but not renameable into place */
+   {
+      bool copied     = false;
+      size_t _len     = strlen(state->pending_path);
+      char *temp_path = (char*)malloc(_len + sizeof(".tmp"));
+      if (!temp_path)
+         return -1;
+      memcpy(temp_path, state->pending_path, _len);
+      memcpy(temp_path + _len, ".tmp", sizeof(".tmp"));
+      copied = file_archive_pending_copy_in_place(temp_path,
+            state->pending_path);
+      filestream_delete(temp_path);
+      free(temp_path);
+      return copied ? 1 : -1;
+   }
 }
 
 /* Finish a member whose decode is parked in the transfer, doing one
@@ -547,13 +723,12 @@ int file_archive_perform_mode_step(file_archive_transfer_t *state)
    state->pending_active = false;
 
    if (ret == -1)
+   {
+      file_archive_pending_abandon(state);
       return -1;
+   }
 
-   if (!filestream_write_file(state->pending_path,
-            state->pending_handle.data, state->pending_size))
-      return -1;
-
-   return 1;
+   return file_archive_pending_commit(state);
 }
 
 /* Begin decoding a member into the transfer's pending slot.
@@ -561,7 +736,7 @@ int file_archive_perform_mode_step(file_archive_transfer_t *state)
  * Returns 1 if it finished immediately, 0 if it parked and wants to be
  * resumed through file_archive_perform_mode_step(), -1 on failure. */
 int file_archive_perform_mode_start(const char *path, const char *valid_exts,
-      const uint8_t *cdata, unsigned cmode, uint32_t csize, uint32_t size,
+      const uint8_t *cdata, unsigned cmode, uint64_t csize, uint64_t size,
       uint32_t crc32, struct archive_extract_userdata *userdata)
 {
    file_archive_transfer_t *state;
@@ -579,12 +754,19 @@ int file_archive_perform_mode_start(const char *path, const char *valid_exts,
    state->pending_handle.data          = NULL;
    state->pending_handle.real_checksum = 0;
 
+   /* The output file comes first: a backend that can stream sees it
+    * at init and sizes its buffers for a window, not the member */
+   strlcpy(state->pending_path, path, sizeof(state->pending_path));
+   state->pending_sink = filestream_open_atomic(path);
+
    if (!state->backend->stream_decompress_data_to_file_init(
             state->context, &state->pending_handle,
             cdata, cmode, csize, size))
+   {
+      file_archive_pending_abandon(state);
       return -1;
+   }
 
-   strlcpy(state->pending_path, path, sizeof(state->pending_path));
    state->pending_size   = size;
    state->pending_active = true;
 
@@ -592,7 +774,7 @@ int file_archive_perform_mode_start(const char *path, const char *valid_exts,
 }
 
 bool file_archive_perform_mode(const char *path, const char *valid_exts,
-      const uint8_t *cdata, unsigned cmode, uint32_t csize, uint32_t size,
+      const uint8_t *cdata, unsigned cmode, uint64_t csize, uint64_t size,
       uint32_t crc32, struct archive_extract_userdata *userdata)
 {
    /* The blocking form, for callers that need the whole member before
@@ -754,9 +936,18 @@ const struct file_archive_file_backend *file_archive_get_zstd_file_backend(void)
 #endif
 }
 
+const struct file_archive_file_backend *file_archive_get_rar_file_backend(void)
+{
+#ifdef HAVE_RRAR
+   return &rar_backend;
+#else
+   return NULL;
+#endif
+}
+
 const struct file_archive_file_backend* file_archive_get_file_backend(const char *path)
 {
-#if defined(HAVE_7ZIP) || defined(HAVE_ZLIB) || defined(HAVE_RZSTD) || defined(HAVE_COMPRESSION)
+#if defined(HAVE_7ZIP) || defined(HAVE_ZLIB) || defined(HAVE_RZSTD) || defined(HAVE_RRAR) || defined(HAVE_RBZIP2) || defined(HAVE_COMPRESSION)
    char newpath[PATH_MAX_LENGTH];
    const char *file_ext          = NULL;
    char *last                    = NULL;
@@ -785,6 +976,16 @@ const struct file_archive_file_backend* file_archive_get_file_backend(const char
 #ifdef HAVE_RZSTD
    if (string_is_equal_noncase(file_ext, "zst"))
       return &zstd_backend;
+#endif
+
+#ifdef HAVE_RBZIP2
+   if (string_is_equal_noncase(file_ext, "bz2"))
+      return &bz2_backend;
+#endif
+
+#ifdef HAVE_RRAR
+   if (string_is_equal_noncase(file_ext, "rar"))
+      return &rar_backend;
 #endif
 #endif
 
@@ -816,6 +1017,13 @@ uint32_t file_archive_get_file_crc32(const char *path)
  **/
 uint32_t file_archive_get_file_crc32_and_size(const char *path, uint64_t *size)
 {
+   return file_archive_get_file_crc32_size_and_ext(path, size, NULL, 0,
+         NULL);
+}
+
+uint32_t file_archive_get_file_crc32_size_and_ext(const char *path,
+      uint64_t *size, char *ext, size_t len, unsigned *entries)
+{
    file_archive_transfer_t state;
    struct archive_extract_userdata userdata        = {0};
    bool returnerr                                  = false;
@@ -837,6 +1045,7 @@ uint32_t file_archive_get_file_crc32_and_size(const char *path, uint64_t *size)
    memset(&state, 0, sizeof(state));
 
    state.type              = ARCHIVE_TRANSFER_INIT;
+   userdata.crc_wanted     = true;
 
    /* Initialize and open archive first.
       Sets next state type to ITERATE. */
@@ -879,6 +1088,8 @@ uint32_t file_archive_get_file_crc32_and_size(const char *path, uint64_t *size)
          break;
    }
 
+   if (entries)
+      *entries = found ? state.step_total : 0;
    file_archive_parse_file_iterate_stop(&state);
 
    /* Report nothing rather than whichever entry the walk stopped on:
@@ -887,9 +1098,13 @@ uint32_t file_archive_get_file_crc32_and_size(const char *path, uint64_t *size)
    if (!found)
    {
       *size = 0;
+      if (ext && len)
+         *ext = '\0';
       return 0;
    }
 
+   if (ext && len)
+      strlcpy(ext, path_get_extension(userdata.current_file_path), len);
    *size = userdata.size;
    return userdata.crc;
 }

@@ -31,6 +31,13 @@
 
 RETRO_BEGIN_DECLS
 
+/* How long a TLS read, in the handshake or in a record, waits for the
+ * server's next bytes before it fails: a server that goes silent must
+ * not hold the caller's thread for good. */
+#ifndef SSL_SOCKET_IO_TIMEOUT_MS
+#define SSL_SOCKET_IO_TIMEOUT_MS 30000
+#endif
+
 void* ssl_socket_init(int fd, const char *domain);
 
 int ssl_socket_connect(void *state_data, void *data, bool timeout_enable, bool nonblock);
@@ -45,7 +52,18 @@ int ssl_socket_last_error(void *state_data);
 
 int ssl_socket_send_all_blocking(void *state_data, const void *data_, size_t len, bool no_signal);
 
+/* Takes as much of @data_ as the connection can accept without
+ * blocking and returns how much that was: 0 when the socket is full,
+ * -1 on error.  Bytes taken may still sit inside the TLS layer; once
+ * the last of them is taken, call ssl_socket_flush_nonblocking() until
+ * it reports 1.  After a 0, the next call must pass the same buffer,
+ * at least as long (mbedtls has to finish the record it began). */
 ssize_t ssl_socket_send_all_nonblocking(void *state_data, const void *data_, size_t len, bool no_signal);
+
+/* Moves bytes already taken by ssl_socket_send_all_nonblocking() on to
+ * the socket without blocking.  1: nothing left pending, 0: the socket
+ * is full (wait for it to be writable and call again), -1: error. */
+int ssl_socket_flush_nonblocking(void *state_data);
 
 int ssl_socket_receive_all_blocking(void *state_data, void *data_, size_t len);
 
@@ -69,6 +87,21 @@ void ssl_socket_set_verify_mode(unsigned mode);
 void ssl_socket_log_verify_fail(int mode_required, const char *domain,
       const char *verify_info);
 void ssl_socket_log_verify_disabled(const char *domain);
+
+/* net_socket_ssl_retro.c only: replace the built-in CA bundle with
+ * @pem (concatenated PEM certificates) for the process, NULL to
+ * restore. For tests against a local server. */
+void ssl_socket_retro_set_trust_pem(const char *pem, size_t len);
+/* net_socket_ssl_retro.c only: whether the last handshake on
+ * @state_data resumed a cached session rather than running in full. */
+int ssl_socket_retro_was_resumed(void *state_data);
+/* net_socket_ssl_retro.c only: 0x0304 for a TLS 1.3 connection,
+ * 0x0303 for 1.2, 0 before the handshake. */
+unsigned ssl_socket_retro_version(void *state_data);
+/* net_socket_ssl_retro.c only: the negotiated cipher suite's IANA
+ * number (0x1303 is TLS_CHACHA20_POLY1305_SHA256), 0 before the
+ * handshake. */
+unsigned ssl_socket_retro_suite(void *state_data);
 
 RETRO_END_DECLS
 

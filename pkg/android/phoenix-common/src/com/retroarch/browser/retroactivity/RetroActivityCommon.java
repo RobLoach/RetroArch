@@ -60,6 +60,7 @@ import android.os.CombinedVibration;
 import android.os.Vibrator;
 import android.os.VibrationEffect;
 import android.os.VibratorManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.util.SparseArray;
 import android.text.Editable;
@@ -80,7 +81,6 @@ import java.util.Locale;
  * Class which provides common methods for RetroActivity related classes.
  */
 public class RetroActivityCommon extends NativeActivity
-        implements InputManager.InputDeviceListener
 {
   static {
     System.loadLibrary("retroarch-activity");
@@ -100,8 +100,9 @@ public class RetroActivityCommon extends NativeActivity
   public static final int REQUEST_CODE_OPEN_DOCUMENT_TREE = 0;
   /* Startup permission flow; distinct from the in-session all-files
    * re-ask loop on requestCode 124, which restarts the app on grant. */
-  private static final int REQUEST_CODE_STARTUP_ALL_FILES = 125;
   private static final int REQUEST_CODE_STARTUP_PERMISSIONS = 126;
+  private boolean mStartupSettingsPending;
+  private boolean mStartupSettingsPaused;
   public boolean sustainedPerformanceMode = true;
   public int screenOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
 
@@ -175,25 +176,68 @@ public class RetroActivityCommon extends NativeActivity
    * after a module install, so two passes never delete and recreate
    * the same links at once. */
   private final Object mSymlinkLock = new Object();
+  private Object mInputDeviceListener;
+  /* API 17+: the second display's Presentation; null below */
+  private SecondDisplayController secondDisplay;
+
+  /* Keep the API 16 interface off the activity loaded on Android 2.x. */
+  @TargetApi(16)
+  private static final class DeviceListener implements InputManager.InputDeviceListener
+  {
+    private final RetroActivityCommon activity;
+    private final InputManager manager;
+
+    DeviceListener(RetroActivityCommon activity)
+    {
+      this.activity = activity;
+      manager = (InputManager) activity.getSystemService(Context.INPUT_SERVICE);
+      manager.registerInputDeviceListener(this, null);
+    }
+
+    public void onInputDeviceAdded(int id) { activity.onInputDeviceAdded(id); }
+    public void onInputDeviceChanged(int id) { activity.onInputDeviceChanged(id); }
+    public void onInputDeviceRemoved(int id) { activity.onInputDeviceRemoved(id); }
+    void unregister() { manager.unregisterInputDeviceListener(this); }
+  }
+
+  @Override
+  protected void onSaveInstanceState(Bundle state)
+  {
+    super.onSaveInstanceState(state);
+    state.putBoolean("startupSettingsPending", mStartupSettingsPending);
+  }
+
+  @Override
+  protected void onPause()
+  {
+    if (mStartupSettingsPending)
+      mStartupSettingsPaused = true;
+    super.onPause();
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    if (savedInstanceState != null)
+      mStartupSettingsPending = savedInstanceState.getBoolean("startupSettingsPending");
     /* The symlink pass walks the app data and native library trees,
      * which is disk I/O that does not belong on the UI thread.  Run
      * it on a worker and let it release its half of the startup gate
      * when done; the native side keeps waiting for it, so cores are
      * still in place before native core enumeration runs. */
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          cleanupSymlinks();
-          updateSymlinks();
-        } finally {
-          startupSymlinksDone();
+    if (Build.VERSION.SDK_INT >= 21)
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            cleanupSymlinks();
+            updateSymlinks();
+          } finally {
+            startupSymlinksDone();
+          }
         }
-      }
-    }, "RetroArch-symlinks").start();
+      }, "RetroArch-symlinks").start();
+    else
+      startupSymlinksDone();
 
     if (Build.VERSION.SDK_INT >= 33) {
       registerReceiver(
@@ -207,25 +251,50 @@ public class RetroActivityCommon extends NativeActivity
         new IntentFilter(ACTION_USB_PERMISSION)
       );
     }
-    ((InputManager) getSystemService(Context.INPUT_SERVICE))
-            .registerInputDeviceListener(this, null);
+    if (Build.VERSION.SDK_INT >= 16)
+      mInputDeviceListener = new DeviceListener(this);
     /* Bind the hardware volume keys to the game audio stream;
      * previously done by the Java launcher activity. */
     setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
     PlayCoreManager.getInstance().onCreate(this);
     super.onCreate(savedInstanceState);
+    if (Build.VERSION.SDK_INT >= 17)
+      secondDisplay = new SecondDisplayController(this);
 
     /* super.onCreate has loaded the native library and started the
      * native thread; it now waits on the permission gate until this
      * resolves. */
-    resolveStartupPermissions();
+    if (!mStartupSettingsPending)
+      resolveStartupPermissions();
+    else
+      mStartupSettingsPaused = true;
+  }
+
+  @Override
+  protected void onStart()
+  {
+    super.onStart();
+    if (secondDisplay != null)
+      secondDisplay.onStart();
+  }
+
+  @Override
+  protected void onStop()
+  {
+    /* The second display lets go of its surface while the app thread
+     * still answers */
+    if (secondDisplay != null)
+      secondDisplay.onStop();
+    super.onStop();
   }
 
   @Override
   protected void onDestroy() {
-    ((InputManager) getSystemService(Context.INPUT_SERVICE))
-            .unregisterInputDeviceListener(this);
+    mTouchHapticHandler.removeCallbacks(mTouchHaptic);
+    mTouchHapticPending.set(false);
+    if (Build.VERSION.SDK_INT >= 16 && mInputDeviceListener != null)
+      ((DeviceListener) mInputDeviceListener).unregister();
     unregisterReceiver(mUsbPermissionReceiver);
     closeAllUsbConnections();
     PlayCoreManager.getInstance().onDestroy();
@@ -299,10 +368,11 @@ public class RetroActivityCommon extends NativeActivity
   private void resolveStartupPermissions()
   {
     boolean viaLauncher = getIntent() != null && getIntent().hasExtra("CONFIGFILE");
+    boolean granted = hasStoragePermission();
 
-    if (viaLauncher || isPlayStoreBuild() || hasStoragePermission())
+    if (viaLauncher || isPlayStoreBuild() || granted)
     {
-      startupPermissionResolved(hasStoragePermission());
+      startupPermissionResolved(granted);
       return;
     }
 
@@ -315,22 +385,29 @@ public class RetroActivityCommon extends NativeActivity
           @Override
           public void onClick(android.content.DialogInterface dialog, int which)
           {
+            mStartupSettingsPending = true;
+            mStartupSettingsPaused = false;
+            /* Settings may finish a redirect activity before the user
+             * responds. Resolve on return from its task, not a result. */
             try
             {
               Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
               intent.addCategory("android.intent.category.DEFAULT");
-              intent.setData(Uri.parse(String.format("package:%s", getPackageName())));
-              startActivityForResult(intent, REQUEST_CODE_STARTUP_ALL_FILES);
+              intent.setData(Uri.parse("package:" + getPackageName()));
+              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+              startActivity(intent);
             }
             catch (Exception e)
             {
               try
               {
                 Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                startActivityForResult(intent, REQUEST_CODE_STARTUP_ALL_FILES);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
               }
               catch (Exception e2)
               {
+                mStartupSettingsPending = false;
                 startupPermissionResolved(false);
               }
             }
@@ -377,14 +454,6 @@ public class RetroActivityCommon extends NativeActivity
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent intent)
   {
-    if (requestCode == REQUEST_CODE_STARTUP_ALL_FILES)
-    {
-      /* The Settings return carries no intent; resolve from the live
-       * state and proceed either way. */
-      startupPermissionResolved(hasStoragePermission());
-      return;
-    }
-
     if (requestCode == 124)
     {
       if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R)
@@ -856,11 +925,12 @@ public class RetroActivityCommon extends NativeActivity
   /* InputManager.InputDeviceListener — request USB permission as soon as a
    * supported controller is connected, before any rumble call can occur. */
 
-  @Override
   public void onInputDeviceAdded(int deviceId)
   {
     invalidateDeviceCaches(deviceId);
 
+    if (Build.VERSION.SDK_INT < 19)
+      return;
     UsbDevice usbDevice = findUsbDeviceForInputDevice(deviceId);
     if (usbDevice == null)
       return;
@@ -884,6 +954,8 @@ public class RetroActivityCommon extends NativeActivity
    */
   private void requestPermissionForConnectedSonyControllers()
   {
+    if (Build.VERSION.SDK_INT < 19)
+      return;
     UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
     if (usbManager == null)
       return;
@@ -902,25 +974,32 @@ public class RetroActivityCommon extends NativeActivity
   protected void onResume()
   {
     super.onResume();
+    if (mStartupSettingsPending && mStartupSettingsPaused)
+    {
+      mStartupSettingsPending = false;
+      mStartupSettingsPaused = false;
+      startupPermissionResolved(hasStoragePermission());
+    }
     /* Covers controllers connected at startup or while the activity was
      * backgrounded — cases where onInputDeviceAdded() never fires. */
     requestPermissionForConnectedSonyControllers();
   }
 
-  @Override
   public void onInputDeviceChanged(int deviceId)
   {
     /* The vibrator topology can change with the device. */
     invalidateDeviceCaches(deviceId);
   }
 
-  @Override
   public void onInputDeviceRemoved(int deviceId)
   {
     /* Close any cached USB connection so we don't hold a stale handle. */
     closeUsbConnection(deviceId);
     mUsbPermissionPending.remove(Integer.valueOf(deviceId));
     invalidateDeviceCaches(deviceId);
+    /* Tell the native input driver: no input event marks a removal, so
+     * this callback is the only way it learns that a pad is gone. */
+    inputDeviceRemoved(deviceId);
   }
 
   /** Drops every cached per-device lookup for an input device id. */
@@ -978,15 +1057,69 @@ public class RetroActivityCommon extends NativeActivity
     return result == report.length;
   }
 
+  @TargetApi(21)
+  private static final class TouchHapticAttributes
+  {
+    static final AudioAttributes VALUE = new AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build();
+  }
+
+  @TargetApi(26)
+  private static final class TouchHapticEffect
+  {
+    static final VibrationEffect VALUE = VibrationEffect.createOneShot(
+        30, VibrationEffect.DEFAULT_AMPLITUDE);
+  }
+
+  private final android.os.Handler mTouchHapticHandler =
+      new android.os.Handler(android.os.Looper.getMainLooper());
+  private final java.util.concurrent.atomic.AtomicBoolean mTouchHapticPending =
+      new java.util.concurrent.atomic.AtomicBoolean();
+  private boolean mTouchVibratorResolved;
+  private Vibrator mTouchVibrator;
+  private final Runnable mTouchHaptic = new Runnable() {
+    @Override
+    public void run() {
+      mTouchHapticPending.set(false);
+      if (!getWindow().getDecorView().hasWindowFocus()
+          || Settings.System.getInt(getContentResolver(),
+              Settings.System.HAPTIC_FEEDBACK_ENABLED, 0) == 0)
+        return;
+
+      if (!mTouchVibratorResolved) {
+        mTouchVibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+        if (mTouchVibrator != null && !mTouchVibrator.hasVibrator())
+          mTouchVibrator = null;
+        mTouchVibratorResolved = true;
+      }
+      if (mTouchVibrator == null)
+        return;
+
+      if (Build.VERSION.SDK_INT >= 26)
+        mTouchVibrator.vibrate(TouchHapticEffect.VALUE, TouchHapticAttributes.VALUE);
+      else if (Build.VERSION.SDK_INT >= 21)
+        mTouchVibrator.vibrate(30, TouchHapticAttributes.VALUE);
+      else
+        mTouchVibrator.vibrate(30);
+    }
+  };
+
   public void doHapticFeedback(final int effect)
   {
+    if (effect == HapticFeedbackConstants.KEYBOARD_PRESS) {
+      if (mTouchHapticPending.compareAndSet(false, true)
+          && !mTouchHapticHandler.post(mTouchHaptic))
+        mTouchHapticPending.set(false);
+      return;
+    }
     // Called from the native app thread. View.performHapticFeedback is not
     // documented as thread safe, so hand it to the UI thread.
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
         getWindow().getDecorView().performHapticFeedback(effect,
-            HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING | HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
+            HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
       }
     });
   }
@@ -1585,6 +1718,8 @@ public class RetroActivityCommon extends NativeActivity
     boolean hasOldOrientation = false;
 
     super.onConfigurationChanged(newConfig);
+    if (secondDisplay != null)
+      secondDisplay.onConfigurationChanged();
 
     Log.i("RetroActivity", "onConfigurationChanged: orientation is now " + newConfig.orientation);
 
@@ -1608,9 +1743,16 @@ public class RetroActivityCommon extends NativeActivity
    * @return true if this is a Play Store build, false otherwise
    */
   public boolean isPlayStoreBuild() {
-    Log.i("RetroActivity", "isPlayStoreBuild: " + BuildConfig.PLAY_STORE_BUILD);
-
     return BuildConfig.PLAY_STORE_BUILD;
+  }
+
+  /**
+   * Checks if this version of RetroArch is a Meta Quest build.
+   *
+   * @return true if this is a Meta Quest build, false otherwise
+   */
+  public boolean isMetaQuestBuild() {
+    return BuildConfig.META_QUEST_BUILD;
   }
 
   /**
@@ -1704,6 +1846,11 @@ public class RetroActivityCommon extends NativeActivity
   private boolean  keyboardActive;
   private boolean  keyboardSuppressWatcher;
 
+  /* Read by SecondDisplayController on the UI thread */
+  boolean isKeyboardActive() {
+    return keyboardActive;
+  }
+
   /**
    * Raises the native system keyboard for menu text entry.
    *
@@ -1767,7 +1914,7 @@ public class RetroActivityCommon extends NativeActivity
         keyboardActive = true;
         keyboardSuppressWatcher = true;
         keyboardEditText.setText(initialText != null ? initialText : "");
-        keyboardEditText.setSelection(keyboardEditText.getText().length());
+        keyboardEditText.setSelection(0, keyboardEditText.getText().length());
         keyboardSuppressWatcher = false;
         if (label != null)
           keyboardEditText.setHint(label);
@@ -1776,10 +1923,28 @@ public class RetroActivityCommon extends NativeActivity
         keyboardEditText.setFocusableInTouchMode(true);
         keyboardEditText.requestFocus();
 
-        InputMethodManager imm = (InputMethodManager)
-              getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null)
-          imm.showSoftInput(keyboardEditText, InputMethodManager.SHOW_FORCED);
+        askForKeyboard();
+      }
+    });
+  }
+
+  private void askForKeyboard() {
+    InputMethodManager imm = (InputMethodManager)
+          getSystemService(Context.INPUT_METHOD_SERVICE);
+    if (imm != null)
+      imm.showSoftInput(keyboardEditText, InputMethodManager.SHOW_FORCED);
+  }
+
+  /**
+   * Shows the second display on display ordinal of the last published
+   * list, or hides it for 0; request numbers the request. Called from
+   * native code on any thread; posts to the UI thread and returns.
+   */
+  public void setSecondDisplay(final int ordinal, final int request) {
+    runOnUiThread(new Runnable() {
+      @Override public void run() {
+        if (secondDisplay != null)
+          secondDisplay.show(ordinal, request);
       }
     });
   }
@@ -1803,6 +1968,21 @@ public class RetroActivityCommon extends NativeActivity
         keyboardEditText.setVisibility(View.GONE);
       }
     });
+  }
+
+  /* On a one-focus system the IME refuses the field while the second
+   * display's window holds the focus; it serves the field again only
+   * after this returns */
+  @Override
+  public void onWindowFocusChanged(boolean hasFocus) {
+    super.onWindowFocusChanged(hasFocus);
+    if (hasFocus && keyboardActive && keyboardEditText != null)
+      keyboardEditText.post(new Runnable() {
+        @Override public void run() {
+          if (keyboardActive)
+            askForKeyboard();
+        }
+      });
   }
 
   /////////////// JNI methods ///////////////
@@ -1848,6 +2028,13 @@ public class RetroActivityCommon extends NativeActivity
    * @param finished true when the user confirmed (Done/Enter) or cancelled.
    */
   public native void onSystemKeyboardInput(String text, boolean finished);
+
+  /**
+   * Tells the native input driver that Android removed an input device.
+   *
+   * @param deviceId The id the device had.
+   */
+  public native void inputDeviceRemoved(int deviceId);
 
 
 
@@ -1921,8 +2108,12 @@ public class RetroActivityCommon extends NativeActivity
     if(!isPlayStoreBuild()) return;
 
     synchronized (mSymlinkLock) {
-      traverseFilesystem(getFilesDir());
-      traverseFilesystem(new File(getApplicationInfo().nativeLibraryDir));
+      List<String> availableCores = Arrays.asList(getAvailableCores());
+      SharedPreferences prefs = UserPreferences.getPreferences(this);
+      String corePath = getCorePath();
+      traverseFilesystem(getFilesDir(), availableCores, prefs, corePath);
+      traverseFilesystem(new File(getApplicationInfo().nativeLibraryDir),
+              availableCores, prefs, corePath);
     }
   }
 
@@ -1941,13 +2132,12 @@ public class RetroActivityCommon extends NativeActivity
    * @param cores List of cores to update.
    * @param filenames List of filenames to update.
    */
-  private void traverseFilesystem(File file) {
+  private void traverseFilesystem(File file, List<String> availableCores,
+          SharedPreferences prefs, String corePath) {
     if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return;
 
     File[] list = file.listFiles();
     if(list == null) return;
-
-    List<String> availableCores = Arrays.asList(getAvailableCores());
 
     // Check each file in a directory to see if it's a native library.
     for(int i = 0; i < list.length; i++) {
@@ -1959,11 +2149,10 @@ public class RetroActivityCommon extends NativeActivity
         String core = name.subSequence(3, name.length() - 3).toString();
         String filename = child.getAbsolutePath();
 
-        SharedPreferences prefs = UserPreferences.getPreferences(this);
         if(!prefs.getBoolean("core_deleted_" + core, false)
                 && availableCores.contains(core)) {
           // Generate the destination filename and delete any existing symlinks / cores
-          String newFilename = getCorePath() + core + "_libretro_android.so";
+          String newFilename = corePath + core + "_libretro_android.so";
           new File(newFilename).delete();
 
           try {
@@ -1972,9 +2161,9 @@ public class RetroActivityCommon extends NativeActivity
             // Symlink failed to be created. Should never happen.
           }
         }
-      } else if(file.isDirectory()) {
+      } else if(child.isDirectory()) {
         // Found another directory, so traverse it
-        traverseFilesystem(child);
+        traverseFilesystem(child, availableCores, prefs, corePath);
       }
     }
   }

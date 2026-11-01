@@ -29,7 +29,7 @@
 
 S_BOOL(video_vsync, VIDEO_VSYNC,
       "video_vsync",
-      DEFAULT_VSYNC, SD_FLAG_NONE, SDESC_FLG_REFRESH, CMD_EVENT_NONE,
+      DEFAULT_VSYNC, SD_FLAG_CMD_APPLY_AUTO, SDESC_FLG_REFRESH, CMD_EVENT_VIDEO_SET_BLOCKING_STATE,
       "Vertical Sync (VSync)",
       "Synchronize the output video of the graphics card to the refresh rate of the screen. Recommended.")
 S_UINT(video_swap_interval, VIDEO_SWAP_INTERVAL,
@@ -57,6 +57,11 @@ S_BOOL(video_waitable_swapchains, VIDEO_WAITABLE_SWAPCHAINS,
       DEFAULT_WAITABLE_SWAPCHAINS, SD_FLAG_CMD_APPLY_AUTO, SDESC_FLG_REFRESH, CMD_EVENT_REINIT,
       "Waitable Swapchains",
       "Hard-synchronize the CPU and GPU. Reduces latency at the cost of performance.")
+S_BOOL(video_d3d9ex_present, VIDEO_D3D9EX_PRESENT,
+      "video_d3d9ex_present",
+      DEFAULT_VIDEO_D3D9EX_PRESENT, SD_FLAG_CMD_APPLY_AUTO, SDESC_FLG_REFRESH, CMD_EVENT_REINIT,
+      "Direct3D 9Ex Presentation",
+      "With the Direct3D 9 drivers on Windows Vista and later, present as Direct3D 11 does: a window through the flip model, and with Waitable Swapchains and Max Frame Latency honoured when V-Sync is on. Changes frame pacing. Off: presented as before.")
 S_BOOL(video_threaded_present_repeat, VIDEO_THREADED_PRESENT_REPEAT,
       "video_threaded_present_repeat",
       DEFAULT_VIDEO_THREADED_PRESENT_REPEAT, SD_FLAG_NONE, 0, CMD_EVENT_NONE,
@@ -66,7 +71,7 @@ S_BOOL(video_threaded_display_pacing, VIDEO_THREADED_DISPLAY_PACING,
       "video_threaded_display_pacing",
       DEFAULT_VIDEO_THREADED_DISPLAY_PACING, SD_FLAG_NONE, 0, CMD_EVENT_NONE,
       "Threaded Video Display Pacing",
-      "With Threaded Video, start each core frame as late as the next display refresh allows, from measured core and render times, instead of on a fixed timer. Lowers latency to what Frame Delay reaches on unthreaded video, and a frame that runs long is repeated rather than missed. Off: the timer paces, as before.")
+      "With Threaded Video, start each core frame as late as the next display refresh allows, from measured core and render times, instead of on a fixed timer. Lowers latency to what Frame Delay reaches on unthreaded video, and a frame that runs long is repeated rather than missed. With Driver Pacing in effect, the driver releases each frame, and the hold only keeps it on the display's refresh. Off: the timer paces, as before.")
 S_BOOL(video_present_timing_from_display, VIDEO_PRESENT_TIMING_FROM_DISPLAY,
       "video_present_timing_from_display",
       DEFAULT_VIDEO_PRESENT_TIMING_FROM_DISPLAY, SD_FLAG_NONE, 0, CMD_EVENT_NONE,
@@ -87,3 +92,18 @@ S_UINT_H(video_hard_sync_frames, VIDEO_HARD_SYNC_FRAMES,
       DEFAULT_HARD_SYNC_FRAMES, SD_FLAG_NONE, SDESC_RANGE_MINMAX, CMD_EVENT_NONE, MINIMUM_HARD_SYNC_FRAMES, MAXIMUM_HARD_SYNC_FRAMES, 1, 0, setting_action_ok_uint, NULL,
       "Hard GPU Sync Frames",
       "Set how many frames the CPU can run ahead of the GPU when using 'Hard GPU Sync'.")
+S_BOOL(video_scanline_sync, VIDEO_SCANLINE_SYNC,
+      "video_scanline_sync",
+      DEFAULT_SCANLINE_SYNC, SD_FLAG_CMD_APPLY_AUTO, 0, CMD_EVENT_VIDEO_SET_BLOCKING_STATE,
+      "Scanline Sync",
+      "Synchronize video presentation to scanline position prediction based on core time. Requirements: VSync off, Frame Delay off, display Hz near 1x core FPS and GPU at max clocks.")
+S_UINT(video_scanline_sync_offset, VIDEO_SCANLINE_SYNC_OFFSET,
+      "video_scanline_sync_offset",
+      DEFAULT_SCANLINE_SYNC_OFFSET, SD_FLAG_NONE, SDESC_RANGE_MINMAX, CMD_EVENT_NONE, 0, MAXIMUM_SCANLINE_SYNC_OFFSET, 1, 0, setting_action_ok_uint, NULL,
+      "Scanline Sync Offset",
+      "Adjust Scanline Sync offset manually. Otherwise offset is calculated based on vertical blanking and frame cache sizes.")
+S_UINT(video_driver_pacing, VIDEO_DRIVER_PACING,
+      "video_driver_pacing",
+      DEFAULT_VIDEO_DRIVER_PACING, SD_FLAG_NONE, SDESC_RANGE_MINMAX, CMD_EVENT_NONE, 0, 2, 1, 0, setting_action_ok_uint, setting_get_string_representation_uint_video_driver_pacing,
+      "Driver Pacing",
+      "Let the graphics driver pace frames with late input and a short queue. Uses NVIDIA Reflex (Vulkan VK_NV_low_latency2, D3D11/12 NVAPI, or Vulkan via DXGI) or Vulkan AMD Anti-Lag (VK_AMD_anti_lag). See Statistics/System Information for status. 'On + Boost' raises GPU clocks. Unavailable with Scanline Sync. Threaded Video Display Pacing preserves display refresh; the driver limits content rate when no other limiter does. Frame Delay stands aside while active.")

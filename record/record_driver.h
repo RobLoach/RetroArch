@@ -4,6 +4,8 @@
 #include <boolean.h>
 #include <retro_miscellaneous.h>
 
+#include <retro_inline.h>
+
 #include "../gfx/video_defines.h"   /* VIDEO_SCALE_PACK */
 
 enum ffemu_pix_format
@@ -70,6 +72,12 @@ struct record_params
    unsigned video_stream_scale_factor;
    unsigned video_record_threads;
    unsigned streaming_mode;
+   /* Video queue depth in frames (driver clamps/defaults out-of-range). */
+   unsigned video_fifo_frames;
+   /* Quarter turns counter-clockwise to rotate incoming frames by.
+    * out_dims and aspect_ratio describe the rotated output, fb_dims
+    * the incoming frames. */
+   unsigned rotation;
 
    /* Aspect ratio of input video. Parameters are passed to the muxer,
     * the video itself is not scaled.
@@ -82,6 +90,11 @@ struct record_params
    enum ffemu_pix_format pix_fmt;
 
    bool video_gpu_record;
+   /* Drop frames when the encoder queue is full instead of blocking. */
+   bool allow_frame_drop;
+   /* Prefer a hardware H.264 encoder for the built-in presets. */
+   bool hw_encoder;
+   bool menu_source;
 };
 
 struct record_video_data
@@ -112,6 +125,23 @@ typedef struct record_driver
 } record_driver_t;
 
 
+/* A raw recording's output size and display aspect when the display
+ * shows the core's frames turned @rotation quarter turns. @out_dims
+ * holds the core's size, turned here, unless it is --size's
+ * (@user_dims), which is kept as given. @display_aspect is the
+ * viewport's, which is already the turned picture's; 0 lets the
+ * output size decide. */
+static INLINE void record_raw_geometry(unsigned *out_dims, float *aspect,
+      unsigned rotation, float display_aspect, bool user_dims)
+{
+   if ((rotation & 1) && !user_dims)
+      *out_dims = VIDEO_SCALE_PACK(VIDEO_SCALE_H(*out_dims),
+            VIDEO_SCALE_W(*out_dims));
+   *aspect      = (display_aspect > 0.0f)
+      ? display_aspect
+      : (float)VIDEO_SCALE_W(*out_dims) / VIDEO_SCALE_H(*out_dims);
+}
+
 struct recording
 {
    const record_driver_t *driver;
@@ -121,6 +151,8 @@ struct recording
     * word - VIDEO_SCALE_PACK's layout, so a resize is one comparison
     * against a freshly packed viewport rather than two. */
    unsigned gpu_dims;
+   /* GPU recording reads through read_viewport_bgrx. */
+   bool gpu_bgrx;
 
    /* --size's override of the recording's output size, same layout;
     * zero when it was not given, which is one test instead of two. */
@@ -139,6 +171,7 @@ struct recording
    bool enable;
    bool streaming_enable;
    bool use_output_dir;
+   bool start_pending;
 };
 
 typedef struct recording recording_state_t;
@@ -170,5 +203,36 @@ void streaming_set_state(bool state);
 recording_state_t *recording_state_get_ptr(void);
 
 extern const record_driver_t *record_drivers[];
+
+/* Common native GPU controller hooks. Keep one call at frame/runloop sites;
+ * platform backends own their worker and snapshot retirement. */
+RETRO_BEGIN_DECLS
+extern const record_driver_t record_nvenc;
+extern const record_driver_t record_metal;
+#if defined(HAVE_RECORD_MEDIACODEC) || defined(RECORD_MEDIACODEC_TEST)
+extern const record_driver_t record_mediacodec;
+#endif
+struct video_frame_info;
+void recording_gpu_frame_info(struct video_frame_info *info,bool capture);
+void recording_gpu_poll(void);
+void recording_start_frame(void);
+void recording_gpu_stop(void);
+bool recording_gpu_pending(void);
+bool recording_gpu_reset_pending(void);
+/* Main owner: coalesce reinit flags while native users retire. The existing
+ * GPU poll applies the reinit once, or drops it during content/quit teardown. */
+bool recording_gpu_defer_reinit(int flags);
+void recording_gpu_reinit_poll(void);
+bool recording_gpu_defer_start(const record_driver_t *driver);
+bool recording_gpu_cancel_start(void);
+RETRO_END_DECLS
+static INLINE bool recording_is_native_gpu(const record_driver_t *driver)
+{
+#if defined(HAVE_RECORD_MEDIACODEC) || defined(RECORD_MEDIACODEC_TEST)
+   if (driver == &record_mediacodec)
+      return true;
+#endif
+   return driver == &record_nvenc || driver == &record_metal;
+}
 
 #endif

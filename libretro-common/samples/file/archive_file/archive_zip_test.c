@@ -59,6 +59,10 @@
  *   make SANITIZER=address
  */
 
+/* the lending VFS installs the implementation's own functions as a
+ * frontend's */
+#define VFS_FRONTEND
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,8 +70,66 @@
 
 #include <file/archive_file.h>
 #include <lists/string_list.h>
+#include <encodings/crc32.h>
+#include <encodings/deflate.h>
+#ifdef HAVE_RZSTD
+#include <encodings/rzstd.h>
+#endif
+#include <streams/file_stream.h>
+#include <file/file_path.h>
+#include <vfs/vfs_implementation.h>
+#include <libretro.h>
 
 static int failures = 0;
+
+/* A frontend VFS that lends the first part of the archive from its
+ * own copy and counts what it is asked to read */
+static const uint8_t *lend_map;
+static int64_t        lend_len;
+static uint64_t       lend_read;
+
+static const uint8_t *lend_mapped_ptr(void *hfile, int64_t *len)
+{
+   (void)hfile;
+   *len = lend_len;
+   return lend_map;
+}
+
+static int64_t lend_read_cb(struct retro_vfs_file_handle *h, void *s,
+      uint64_t len)
+{
+   int64_t r = retro_vfs_file_read_impl(h, s, len);
+   if (r > 0)
+      lend_read += (uint64_t)r;
+   return r;
+}
+
+static void lend_vfs(const uint8_t *map, int64_t len)
+{
+   static struct retro_vfs_interface iface;
+   struct retro_vfs_interface_info info;
+
+   memset(&iface, 0, sizeof(iface));
+   iface.get_path = retro_vfs_file_get_path_impl;
+   iface.open     = retro_vfs_file_open_impl;
+   iface.close    = retro_vfs_file_close_impl;
+   iface.size     = retro_vfs_file_size_impl;
+   iface.tell     = retro_vfs_file_tell_impl;
+   iface.seek     = retro_vfs_file_seek_impl;
+   iface.read     = lend_read_cb;
+   iface.write    = retro_vfs_file_write_impl;
+   iface.flush    = retro_vfs_file_flush_impl;
+   iface.remove   = retro_vfs_file_remove_impl;
+   iface.rename   = retro_vfs_file_rename_impl;
+
+   lend_map  = map;
+   lend_len  = len;
+   lend_read = 0;
+   info.required_interface_version = map ? FILESTREAM_REQUIRED_VFS_VERSION : 0;
+   info.iface                      = map ? &iface : NULL;
+   filestream_vfs_init(&info);
+   filestream_set_mapped_ptr_cb(map ? lend_mapped_ptr : NULL);
+}
 
 /* --- tiny ZIP builders (little-endian byte layout) ----------------- */
 
@@ -696,6 +758,595 @@ static void test_missing_backend_reports_failure(void)
    }
 }
 
+/* Members of different methods extracted through one transfer, which
+ * keeps its inflate stream and read buffer from member to member: a
+ * DEFLATE member spanning several 128 KiB input slices is followed by
+ * small DEFLATE and STORED ones, and every member must come out
+ * byte-exact.  Run again with every recorded CRC wrong, every member
+ * must be refused and none written.  Run again through a VFS that
+ * lends the first members in place: they are inflated from what it
+ * lends, the large one through an entry source too, rather than read,
+ * and the rest are read. */
+#define SEQ_MEMBERS 7
+#ifdef HAVE_RZSTD
+#define SEQ_ZSTD    93
+#else
+#define SEQ_ZSTD    0
+#endif
+
+typedef struct
+{
+   uint8_t *data;
+   uint8_t *packed;
+   uint32_t size;
+   uint32_t csize;
+   uint32_t crc;
+   unsigned method;
+} seq_member_t;
+
+static bool seq_deflate(seq_member_t *m)
+{
+   size_t bound = m->size + m->size / 8 + 1024;
+   size_t done  = 0;
+   void *z      = rdeflate_new(6, -15);
+
+   if (!z || !(m->packed = (uint8_t*)malloc(bound)))
+   {
+      rdeflate_free(z);
+      return false;
+   }
+   rdeflate_set_in(z, m->data, m->size);
+   rdeflate_set_out(z, m->packed, bound);
+   rdeflate_finish(z);
+   for (;;)
+   {
+      size_t rd = 0, wr = 0;
+      int st    = rdeflate_process(z, &rd, &wr);
+      done     += wr;
+      if (st == RDEFLATE_PROCESS_END)
+         break;
+      if (st == RDEFLATE_PROCESS_ERROR || (rd == 0 && wr == 0))
+      {
+         rdeflate_free(z);
+         return false;
+      }
+   }
+   rdeflate_free(z);
+   m->csize = (uint32_t)done;
+   return true;
+}
+
+#ifdef HAVE_RZSTD
+static bool seq_zstd(seq_member_t *m)
+{
+   size_t bound = rzstd_compress_bound(m->size);
+   size_t wrote = 0;
+   if (     !(m->packed = (uint8_t*)malloc(bound))
+         || rzstd_encode(m->packed, bound, m->data, m->size, 3, &wrote)
+            != RZSTD_PROCESS_END)
+      return false;
+   m->csize = (uint32_t)wrote;
+   return true;
+}
+#endif
+
+static int seq_extract_cb(const char *name, const char *valid_exts,
+      const uint8_t *cdata, unsigned cmode, uint64_t csize, uint64_t size,
+      uint32_t checksum, struct archive_extract_userdata *userdata)
+{
+   char out[64];
+   unsigned *n = (unsigned*)userdata->cb_data;
+
+   snprintf(out, sizeof(out), "rarch_zip_seq_out_%s", name);
+   if (file_archive_perform_mode(out, valid_exts, cdata, cmode,
+            csize, size, checksum, userdata))
+      (*n)++;
+   return 1;
+}
+
+static void member_sequence(bool corrupt, bool lend)
+{
+   static const unsigned methods[SEQ_MEMBERS] = { 8, 0, 8, SEQ_ZSTD, 8, 0, 8 };
+   static const uint32_t sizes[SEQ_MEMBERS]   =
+      { 3000, 777, 512 * 1024, 20000, 5000, 1, 1 };
+   const char *tmp_path = "rarch_zip_seq_test.zip";
+   seq_member_t m[SEQ_MEMBERS];
+   struct archive_extract_userdata userdata;
+   file_archive_transfer_t state;
+   uint32_t offsets[SEQ_MEMBERS];
+   uint32_t lcg      = 1;
+   uint8_t *buf      = NULL;
+   size_t len        = 0;
+   size_t cap        = 0;
+   size_t cd_start;
+   unsigned extracted = 0;
+   unsigned i;
+   bool ok           = true;
+   bool returnerr    = true;
+
+   memset(m, 0, sizeof(m));
+
+   for (i = 0; i < SEQ_MEMBERS; i++)
+   {
+      uint32_t j;
+      m[i].size   = sizes[i];
+      m[i].method = methods[i];
+      m[i].data   = (uint8_t*)malloc(m[i].size);
+      /* Text-like for the small members, noise for the large one so
+       * its compressed size spans several input slices. */
+      for (j = 0; j < m[i].size; j++)
+      {
+         lcg = lcg * 1103515245u + 12345u;
+         m[i].data[j] = (m[i].size > 65536)
+            ? (uint8_t)(lcg >> 16)
+            : (uint8_t)('a' + ((lcg >> 16) % 7) + i);
+      }
+      m[i].crc = encoding_crc32(0, m[i].data, m[i].size);
+      if (corrupt)
+         m[i].crc ^= 1;
+      if (m[i].method == 8)
+      {
+         if (!seq_deflate(&m[i]))
+            ok = false;
+      }
+#ifdef HAVE_RZSTD
+      else if (m[i].method == SEQ_ZSTD)
+      {
+         if (!seq_zstd(&m[i]))
+            ok = false;
+      }
+#endif
+      else
+         m[i].csize = m[i].size;
+      cap += 30 + 46 + 2 * 16 + m[i].csize;
+   }
+   cap += 22;
+
+   if (ok && m[2].csize <= 2 * 128 * 1024)
+   {
+      printf("FAIL  member sequence fixture: large member too small\n");
+      failures++;
+      ok = false;
+   }
+
+   if (ok && (buf = (uint8_t*)malloc(cap)))
+   {
+      char name[16];
+
+      for (i = 0; i < SEQ_MEMBERS; i++)
+      {
+         size_t nl;
+         snprintf(name, sizeof(name), "m%u.bin", i);
+         nl         = strlen(name);
+         offsets[i] = (uint32_t)len;
+         put_u32(buf + len + 0,  LFH_SIG);
+         put_u16(buf + len + 4,  20);
+         put_u16(buf + len + 6,  0);
+         put_u16(buf + len + 8,  (uint16_t)m[i].method);
+         put_u16(buf + len + 10, 0);
+         put_u16(buf + len + 12, 0);
+         put_u32(buf + len + 14, m[i].crc);
+         put_u32(buf + len + 18, m[i].csize);
+         put_u32(buf + len + 22, m[i].size);
+         put_u16(buf + len + 26, (uint16_t)nl);
+         put_u16(buf + len + 28, 0);
+         memcpy(buf + len + 30, name, nl);
+         memcpy(buf + len + 30 + nl,
+               m[i].packed ? m[i].packed : m[i].data, m[i].csize);
+         len += 30 + nl + m[i].csize;
+      }
+
+      cd_start = len;
+      for (i = 0; i < SEQ_MEMBERS; i++)
+      {
+         size_t nl;
+         snprintf(name, sizeof(name), "m%u.bin", i);
+         nl = strlen(name);
+         len += write_stored_cfh(buf + len, name, m[i].size, m[i].crc,
+               offsets[i]);
+         /* write_stored_cfh writes method 0 and csize == size. */
+         put_u16(buf + len - 46 - nl + 10, (uint16_t)m[i].method);
+         put_u32(buf + len - 46 - nl + 20, m[i].csize);
+      }
+      len += write_eocd(buf + len, SEQ_MEMBERS,
+            (uint32_t)(len - cd_start), (uint32_t)cd_start);
+
+      write_file(tmp_path, buf, len);
+
+      memset(&state, 0, sizeof(state));
+      memset(&userdata, 0, sizeof(userdata));
+      state.type       = ARCHIVE_TRANSFER_INIT;
+      userdata.cb_data = &extracted;
+
+      /* lent up to the fifth member's header */
+      if (lend)
+         lend_vfs(buf, (int64_t)offsets[4]);
+
+      while (file_archive_parse_file_iterate(&state, &returnerr, tmp_path,
+               NULL, seq_extract_cb, &userdata) == 0) { }
+
+      if (lend)
+      {
+         uint64_t iterate_read = lend_read;
+         char     member[64];
+         file_archive_entry_source_t *src;
+         int64_t  usize = 0;
+         uint8_t *got   = (uint8_t*)malloc(m[2].size);
+         int64_t  done  = 0;
+
+
+         /* the headers in the lent part are read, the members not */
+         if (iterate_read > len - offsets[4] + 4096)
+         {
+            printf("FAIL  lent members: %llu octets read, not lent\n",
+                  (unsigned long long)iterate_read);
+            ok = false;
+         }
+
+         snprintf(member, sizeof(member), "%s#m2.bin", tmp_path);
+         lend_read = 0;
+         if (!got || !(src = file_archive_entry_source_open(member, &usize))
+               || usize != (int64_t)m[2].size)
+            ok = false;
+         else
+         {
+            for (;;)
+            {
+               int64_t n = file_archive_entry_source_read(src,
+                     got + done, 4096);
+               if (n <= 0)
+                  break;
+               done += n;
+            }
+            file_archive_entry_source_close(src);
+            if (done != (int64_t)m[2].size || memcmp(got, m[2].data, m[2].size))
+            {
+               printf("FAIL  lent entry source: %lld of %u octets right\n",
+                     (long long)done, m[2].size);
+               ok = false;
+            }
+            else if (lend_read >= m[2].csize)
+            {
+               printf("FAIL  lent entry source: %llu octets read, not lent\n",
+                     (unsigned long long)lend_read);
+               ok = false;
+            }
+         }
+         free(got);
+         lend_vfs(NULL, 0);
+      }
+
+      /* every member through an entry source, as content loads it; a
+       * member decoded whole is checked against its CRC there too */
+      if (!lend)
+         for (i = 0; i < SEQ_MEMBERS; i++)
+         {
+            char     member[64];
+            int64_t  usize = 0, done = 0, got_n;
+            uint8_t *got   = (uint8_t*)malloc(m[i].size + 1);
+            file_archive_entry_source_t *src;
+            snprintf(member, sizeof(member), "%s#m%u.bin", tmp_path, i);
+            if (!(src = file_archive_entry_source_open(member, &usize))
+                  || usize != (int64_t)m[i].size)
+            {
+               printf("FAIL  member sequence: m%u.bin (method %u) opens no "
+                      "entry source\n", i, m[i].method);
+               ok = false;
+            }
+            else
+            {
+               while ((got_n = file_archive_entry_source_read(src,
+                           got + done, 4096)) > 0)
+                  done += got_n;
+               if (corrupt && m[i].method == SEQ_ZSTD && SEQ_ZSTD && got_n >= 0)
+               {
+                  printf("FAIL  member sequence: m%u.bin (method %u) read "
+                         "through an entry source despite a wrong CRC\n",
+                         i, m[i].method);
+                  ok = false;
+               }
+               else if (!corrupt && (done != (int64_t)m[i].size
+                        || memcmp(got, m[i].data, m[i].size)))
+               {
+                  printf("FAIL  member sequence: m%u.bin (method %u) differs "
+                         "through an entry source\n", i, m[i].method);
+                  ok = false;
+               }
+            }
+            if (src)
+               file_archive_entry_source_close(src);
+            free(got);
+         }
+
+      /* read whole, a member failing its CRC is no member, not an
+       * empty one */
+      if (corrupt)
+         for (i = 0; i < SEQ_MEMBERS; i++)
+         {
+            char    member[64];
+            void   *got = NULL;
+            int64_t got_len = -1;
+            snprintf(member, sizeof(member), "%s#m%u.bin", tmp_path, i);
+            if (file_archive_compressed_read(member, &got, NULL, &got_len))
+            {
+               printf("FAIL  member sequence: m%u.bin (method %u) read "
+                      "whole despite a wrong CRC, %lld octets\n", i,
+                      m[i].method, (long long)got_len);
+               ok = false;
+            }
+            free(got);
+         }
+
+      /* read to a file, as for a core that wants a path: written as it
+       * is decoded, a stored member from where it lies, and with a
+       * wrong CRC not written at all */
+      for (i = 0; i < SEQ_MEMBERS; i++)
+      {
+         char    member[64];
+         void   *got     = NULL;
+         int64_t got_len = 0;
+         int64_t rd;
+         snprintf(member, sizeof(member), "%s#m%u.bin", tmp_path, i);
+         remove("rarch_zip_seq_file.bin");
+         rd = file_archive_compressed_read(member, NULL,
+               "rarch_zip_seq_file.bin", &got_len);
+         if (corrupt)
+         {
+            if (rd || path_is_valid("rarch_zip_seq_file.bin"))
+            {
+               printf("FAIL  member sequence: m%u.bin (method %u) read to "
+                      "a file despite a wrong CRC\n", i, m[i].method);
+               ok = false;
+            }
+         }
+         else if (!rd || !filestream_read_file("rarch_zip_seq_file.bin",
+                  &got, &got_len) || got_len != (int64_t)m[i].size
+               || memcmp(got, m[i].data, m[i].size))
+         {
+            printf("FAIL  member sequence: m%u.bin (method %u) differs "
+                   "read to a file\n", i, m[i].method);
+            ok = false;
+         }
+         free(got);
+         remove("rarch_zip_seq_file.bin");
+      }
+
+      remove(tmp_path);
+
+      if (extracted != (corrupt ? 0 : SEQ_MEMBERS))
+         ok = false;
+
+
+      for (i = 0; i < SEQ_MEMBERS; i++)
+      {
+         char out[64];
+         void *got      = NULL;
+         int64_t gotlen = 0;
+
+         snprintf(out, sizeof(out), "rarch_zip_seq_out_m%u.bin", i);
+         if (corrupt)
+         {
+            if (path_is_valid(out))
+            {
+               printf("FAIL  member sequence: m%u.bin (method %u) "
+                      "written despite a wrong CRC\n", i, m[i].method);
+               ok = false;
+            }
+         }
+         else if (!filestream_read_file(out, &got, &gotlen)
+               || gotlen != (int64_t)m[i].size
+               || memcmp(got, m[i].data, m[i].size))
+         {
+            printf("FAIL  member sequence: m%u.bin (method %u) differs\n",
+                  i, m[i].method);
+            ok = false;
+         }
+         free(got);
+         remove(out);
+      }
+   }
+   else
+      ok = false;
+
+   free(buf);
+   for (i = 0; i < SEQ_MEMBERS; i++)
+   {
+      free(m[i].data);
+      free(m[i].packed);
+   }
+
+   if (!ok)
+   {
+      printf("FAIL  member sequence%s: %u of %u members extracted, "
+             "contents as reported above\n",
+             corrupt ? " (wrong CRCs)" : "", extracted, SEQ_MEMBERS);
+      failures++;
+   }
+   else if (corrupt)
+      printf("ok    members failing their recorded CRC are refused\n");
+   else if (lend)
+      printf("ok    members are decoded from what the VFS lends\n");
+   else
+      printf("ok    mixed DEFLATE/STORED members extract intact through "
+             "one transfer\n");
+}
+
+static void test_member_sequence_reuse(void)
+{
+   member_sequence(false, false);
+}
+
+static void test_member_crc_mismatch(void)
+{
+   member_sequence(true, false);
+}
+
+static void test_member_lent(void)
+{
+   member_sequence(false, true);
+}
+
+/* An entry source is opened only for a member that lies inside the
+ * archive: a central directory claiming more than the archive holds -
+ * a stored member longer than the file, a deflated one whose packed
+ * size runs past it, a header offset past it - is refused at open,
+ * not read from where the mapping ends. */
+static void test_entry_source_bounds(void)
+{
+   static const char payload[] = "short member";
+   const char *tmp_path = "rarch_zip_bounds_test.zip";
+   unsigned    c;
+   for (c = 0; c < 4; c++)
+   {
+      uint8_t  buf[512];
+      size_t   len = 0, cd;
+      int64_t  usize = 0;
+      char     member[64];
+      file_archive_entry_source_t *src;
+
+      len += write_stored_lfh(buf, "m.bin", (const uint8_t*)payload,
+            sizeof(payload) - 1, encoding_crc32(0, (const uint8_t*)payload,
+               sizeof(payload) - 1));
+      cd   = len;
+      len += write_stored_cfh(buf + len, "m.bin", sizeof(payload) - 1,
+            encoding_crc32(0, (const uint8_t*)payload, sizeof(payload) - 1), 0);
+      switch (c)
+      {
+         case 1:   /* stored, and longer than the archive */
+            put_u32(buf + cd + 20, 1u << 20);
+            put_u32(buf + cd + 24, 1u << 20);
+            break;
+         case 2:   /* deflated, packed past the end */
+            put_u16(buf + cd + 10, 8);
+            put_u32(buf + cd + 20, 1u << 20);
+            put_u32(buf + cd + 24, 64);
+            break;
+         case 3:   /* its header past the end */
+            put_u32(buf + cd + 42, 1u << 20);
+            break;
+         default:  /* as it is: opens */
+            break;
+      }
+      len += write_eocd(buf + len, 1, (uint32_t)(len - cd), (uint32_t)cd);
+      write_file(tmp_path, buf, len);
+      snprintf(member, sizeof(member), "%s#m.bin", tmp_path);
+      src = file_archive_entry_source_open(member, &usize);
+      if (c == 0 ? !src || usize != (int64_t)sizeof(payload) - 1 : src != NULL)
+      {
+         printf("[FAIL] entry source bounds, case %u: %s\n", c,
+               src ? "opened" : "refused");
+         failures++;
+      }
+      if (src)
+         file_archive_entry_source_close(src);
+      remove(tmp_path);
+   }
+   printf("[SUCCESS] entry sources open only for members inside the archive\n");
+}
+
+/* TorrentZip ends a zip with the comment TORRENTZIPPED- and a CRC; the
+ * reader says so whether the end record is read or mapped. */
+static void tz_check(const char *label, const char *comment, bool lend,
+      bool want)
+{
+   static const uint8_t payload[4] = { 1, 2, 3, 4 };
+   uint8_t      buf[256];
+   const char  *tmp_path  = "rarch_zip_tz_test.zip";
+   uint32_t     crc       = encoding_crc32(0, payload, sizeof(payload));
+   size_t       clen      = comment ? strlen(comment) : 0;
+   size_t       len, cd_start;
+   bool         returnerr = true;
+   file_archive_transfer_t         *state    = (file_archive_transfer_t*)
+      calloc(1, sizeof(*state));
+   struct archive_extract_userdata *userdata =
+      (struct archive_extract_userdata*)calloc(1, sizeof(*userdata));
+
+   if (!state || !userdata)
+      abort();
+
+   len       = write_stored_lfh(buf, "a.bin", payload, sizeof(payload), crc);
+   cd_start  = len;
+   len      += write_stored_cfh(buf + len, "a.bin", sizeof(payload), crc, 0);
+   len      += write_eocd(buf + len, 1, (uint32_t)(len - cd_start),
+         (uint32_t)cd_start);
+   put_u16(buf + len - 2, (uint16_t)clen);
+   if (clen)
+      memcpy(buf + len, comment, clen);
+   len      += clen;
+   write_file(tmp_path, buf, len);
+   if (lend)
+      lend_vfs(buf, (int64_t)len);
+
+   state->type = ARCHIVE_TRANSFER_INIT;
+   file_archive_parse_file_iterate(state, &returnerr, tmp_path, NULL,
+         NULL, userdata);
+   if (state->type != ARCHIVE_TRANSFER_ITERATE || state->torrentzip != want)
+   {
+      printf("[FAIL] %s: torrentzip %d, want %d\n", label,
+            (int)state->torrentzip, (int)want);
+      failures++;
+   }
+   else
+      printf("[SUCCESS] %s\n", label);
+   file_archive_parse_file_iterate_stop(state);
+   if (lend)
+      lend_vfs(NULL, 0);
+   remove(tmp_path);
+   free(state);
+   free(userdata);
+}
+
+static void test_torrentzip_comment(void)
+{
+   tz_check("TorrentZip comment, read", "TORRENTZIPPED-5C56B2DD",
+         false, true);
+   tz_check("other comment, read", "RVZSTD-250F05A8", false, false);
+   tz_check("long TorrentZip comment, read", "TORRENTZIPPED-5C56B2DD0",
+         false, false);
+   tz_check("22-byte other comment, read", "TORRENTZIPPXD-5C56B2DD",
+         false, false);
+   tz_check("no comment, read", NULL, false, false);
+#ifdef VFS_HAVE_FILE_MAPPING
+   tz_check("TorrentZip comment, mapped", "TORRENTZIPPED-5C56B2DD",
+         true, true);
+   tz_check("other comment, mapped", "RVZSTD-250F05A8", true, false);
+   tz_check("long TorrentZip comment, mapped", "TORRENTZIPPED-5C56B2DD0",
+         true, false);
+   tz_check("22-byte other comment, mapped", "TORRENTZIPPXD-5C56B2DD",
+         true, false);
+#endif
+}
+
+/* A transfer the zip reader last opened a TorrentZip with says no such
+ * thing of the next archive, whichever backend opens it. */
+static void test_torrentzip_not_carried(void)
+{
+   bool returnerr = false;
+   file_archive_transfer_t *state =
+      (file_archive_transfer_t*)calloc(1, sizeof(*state));
+   struct archive_extract_userdata *userdata =
+      (struct archive_extract_userdata*)calloc(1, sizeof(*userdata));
+
+   if (!state || !userdata)
+      abort();
+   write_file("tz_carried.7z", (const uint8_t*)"7z", 2);
+   state->torrentzip = true;
+   state->type       = ARCHIVE_TRANSFER_INIT;
+   file_archive_parse_file_iterate(state, &returnerr, "tz_carried.7z",
+         NULL, NULL, userdata);
+   if (state->torrentzip)
+   {
+      printf("[FAIL] TorrentZip flag carried over to the next archive\n");
+      failures++;
+   }
+   else
+      printf("[SUCCESS] TorrentZip flag not carried over\n");
+   file_archive_parse_file_iterate_stop(state);
+   remove("tz_carried.7z");
+   free(state);
+   free(userdata);
+}
+
 int main(void)
 {
    test_truncated_entry();
@@ -707,6 +1358,12 @@ int main(void)
    test_init_failure_cleanup();
    test_missing_member_terminates();
    test_missing_backend_reports_failure();
+   test_member_sequence_reuse();
+   test_member_crc_mismatch();
+   test_member_lent();
+   test_entry_source_bounds();
+   test_torrentzip_comment();
+   test_torrentzip_not_carried();
 
    if (failures)
    {

@@ -1,12 +1,14 @@
+include ../../sample_objdir.mk
+
 TARGET := faulthandler_test
 LIBRETRO_COMM_DIR := ../../..
 SOURCES := faulthandler_test.c \
 	$(LIBRETRO_COMM_DIR)/faulthandler/faulthandler.c \
 	$(LIBRETRO_COMM_DIR)/memmap/memmap.c \
 	$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
-CFLAGS  += -Wall -W -std=gnu99 -g -O1 -I$(LIBRETRO_COMM_DIR)/include -DHAVE_THREADS
+CFLAGS  += -Wall -W -std=gnu99 -g1 -O1 -I$(LIBRETRO_COMM_DIR)/include -DHAVE_THREADS
 LDFLAGS += -lpthread -lrt
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 ifneq ($(SAN),)
    SANITIZER := $(SAN)
 endif
@@ -17,10 +19,15 @@ endif
 all: $(TARGET)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 check: all
 	./$(TARGET)
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(OBJS) $(TARGET)
 .PHONY: all check clean

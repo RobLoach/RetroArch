@@ -27,7 +27,11 @@
 
 #define SDL_SUPPORTS_RUMBLE  SDL_VERSION_ATLEAST(2, 0, 9)
 #define SDL_SUPPORTS_SENSORS SDL_VERSION_ATLEAST(2, 0, 14)
+/* the _L sensors: a Wii Remote's Nunchuk, the left Joy-Con of a pair */
+#define SDL_SUPPORTS_SENSORS_L SDL_VERSION_ATLEAST(2, 26, 0)
+#define SDL_SUPPORTS_TOUCHPAD SDL_VERSION_ATLEAST(2, 0, 14)
 #define SDL_SUPPORTS_HIDAPI_WII SDL_VERSION_ATLEAST(2, 26, 0)
+#define SDL_SUPPORTS_HIDAPI_PS3 SDL_VERSION_ATLEAST(2, 26, 0)
 
 typedef struct _sdl2_joypad
 {
@@ -39,6 +43,7 @@ typedef struct _sdl2_joypad
    unsigned num_buttons;
    unsigned num_hats;
    unsigned num_balls;
+   uint8_t touch_fingers; /* the first touchpad's, at most two */
 } sdl2_joypad_t;
 
 /* TODO/FIXME - static globals */
@@ -81,9 +86,32 @@ static int16_t sdl2_pad_get_axis(sdl2_joypad_t *pad, unsigned axis)
 {
    /* TODO: see if a rarch <-> sdl translation is needed. */
    if (pad->controller)
+   {
+      /* SDL's HIDAPI driver for PS3 controllers exposes additional axes
+       * past the Controller API's six, representing pressure sensitive
+       * buttons. */
+      if (axis >= SDL_CONTROLLER_AXIS_MAX)
+      {
+         /* Ensure pressure sensitive buttons rest at 0, like triggers do. */
+         int32_t pressure = SDL_JoystickGetAxis(pad->joypad, axis);
+         return (int16_t)((pressure + 32768) / 2);
+      }
       return SDL_GameControllerGetAxis(pad->controller, (SDL_GameControllerAxis)axis);
+   }
    return SDL_JoystickGetAxis(pad->joypad, axis);
 }
+
+#if SDL_SUPPORTS_HIDAPI_PS3
+static bool sdl2_pad_has_pressure_axes(sdl2_joypad_t *pad,
+      int32_t vendor, int32_t product)
+{
+   /* 0x054c/0x0268 is a PS3 controller. */
+   return vendor  == 0x054c
+       && product == 0x0268
+       && SDL_GetHintBoolean(SDL_HINT_JOYSTICK_HIDAPI_PS3, SDL_FALSE)
+       && SDL_JoystickNumAxes(pad->joypad) > SDL_CONTROLLER_AXIS_MAX;
+}
+#endif
 
 static void sdl2_pad_connect(unsigned id)
 {
@@ -169,6 +197,14 @@ static void sdl2_pad_connect(unsigned id)
       pad->num_buttons = SDL_CONTROLLER_BUTTON_MAX;
       pad->num_hats    = 1;
       pad->num_balls   = 0;
+#if SDL_SUPPORTS_HIDAPI_PS3
+      if (sdl2_pad_has_pressure_axes(pad, vendor, product))
+      {
+         pad->num_axes = SDL_JoystickNumAxes(pad->joypad);
+         RARCH_LOG("[SDL] Pad #%u: reading %u pressure-sensitive button axes.\n",
+               id, pad->num_axes - SDL_CONTROLLER_AXIS_MAX);
+      }
+#endif
 
       /* SDL Device supports Game Controller API. */
    }
@@ -224,6 +260,14 @@ static void sdl2_pad_connect(unsigned id)
                id,
                has_accel ? "yes" : "no",
                has_gyro  ? "yes" : "no");
+   }
+#endif
+#if SDL_SUPPORTS_TOUCHPAD
+   if (pad->controller && SDL_GameControllerGetNumTouchpads(pad->controller) > 0)
+   {
+      int fingers        = SDL_GameControllerGetNumTouchpadFingers(pad->controller, 0);
+      pad->touch_fingers = (uint8_t)(fingers > INPUT_PAD_VIEW_TOUCHES
+            ? INPUT_PAD_VIEW_TOUCHES : fingers > 0 ? fingers : 0);
    }
 #endif
 }
@@ -355,6 +399,29 @@ static int32_t sdl2_joypad_button(unsigned port, uint16_t joykey)
    return sdl2_joypad_button_state(pad, port, joykey);
 }
 
+/* Every plain button of the pad at once, as sdl2_joypad_button()
+ * gives them one by one; hats are read through sdl2_joypad_button()
+ * with a hat key. This is what lets the frontend copy the pad once a
+ * poll (the snapshot bridge in input_driver.c): a core that reads its
+ * buttons one at a time made a call into SDL for each, and now this
+ * is the one walk of them a poll. */
+static void sdl2_joypad_get_buttons(unsigned port, input_bits_t *state)
+{
+   unsigned i, n;
+   sdl2_joypad_t *pad;
+
+   BIT256_CLEAR_ALL_PTR(state);
+   if (port >= MAX_USERS)
+      return;
+   pad = (sdl2_joypad_t*)&sdl2_pads[port];
+   if (!pad->joypad)
+      return;
+   n = (pad->num_buttons < 256) ? pad->num_buttons : 256;
+   for (i = 0; i < n; i++)
+      if (sdl2_pad_get_button(pad, i))
+         BIT256_SET_PTR(state, i);
+}
+
 static int16_t sdl2_joypad_axis_state(
       sdl2_joypad_t *pad,
       unsigned port, uint32_t joyaxis)
@@ -390,7 +457,8 @@ static int16_t sdl2_joypad_axis(unsigned port, uint32_t joyaxis)
 
 static int16_t sdl2_joypad_state(
       rarch_joypad_info_t *joypad_info,
-      const struct retro_keybind *binds,
+      const uint16_t *joykeys,
+      const uint32_t *joyaxes,
       unsigned port)
 {
    int i;
@@ -405,11 +473,8 @@ static int16_t sdl2_joypad_state(
 
    for (i = 0; i < RARCH_FIRST_CUSTOM_BIND; i++)
    {
-      /* Auto-binds are per joypad, not per user. */
-      const uint64_t joykey  = (binds[i].joykey != NO_BTN)
-         ? binds[i].joykey  : joypad_info->auto_binds[i].joykey;
-      const uint32_t joyaxis = (binds[i].joyaxis != AXIS_NONE)
-         ? binds[i].joyaxis : joypad_info->auto_binds[i].joyaxis;
+      const uint64_t joykey  = joykeys[i];
+      const uint32_t joyaxis = joyaxes[i];
       if (
                (uint16_t)joykey != NO_BTN
             && sdl2_joypad_button_state(pad, port_idx, (uint16_t)joykey)
@@ -452,14 +517,13 @@ static bool sdl2_joypad_set_rumble(unsigned pad, enum retro_rumble_effect effect
    SDL_HapticEffect efx;
    sdl2_joypad_t *joypad = (sdl2_joypad_t*)&sdl2_pads[pad];
 
-   memset(&efx, 0, sizeof(efx));
-
    if (!joypad->joypad)
       return false;
 
-   efx.type             = SDL_HAPTIC_LEFTRIGHT;
-   efx.leftright.type   = SDL_HAPTIC_LEFTRIGHT;
-   efx.leftright.length = 5000;
+   efx.leftright.type            = SDL_HAPTIC_LEFTRIGHT;
+   efx.leftright.length          = 5000;
+   efx.leftright.large_magnitude = 0;
+   efx.leftright.small_magnitude = 0;
 
    switch (effect)
    {
@@ -521,6 +585,31 @@ static bool sdl2_joypad_set_sensor_state(unsigned pad, enum retro_sensor_action 
    sdl2_joypad_t *joypad = (sdl2_joypad_t*)&sdl2_pads[pad];
    (void)joypad; /* maybe unused */
 
+   /* sensor sub-device 1 (RETRO_SENSOR_SUBDEVICE): the part in the
+    * left hand */
+   if (RETRO_SENSOR_INDEX(action))
+   {
+#if SDL_SUPPORTS_SENSORS_L
+      unsigned base = RETRO_SENSOR_BASE(action);
+      SDL_SensorType type;
+      if (RETRO_SENSOR_INDEX(action) != 1)
+         return false;
+      if (     base == RETRO_SENSOR_GYROSCOPE_ENABLE
+            || base == RETRO_SENSOR_GYROSCOPE_DISABLE)
+         type = SDL_SENSOR_GYRO_L;
+      else if (base == RETRO_SENSOR_ACCELEROMETER_ENABLE
+            || base == RETRO_SENSOR_ACCELEROMETER_DISABLE)
+         type = SDL_SENSOR_ACCEL_L;
+      else
+         return false;
+      if (SDL_GameControllerHasSensor(joypad->controller, type))
+         return !SDL_GameControllerSetSensorEnabled(joypad->controller, type,
+               (SDL_bool)(   base == RETRO_SENSOR_GYROSCOPE_ENABLE
+                          || base == RETRO_SENSOR_ACCELEROMETER_ENABLE));
+#endif
+      return false;
+   }
+
    switch (action)
    {
 #if SDL_SUPPORTS_SENSORS
@@ -553,9 +642,18 @@ static bool sdl2_joypad_get_sensor_input(unsigned pad, unsigned id, float *value
    sdl2_joypad_t *joypad = (sdl2_joypad_t*)&sdl2_pads[pad];
    SDL_SensorType sensor_type;
    float sensor_data[3];
+   unsigned idx = RETRO_SENSOR_INDEX(id);
 
    if (!joypad->controller)
       return false;
+#if SDL_SUPPORTS_SENSORS_L
+   if (idx > 1)
+      return false;
+#else
+   if (idx)
+      return false;
+#endif
+   id = RETRO_SENSOR_BASE(id);
 
    if ((id >= RETRO_SENSOR_ACCELEROMETER_X) && (id <= RETRO_SENSOR_ACCELEROMETER_Z))
       sensor_type = SDL_SENSOR_ACCEL;
@@ -563,6 +661,11 @@ static bool sdl2_joypad_get_sensor_input(unsigned pad, unsigned id, float *value
       sensor_type = SDL_SENSOR_GYRO;
    else
       return false;
+#if SDL_SUPPORTS_SENSORS_L
+   if (idx)
+      sensor_type = sensor_type == SDL_SENSOR_ACCEL
+         ? SDL_SENSOR_ACCEL_L : SDL_SENSOR_GYRO_L;
+#endif
 
    if (SDL_GameControllerGetSensorData(joypad->controller, sensor_type, sensor_data, 3) < 0)
       return false;
@@ -595,6 +698,41 @@ static bool sdl2_joypad_get_sensor_input(unsigned pad, unsigned id, float *value
 #endif
 }
 
+#if SDL_SUPPORTS_TOUCHPAD
+static bool sdl2_joypad_get_touchpad(unsigned pad, input_pad_view_t *view)
+{
+   unsigned i;
+   uint8_t down = 0;
+   SDL_GameController *controller;
+
+   if (     pad >= MAX_USERS
+         || !(controller = sdl2_pads[pad].controller)
+         || !sdl2_pads[pad].touch_fingers)
+      return false;
+
+   for (i = 0; i < sdl2_pads[pad].touch_fingers; i++)
+   {
+      Uint8 on;
+      float x, y;
+      if (     !SDL_GameControllerGetTouchpadFinger(controller, 0, (int)i,
+                  &on, &x, &y, NULL)
+            && on)
+      {
+         /* 0..1 across, as -0x7fff..0x7fff */
+         int32_t tx      = (int32_t)(x * 65534.0f) - 0x7fff;
+         int32_t ty      = (int32_t)(y * 65534.0f) - 0x7fff;
+         view->touch[i]  = (uint32_t)(uint16_t)(int16_t)tx
+                         | ((uint32_t)(uint16_t)(int16_t)ty << 16);
+         down           |= (uint8_t)(1 << i);
+      }
+   }
+   if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_TOUCHPAD))
+      down |= INPUT_PAD_TOUCH_PRESS;
+   view->touch_down = down;
+   return true;
+}
+#endif
+
 static bool sdl2_joypad_query_pad(unsigned pad)
 {
    return pad < MAX_USERS && sdl2_pads[pad].joypad;
@@ -606,7 +744,7 @@ input_device_driver_t sdl2_joypad = {
    sdl2_joypad_destroy,
    sdl2_joypad_button,
    sdl2_joypad_state,
-   NULL,                   /* get_buttons */
+   sdl2_joypad_get_buttons,
    sdl2_joypad_axis,
    sdl2_joypad_poll,
    sdl2_joypad_set_rumble,
@@ -614,5 +752,15 @@ input_device_driver_t sdl2_joypad = {
    sdl2_joypad_set_sensor_state,
    sdl2_joypad_get_sensor_input,
    sdl2_joypad_name,
-   "sdl2"
+   "sdl2",
+   NULL, /* get_bt_host */
+   NULL, /* set_bt_host */
+   NULL, /* survives_video */
+   NULL, /* set_player */
+   NULL, /* view */
+#if SDL_SUPPORTS_TOUCHPAD
+   sdl2_joypad_get_touchpad
+#else
+   NULL  /* get_touchpad */
+#endif
 };

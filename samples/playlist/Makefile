@@ -1,3 +1,5 @@
+include ../sample_objdir.mk
+
 TARGET := playlist_parity_test
 
 CORE_DIR          := ../..
@@ -33,13 +35,14 @@ SOURCES_C := \
 	$(LIBRETRO_COMM_DIR)/file/archive_file.c \
 	$(LIBRETRO_COMM_DIR)/file/archive_file_zlib.c \
 	$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
+	$(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 
-OBJECTS  := $(SOURCES_C:.c=.o)
+OBJECTS  := $(call sample_objs,$(SOURCES_C:.c=.o))
 
 DEFINES  := -DHAVE_COMPRESSION -DHAVE_ZLIB -DHAVE_THREADS -DRARCH_INTERNAL
 INCDIRS  := -I$(LIBRETRO_COMM_DIR)/include -I$(CORE_DIR)
-CFLAGS   += -Wall -std=gnu99 -g $(DEFINES) $(INCDIRS)
+CFLAGS   += -Wall -std=gnu99 -g1 $(DEFINES) $(INCDIRS)
 LDFLAGS  += -lz -lm -lpthread -Wl,--wrap=strdup
 
 # The samples workflow passes SANITIZER=address,undefined to every
@@ -54,10 +57,15 @@ all: $(TARGET)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 $(TARGET): $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJECTS)
 
 .PHONY: clean all

@@ -4,11 +4,12 @@
  * defaults without ever swapping the pointer other threads read. */
 #include "../../../configuration.c"
 #include "../../../libretro-common/compat/compat_strl.c"
+#include "../../../gfx/video_views.c"
 
 #include <stdio.h>
 
 struct defaults g_defaults;
-static global_t test_global;
+void RARCH_ERR(const char *fmt, ...) { (void)fmt; }
 
 bool *audio_get_bool_ptr(enum audio_action action)
 {
@@ -44,10 +45,12 @@ size_t fill_pathname_join(char *out, const char *dir, const char *path, size_t s
       n = 0;
    return n + strlcpy(out + n, path, size ? size - n : 0);
 }
-void input_config_reset(void) { }
+void input_config_reset_binds(void) { }
+void input_config_forget_controllers(void) { }
 void input_config_set_device(unsigned port, unsigned id) { (void)port; (void)id; }
 void input_remapping_deinit(bool save) { (void)save; }
 void input_remapping_set_defaults(bool clear) { (void)clear; }
+void input_remapping_defaults_into(struct settings *settings) { (void)settings; }
 bool path_is_directory(const char *path) { (void)path; return false; }
 bool path_mkdir(const char *dir) { (void)dir; return true; }
 recording_state_t *recording_state_get_ptr(void)
@@ -56,6 +59,7 @@ bool retroarch_ctl(enum rarch_ctl_state state, void *data)
 { (void)state; (void)data; return false; }
 bool retroarch_override_setting_is_set(enum rarch_override_setting enum_idx, void *data)
 { (void)enum_idx; (void)data; return false; }
+uint32_t retroarch_get_flags(void) { return 0; }
 
 int main(void)
 {
@@ -71,7 +75,7 @@ int main(void)
    live->bools.audio_enable        = false;
    live->floats.slowmotion_ratio   = 7.0f;
 
-   config_set_defaults(&test_global, target);
+   config_set_defaults(target);
 
    if (config_get_ptr() != live)
    { printf("FAIL: defaults moved config_get_ptr()\n"); return 1; }

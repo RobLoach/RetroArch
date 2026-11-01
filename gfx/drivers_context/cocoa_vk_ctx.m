@@ -71,7 +71,7 @@ void cocoa_main_thread_sync(void (*func)(void *userdata), void *userdata);
 static uint32_t cocoa_vk_gfx_ctx_get_flags(void *data)
 {
    uint32_t flags = 0;
-#if defined(HAVE_SLANG) && defined(HAVE_SPIRV_CROSS)
+#if defined(HAVE_SLANG) && (defined(HAVE_SPIRV_CROSS) || defined(HAVE_RSLC))
    BIT32_SET(flags, GFX_CTX_FLAGS_SHADERS_SLANG);
 #endif
    return flags;
@@ -118,11 +118,8 @@ static bool cocoa_vk_gfx_ctx_suppress_screensaver(void *data, bool disable)
 }
 
 static void cocoa_vk_gfx_ctx_input_driver(void *data,
-      const char *name,
-      input_driver_t **input, void **input_data)
+      const char *name)
 {
-   *input      = NULL;
-   *input_data = NULL;
 }
 
 #if TARGET_OS_OSX
@@ -540,6 +537,19 @@ static void cocoa_vk_gfx_ctx_get_video_output_size(void *data,
    cocoa_get_video_output_size(dims, desc, desc_len);
 }
 
+#if TARGET_OS_OSX
+/* The display's last vblank, from the view's display link
+ * (ui/drivers/cocoa/cocoa_common.m), for when the device has no
+ * display timing of its own to report. */
+retro_time_t cocoa_last_vblank_time(void);
+
+static retro_time_t cocoa_vk_gfx_ctx_last_present_time(void *data)
+{
+   (void)data;
+   return cocoa_last_vblank_time();
+}
+#endif
+
 const gfx_ctx_driver_t gfx_ctx_cocoavk = {
    cocoa_vk_gfx_ctx_init,
    cocoa_vk_gfx_ctx_destroy,
@@ -582,5 +592,10 @@ const gfx_ctx_driver_t gfx_ctx_cocoavk = {
    NULL, /* make_current */
    NULL, /* create_surface */
    NULL  /* destroy_surface */,
-   cocoa_vk_gfx_ctx_presentable
+   cocoa_vk_gfx_ctx_presentable,
+#if TARGET_OS_OSX
+   cocoa_vk_gfx_ctx_last_present_time
+#else
+   NULL  /* last_present_time */
+#endif
 };

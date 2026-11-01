@@ -46,6 +46,14 @@
 
 #define MAX_SERVER_STALL_TIME_USEC (5*1000*1000)
 #define MAX_CLIENT_STALL_TIME_USEC (10*1000*1000)
+/* Lockstep also waits out a joiner loading a large state */
+#define MAX_LOCKSTEP_STALL_TIME_USEC (30*1000*1000)
+/* A larger state, kept once per buffered frame, is too much to roll back */
+#define NETPLAY_LOCKSTEP_STATE_SIZE  (32*1024*1024)
+/* Lockstep hides network latency with input latency, up to this */
+#define NETPLAY_LOCKSTEP_LATENCY_MAX 8
+/* Frames with input to spare before lockstep lowers it again */
+#define NETPLAY_LOCKSTEP_CALM_FRAMES 300
 #define CATCH_UP_CHECK_TIME_USEC   (500*1000)
 #define MAX_RETRIES                16
 #define RETRY_MS                   500
@@ -65,6 +73,18 @@
 
 #define PREV_PTR(x) ((x) == 0 ? netplay->buffer_size - 1 : (x) - 1)
 #define NEXT_PTR(x) ((x + 1) % netplay->buffer_size)
+
+/* A joypad port sent as analog, so its sticks sync with its buttons.
+ * The core is still given the joypad device it asked for. */
+#define NETPLAY_DEVICE_ANALOG_JOYPAD_FLAG ((uint32_t)1 << 30)
+#define NETPLAY_DEVICE_ANALOG_JOYPAD(device) \
+   (((device) & ~(uint32_t)RETRO_DEVICE_MASK) | RETRO_DEVICE_ANALOG \
+    | NETPLAY_DEVICE_ANALOG_JOYPAD_FLAG)
+#define NETPLAY_DEVICE_FOR_CORE(device) \
+   (((device) & NETPLAY_DEVICE_ANALOG_JOYPAD_FLAG) \
+    ? (((device) & ~(NETPLAY_DEVICE_ANALOG_JOYPAD_FLAG \
+          | (uint32_t)RETRO_DEVICE_MASK)) | RETRO_DEVICE_JOYPAD) \
+    : (device))
 
 /* Quirks mandated by how particular cores save states. This is distilled from
  * the larger set of quirks that the quirks environment can communicate. */
@@ -266,7 +286,10 @@ enum rarch_netplay_stall_reason
    NETPLAY_STALL_INPUT_LATENCY,
 
    /* The server asked us to stall */
-   NETPLAY_STALL_SERVER_REQUESTED
+   NETPLAY_STALL_SERVER_REQUESTED,
+
+   /* Lockstep: waiting for every player's real input for this frame */
+   NETPLAY_STALL_LOCKSTEP
 };
 
 enum netplay_modus
@@ -321,10 +344,20 @@ struct delta_frame
    /* The serialized state of the core at this frame, before input */
    void *state;
 
+#ifdef HAVE_BSV_MOVIE
+   /* Allocated only while recording; never part of the wire protocol. */
+   struct netplay_bsv_frame *bsv;
+#endif
+
    uint32_t frame;
 
    /* The CRC-32 of the serialized state if we've calculated it, else 0 */
    uint32_t crc;
+
+   /* Lockstep: our CRC, taken before the frame ran; there is no state
+    * of this frame to take it from later */
+   uint32_t local_crc;
+   bool have_local_crc;
 
    /* Have we read local input? */
    bool have_local;
@@ -490,7 +523,7 @@ enum netplay_flags
    /* Are we the server? */
    NETPLAY_FLAG_IS_SERVER                     = (1 << 1),
    NETPLAY_FLAG_NAT_TRAVERSAL                 = (1 << 2),
-   /* Have we checked whether CRCs are valid at all? */
+   /* Has a check matched since the last state we loaded? */
    NETPLAY_FLAG_CRC_VALIDITY_CHECKED          = (1 << 3),
    /* Are they valid? */
    NETPLAY_FLAG_CRCS_VALID                    = (1 << 4),
@@ -511,7 +544,17 @@ enum netplay_flags
    /* Have we requested a savestate as a sync point? */
    NETPLAY_FLAG_SAVESTATE_REQUEST_OUTSTANDING = (1 << 12),
    /* Host settings */
-   NETPLAY_FLAG_ALLOW_PAUSING                 = (1 << 13)
+   NETPLAY_FLAG_ALLOW_PAUSING                 = (1 << 13),
+   /* A BSV recording is staging this frame's input queries */
+   NETPLAY_FLAG_BSV_CAPTURING                 = (1 << 14),
+   /* Joypad ports travel as analog (NETPLAY_DEVICE_ANALOG_JOYPAD) */
+   NETPLAY_FLAG_ANALOG_JOYPADS                = (1 << 15),
+   /* Run frames only on real input, never rewind: every delta frame
+    * shares lockstep_state */
+   NETPLAY_FLAG_LOCKSTEP                      = (1 << 16),
+   /* The host's core state is another size than ours, so a CRC over
+    * a whole state cannot agree */
+   NETPLAY_FLAG_STATE_CRC_UNUSABLE            = (1 << 17)
 };
 
 struct netplay
@@ -529,6 +572,8 @@ struct netplay
    retro_time_t catch_up_time;
    /* How long have we been stalled? */
    retro_time_t stall_time;
+   /* When the lockstep wait began; only a frame that runs resets it */
+   retro_time_t lockstep_stall_time;
 
    retro_time_t next_announce;
    retro_time_t next_ping;
@@ -558,6 +603,14 @@ struct netplay
 
    /* A buffer into which to compress frames for transfer */
    uint8_t *zbuffer;
+   /* Lockstep: the one state every delta frame points at */
+   void *lockstep_state;
+   /* Frames on which serializing for a joining peer failed */
+   uint32_t lockstep_state_failures;
+   /* The frame lockstep last raised input latency on, and the frames
+    * since it last waited */
+   uint32_t lockstep_raised_frame;
+   uint32_t lockstep_calm_frames;
 
    size_t connections_size;
    size_t buffer_size;
@@ -634,6 +687,8 @@ struct netplay
 
    /* Frequency with which to check CRCs */
    uint32_t check_frames;
+   /* The frame of the last state loaded from the host */
+   uint32_t crc_load_frame;
 
    /* How far behind did we fall? */
    uint32_t catch_up_behind;
@@ -678,7 +733,7 @@ struct netplay
    /* Our nickname */
    char nick[NETPLAY_NICK_LEN];
 
-   uint16_t flags; /* enum netplay_flags */
+   uint32_t flags; /* enum netplay_flags */
 };
 
 void video_frame_net(const void *data,

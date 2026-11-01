@@ -16,9 +16,12 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <time.h>
 #include <errno.h>
+#include <limits.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <math.h>
 
 #include <android/keycodes.h>
 
@@ -41,7 +44,20 @@
 
 #include "../../command.h"
 #include "../../frontend/drivers/platform_unix.h"
+#include "android_pad_removed.h"
+#include "android_groups.h"
+#include "android_poll_wait.h"
+#include "android_press_group.h"
+#include "android_poll_changes.h"
 #include "../drivers_keyboard/keyboard_event_android.h"
+#include "android_kbd_route.h"
+#ifdef HAVE_OPENXR
+#include "../common/input_openxr.h"
+#endif
+#include "android_key_state.h"
+#include "android_stylus_map.h"
+#include "../common/output_writer.h"
+#include "../common/overlay_contact.h"
 #include "../../tasks/tasks_internal.h"
 #include "../../performance_counters.h"
 
@@ -56,7 +72,6 @@
 #include "../../gfx/video_thread_wrapper.h"
 #endif
 
-#define MAX_TOUCH 16
 #define MAX_NUM_KEYBOARDS 3
 #define DEFAULT_ASENSOR_EVENT_RATE 60
 
@@ -68,9 +83,16 @@ enum {
     AMOTION_EVENT_BUTTON_TERTIARY = 1 << 2,
     AMOTION_EVENT_BUTTON_BACK = 1 << 3,
     AMOTION_EVENT_BUTTON_FORWARD = 1 << 4,
+    AMOTION_EVENT_BUTTON_STYLUS_PRIMARY = 1 << 5,
+    AMOTION_EVENT_BUTTON_STYLUS_SECONDARY = 1 << 6,
     AMOTION_EVENT_AXIS_VSCROLL = 9,
+    AMOTION_EVENT_AXIS_DISTANCE = 24,
     AMOTION_EVENT_ACTION_HOVER_MOVE = 7,
-    AINPUT_SOURCE_STYLUS = 0x00004000
+    AMOTION_EVENT_ACTION_HOVER_ENTER = 9,
+    AMOTION_EVENT_ACTION_HOVER_EXIT = 10,
+    AINPUT_SOURCE_STYLUS = 0x00004000,
+    AMOTION_EVENT_TOOL_TYPE_FINGER = 1,
+    AMOTION_EVENT_TOOL_TYPE_STYLUS = 2
 };
 #endif
 /* If using an NDK lower than 16b then add missing definition */
@@ -103,8 +125,51 @@ enum {
  * Every bit index used against a row must be < LAST_KEYCODE;
  * writers bound incoming keycodes, readers bound bind keysyms. */
 static uint8_t android_key_state[DEFAULT_MAX_PADS + 1][MAX_KEYS];
+/* A poll keeps track of every key of every row (android_poll_changes.h) */
+typedef char android_poll_changes_rows_check[
+   (     ANDROID_POLL_CHANGES_ROWS      >= DEFAULT_MAX_PADS + 1
+      && ANDROID_POLL_CHANGES_KEY_BYTES >= MAX_KEYS) ? 1 : -1];
 
-#define ANDROID_KEYBOARD_PORT_INPUT_PRESSED(binds, id) (BIT_GET(android_key_state[ANDROID_KEYBOARD_PORT], rarch_keysym_lut[RETRO_KEYBIND_KEY(&(binds)[(id)])]))
+/* each pad's presses kept back by the input block timeout, and the
+ * timeout for this poll, in ns: 0 keeps nothing back */
+static android_press_group_t android_press_group[DEFAULT_MAX_PADS];
+static int64_t android_press_window_ns;
+typedef char android_press_group_fits[
+   (MAX_KEYS <= ANDROID_PRESS_GROUP_BYTES) ? 1 : -1];
+
+/* Samsung S-Pen firmware emits phantom touchscreen DOWN events shortly
+ * after a hover ends. arm() records the last hover point and a deadline;
+ * drop() returns true for incoming touches inside that spatial/temporal
+ * window so the caller can discard them. */
+static bool     g_hover_guard_active = false;
+static int64_t  g_hover_guard_until_ms = 0;
+static float    g_hover_guard_x = 0.0f, g_hover_guard_y = 0.0f;
+
+static void hover_guard_arm(float x, float y, int64_t now_ms, int guard_ms)
+{
+   g_hover_guard_active = true;
+   g_hover_guard_until_ms = now_ms + guard_ms;
+   g_hover_guard_x = x;
+   g_hover_guard_y = y;
+#ifdef DEBUG_ANDROID_INPUT
+   RARCH_LOG("[RA Input] Hover guard ARMED at (%.1f,%.1f) for %dms\n",
+             x, y, guard_ms);
+#endif
+}
+
+static bool hover_guard_drop(float x, float y, int64_t now_ms, float eps_px)
+{
+   if (!g_hover_guard_active)
+      return false;
+   if (now_ms > g_hover_guard_until_ms)
+   {
+      g_hover_guard_active = false;
+      return false;
+   }
+   return (fabsf(x - g_hover_guard_x) <= eps_px &&
+           fabsf(y - g_hover_guard_y) <= eps_px);
+}
+
 
 #define ANDROID_KEYBOARD_INPUT_PRESSED(key) (BIT_GET(android_key_state[0], (key)))
 
@@ -120,15 +185,16 @@ typedef struct
    float z;
 } sensor_t;
 
+/* A touch's position three ways, each x, y as VIDEO_POS_PACK: in the
+ * viewport, confined to it, and in the whole screen. */
 struct input_pointer
 {
-   int16_t x, y;
-   int16_t confined_x, confined_y;
-   int16_t full_x, full_y;
+   uint32_t pos;
+   uint32_t confined_pos;
+   uint32_t full_pos;
 };
 
-static int pad_id1 = -1;
-static int pad_id2 = -1;
+static input_groups_t android_groups;
 static int kbd_id[MAX_NUM_KEYBOARDS];
 static int kbd_num = 0;
 
@@ -146,21 +212,19 @@ enum
    AXIS_BRAKE    = 23
 };
 
-typedef struct state_device
-{
-   int id;
-   int port;
-   char name[256];
-} state_device_t;
-
 typedef struct android_input
 {
    int64_t quick_tap_time;
+   /* 120ms window after any stylus event during which the touchscreen
+    * quick-tap emulation is suppressed. */
+   bool    stylus_proximity_active;
+   int64_t stylus_proximity_until_ns;
+   android_stylus_state_t stylus;      /* What the pen is holding (android_stylus_map.h) */
    state_device_t pad_states[MAX_USERS];        /* int alignment */
-   int mouse_x, mouse_y;
-   int16_t mouse_x_viewport_screen, mouse_y_viewport_screen;
-   int16_t mouse_x_viewport, mouse_y_viewport;
-   int mouse_x_delta, mouse_y_delta;
+   uint32_t mouse_pos;     /* VIDEO_POS_PACK */
+   uint32_t mouse_viewport_screen_pos;   /* VIDEO_POS_PACK */
+   uint32_t mouse_viewport_pos;          /* VIDEO_POS_PACK */
+   uint32_t mouse_delta;   /* VIDEO_POS_PACK */
    int mouse_l, mouse_r, mouse_m, mouse_wu, mouse_wd;
    bool mouse_activated;
    unsigned pads_connected;
@@ -169,16 +233,48 @@ typedef struct android_input
    sensor_t gyroscope_state;                    /* float alignment */
    float mouse_x_prev, mouse_y_prev;
    struct input_pointer pointer[MAX_TOUCH];     /* int16_t alignment */
+   /* each pointer's contact, kept in step with pointer[] and handed to
+    * the frontend each poll (input_driver_publish_touch_contacts) */
+   uint32_t contact[MAX_TOUCH];
+   int16_t contact_angle[MAX_TOUCH];
+   /* The second display's fingers (RARCH_DEVICE_POINTER_SECOND), by the
+    * order they went down */
+   struct input_pointer second_pointer[MAX_TOUCH];
+   int32_t second_pointer_id[MAX_TOUCH];
+   unsigned second_pointer_count;
+   /* The bound_surface those fingers are on */
+   int32_t second_surface;
+   /* What this poll has changed */
+   android_poll_changes_t changes;
    char device_model[256];
 } android_input_t;
 
+static void android_stylus_proximity_check_expire(android_input_t *android)
+{
+   if (android->stylus_proximity_active)
+   {
+      retro_time_t now = cpu_features_get_time_usec();
+      if (now / 1000 > android->stylus_proximity_until_ns / 1000000)
+         android->stylus_proximity_active = false;
+   }
+}
+
 bool (*engine_lookup_name)(char *buf,
       int *vendorId, int *productId, size_t len, int id);
-void (*engine_handle_dpad)(struct android_app *, AInputEvent*, int, int);
 
-static void android_input_poll_input_gingerbread(android_input_t *android);
-static void android_input_poll_input_default(android_input_t *android);
-static void (*android_input_poll_input)(android_input_t *android);
+/* Nanosecond timestamp of the most recent stylus event; queried by
+ * android_input_stylus_recently_active() so runloop.c can auto-hide the
+ * touch overlay while the S-Pen is in use. */
+int64_t g_android_stylus_last_event_ns = 0;
+
+bool android_input_stylus_recently_active(void)
+{
+   int64_t now_ns = (int64_t)cpu_features_get_time_usec() * 1000;
+   return (now_ns - g_android_stylus_last_event_ns) < 2000000000LL; /* 2 s */
+}
+
+static void android_input_reader_set_queue(struct android_app *android_app,
+      AInputQueue *queue);
 
 static bool android_input_set_sensor_state(void *data, unsigned port,
       enum retro_sensor_action action, unsigned event_rate);
@@ -200,6 +296,18 @@ extern int32_t AMotionEvent_getButtonState(const AInputEvent* motion_event);
 static typeof(AMotionEvent_getButtonState) *p_AMotionEvent_getButtonState;
 
 #define AMotionEvent_getButtonState (*p_AMotionEvent_getButtonState)
+
+extern int32_t AMotionEvent_getToolType(const AInputEvent* motion_event, size_t pointer_index);
+
+static typeof(AMotionEvent_getToolType) *p_AMotionEvent_getToolType;
+
+#define AMotionEvent_getToolType (*p_AMotionEvent_getToolType)
+
+extern float AMotionEvent_getPressure(const AInputEvent* motion_event, size_t pointer_index);
+
+static typeof(AMotionEvent_getPressure) *p_AMotionEvent_getPressure;
+
+#define AMotionEvent_getPressure (*p_AMotionEvent_getPressure)
 
 #ifdef HAVE_DYLIB
 static void *libandroid_handle;
@@ -227,7 +335,7 @@ static void *libandroid_handle;
  * publication. The session fields below the mailbox - the line
  * buffer and its cursors, the callback, the open flag's writers -
  * all live on the input thread alone. */
-#define ANDROID_KBD_BUFFER_SIZE 512
+#define ANDROID_KBD_BUFFER_SIZE INPUT_NATIVE_KEYBOARD_BUFFER_SIZE
 
 struct android_kbd_msg
 {
@@ -294,6 +402,17 @@ JNIEXPORT void JNICALL Java_com_retroarch_browser_retroactivity_RetroActivityCom
       free(stale);
 }
 
+/* Input devices the OS has removed, on their way from the UI thread
+ * to the input thread (see android_pad_removed.h). */
+static android_removed_box_t android_removed_box;
+
+/* Called by Java (RetroActivityCommon.onInputDeviceRemoved). */
+JNIEXPORT void JNICALL Java_com_retroarch_browser_retroactivity_RetroActivityCommon_inputDeviceRemoved(
+      JNIEnv *env, jobject this_obj, jint device_id)
+{
+   android_removed_post(&android_removed_box, (int)device_id);
+}
+
 bool android_keyboard_start(char **buffer_ptr, size_t *size_ptr,
       size_t *ptr_ptr, const char *label,
       input_keyboard_line_complete_t cb, void *userdata)
@@ -315,6 +434,8 @@ bool android_keyboard_start(char **buffer_ptr, size_t *size_ptr,
    else
       allocated[0] = '\0';
 
+   free(*buffer_ptr);
+
    /* Repoint the keyboard line at our buffer; it is freed later by
     * input_keyboard_line_free(), mirroring the iOS path. */
    *buffer_ptr = allocated;
@@ -335,7 +456,7 @@ bool android_keyboard_start(char **buffer_ptr, size_t *size_ptr,
 
    /* Suppress the built-in OSK for as long as the IME owns the line;
     * without this both are drawn at once and both consume input. */
-   input_state_get_ptr()->flags |= INP_FLAG_NATIVE_KB_SHOWN;
+   input_driver_set_native_keyboard_shown(true);
 
    if ((env = jni_thread_getenv()))
    {
@@ -365,7 +486,7 @@ void android_keyboard_end(void)
    if (!retro_atomic_load_relaxed_int(&android_kbd_open))
       return;
 
-   input_state_get_ptr()->flags &= ~INP_FLAG_NATIVE_KB_SHOWN;
+   input_driver_set_native_keyboard_shown(false);
 
    /* Close the gate first, then clear the session: the UI thread
     * checks the gate before producing, and anything that races past
@@ -423,8 +544,6 @@ void android_keyboard_poll(void)
 
    if (finished)
    {
-      input_driver_state_t *input_st = input_state_get_ptr();
-
       /* Mirror the iOS completion block: fire the callback (NULL line
        * on cancel), then release the keyboard line and unblock hotkeys.
        * The callback closes the dialog, which hides the soft keyboard
@@ -432,11 +551,7 @@ void android_keyboard_poll(void)
       if (cb)
          cb(userdata, cancel ? NULL : buffer);
 
-      if (input_st)
-      {
-         input_keyboard_line_free(input_st);
-         input_st->flags &= ~INP_FLAG_KB_MAPPING_BLOCKED;
-      }
+      input_driver_keyboard_line_end();
 
       /* The callback normally closes the dialog (-> android_keyboard_end),
        * which clears our state. If it did not, drop the now-freed buffer
@@ -447,7 +562,7 @@ void android_keyboard_poll(void)
          android_kbd_buffer = NULL;
          retro_atomic_store_release_int(&android_kbd_open, 0);
          android_kbd_drain_pending();
-         input_state_get_ptr()->flags &= ~INP_FLAG_NATIVE_KB_SHOWN;
+         input_driver_set_native_keyboard_shown(false);
       }
    }
 }
@@ -619,159 +734,229 @@ bool android_input_can_be_keyboard(void *data, int port)
     state_device_t *device = &android->pad_states[port];
     if (!device->id && !*device->name)
         return false;
+    if (device->id == ANDROID_PAD_ID_REMOVED)
+        return false;
 
     return android_input_can_be_keyboard_jni(device->id);
 }
 
-#ifdef HAVE_THREADS
-/* EGL bindings are per-thread. Under threaded video the context is made
- * current on the video thread, so an eglMakeCurrent() issued from here
- * releases this thread's (empty) binding and leaves the surface current
- * on the worker - and a later create_surface() would bind the same
- * context a second time, on a second thread. Both entry points therefore
- * run where the context lives. */
-static uintptr_t android_ctx_create_surface_cb(void *data)
-{
-   video_driver_state_t *state = video_state_get_ptr();
-
-   if (!state->current_video_context.create_surface)
-      return 0;
-
-   return state->current_video_context.create_surface(data) ? 1 : 0;
-}
-
-static uintptr_t android_ctx_destroy_surface_cb(void *data)
-{
-   video_driver_state_t *state = video_state_get_ptr();
-
-   if (state->current_video_context.destroy_surface)
-      state->current_video_context.destroy_surface(data);
-
-   return 0;
-}
-#endif
-
-static void android_input_destroy_surface(video_driver_state_t *state)
-{
-   if (!state || !state->current_video_context.destroy_surface)
-      return;
-
-#ifdef HAVE_THREADS
-   /* The video worker may still be recording a frame that references the
-    * surface. Drain it before the context driver frees the surface. */
-   video_thread_wait_idle();
-
-   /* Dispatches to the video thread, or calls straight through when the
-    * wrapper is inactive or this already is the video thread. */
-   video_thread_texture_handle(state->context_data,
-         android_ctx_destroy_surface_cb);
-#else
-   state->current_video_context.destroy_surface(state->context_data);
-#endif
-}
-
-/* Set once the pause-time flush has been performed, cleared again on
- * resume. A pause -> resume -> pause cycle therefore flushes twice, but a
- * duplicate APP_CMD_PAUSE does not rewrite the config a second time. */
+/* Set once the background flush has been performed, cleared again on
+ * start or resume. A pause -> resume -> pause cycle therefore flushes
+ * twice, but a duplicate APP_CMD_PAUSE, or the APP_CMD_STOP that follows
+ * it, does not rewrite the config a second time. */
 static bool android_state_flushed = false;
 
-/* Set by the APP_CMD_PAUSE handler, consumed by
+/* Set by the APP_CMD_PAUSE and APP_CMD_STOP handlers, consumed by
  * android_input_flush_pending_state() at the top of the next runloop
  * iteration. */
 static bool android_state_flush_pending = false;
 
-/* Set by the keypress haptic callback, consumed by
- * android_input_flush_pending_haptics() at the top of the next runloop
- * iteration. Cleared by the lifecycle handlers: the runloop blocks in the
- * poll while backgrounded, so a press left pending would otherwise be
- * delivered on the resume that follows. */
-static bool android_keypress_vibrate_pending = false;
+/* APP_CMD_PAUSE or APP_CMD_STOP whose acknowledgement is held back until
+ * the flush has run, or -1. See android_input_flush_pending_state(). */
+static int android_state_ack_cmd = -1;
 
-/* Android may reclaim the process at any point after onPause() has
- * returned. onDestroy() is not guaranteed to run at all - in particular,
- * swiping the task away from Recents never delivers it - so onPause() is
- * the last callback that can be relied upon.
+/* Set by the keypress haptic callback and taken by the haptic thread
+ * at once - or, with no thread, by android_input_flush_pending_haptics()
+ * at the top of the next runloop iteration. Cleared by the lifecycle
+ * handlers: the runloop blocks in the poll while backgrounded, so a
+ * press left pending would otherwise be delivered on the resume that
+ * follows. */
+static retro_atomic_int_t android_keypress_vibrate_pending;
+/* The thread that makes the buzz the moment a press asks for it, not a
+ * frame later: the press can come on a core's libco stack, where Java
+ * is not to be entered, and the runloop's top is up to a frame away. */
+static input_output_writer_t *android_haptic_writer;
+static void android_input_haptic_writer_cb(void *userdata, bool last);
+
+/* Hands a held-back APP_CMD_PAUSE/APP_CMD_STOP acknowledgement to the
+ * lifecycle callback waiting for it in android_app_set_activity_state(). */
+static void android_input_release_state_ack(struct android_app *android_app)
+{
+   if (android_state_ack_cmd < 0 || !android_app)
+      return;
+
+   android_lifecycle_set_state(&android_app->lc, android_state_ack_cmd);
+
+   android_state_ack_cmd = -1;
+}
+
+/* Swiping the task away from Recents and the low-memory killer end the
+ * process with SIGKILL, and a QUITFOCUS launch exits from the Java side's
+ * onStop(); onDestroy() is not delivered first in any of them, so
+ * retroarch_main_quit() never runs. What Android does
+ * guarantee is ordering: a task removed while RetroArch is in the
+ * foreground is killed only once the process drops to the background,
+ * which is after onPause() has returned, and a stopped process is only
+ * reclaimed after onStop() has returned.
  *
- * Everything that would otherwise only be written by retroarch_main_quit()
- * is therefore flushed here instead, so that settings survive the process
- * being killed without the user having to invoke 'Quit RetroArch'.
+ * APP_CMD_PAUSE and APP_CMD_STOP are therefore acknowledged only after
+ * the flush has run. The lifecycle callback waiting in
+ * android_app_set_activity_state() does not return until then, so the
+ * files are on disk before the process can be killed.
  *
  * Called from the runloop rather than from the command handler: the
  * command pipe is drained by android_input_poll(), which a core reaches
  * through the input poll callback, so a flush performed there would read
- * core memory and rewrite the config from inside retro_run(). One frame
- * of latency is well inside the window Android allows after onPause(). */
+ * core memory and rewrite the config from inside retro_run(). */
 void android_input_flush_pending_state(void)
 {
-   settings_t *settings        = config_get_ptr();
-   runloop_state_t *runloop_st = runloop_state_get_ptr();
-
    if (!android_state_flush_pending)
       return;
    android_state_flush_pending = false;
 
-   if (android_state_flushed)
-      return;
-   android_state_flushed = true;
-
-   /* Config subsystem is not up yet - nothing to persist. */
-   if (!settings)
-      return;
-
-   /* SRAM first: it is the more expensive of the two, and the more
-    * painful to lose. Non-SRAM cores make this a no-op.
-    *
-    * Only flush while content is actually loaded. APP_CMD_PAUSE can be
-    * delivered while frontend_unix_init() is still pumping events
-    * waiting for the window (activity created, then immediately
-    * backgrounded / screen locked), long before any core exists - and,
-    * worse, while a previous activity instance in the same process may
-    * still be mid-teardown, leaving runloop_state.current_core in a
-    * transient state. There is nothing to save in either case:
-    * CMD_EVENT_SAVE_FILES exists to persist SRAM and game-specific
-    * cheats, both of which require loaded content. */
-   if (runloop_st->current_core.flags & RETRO_CORE_FLAG_GAME_LOADED)
-      command_event(CMD_EVENT_SAVE_FILES, NULL);
-
-   /* Core options: written unconditionally on core unload, so not
-    * gated on config_save_on_exit here either. Without this, option
-    * changes are lost whenever the process is killed in the
-    * background, e.g. swiped away from Recents. No-op when no core
-    * with options is loaded. */
-   runloop_core_options_save();
-
-   if (settings->bools.config_save_on_exit)
+   if (!android_state_flushed)
    {
-      video_driver_state_t *video_st = video_state_get_ptr();
-      char live_driver[32];
+      android_state_flushed = true;
+      retroarch_save_for_suspend();
+   }
 
-      live_driver[0] = '\0';
+   android_input_release_state_ack(g_android);
+}
 
-      /* A core that forces its own renderer overwrites video_driver
-       * with the forced name and parks the configured one in
-       * cached_driver_id. Writing the config in that state persists the
-       * core's choice as the user's, so a driver picked from the menu
-       * is silently replaced by whatever the last loaded core wanted.
-       * main_exit() restores the cached name before it saves; do the
-       * same here.
-       *
-       * Unlike main_exit(), swap the live value back afterwards: the
-       * activity may be resumed, and the renderer actually in use does
-       * not change just because the app went to the background. */
-      if (video_st->cached_driver_id[0])
+/* RetroArch gained the focus (android_focus.h) */
+static void android_input_focus_gained(struct android_app *android_app)
+{
+   bool sensors_allowed         = input_config_get_sensors_enable();
+   /* Re-enable sensors that were disabled on focus loss */
+   bool enable_accelerometer   = (android_app->sensor_state_mask &
+         (UINT64_C(1) << RETRO_SENSOR_ACCELEROMETER_DISABLE));
+   bool enable_gyroscope       = (android_app->sensor_state_mask &
+         (UINT64_C(1) << RETRO_SENSOR_GYROSCOPE_DISABLE));
+
+   /* On first focus (no sensor state yet), enable if setting is on.
+    * This handles shader sensor access without going through cores.
+    * Default to enabling if settings aren't loaded yet (first launch). */
+   if (!enable_accelerometer &&
+       !(android_app->sensor_state_mask & (UINT64_C(1) << RETRO_SENSOR_ACCELEROMETER_ENABLE)))
+   {
+      if (sensors_allowed)
+         enable_accelerometer = true;
+   }
+   if (!enable_gyroscope &&
+       !(android_app->sensor_state_mask & (UINT64_C(1) << RETRO_SENSOR_GYROSCOPE_ENABLE)))
+   {
+      if (sensors_allowed)
+         enable_gyroscope = true;
+   }
+
+   if (!sensors_allowed)
+   {
+      enable_accelerometer = false;
+      enable_gyroscope     = false;
+   }
+
+   runloop_set_platform_paused(false);
+   video_driver_unset_stub_frame();
+
+   /* Try to enable sensors via input driver. If that fails before the
+    * input driver has initialized, enable directly via sensor API. */
+   if (enable_accelerometer)
+   {
+      if (!input_set_sensor_state(0,
+            RETRO_SENSOR_ACCELEROMETER_ENABLE,
+            android_app->accelerometer_event_rate) &&
+          !android_app->input_alive)
       {
-         strlcpy(live_driver, settings->arrays.video_driver,
-               sizeof(live_driver));
-         configuration_set_string(settings,
-               settings->arrays.video_driver,
-               video_st->cached_driver_id);
+         /* Input driver not ready — enable sensor directly */
+         unsigned rate = android_app->accelerometer_event_rate;
+         if (rate == 0)
+            rate = DEFAULT_ASENSOR_EVENT_RATE;
+         android_input_enable_sensor_manager(android_app);
+         if (android_enable_sensor(android_app,
+               android_app->accelerometerSensor, rate,
+               RETRO_SENSOR_ACCELEROMETER_ENABLE,
+               RETRO_SENSOR_ACCELEROMETER_DISABLE))
+            android_app->accelerometer_event_rate = rate;
       }
+   }
 
-      command_event(CMD_EVENT_MENU_SAVE_CURRENT_CONFIG, NULL);
+   if (enable_gyroscope)
+   {
+      if (!input_set_sensor_state(0,
+            RETRO_SENSOR_GYROSCOPE_ENABLE,
+            android_app->gyroscope_event_rate) &&
+          !android_app->input_alive)
+      {
+         /* Input driver not ready — enable sensor directly */
+         unsigned rate = android_app->gyroscope_event_rate;
+         if (rate == 0)
+            rate = DEFAULT_ASENSOR_EVENT_RATE;
+         android_input_enable_sensor_manager(android_app);
+         if (android_enable_sensor(android_app,
+               android_app->gyroscopeSensor, rate,
+               RETRO_SENSOR_GYROSCOPE_ENABLE,
+               RETRO_SENSOR_GYROSCOPE_DISABLE))
+            android_app->gyroscope_event_rate = rate;
+      }
+   }
 
-      if (live_driver[0])
-         configuration_set_string(settings,
-               settings->arrays.video_driver, live_driver);
+   /* Start gravity-based orientation detection (once per app launch only).
+    * Samples accelerometer data over ~30 frames to determine which axis
+    * gravity is on, detecting both display rotation and sensor IC
+    * misalignment automatically. */
+   if (!android_app->gravity_calibrated)
+   {
+      android_app->gravity_accum_x      = 0.0f;
+      android_app->gravity_accum_y      = 0.0f;
+      android_app->gravity_sample_count = 0;
+   }
+   else
+   {
+      /* Gravity already calibrated (not first launch),
+       * start rest position capture immediately */
+      input_sensor_start_rest_capture();
+   }
+   /* No waiter: onWindowFocusChanged() posts the command and
+    * returns without blocking, so the lock and broadcast only
+    * guarded this one scalar. The field is atomic now. */
+   retro_atomic_store_release_int(&android_app->unfocused, 0);
+}
+
+/* RetroArch lost the focus */
+static void android_input_focus_lost(struct android_app *android_app)
+{
+   bool disable_accelerometer  = (android_app->sensor_state_mask &
+         (UINT64_C(1) << RETRO_SENSOR_ACCELEROMETER_ENABLE)) &&
+               android_app->accelerometerSensor;
+   bool disable_gyroscope      = (android_app->sensor_state_mask &
+         (UINT64_C(1) << RETRO_SENSOR_GYROSCOPE_ENABLE)) &&
+               android_app->gyroscopeSensor;
+
+   retro_atomic_store_release_int(&android_keypress_vibrate_pending, 0);
+   runloop_set_platform_paused(true);
+   video_driver_set_stub_frame();
+
+   /* Avoid draining battery while app is not being used. */
+   if (disable_accelerometer)
+      input_set_sensor_state(0,
+            RETRO_SENSOR_ACCELEROMETER_DISABLE,
+            android_app->accelerometer_event_rate);
+
+   if (disable_gyroscope)
+      input_set_sensor_state(0,
+            RETRO_SENSOR_GYROSCOPE_DISABLE,
+            android_app->gyroscope_event_rate);
+
+   /* No waiter: onWindowFocusChanged() posts the command and
+    * returns without blocking, so the lock and broadcast only
+    * guarded this one scalar. The field is atomic now. */
+   retro_atomic_store_release_int(&android_app->unfocused, 1);
+}
+
+/* After a poll's rings and commands: acted on once, and only when the
+ * focus of the two windows changed */
+static void android_input_focus_settle(struct android_app *android_app)
+{
+   switch (android_focus_settle(&android_app->focus))
+   {
+      case ANDROID_FOCUS_GAIN:
+         android_input_focus_gained(android_app);
+         break;
+      case ANDROID_FOCUS_LOSE:
+         android_input_focus_lost(android_app);
+         break;
+      default:
+         break;
    }
 }
 
@@ -779,46 +964,30 @@ static void android_input_poll_main_cmd(void)
 {
    int8_t cmd;
    ssize_t ret;
+   struct android_app_msg msg;
    struct android_app *android_app = (struct android_app*)g_android;
 
    /* A command dropped here is never acknowledged, and a lifecycle
     * callback waiting on it would block the Java UI thread until
-    * ActivityManager gives up. Retry rather than lose the byte. */
+    * ActivityManager gives up. Retry rather than lose it. A record is
+    * written whole, so it is read whole or not at all. */
    do
    {
-      ret = read(android_app->msgread, &cmd, sizeof(cmd));
+      ret = read(android_app->msgread, &msg, sizeof(msg));
    } while (ret < 0 && errno == EINTR);
 
-   if (ret != (ssize_t)sizeof(cmd))
-      cmd = -1;
+   cmd = (ret == (ssize_t)sizeof(msg)) ? msg.cmd : -1;
 
    switch (cmd)
    {
       case APP_CMD_REINIT_DONE:
-         slock_lock(android_app->mutex);
-
          android_app->reinitRequested = 0;
-
-         scond_broadcast(android_app->cond);
-         slock_unlock(android_app->mutex);
          break;
 
       case APP_CMD_INPUT_CHANGED:
-         slock_lock(android_app->mutex);
-
-         if (android_app->inputQueue)
-            AInputQueue_detachLooper(android_app->inputQueue);
-
-         android_app->inputQueue = android_app->pendingInputQueue;
-
-         if (android_app->inputQueue)
-            AInputQueue_attachLooper(android_app->inputQueue,
-                  android_app->looper, LOOPER_ID_INPUT, NULL,
-                  NULL);
-
-         android_app->done_seq++;
-         scond_broadcast(android_app->cond);
-         slock_unlock(android_app->mutex);
+         /* answered by the input reader, once it lets go of the old
+          * queue */
+         android_input_reader_set_queue(android_app, (AInputQueue*)msg.arg);
 
          /* The set of attached input devices has changed, so a cached
           * KeyCharacterMap may now belong to a device that is gone or
@@ -829,12 +998,17 @@ static void android_input_poll_main_cmd(void)
          break;
 
       case APP_CMD_INIT_WINDOW:
-         slock_lock(android_app->mutex);
-         android_app->window = android_app->pendingWindow;
+         android_lifecycle_window_set(&android_app->lc, msg.arg);
+#ifdef HAVE_OPENXR
+         /* A headset's own context keeps its session across window
+          * recreation, so a new window must not tear it down. Asked of
+          * the context driver. */
+         if (!video_context_driver_headset_inline())
+            android_app->reinitRequested = 1;
+#else
          android_app->reinitRequested = 1;
-         android_app->done_seq++;
-         scond_broadcast(android_app->cond);
-         slock_unlock(android_app->mutex);
+#endif
+         android_lifecycle_done(&android_app->lc);
 
          /* A resume brings a NEW window, and the display mode and
           * frame rate chosen for the old one do not come with it.
@@ -848,32 +1022,56 @@ static void android_input_poll_main_cmd(void)
       case APP_CMD_START:
       case APP_CMD_PAUSE:
       {
-         video_driver_state_t *state = video_state_get_ptr();
+         /* Acknowledged by the flush, see
+          * android_input_flush_pending_state(). */
+         bool hold_ack               = (cmd == APP_CMD_PAUSE)
+            && !android_state_flushed;
 
-         slock_lock(android_app->mutex);
-         android_app->activityState = cmd;
+         if (!hold_ack)
+            android_lifecycle_set_state(&android_app->lc, cmd);
+#ifdef HAVE_OPENXR
+         /* A headset's own context has no window to bring back. */
+         if (video_context_driver_headset_inline())
+         {
+            if (cmd == APP_CMD_PAUSE)
+            {
+               android_state_flush_pending = true;
+               retro_atomic_store_release_int(&android_keypress_vibrate_pending, 0);
+               if (hold_ack)
+                  android_state_ack_cmd = APP_CMD_PAUSE;
+            }
+            else
+            {
+               android_state_flush_pending = false;
+               android_state_flushed = false;
+               android_state_ack_cmd = -1;
+            }
+            break;
+         }
+#endif
          /* RESUME/START can arrive before INIT_WINDOW. In that case,
           * wait for INIT_WINDOW rather than falling back to a full
           * video-driver reinitialization without a native window. */
          if (  (cmd == APP_CMD_RESUME || cmd == APP_CMD_START)
-             && state->current_video_context.ident
-             && string_is_equal(state->current_video_context.ident,
-                   "vk_android")
-             && android_app->window
-             && state->current_video_context.create_surface)
+             && video_context_driver_is("vk_android")
+             && android_app_window(android_app)
+             && video_context_surface_can_create())
             android_app->reinitRequested = 1;
-         scond_broadcast(android_app->cond);
-         slock_unlock(android_app->mutex);
 
          if (cmd == APP_CMD_PAUSE)
          {
             android_state_flush_pending = true;
-            android_keypress_vibrate_pending = false;
+            retro_atomic_store_release_int(&android_keypress_vibrate_pending, 0);
+            if (hold_ack)
+               android_state_ack_cmd    = APP_CMD_PAUSE;
          }
          else
          {
+            /* A callback still waiting on a held-back acknowledgement
+             * has timed out by now; this state supersedes it. */
             android_state_flush_pending = false;
             android_state_flushed       = false;
+            android_state_ack_cmd       = -1;
          }
 
 #ifdef HAVE_ANDROID_LIFECYCLE_HOOKS
@@ -887,22 +1085,26 @@ static void android_input_poll_main_cmd(void)
 
       case APP_CMD_STOP:
       {
-         video_driver_state_t *state = video_state_get_ptr();
+         retro_atomic_store_release_int(&android_keypress_vibrate_pending, 0);
 
-         android_keypress_vibrate_pending = false;
-
-         slock_lock(android_app->mutex);
-         android_app->activityState = cmd;
-         scond_broadcast(android_app->cond);
-         slock_unlock(android_app->mutex);
+         /* Normally flushed on the preceding APP_CMD_PAUSE already. When
+          * that has not happened - its acknowledgement timed out while
+          * this thread was held elsewhere - the flush is still owed, and
+          * onStop() is the last point before the process can be
+          * reclaimed. */
+         if (!android_state_flushed)
+         {
+            android_state_flush_pending = true;
+            android_state_ack_cmd       = APP_CMD_STOP;
+         }
+         else
+            android_lifecycle_set_state(&android_app->lc, cmd);
 
          /* Android may retain the same ANativeWindow while the app is
           * backgrounded. Release Vulkan's acquired buffers anyway so BLAST
           * cannot wedge before APP_CMD_TERM_WINDOW is delivered. */
-         if (     state->current_video_context.ident
-               && string_is_equal(state->current_video_context.ident,
-                     "vk_android"))
-            android_input_destroy_surface(state);
+         if (video_context_driver_is("vk_android"))
+            video_context_surface_destroy();
          break;
       }
 
@@ -912,213 +1114,150 @@ static void android_input_poll_main_cmd(void)
          break;
       case APP_CMD_TERM_WINDOW:
       {
-         video_driver_state_t *state = video_state_get_ptr();
+         retro_atomic_store_release_int(&android_keypress_vibrate_pending, 0);
 
-         android_keypress_vibrate_pending = false;
+         video_context_surface_destroy();
 
-         android_input_destroy_surface(state);
-
-         slock_lock(android_app->mutex);
-
-         /* The window is being hidden or closed, clean it up. */
-         /* terminate display/EGL context here */
-         android_app->window = NULL;
-         android_app->done_seq++;
-         scond_broadcast(android_app->cond);
-         slock_unlock(android_app->mutex);
+         /* The window is being hidden or closed: nobody may hold it by
+          * the time the UI thread hands it back. */
+         android_lifecycle_window_retire(&android_app->lc);
+         android_lifecycle_done(&android_app->lc);
          break;
       }
 
       case APP_CMD_GAINED_FOCUS:
-         {
-            runloop_state_t *runloop_st = runloop_state_get_ptr();
-            settings_t *settings         = config_get_ptr();
-            bool sensors_allowed         = !settings || settings->bools.input_sensors_enable;
-            /* Re-enable sensors that were disabled on focus loss */
-            bool enable_accelerometer   = (android_app->sensor_state_mask &
-                  (UINT64_C(1) << RETRO_SENSOR_ACCELEROMETER_DISABLE));
-            bool enable_gyroscope       = (android_app->sensor_state_mask &
-                  (UINT64_C(1) << RETRO_SENSOR_GYROSCOPE_DISABLE));
-
-            /* On first focus (no sensor state yet), enable if setting is on.
-             * This handles shader sensor access without going through cores.
-             * Default to enabling if settings aren't loaded yet (first launch). */
-            if (!enable_accelerometer &&
-                !(android_app->sensor_state_mask & (UINT64_C(1) << RETRO_SENSOR_ACCELEROMETER_ENABLE)))
-            {
-               if (sensors_allowed)
-                  enable_accelerometer = true;
-            }
-            if (!enable_gyroscope &&
-                !(android_app->sensor_state_mask & (UINT64_C(1) << RETRO_SENSOR_GYROSCOPE_ENABLE)))
-            {
-               if (sensors_allowed)
-                  enable_gyroscope = true;
-            }
-
-            if (!sensors_allowed)
-            {
-               enable_accelerometer = false;
-               enable_gyroscope     = false;
-            }
-
-            runloop_st->flags &= ~(RUNLOOP_FLAG_PAUSED
-                                 | RUNLOOP_FLAG_IDLE);
-            video_driver_unset_stub_frame();
-
-            /* Try to enable sensors via input driver. If that fails before the
-             * input driver has initialized, enable directly via sensor API. */
-            if (enable_accelerometer)
-            {
-               if (!input_set_sensor_state(0,
-                     RETRO_SENSOR_ACCELEROMETER_ENABLE,
-                     android_app->accelerometer_event_rate) &&
-                   !android_app->input_alive)
-               {
-                  /* Input driver not ready — enable sensor directly */
-                  unsigned rate = android_app->accelerometer_event_rate;
-                  if (rate == 0)
-                     rate = DEFAULT_ASENSOR_EVENT_RATE;
-                  android_input_enable_sensor_manager(android_app);
-                  if (android_enable_sensor(android_app,
-                        android_app->accelerometerSensor, rate,
-                        RETRO_SENSOR_ACCELEROMETER_ENABLE,
-                        RETRO_SENSOR_ACCELEROMETER_DISABLE))
-                     android_app->accelerometer_event_rate = rate;
-               }
-            }
-
-            if (enable_gyroscope)
-            {
-               if (!input_set_sensor_state(0,
-                     RETRO_SENSOR_GYROSCOPE_ENABLE,
-                     android_app->gyroscope_event_rate) &&
-                   !android_app->input_alive)
-               {
-                  /* Input driver not ready — enable sensor directly */
-                  unsigned rate = android_app->gyroscope_event_rate;
-                  if (rate == 0)
-                     rate = DEFAULT_ASENSOR_EVENT_RATE;
-                  android_input_enable_sensor_manager(android_app);
-                  if (android_enable_sensor(android_app,
-                        android_app->gyroscopeSensor, rate,
-                        RETRO_SENSOR_GYROSCOPE_ENABLE,
-                        RETRO_SENSOR_GYROSCOPE_DISABLE))
-                     android_app->gyroscope_event_rate = rate;
-               }
-            }
-
-            /* Start gravity-based orientation detection (once per app launch only).
-             * Samples accelerometer data over ~30 frames to determine which axis
-             * gravity is on, detecting both display rotation and sensor IC
-             * misalignment automatically. */
-            if (!android_app->gravity_calibrated)
-            {
-               android_app->gravity_accum_x      = 0.0f;
-               android_app->gravity_accum_y      = 0.0f;
-               android_app->gravity_sample_count = 0;
-            }
-            else
-            {
-               /* Gravity already calibrated (not first launch),
-                * start rest position capture immediately */
-               input_sensor_start_rest_capture();
-            }
-         }
-         /* No waiter: onWindowFocusChanged() posts the command and
-          * returns without blocking, so the lock and broadcast only
-          * guarded this one scalar. The field is atomic now. */
-         retro_atomic_store_release_int(&android_app->unfocused, 0);
-         break;
       case APP_CMD_LOST_FOCUS:
-         android_keypress_vibrate_pending = false;
-         {
-            runloop_state_t *runloop_st = runloop_state_get_ptr();
-            bool disable_accelerometer  = (android_app->sensor_state_mask &
-                  (UINT64_C(1) << RETRO_SENSOR_ACCELEROMETER_ENABLE)) &&
-                        android_app->accelerometerSensor;
-            bool disable_gyroscope      = (android_app->sensor_state_mask &
-                  (UINT64_C(1) << RETRO_SENSOR_GYROSCOPE_ENABLE)) &&
-                        android_app->gyroscopeSensor;
-
-            runloop_st->flags |=  (RUNLOOP_FLAG_PAUSED
-                                 | RUNLOOP_FLAG_IDLE);
-            video_driver_set_stub_frame();
-
-            /* Avoid draining battery while app is not being used. */
-            if (disable_accelerometer)
-               input_set_sensor_state(0,
-                     RETRO_SENSOR_ACCELEROMETER_DISABLE,
-                     android_app->accelerometer_event_rate);
-
-            if (disable_gyroscope)
-               input_set_sensor_state(0,
-                     RETRO_SENSOR_GYROSCOPE_DISABLE,
-                     android_app->gyroscope_event_rate);
-         }
-         /* No waiter: onWindowFocusChanged() posts the command and
-          * returns without blocking, so the lock and broadcast only
-          * guarded this one scalar. The field is atomic now. */
-         retro_atomic_store_release_int(&android_app->unfocused, 1);
+         android_focus_activity(&android_app->focus,
+               cmd == APP_CMD_GAINED_FOCUS,
+               (int64_t)cpu_features_get_time_usec());
          break;
 
       case APP_CMD_DESTROY:
-         android_keypress_vibrate_pending = false;
+         retro_atomic_store_release_int(&android_keypress_vibrate_pending, 0);
          android_app->destroyRequested = 1;
+         break;
+
+      case APP_CMD_SECOND_WINDOW_CHANGED:
+         video_driver_restore_windows();
+         break;
+
+      case APP_CMD_SECOND_GAINED_FOCUS:
+      case APP_CMD_SECOND_LOST_FOCUS:
+         android_focus_second(&android_app->focus,
+               cmd == APP_CMD_SECOND_GAINED_FOCUS,
+               (int64_t)cpu_features_get_time_usec());
          break;
    }
 }
 
-static void engine_handle_dpad_default(struct android_app *android,
-      AInputEvent *event, int port, int source)
+/* The second display's touches since the last poll, mapped through the
+ * window that shows it as android_pointer_set() maps the main display's;
+ * one from another surface is dropped. They never move the mouse or
+ * count as a quick tap. */
+static void android_input_poll_second_touches(android_input_t *android,
+      struct android_app *android_app)
 {
-   size_t motion_ptr = AMotionEvent_getAction(event) >>
-      AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
-   float x           = AMotionEvent_getX(event, motion_ptr);
-   float y           = AMotionEvent_getY(event, motion_ptr);
+   android_second_touch_t touch;
+   struct android_second_display *second = &android_app->second_display;
+   int32_t surface     = retro_atomic_load_acquire_int(&second->bound_surface);
+   unsigned window     = (unsigned)
+      retro_atomic_load_acquire_int(&second->bound_window);
+   unsigned generation = (unsigned)
+      retro_atomic_load_acquire_int(&second->bound_generation);
 
-   if (port < 0 || port >= DEFAULT_MAX_PADS)
-      return;
+   /* Fingers on a surface that went have no up to come */
+   if (surface != android->second_surface)
+   {
+      android->second_pointer_count = 0;
+      android->second_surface       = surface;
+   }
 
-   android->analog_state[port][0] = (int16_t)(x * 32767.0f);
-   android->analog_state[port][1] = (int16_t)(y * 32767.0f);
+   while (retro_spsc_read_avail(&second->touches) >= sizeof(touch))
+   {
+      unsigned i;
+      unsigned count = android->second_pointer_count;
+      retro_spsc_read(&second->touches, &touch, sizeof(touch));
+      /* Window 0 would map through the main viewport: a clear raced */
+      if (!surface || !window || touch.generation != surface)
+         continue;
+      android_focus_second_input(&android_app->focus);
+      for (i = 0; i < count; i++)
+         if (android->second_pointer_id[i] == touch.pointer_id)
+            break;
+      if (!touch.down)
+      {
+         if (i < count)
+         {
+            memmove(&android->second_pointer[i],
+                  &android->second_pointer[i + 1],
+                  (count - i - 1) * sizeof(android->second_pointer[0]));
+            memmove(&android->second_pointer_id[i],
+                  &android->second_pointer_id[i + 1],
+                  (count - i - 1) * sizeof(android->second_pointer_id[0]));
+            android->second_pointer_count--;
+         }
+         continue;
+      }
+      if (i == count)
+      {
+         if (count >= MAX_TOUCH)
+            continue;
+         android->second_pointer_id[i] = touch.pointer_id;
+         android->second_pointer_count++;
+      }
+      if (!video_driver_translate_window_point(window, generation,
+               touch.x, touch.y, false,
+               &android->second_pointer[i].confined_pos))
+         android->second_pointer[i].confined_pos =
+            VIDEO_POS_PACK(-0x8000, -0x8000);
+      if (!video_driver_translate_window_point(window, generation,
+               touch.x, touch.y, true, &android->second_pointer[i].pos))
+         android->second_pointer[i].pos = VIDEO_POS_PACK(-0x8000, -0x8000);
+      android->second_pointer[i].full_pos = VIDEO_POS_PACK(-0x8000, -0x8000);
+   }
 }
 
-#ifdef HAVE_DYLIB
-static void engine_handle_dpad_getaxisvalue(struct android_app *android,
-      AInputEvent *event, int port, int source)
+/* A stick or hat move from its axes, in ANDROID_JOYSTICK_AXES' order;
+ * without AMotionEvent_getAxisValue only X and Y are read */
+static void android_input_dpad_fields(struct android_app *android,
+      int port, const float *axes, bool all_axes)
 {
-   size_t motion_ptr = AMotionEvent_getAction(event) >>
-      AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
-   float x           = AMotionEvent_getAxisValue(event, AXIS_X, motion_ptr);
-   float y           = AMotionEvent_getAxisValue(event, AXIS_Y, motion_ptr);
-   float z           = AMotionEvent_getAxisValue(event, AXIS_Z, motion_ptr);
-   float rz          = AMotionEvent_getAxisValue(event, AXIS_RZ, motion_ptr);
-   float hatx        = AMotionEvent_getAxisValue(event, AXIS_HAT_X, motion_ptr);
-   float haty        = AMotionEvent_getAxisValue(event, AXIS_HAT_Y, motion_ptr);
-   float ltrig       = AMotionEvent_getAxisValue(event, AXIS_LTRIGGER, motion_ptr);
-   float rtrig       = AMotionEvent_getAxisValue(event, AXIS_RTRIGGER, motion_ptr);
-   float brake       = AMotionEvent_getAxisValue(event, AXIS_BRAKE, motion_ptr);
-   float gas         = AMotionEvent_getAxisValue(event, AXIS_GAS, motion_ptr);
-
    if (port < 0 || port >= DEFAULT_MAX_PADS)
       return;
 
-   android->hat_state[port][0]    = (int)hatx;
-   android->hat_state[port][1]    = (int)haty;
+   android->analog_state[port][0] = (int16_t)(axes[0] * 32767.0f);
+   android->analog_state[port][1] = (int16_t)(axes[1] * 32767.0f);
+   if (!all_axes)
+      return;
+
+   android->hat_state[port][0]    = (int)axes[4];
+   android->hat_state[port][1]    = (int)axes[5];
 
    /* XXX: this could be a loop instead, but do we really want to
     * loop through every axis? */
-   android->analog_state[port][0] = (int16_t)(x * 32767.0f);
-   android->analog_state[port][1] = (int16_t)(y * 32767.0f);
-   android->analog_state[port][2] = (int16_t)(z * 32767.0f);
-   android->analog_state[port][3] = (int16_t)(rz * 32767.0f);
-   android->analog_state[port][6] = (int16_t)(ltrig * 32767.0f);
-   android->analog_state[port][7] = (int16_t)(rtrig * 32767.0f);
-   android->analog_state[port][8] = (int16_t)(brake * 32767.0f);
-   android->analog_state[port][9] = (int16_t)(gas * 32767.0f);
+   android->analog_state[port][2] = (int16_t)(axes[2] * 32767.0f);
+   android->analog_state[port][3] = (int16_t)(axes[3] * 32767.0f);
+   android->analog_state[port][6] = (int16_t)(axes[6] * 32767.0f);
+   android->analog_state[port][7] = (int16_t)(axes[7] * 32767.0f);
+   android->analog_state[port][8] = (int16_t)(axes[8] * 32767.0f);
+   android->analog_state[port][9] = (int16_t)(axes[9] * 32767.0f);
 }
+
+/* The calls above that not every Android release has, looked up once,
+ * before the input reader starts: it reads them too */
+static void android_input_resolve_calls(void)
+{
+#ifdef HAVE_DYLIB
+   p_AMotionEvent_getAxisValue   = dlsym(RTLD_DEFAULT,
+         "AMotionEvent_getAxisValue");
+   p_AMotionEvent_getButtonState = dlsym(RTLD_DEFAULT,
+         "AMotionEvent_getButtonState");
+   p_AMotionEvent_getToolType    = dlsym(RTLD_DEFAULT,
+         "AMotionEvent_getToolType");
+   p_AMotionEvent_getPressure    = dlsym(RTLD_DEFAULT,
+         "AMotionEvent_getPressure");
 #endif
+}
 
 static bool android_input_init_handle(void)
 {
@@ -1134,17 +1273,9 @@ static bool android_input_init_handle(void)
                RTLD_LOCAL | RTLD_LAZY)) == 0)
       return false;
 #endif
-
-   if ((p_AMotionEvent_getAxisValue = dlsym(RTLD_DEFAULT,
-               "AMotionEvent_getAxisValue")))
-      engine_handle_dpad            = engine_handle_dpad_getaxisvalue;
-
-   p_AMotionEvent_getButtonState    = dlsym(RTLD_DEFAULT,
-               "AMotionEvent_getButtonState");
 #endif
 
-   pad_id1 = -1;
-   pad_id2 = -1;
+   input_groups_clear(&android_groups);
 
    return true;
 }
@@ -1159,17 +1290,25 @@ static void *android_input_init(const char *joypad_driver)
    if (!android)
       return NULL;
 
+   if (!android_haptic_writer)
+      android_haptic_writer = input_output_writer_new(
+            android_input_haptic_writer_cb, NULL);
+
    android->mouse_activated = false;
    android->pads_connected = 0;
    android->quick_tap_time = 0;
+   android->stylus_proximity_active = false;
+   android->stylus_proximity_until_ns = 0;
+   android->stylus.contact_active = false;
+   android->stylus.press_active   = false;
 
    input_keymaps_init_keyboard_lut(rarch_key_map_android);
 
    /* The IME is only reachable if the Java side resolved showKeyboard. */
    if (android_app && android_app->showKeyboard)
-      input_state_get_ptr()->flags |=  INP_FLAG_NATIVE_KB_AVAIL;
+      input_driver_set_native_keyboard_available(true);
    else
-      input_state_get_ptr()->flags &= ~INP_FLAG_NATIVE_KB_AVAIL;
+      input_driver_set_native_keyboard_available(false);
 
    frontend_android_get_version_sdk(&sdk);
 
@@ -1177,13 +1316,6 @@ static void *android_input_init(const char *joypad_driver)
       engine_lookup_name       = android_input_lookup_name;
    else
       engine_lookup_name       = android_input_lookup_name_prekitkat;
-
-   engine_handle_dpad          = engine_handle_dpad_default;
-
-   if (sdk > 10)
-      android_input_poll_input = android_input_poll_input_default;
-   else
-      android_input_poll_input = android_input_poll_input_gingerbread;
 
    if (!android_input_init_handle())
    {
@@ -1195,13 +1327,15 @@ static void *android_input_init(const char *joypad_driver)
 
    android_app->input_alive = true;
 
+   /* From now on the input reader keeps what it reads for the poll */
+   retro_atomic_store_release_int(&android_app->input_reader.active, 1);
+
    /* Enable sensors on init if setting is on (or not yet loaded)
     * and they haven't already been enabled by GAINED_FOCUS.
     * Check sensor_state_mask to avoid double-enabling, since
     * ASensorEventQueue_enableSensor is reference-counted. */
    {
-      settings_t *settings = config_get_ptr();
-      bool enable_sensors = !settings || settings->bools.input_sensors_enable;
+      bool enable_sensors = input_config_get_sensors_enable();
 
       if (enable_sensors && !android_app->sensor_state_mask)
       {
@@ -1231,6 +1365,14 @@ static void *android_input_init(const char *joypad_driver)
 
 static int android_check_quick_tap(android_input_t *android)
 {
+   /* Suppress quick-tap promotion while the hover guard is active: phantom
+    * touchscreen events after a stylus hover exit must not fire clicks. */
+   if (g_hover_guard_active)
+   {
+      android->quick_tap_time = 0;
+      return 0;
+   }
+
    /* Check if the touch screen has been been quick tapped
     * and then not touched again for 200ms
     * If so then return true and deactivate quick tap timer */
@@ -1245,8 +1387,21 @@ static int android_check_quick_tap(android_input_t *android)
    return 0;
 }
 
+/* A pointer of a copied event; one it does not carry reads as 0 */
+static INLINE float android_input_event_x(const android_input_event_t *ev,
+      size_t i)
+{
+   return (i < (size_t)ev->pointer_count) ? ev->pointer[i].x : 0.0f;
+}
+
+static INLINE float android_input_event_y(const android_input_event_t *ev,
+      size_t i)
+{
+   return (i < (size_t)ev->pointer_count) ? ev->pointer[i].y : 0.0f;
+}
+
 static INLINE void android_mouse_calculate_deltas(android_input_t *android,
-      AInputEvent *event,size_t motion_ptr,int source)
+      const android_input_event_t *ev, size_t motion_ptr, int source)
 {
    unsigned out_dims;
    unsigned video_width, video_height;
@@ -1265,30 +1420,21 @@ static INLINE void android_mouse_calculate_deltas(android_input_t *android,
    float y_max   = (float)video_height;
 
    struct video_viewport vp = {0};
-   int16_t res_x            = 0;
-   int16_t res_y            = 0;
-   int16_t res_screen_x     = 0;
-   int16_t res_screen_y     = 0;
 
    /* AINPUT_SOURCE_MOUSE_RELATIVE is available on Oreo (SDK 26) and newer,
     * it passes the relative coordinates in the regular X and Y parts.
     * NOTE: AINPUT_SOURCE_* defines have multiple bits set so do full check */
    if ((source & AINPUT_SOURCE_MOUSE_RELATIVE) == AINPUT_SOURCE_MOUSE_RELATIVE)
    {
-      x_delta = AMotionEvent_getX(event, motion_ptr);
-      y_delta = AMotionEvent_getY(event, motion_ptr);
+      x_delta = android_input_event_x(ev, motion_ptr);
+      y_delta = android_input_event_y(ev, motion_ptr);
    }
    else
    {
       /* This axis is only available on Android Nougat or on
       * Android devices with NVIDIA extensions */
-      if (p_AMotionEvent_getAxisValue)
-      {
-         x_delta = AMotionEvent_getAxisValue(event,AMOTION_EVENT_AXIS_RELATIVE_X,
-               motion_ptr);
-         y_delta = AMotionEvent_getAxisValue(event,AMOTION_EVENT_AXIS_RELATIVE_Y,
-               motion_ptr);
-      }
+      x_delta = ev->relative_x;
+      y_delta = ev->relative_y;
 
       /* If AXIS_RELATIVE had 0 values it might be because we're not
       * running Android Nougat or on a device
@@ -1300,27 +1446,28 @@ static INLINE void android_mouse_calculate_deltas(android_input_t *android,
       */
       if (!x_delta && !y_delta)
       {
-         x = AMotionEvent_getX(event, motion_ptr);
-         y = AMotionEvent_getY(event, motion_ptr);
+         x = android_input_event_x(ev, motion_ptr);
+         y = android_input_event_y(ev, motion_ptr);
 
-         x_delta = (x_delta - android->mouse_x_prev);
-         y_delta = (y_delta - android->mouse_y_prev);
+         x_delta = (x - android->mouse_x_prev);
+         y_delta = (y - android->mouse_y_prev);
 
          android->mouse_x_prev = x;
          android->mouse_y_prev = y;
       }
    }
 
-   android->mouse_x_delta = x_delta;
-   android->mouse_y_delta = y_delta;
+   /* a poll can apply several moves: the core reads their sum */
+   VIDEO_POS_ADD(android->mouse_delta, x_delta, y_delta);
 
-   if (!x) x = android->mouse_x + android->mouse_x_delta;
-   if (!y) y = android->mouse_y + android->mouse_y_delta;
+   if (!x) x = VIDEO_POS_X(android->mouse_pos) + x_delta;
+   if (!y) y = VIDEO_POS_Y(android->mouse_pos) + y_delta;
 
-   video_driver_translate_coord_viewport_confined_wrap(&vp,
-            (int) x, (int) y,
-            &android->mouse_x_viewport, &android->mouse_y_viewport,
-            &android->mouse_x_viewport_screen, &android->mouse_y_viewport_screen);
+   {
+      input_driver_translate_coord_viewport_confined_wrap(&vp,
+            (int) x, (int) y, &android->mouse_viewport_pos,
+            &android->mouse_viewport_screen_pos);
+   }
 
    /* x and y are used for the screen mouse, so we want
     * to avoid values outside of the viewport resolution */
@@ -1329,27 +1476,210 @@ static INLINE void android_mouse_calculate_deltas(android_input_t *android,
    if (y < y_min) y = y_min;
    else if (y > y_max) y = y_max;
 
-   android->mouse_x = x;
-   android->mouse_y = y;
+   android->mouse_pos = VIDEO_POS_PACK(x, y);
+}
+
+/* Touch @i at screen @x, @y: the confined variant for the pointer
+ * query, the plain one for the true offscreen value Android needs. */
+static void android_pointer_set(android_input_t *android, unsigned i,
+      struct video_viewport *vp, float x, float y)
+{
+   /* a translation that fails (no viewport) leaves what was there */
+   input_driver_translate_coord_viewport_confined_wrap(vp, x, y,
+         &android->pointer[i].confined_pos, &android->pointer[i].full_pos);
+   input_driver_translate_coord_viewport_wrap(vp, x, y,
+         &android->pointer[i].pos, &android->pointer[i].full_pos);
+}
+
+/* The pen's position, written to pointer 0. */
+static void android_stylus_set_position(android_input_t *android,
+      float x, float y)
+{
+   struct video_viewport vp = {0};
+   android_pointer_set(android, 0, &vp, x, y);
+}
+
+/* One pen event: the decision is android_stylus_map.h's, and this
+ * applies it to the pointer and mouse state. */
+static void android_stylus_event(android_input_t *android,
+      const android_stylus_cfg_t *cfg, enum android_stylus_event event,
+      bool side_pressed, float pressure, float distance,
+      float x, float y)
+{
+   android_stylus_result_t res;
+
+   android_stylus_map(&android->stylus, cfg, event, side_pressed,
+         pressure, distance, &res);
+
+   if (res.set_position)
+      android_stylus_set_position(android, x, y);
+
+   android->mouse_r = res.mouse_r;
+
+   if (res.pointer_count != ANDROID_STYLUS_COUNT_KEEP)
+      android->pointer_count = res.pointer_count;
 }
 
 static INLINE void android_input_poll_event_type_motion(
-      android_input_t *android, AInputEvent *event,
+      android_input_t *android, const android_input_event_t *ev,
       int port, int source)
 {
-   int getaction     = AMotionEvent_getAction(event);
-   int action        = getaction  & AMOTION_EVENT_ACTION_MASK;
-   size_t motion_ptr = getaction >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
-   bool keyup        = (
-            action == AMOTION_EVENT_ACTION_UP
-         || action == AMOTION_EVENT_ACTION_CANCEL
-         || action == AMOTION_EVENT_ACTION_POINTER_UP);
+   int getaction, action;
+   size_t motion_ptr;
+   int64_t event_time_ms;
+   float x, y;
+   int32_t tool_type;
+   bool is_stylus, is_finger, is_hover_action;
+   android_stylus_cfg_t stylus_cfg;
+   bool side_pressed;
+   float pressure, distance;
+   int buttons;
+   bool keyup;
+
+   getaction = ev->fields.action;
+   action = getaction & AMOTION_EVENT_ACTION_MASK;
+   motion_ptr = getaction >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+   event_time_ms = ev->fields.event_time / 1000000;
+   x = android_input_event_x(ev, motion_ptr);
+   y = android_input_event_y(ev, motion_ptr);
+   tool_type = ev->tool_type;
+
+   is_stylus = (tool_type == AMOTION_EVENT_TOOL_TYPE_STYLUS);
+   is_finger = (tool_type == AMOTION_EVENT_TOOL_TYPE_FINGER);
+
+   /* Fall back to source bits if toolType is unknown. */
+   if (!is_stylus && !is_finger)
+   {
+      is_stylus = ((source & AINPUT_SOURCE_STYLUS) == AINPUT_SOURCE_STYLUS);
+      is_finger = ((source & AINPUT_SOURCE_TOUCHSCREEN) == AINPUT_SOURCE_TOUCHSCREEN);
+   }
+
+   is_hover_action = (action == AMOTION_EVENT_ACTION_HOVER_MOVE ||
+                      action == AMOTION_EVENT_ACTION_HOVER_ENTER ||
+                      action == AMOTION_EVENT_ACTION_HOVER_EXIT);
+
+#ifdef DEBUG_ANDROID_INPUT
+   RARCH_LOG("[RA Input] act=%d src=0x%x tool=%d dev=%d btn=0x%x dropped=%d\n",
+             action, source, tool_type, ev->fields.device_id,
+             ev->button_state, 0);
+#endif
+
+   if (is_stylus)
+   {
+      if (motion_ptr >= MAX_TOUCH)
+         return;
+
+      if (!input_config_get_stylus_enable())
+      {
+#ifdef DEBUG_ANDROID_INPUT
+         RARCH_LOG("[RA Input] Stylus support disabled - ignoring stylus event\n");
+#endif
+         return;
+      }
+
+      /* Refresh overlay auto-hide timer (runloop.c reads this) only after the
+       * enable gate, so a passing pen does not hide the overlay for a user
+       * who has disabled S-Pen support. A pen hovering is not in use
+       * unless hovering moves the pointer (#19824). */
+      if (!is_hover_action || input_config_get_stylus_hover_moves_pointer())
+         g_android_stylus_last_event_ns = (int64_t)cpu_features_get_time_usec() * 1000;
+
+      stylus_cfg.require_contact      =
+         input_config_get_stylus_require_contact_for_click();
+      stylus_cfg.hover_moves_pointer  =
+         input_config_get_stylus_hover_moves_pointer();
+      stylus_cfg.pressure_sensitivity =
+         input_config_get_stylus_pressure_sensitivity();
+
+      buttons         = ev->button_state;
+      /* Which of the two the barrel button reports varies by device. */
+      side_pressed    = (buttons & (AMOTION_EVENT_BUTTON_STYLUS_PRIMARY
+                                  | AMOTION_EVENT_BUTTON_STYLUS_SECONDARY)) != 0;
+
+      /* The barrel button is the pen's secondary button: report it
+       * the way a mouse's is (see android_stylus_map.h). */
+      android->mouse_r = side_pressed;
+
+      switch (action)
+      {
+         case AMOTION_EVENT_ACTION_HOVER_ENTER:
+         case AMOTION_EVENT_ACTION_HOVER_MOVE:
+         case AMOTION_EVENT_ACTION_HOVER_EXIT:
+#ifdef DEBUG_ANDROID_INPUT
+            RARCH_LOG("[RA Input] Stylus hover (act=%d) - arming hover guard\n", action);
+#endif
+            hover_guard_arm(x, y, event_time_ms, 100);
+
+            android->stylus_proximity_active   = true;
+            android->stylus_proximity_until_ns =
+               ev->fields.event_time + 120000000; /* 120ms */
+            android->quick_tap_time            = 0;
+
+            android_stylus_event(android, &stylus_cfg,
+                  (action == AMOTION_EVENT_ACTION_HOVER_EXIT)
+                  ? ANDROID_STYLUS_HOVER_EXIT : ANDROID_STYLUS_HOVER,
+                  side_pressed, 0.0f, 1.0f, x, y);
+            return;
+
+         case AMOTION_EVENT_ACTION_UP:
+         case AMOTION_EVENT_ACTION_CANCEL:
+            android_stylus_event(android, &stylus_cfg,
+                  (action == AMOTION_EVENT_ACTION_CANCEL)
+                  ? ANDROID_STYLUS_CANCEL : ANDROID_STYLUS_UP,
+                  side_pressed, 0.0f, 0.0f, x, y);
+#ifdef DEBUG_ANDROID_INPUT
+            RARCH_LOG("[Stylus] UP - pointer released\n");
+#endif
+            return;
+
+         case AMOTION_EVENT_ACTION_DOWN:
+         case AMOTION_EVENT_ACTION_MOVE:
+            if (action == AMOTION_EVENT_ACTION_DOWN)
+            {
+               g_hover_guard_active             = false;
+               android->stylus_proximity_active = false;
+            }
+
+            pressure = ev->pressure;
+            distance = ev->distance;
+
+#ifdef DEBUG_ANDROID_INPUT
+            RARCH_LOG("[RA Input] S Pen contact - side:%s p=%.3f d=%.3f\n",
+                      side_pressed ? "Y" : "N", pressure, distance);
+#endif
+
+            android_stylus_event(android, &stylus_cfg,
+                  ANDROID_STYLUS_CONTACT,
+                  side_pressed, pressure, distance, x, y);
+            return;
+
+         default:
+            break;
+      }
+   }
+   else
+   {
+      /* Drop phantom touches near a recent stylus hover (see hover_guard). */
+      if ((action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE) &&
+          hover_guard_drop(x, y, event_time_ms, 12.0f))
+      {
+#ifdef DEBUG_ANDROID_INPUT
+         RARCH_LOG("[RA Input] DROPPED phantom touch near stylus hover (x=%.1f y=%.1f)\n", x, y);
+#endif
+         return;
+      }
+   }
+
+   keyup = (action == AMOTION_EVENT_ACTION_UP ||
+            action == AMOTION_EVENT_ACTION_CANCEL ||
+            action == AMOTION_EVENT_ACTION_POINTER_UP);
 
    /* If source is mouse then calculate button state
     * and mouse deltas and don't process as touchscreen event.
     * NOTE: AINPUT_SOURCE_* defines have multiple bits set so do full check */
-   if (    (source & AINPUT_SOURCE_MOUSE) == AINPUT_SOURCE_MOUSE
+   if (((source & AINPUT_SOURCE_MOUSE) == AINPUT_SOURCE_MOUSE
         || (source & AINPUT_SOURCE_MOUSE_RELATIVE) == AINPUT_SOURCE_MOUSE_RELATIVE)
+       && !is_stylus)
    {
       if (!android->mouse_activated)
       {
@@ -1359,14 +1689,13 @@ static INLINE void android_input_poll_event_type_motion(
       /* getButtonState requires API level 14 */
       if (p_AMotionEvent_getButtonState)
       {
-         int btn              = (int)AMotionEvent_getButtonState(event);
+         int btn              = (int)ev->button_state;
 
          android->mouse_l     = (btn & AMOTION_EVENT_BUTTON_PRIMARY);
          android->mouse_r     = (btn & AMOTION_EVENT_BUTTON_SECONDARY);
          android->mouse_m     = (btn & AMOTION_EVENT_BUTTON_TERTIARY);
 
-         btn                  = (int)AMotionEvent_getAxisValue(event,
-               AMOTION_EVENT_AXIS_VSCROLL, motion_ptr);
+         btn                  = (int)ev->vscroll;
 
          if (btn > 0)
             android->mouse_wu = btn;
@@ -1383,8 +1712,19 @@ static INLINE void android_input_poll_event_type_motion(
             android->mouse_l = 0;
       }
 
-      android_mouse_calculate_deltas(android,event,motion_ptr,source);
+      android_mouse_calculate_deltas(android, ev, motion_ptr, source);
+      return;
+   }
 
+   /* Drop hover events from touchscreen processing so they can't drive
+    * clicks. This has to come after the mouse branch above: a mouse
+    * moved with no button held reports its motion as hover events, and
+    * dropping those first would leave it unable to move. */
+   if (is_hover_action)
+   {
+#ifdef DEBUG_ANDROID_INPUT
+      RARCH_LOG("[Android Input] Blocking hover event from touchscreen processing - action:%d source:0x%X\n", action, source);
+#endif
       return;
    }
 
@@ -1394,12 +1734,11 @@ static INLINE void android_input_poll_event_type_motion(
       {
          /* If touchscreen was pressed for less than 200ms
           * then register time stamp of a quick tap */
-         if ((AMotionEvent_getEventTime(event)-AMotionEvent_getDownTime(event))/1000000 < 200)
+         if ((ev->fields.event_time - ev->down_time)/1000000 < 200)
          {
             /* Prevent the quick tap if a button on the overlay is down */
-            input_driver_state_t *input_st = input_state_get_ptr();
-            if (!(input_st->flags & INP_FLAG_BLOCK_POINTER_INPUT))
-               android->quick_tap_time = AMotionEvent_getEventTime(event);
+            if (!input_driver_pointer_input_blocked())
+               android->quick_tap_time = ev->fields.event_time;
          }
          android->mouse_l = 0;
       }
@@ -1407,26 +1746,31 @@ static INLINE void android_input_poll_event_type_motion(
       memmove(android->pointer + motion_ptr,
             android->pointer + motion_ptr + 1,
             (MAX_TOUCH - motion_ptr - 1) * sizeof(struct input_pointer));
+      memmove(android->contact + motion_ptr,
+            android->contact + motion_ptr + 1,
+            (MAX_TOUCH - motion_ptr - 1) * sizeof(*android->contact));
+      memmove(android->contact_angle + motion_ptr,
+            android->contact_angle + motion_ptr + 1,
+            (MAX_TOUCH - motion_ptr - 1) * sizeof(*android->contact_angle));
       if (android->pointer_count > 0)
          android->pointer_count--;
    }
    else
    {
-      int      pointer_max     = MIN(
-            AMotionEvent_getPointerCount(event), MAX_TOUCH);
+      int      pointer_max     = MIN(ev->pointer_count, MAX_TOUCH);
 
       if (action == AMOTION_EVENT_ACTION_DOWN && ENABLE_TOUCH_SCREEN_MOUSE)
       {
          /* When touch screen is pressed, set mouse
           * previous position to current position
           * before starting to calculate mouse movement deltas. */
-         android->mouse_x_prev = AMotionEvent_getX(event, motion_ptr);
-         android->mouse_y_prev = AMotionEvent_getY(event, motion_ptr);
+         android->mouse_x_prev = android_input_event_x(ev, motion_ptr);
+         android->mouse_y_prev = android_input_event_y(ev, motion_ptr);
 
          /* If another touch happened within 200ms after a quick tap
           * then cancel the quick tap and register left mouse button
           * as being held down */
-         if ((AMotionEvent_getEventTime(event) - android->quick_tap_time)/1000000 < 200)
+         if ((ev->fields.event_time - android->quick_tap_time)/1000000 < 200)
          {
             android->quick_tap_time = 0;
             android->mouse_l        = 1;
@@ -1436,32 +1780,18 @@ static INLINE void android_input_poll_event_type_motion(
       if ((       action == AMOTION_EVENT_ACTION_MOVE
                || action == AMOTION_EVENT_ACTION_HOVER_MOVE)
             && ENABLE_TOUCH_SCREEN_MOUSE)
-         android_mouse_calculate_deltas(android,event,motion_ptr,source);
+         android_mouse_calculate_deltas(android, ev, motion_ptr, source);
 
       for (motion_ptr = 0; motion_ptr < pointer_max; motion_ptr++)
       {
          struct video_viewport vp = {0};
-         float x = AMotionEvent_getX(event, motion_ptr);
-         float y = AMotionEvent_getY(event, motion_ptr);
+         float x = ev->pointer[motion_ptr].x;
+         float y = ev->pointer[motion_ptr].y;
 
-         /* On other platforms, pointer query uses the confined wrap function, *
-          * but some extra functionality is added to Android which needs the   *
-          * true offscreen value -0x8000, so both variants are called. */
-         video_driver_translate_coord_viewport_confined_wrap(
-               &vp,
-               x, y,
-               &android->pointer[motion_ptr].confined_x,
-               &android->pointer[motion_ptr].confined_y,
-               &android->pointer[motion_ptr].full_x,
-               &android->pointer[motion_ptr].full_y);
-
-         video_driver_translate_coord_viewport_wrap(
-               &vp,
-               x, y,
-               &android->pointer[motion_ptr].x,
-               &android->pointer[motion_ptr].y,
-               &android->pointer[motion_ptr].full_x,
-               &android->pointer[motion_ptr].full_y);
+         android_pointer_set(android, motion_ptr, &vp, x, y);
+         android->contact[motion_ptr]       = OVERLAY_CONTACT_PACK(
+               ev->pointer[motion_ptr].major, ev->pointer[motion_ptr].minor);
+         android->contact_angle[motion_ptr] = ev->pointer[motion_ptr].angle;
 
          android->pointer_count = MAX(
                android->pointer_count,
@@ -1485,6 +1815,19 @@ static bool android_is_keyboard_id(int id)
    return false;
 }
 
+/* Whether an event is handled the way a keyboard's is: its keys go to
+ * the keyboard row and its device gets no pad slot. True for a
+ * registered keyboard, and for a television's remote over HDMI-CEC,
+ * which is told by its source (see android_kbd_route.h). */
+static bool android_input_event_is_keyboard(const android_input_t *android,
+      int id, int source)
+{
+   if (android_is_keyboard_id(id))
+      return true;
+   return     android_key_source_is_cec(source)
+           && android_cec_remote_is_keyboard(android->device_model);
+}
+
 /* Resolves the printable Unicode codepoint produced by a hardware-key
  * press, honouring the active keyboard layout and modifier (shift, caps
  * lock, ...) state via the device's KeyCharacterMap - this mirrors what
@@ -1503,8 +1846,9 @@ static bool android_is_keyboard_id(int id)
  * the call that created it. */
 #define ANDROID_KCM_CACHE_SIZE 4
 
-static jclass    kcm_class                                   = NULL;
-static jmethodID kcm_load                                    = NULL;
+static rjni_ref  kcm_class_ref;
+static rjni_ref  kcm_load_ref;
+static rjni_ref  kcm_get_ref;
 static jmethodID kcm_get                                     = NULL;
 static jobject   kcm_obj[ANDROID_KCM_CACHE_SIZE];
 static int       kcm_obj_device[ANDROID_KCM_CACHE_SIZE];
@@ -1526,12 +1870,8 @@ static void android_keycode_map_free(JNIEnv *env)
       kcm_obj_device[i] = 0;
    }
 
-   if (kcm_class)
-      (*env)->DeleteGlobalRef(env, kcm_class);
-
-   kcm_class          = NULL;
-   kcm_load           = NULL;
-   kcm_get            = NULL;
+   /* The class global reference and the method IDs are process-lifetime
+    * rjni once-caches now, so a driver restart re-resolves nothing. */
    kcm_obj_next       = 0;
    kcm_resolve_failed = false;
 }
@@ -1545,41 +1885,30 @@ static void android_keycode_map_free(JNIEnv *env)
  * a reconnected device re-resolves. */
 static jobject android_keycode_map_get(JNIEnv *env, int device_id)
 {
-   int     i;
-   jobject local = NULL;
+   int       i;
+   jobject   local = NULL;
+   jclass    kcm_class;
+   jmethodID kcm_load;
 
    if (kcm_resolve_failed)
       return NULL;
 
+   /* rjni once-caches: after the first call these are three atomic
+    * loads, with no VM crossing even across driver restarts. */
+   kcm_class = rjni_class(&kcm_class_ref, env,
+         "android/view/KeyCharacterMap");
    if (!kcm_class)
    {
-      jclass found = NULL;
-
-      FIND_CLASS(env, found, "android/view/KeyCharacterMap");
-      if (!found)
-      {
-         kcm_resolve_failed = true;
-         return NULL;
-      }
-
-      kcm_class = (jclass)(*env)->NewGlobalRef(env, found);
-      (*env)->DeleteLocalRef(env, found);
-      if (!kcm_class)
-      {
-         kcm_resolve_failed = true;
-         return NULL;
-      }
-
-      GET_STATIC_METHOD_ID(env, kcm_load, kcm_class, "load",
-            "(I)Landroid/view/KeyCharacterMap;");
-      GET_METHOD_ID(env, kcm_get, kcm_class, "get", "(II)I");
-
-      if (!kcm_load || !kcm_get)
-      {
-         android_keycode_map_free(env);
-         kcm_resolve_failed = true;
-         return NULL;
-      }
+      kcm_resolve_failed = true;
+      return NULL;
+   }
+   kcm_load = rjni_method_static(&kcm_load_ref, env, kcm_class, "load",
+         "(I)Landroid/view/KeyCharacterMap;");
+   kcm_get  = rjni_method(&kcm_get_ref, env, kcm_class, "get", "(II)I");
+   if (!kcm_load || !kcm_get)
+   {
+      kcm_resolve_failed = true;
+      return NULL;
    }
 
    for (i = 0; i < ANDROID_KCM_CACHE_SIZE; i++)
@@ -1627,14 +1956,15 @@ static unsigned android_keycode_to_unicode(int device_id,
 }
 
 static INLINE void android_input_poll_event_type_keyboard(
-      AInputEvent *event, int keycode, int *handled)
+      const android_input_fields_t *key, int *handled)
 {
-   int keydown           = (AKeyEvent_getAction(event)
-         == AKEY_EVENT_ACTION_DOWN);
-   unsigned keyboardcode = input_keymaps_translate_keysym_to_rk(keycode);
+   int keycode           = key->keycode;
+   int keydown           = (key->action == AKEY_EVENT_ACTION_DOWN);
+   int keyboard_keycode  = android_keycode_for_keyboard(keycode);
+   unsigned keyboardcode = input_keymaps_translate_keysym_to_rk(keyboard_keycode);
    /* Set keyboard modifier based on shift,ctrl and alt state */
    uint16_t mod          = 0;
-   int meta              = AKeyEvent_getMetaState(event);
+   int meta              = key->meta_state;
    uint32_t character    = 0;
 
    if (meta & AMETA_ALT_ON)
@@ -1657,7 +1987,7 @@ static INLINE void android_input_poll_event_type_keyboard(
     * symbols, and yields 0 for modifier/lock keys so they no longer leak
     * into menu text fields as '?'. */
    character = android_keycode_to_unicode(
-         AInputEvent_getDeviceId(event), keycode, meta);
+         key->device_id, keyboard_keycode, meta);
 
    /* Fall back to the raw keysym for the plain ASCII range when the
     * platform could not resolve a character (e.g. JNI unavailable).
@@ -1674,70 +2004,55 @@ static INLINE void android_input_poll_event_type_keyboard(
       *handled = 0;
 }
 
-static INLINE void android_input_poll_event_type_key(
-      struct android_app *android_app,
-      AInputEvent *event, int port, int keycode, int source,
-      int type_event, int *handled)
+/* The keycodes and sources android_key_state.h spells out are the
+ * NDK's. */
+typedef char android_key_state_codes_check[
+   (     ANDROID_KEY_BACK            == AKEYCODE_BACK
+      && ANDROID_KEY_DPAD_CENTER     == AKEYCODE_DPAD_CENTER
+      && ANDROID_KEY_X               == AKEYCODE_X
+      && ANDROID_KEY_ENTER           == AKEYCODE_ENTER
+      && ANDROID_KEY_SOURCE_GAMEPAD  == AINPUT_SOURCE_GAMEPAD
+      && ANDROID_KEY_SOURCE_JOYSTICK == AINPUT_SOURCE_JOYSTICK) ? 1 : -1];
+
+static INLINE void android_input_poll_event_type_key(int port,
+      const android_input_fields_t *key, int *handled)
 {
-   uint8_t *buf;
-   int action           = AKeyEvent_getAction(event);
-   int keysym           = keycode;
-   bool alias_back_as_x =
-         (source & AINPUT_SOURCE_GAMEPAD)  != AINPUT_SOURCE_GAMEPAD
-      && (source & AINPUT_SOURCE_JOYSTICK) != AINPUT_SOURCE_JOYSTICK;
+   int action  = key->action;
+   int keycode = key->keycode;
 
    /* android_key_state[] has one row per pad slot plus the
     * dedicated keyboard row at ANDROID_KEYBOARD_PORT. */
    if (port < 0 || port > ANDROID_KEYBOARD_PORT)
       return;
-   buf           = android_key_state[port];
 
-   /* Handle 'duplicate' inputs that correspond to the same RETROK_*
-    * key. rarch_key_map_android can only map RETROK_RETURN to one
-    * keycode, so DPAD_CENTER is folded into ENTER - but only on the
-    * keyboard row, which is read through rarch_keysym_lut. Pad rows
-    * are read by raw keycode against joypad binds, and remotes/pads
-    * autoconfigure their OK/Center button as "23" (e.g. Amazon Fire
-    * TV Remote), so rewriting it there makes that bind dead. */
-   if (     port    == ANDROID_KEYBOARD_PORT
-         && keycode == AKEYCODE_DPAD_CENTER)
-      keysym = AKEYCODE_ENTER;
-   /* Rows are MAX_KEYS bytes wide and readers bound their lookups at
-    * LAST_KEYCODE (android_joypad_button_state). Keycodes arrive
-    * straight from the platform and are not confined to that range:
-    * public codes run well past AKEYCODE_ASSIST (AKEYCODE_WAKEUP is
-    * 224, AKEYCODE_PROFILE_SWITCH 288) and vendor codes are
-    * unbounded, so an unguarded BIT_SET writes past the row - and
-    * past the array itself for ANDROID_KEYBOARD_PORT, which is the
-    * last one - corrupting whatever the linker placed next to it.
-    * Nothing above LAST_KEYCODE is bindable, so drop it. */
-   if (keysym >= 0 && keysym < LAST_KEYCODE)
+   /* What a press sets and a release clears is decided in
+    * android_key_state.h, in one place, so the two cannot drift
+    * apart again. */
+   /* a pad's button, kept back by the input block timeout; BACK is
+    * left alone, for what it puts on the keyboard row */
+   if (     android_press_window_ns
+         && port < DEFAULT_MAX_PADS
+         && keycode > 0 && keycode < LAST_KEYCODE
+         && keycode != ANDROID_KEY_BACK)
    {
-      /* some controllers send both the up and down events at once
-       * when the button is released for "special" buttons, like menu buttons
-       * work around that by only using down events for meta keys (which get
-       * cleared every poll anyway)
-       */
-      switch (action)
+      if (action == AKEY_EVENT_ACTION_DOWN)
       {
-         case AKEY_EVENT_ACTION_UP:
-            BIT_CLEAR(buf, keysym);
-            if (keysym == AKEYCODE_BACK && alias_back_as_x)
-            {
-               BIT_CLEAR(buf, AKEYCODE_X); /* alias BACK on remote */
-               BIT_CLEAR(android_key_state[ANDROID_KEYBOARD_PORT], AKEYCODE_X);
-            }
-            break;
-         case AKEY_EVENT_ACTION_DOWN:
-            BIT_SET(buf, keysym);
-            if (keysym == AKEYCODE_BACK && alias_back_as_x)
-            {
-               BIT_SET(buf, AKEYCODE_X);
-               BIT_SET(android_key_state[ANDROID_KEYBOARD_PORT], AKEYCODE_X);
-            }
-            break;
+         android_press_group_down(&android_press_group[port], keycode,
+               key->event_time);
+         action = -1;
       }
+      else if (action == AKEY_EVENT_ACTION_UP
+            && android_press_group_up(&android_press_group[port], keycode))
+         action = -1;
    }
+
+   if (     action == AKEY_EVENT_ACTION_DOWN
+         || action == AKEY_EVENT_ACTION_UP)
+      android_key_state_write(
+            android_key_state[port],
+            android_key_state[ANDROID_KEYBOARD_PORT],
+            LAST_KEYCODE, keycode, key->source,
+            action == AKEY_EVENT_ACTION_DOWN);
 
    if ((keycode == AKEYCODE_VOLUME_UP || keycode == AKEYCODE_VOLUME_DOWN))
       *handled = 0;
@@ -1784,16 +2099,37 @@ static int android_input_recover_port(android_input_t *android, int id)
    int vendorId          = 0;
    int productId         = 0;
    int ret               = -1;
-   settings_t *settings  = config_get_ptr();
 
    if (!engine_lookup_name(device_name, &vendorId,
 			   &productId, sizeof(device_name), id))
        return -1;
+
+   /* A pad the OS reported as removed comes back to the slot it left,
+    * whatever id it returns under. Its disconnect was reported to the
+    * frontend, so its return is reported too. A removed slot is looked
+    * for first: of two identical controllers, the one that went away
+    * must not be taken for the one still connected. */
+   ret = android_pad_find_removed(android->pad_states,
+         android->pads_connected, device_name);
+   if (ret >= 0)
+   {
+      android->pad_states[ret].id = id;
+      g_android->id[ret]          = id;
+      input_autoconfigure_connect(
+            android->pad_states[ret].name,
+            NULL, NULL,
+            android_joypad.ident,
+            ret,
+            vendorId,
+            productId);
+      return ret;
+   }
+
    ret = android_input_get_id_index_from_name(android, device_name);
    if (ret < 0)
        return -1;
 
-   if (!settings->bools.android_input_disconnect_workaround)
+   if (!input_config_get_android_disconnect_workaround())
    {
       char stale_name[256];
 
@@ -1825,10 +2161,9 @@ static bool is_configured_as_physical_keyboard(int vendor_id, int product_id, co
     int keyboard_vendor_id;
     int keyboard_product_id;
     char keyboard_name[256];
-    settings_t *settings = config_get_ptr();
 
     {
-        const char *str = settings->arrays.input_android_physical_keyboard;
+        const char *str = input_config_get_android_physical_keyboard();
         char *end       = NULL;
         long vid, pid;
 
@@ -1893,6 +2228,8 @@ static void handle_hotplug(android_input_t *android,
 {
    char device_name[256];
    char name_buf[256];
+   int group;
+   unsigned role                = INPUT_GROUP_MEMBER;
    int vendorId                 = 0;
    int productId                = 0;
    const char *device_model     = android->device_model;
@@ -1903,105 +2240,40 @@ static void handle_hotplug(android_input_t *android,
             &productId, sizeof(device_name), id))
       return;
 
-   /* FIXME - per-device hacks for NVidia Shield, Xperia Play and
-    * similar devices
-    *
-    * These hacks depend on autoconf, but can work with user
-    * created autoconfs properly
-    */
+   group = input_group_rule_find(android_group_rules, ANDROID_GROUP_RULES,
+         device_model, device_name, &role);
+   if (     group > ANDROID_GROUP_SHIELD_GAMEPAD
+         && strstr(device_name, "NVIDIA"))
+      group = -1;
 
-   /* NVIDIA Shield Console
-    * This is the most complicated example, the built-in controller
-    * has an extra button that can't be used and a remote.
-    *
-    * We map the remote for navigation and overwrite whenever a
-    * real controller is connected.
-    * Also group the NVIDIA button on the controller with the
-    * main controller inputs so it's usable. It's mapped to
-    * menu by default
-    *
-    * The NVIDIA button is identified as "Virtual" device when first
-    * pressed. CEC remote input is also identified as "Virtual" device.
-    * If a virtual device is detected before a controller then it will
-    * be assigned to port 0 as "SHIELD Virtual Controller". When a real
-    * controller is detected it will overwrite the virtual controller
-    * and be grouped with the NVIDIA button of the virtual device.
-    *
-    */
-   if (strstr(device_model, "SHIELD Android TV") && (
-      strstr(device_name, "Virtual") ||
-      strstr(device_name, "NVIDIA Corporation NVIDIA Controller v01.0")))
+   if (group >= 0)
    {
-      /* only use the hack if the device is one of the built-in devices */
+      const input_group_rule_t *rule = &android_group_rules[group];
+      int32_t lead;
+
       RARCH_LOG("[Android] Special device detected: %s.\n", device_model);
+      /* On the SHIELD Android TV the remote, or the NVIDIA button come
+       * before its controller, holds port 1 until a controller comes */
+      if (     group == ANDROID_GROUP_SHIELD_TV
+            && role  == INPUT_GROUP_LEADS
+            && (   strstr(android->pad_states[0].name, "SHIELD Remote")
+                || strstr(android->pad_states[0].name,
+                     "SHIELD Virtual Controller")))
       {
-         /* Remove the remote or virtual controller device if it is mapped */
-         if (   strstr(android->pad_states[0].name, "SHIELD Remote")
-             || strstr(android->pad_states[0].name, "SHIELD Virtual Controller"))
-         {
-            pad_id1 = -1;
-            pad_id2 = -1;
-            android->pads_connected = 0;
+         input_groups_clear(&android_groups);
+         android->pads_connected = 0;
+         *port = 0;
+      }
+      lead = input_groups_join(&android_groups, group, role, id);
+      if (lead < 0 && group == ANDROID_GROUP_SHIELD_TV)
+         strlcpy_lit(name_buf, "SHIELD Virtual Controller", sizeof(name_buf));
+      else if (lead != id)
+         return;
+      else
+      {
+         strlcpy(name_buf, rule->name, sizeof(name_buf));
+         if (rule->first_port)
             *port = 0;
-            strlcpy(name_buf, device_name, sizeof(name_buf));
-         }
-
-         /* if the actual controller has not been mapped yet,
-          * then configure Virtual device for now */
-         if (strstr(device_name, "Virtual") && android->pads_connected==0)
-            strlcpy_lit(name_buf, "SHIELD Virtual Controller", sizeof(name_buf));
-         else
-            strlcpy_lit(name_buf, "NVIDIA SHIELD Controller", sizeof(name_buf));
-
-         /* apply the hack only for the first controller
-          * store the id for later use
-         */
-         if (strstr(device_name, "NVIDIA Corporation NVIDIA Controller v01.0")
-               && android->pads_connected==0)
-            pad_id1 = id;
-         else if (strstr(device_name, "Virtual") && pad_id1 != -1)
-         {
-            id = pad_id1;
-            return;
-         }
-      }
-   }
-
-   else if (strstr(device_model, "SHIELD") && (
-      strstr(device_name, "Virtual") || strstr(device_name, "gpio") ||
-      strstr(device_name, "NVIDIA Corporation NVIDIA Controller v01.01") ||
-      strstr(device_name, "NVIDIA Corporation NVIDIA Controller v01.02")))
-   {
-      /* only use the hack if the device is one of the built-in devices */
-      RARCH_LOG("[Android] Special device detected: %s.\n", device_model);
-      {
-         if ( pad_id1 < 0 )
-            pad_id1 = id;
-         else
-            pad_id2 = id;
-
-         if ( pad_id2 > 0)
-            return;
-         strlcpy_lit(name_buf, "NVIDIA SHIELD Portable", sizeof(name_buf));
-      }
-   }
-
-   else if (strstr(device_model, "SHIELD") && (
-      strstr(device_name, "Virtual") || strstr(device_name, "gpio") ||
-      strstr(device_name, "NVIDIA Corporation NVIDIA Controller v01.03")))
-   {
-      /* only use the hack if the device is one of the built-in devices */
-      RARCH_LOG("[Android] Special device detected: %s.\n", device_model);
-      {
-         if (strstr(device_name, "NVIDIA Corporation NVIDIA Controller v01.03")
-             && android->pads_connected==0)
-            pad_id1 = id;
-         else if (strstr(device_name, "Virtual") || strstr(device_name, "gpio"))
-         {
-            id = pad_id1;
-            return;
-         }
-         strlcpy_lit(name_buf, "NVIDIA SHIELD Gamepad", sizeof(name_buf));
       }
    }
 
@@ -2012,86 +2284,6 @@ static void handle_hotplug(android_input_t *android,
     /* to-do: add DS4 on Bravia ATV */
    else if (strstr(device_name, "NVIDIA"))
       strlcpy_lit(name_buf, "Android Gamepad", sizeof(name_buf));
-
-   /* GPD XD
-    * This is a simple hack, basically groups the "back"
-    * button with the rest of the gamepad
-    */
-   else if (strstr(device_model, "XD") && (
-      strstr(device_name, "Virtual") || strstr(device_name, "rk29-keypad") ||
-      strstr(device_name,"Playstation3") || strstr(device_name,"XBOX")))
-   {
-      /* only use the hack if the device is one of the built-in devices */
-      RARCH_LOG("[Android] Special device detected: %s.\n", device_model);
-      {
-         if ( pad_id1 < 0 )
-            pad_id1 = id;
-         else
-            pad_id2 = id;
-
-         if ( pad_id2 > 0)
-            return;
-
-         strlcpy_lit(name_buf, "GPD XD", sizeof(name_buf));
-         *port = 0;
-      }
-   }
-
-   /* XPERIA Play
-    * This device is composed of two hid devices
-    * We make it look like one device
-    */
-   else if (
-            (
-               string_starts_with_size(device_model, "R800", STRLEN_CONST("R800")) ||
-               strstr(device_model, "Xperia Play") ||
-               strstr(device_model, "Play") ||
-               strstr(device_model, "SO-01D")
-            ) || (
-               strstr(device_name, "keypad-game-zeus") ||
-               strstr(device_name, "keypad-zeus") ||
-               strstr(device_name, "Android Gamepad")
-            )
-         )
-   {
-      /* only use the hack if the device is one of the built-in devices */
-      RARCH_LOG("[Android] Special device detected: %s.\n", device_model);
-      {
-         if ( pad_id1 < 0 )
-            pad_id1 = id;
-         else
-            pad_id2 = id;
-
-         if ( pad_id2 > 0)
-            return;
-
-         strlcpy_lit(name_buf, "XPERIA Play", sizeof(name_buf));
-         *port = 0;
-      }
-   }
-
-   /* ARCHOS Gamepad
-    * This device is composed of two hid devices
-    * We make it look like one device
-    */
-   else if (strstr(device_model, "ARCHOS GAMEPAD") && (
-      strstr(device_name, "joy_key") || strstr(device_name, "joystick")))
-   {
-      /* only use the hack if the device is one of the built-in devices */
-      RARCH_LOG("[Android] ARCHOS GAMEPAD Detected: %s.\n", device_model);
-      {
-         if ( pad_id1 < 0 )
-            pad_id1 = id;
-         else
-            pad_id2 = id;
-
-         if ( pad_id2 > 0)
-            return;
-
-         strlcpy_lit(name_buf, "ARCHOS GamePad", sizeof(name_buf));
-         *port = 0;
-      }
-   }
 
    /* Amazon Fire TV & Fire stick */
    else if (
@@ -2225,12 +2417,26 @@ static void handle_hotplug(android_input_t *android,
    android->pads_connected++;
 }
 
-static int android_input_get_id(AInputEvent *event)
+/* A device id as the pad slots know it */
+static int android_input_map_id(int id)
 {
-   int id = AInputEvent_getDeviceId(event);
-   if (id == pad_id2)
-      return pad_id1;
-   return id;
+   return input_groups_lead(&android_groups, id);
+}
+
+/* An event's pad slot, plugging its device in if it is new */
+static int android_input_resolve_port(android_input_t *android,
+      struct android_app *android_app, int id, int source,
+      bool *is_keyboard)
+{
+   int port     = android_input_get_id_port(android, id, source);
+   *is_keyboard = android_input_event_is_keyboard(android, id, source);
+
+   if (port < 0 && !*is_keyboard)
+      port = android_input_recover_port(android, id);
+
+   if (port < 0 && !*is_keyboard)
+      handle_hotplug(android, android_app, &port, id, source);
+   return port;
 }
 
 struct TOUCHSTATE
@@ -2241,13 +2447,13 @@ struct TOUCHSTATE
 };
 
 static void engine_handle_touchpad(
-      struct android_app *android, AInputEvent *event, int port)
+      struct android_app *android, const android_input_event_t *ev, int port)
 {
    size_t n;
    static struct TOUCHSTATE touchstate[64];
-   int    raw_action  = AMotionEvent_getAction(event);
+   int    raw_action  = ev->fields.action;
    int    action      = AMOTION_EVENT_ACTION_MASK & raw_action;
-   size_t ptr_count   = AMotionEvent_getPointerCount(event);
+   size_t ptr_count   = (size_t)ev->pointer_count;
    int    action_id   = -1;
 
    /* Every other handler on this path bounds the port it is given.
@@ -2273,14 +2479,14 @@ static void engine_handle_touchpad(
       if (action_idx >= ptr_count)
          return;
 
-      action_id = AMotionEvent_getPointerId(event, action_idx);
+      action_id = ev->pointer[action_idx].id;
    }
 
    for (n = 0; n < ptr_count; ++n)
    {
       int pointer_id = (action_id >= 0)
          ? action_id
-         : AMotionEvent_getPointerId(event, n);
+         : ev->pointer[n].id;
 
       /* Pointer ids run to 31 on every Android release, so this only
        * fires on an id the framework never produces. */
@@ -2297,8 +2503,8 @@ static void engine_handle_touchpad(
 
       if (touchstate[pointer_id].down)
       {
-         int x = touchstate[pointer_id].x  = AMotionEvent_getX(event, n);
-         int y = touchstate[pointer_id].y  = AMotionEvent_getY(event, n);
+         int x = touchstate[pointer_id].x  = ev->pointer[n].x;
+         int y = touchstate[pointer_id].y  = ev->pointer[n].y;
          if (x < 360)
          {
             android->analog_state[port][0] =
@@ -2331,158 +2537,655 @@ static void engine_handle_touchpad(
    }
 }
 
-static void android_input_poll_input_gingerbread(
-      android_input_t *android)
+/* True for a key event that belongs to the system keyboard's text
+ * field (see android_kbd_route.h): the caller finishes it unhandled
+ * and keeps it out of the key state and the line editor. An event
+ * from the soft keyboard carries AKEY_EVENT_FLAG_SOFT_KEYBOARD, the
+ * virtual keyboard's device id (-1), or both, depending on how the
+ * IME built it. */
+static bool android_kbd_takes_key(const android_input_fields_t *key)
 {
-   AInputEvent              *event = NULL;
-   struct android_app *android_app = (struct android_app*)g_android;
+   return android_kbd_key_goes_to_ime(
+         retro_atomic_load_relaxed_int(&android_kbd_open) != 0,
+            (key->flags & AKEY_EVENT_FLAG_SOFT_KEYBOARD)
+         || key->device_id == -1,
+         key->keycode == AKEYCODE_BACK);
+}
 
-   /* The queue is swapped out from under this poll: a destroyed input
-    * queue arrives as a NULL through APP_CMD_INPUT_CHANGED, and a
-    * LOOPER_ID_INPUT raised before that command was serviced is still
-    * delivered afterwards in the same pollOnce batch.
-    * android_input_discard_events guards the same pointer. */
-   if (!android_app || !android_app->inputQueue)
+static void android_input_key_read(AInputEvent *event, int source,
+      android_input_fields_t *key)
+{
+   key->event_time = AKeyEvent_getEventTime(event);
+   key->type       = AINPUT_EVENT_TYPE_KEY;
+   key->device_id  = AInputEvent_getDeviceId(event);
+   key->source     = source;
+   key->action     = AKeyEvent_getAction(event);
+   key->keycode    = AKeyEvent_getKeyCode(event);
+   key->flags      = AKeyEvent_getFlags(event);
+   key->meta_state = AKeyEvent_getMetaState(event);
+}
+
+/* A key from the input queue or the second display's window; *handled
+ * is the queue's answer, which SecondDisplayController repeats */
+static void android_input_key_fields(int port, bool is_keyboard,
+      const android_input_fields_t *key, int *handled)
+{
+   if (!key->keycode)
       return;
 
-   /* Read all pending events. */
-   if (AInputQueue_getEvent(android_app->inputQueue, &event) >= 0)
+   if (android_kbd_takes_key(key))
    {
-      int source, type_event, id, port;
-      int32_t   handled = 0;
-      if (AInputQueue_preDispatchEvent(android_app->inputQueue, event))
-         return;
-      source            = AInputEvent_getSource(event);
-      type_event        = AInputEvent_getType(event);
-      id                = android_input_get_id(event);
-      port              = android_input_get_id_port(android, id, source);
+      *handled = 0;
+      return;
+   }
 
-      if (port < 0 && !android_is_keyboard_id(id))
-         port = android_input_recover_port(android, id);
+   if (is_keyboard)
+   {
+      android_input_poll_event_type_keyboard(key, handled);
+      android_input_poll_event_type_key(ANDROID_KEYBOARD_PORT, key,
+            handled);
+   }
+   else
+      android_input_poll_event_type_key(port, key, handled);
+}
 
-      if (port < 0 && !android_is_keyboard_id(id))
-         handle_hotplug(android, android_app,
-         &port, id, source);
+/* ---- the input reader ----
+ *
+ * Android sends a window its next key only once it has finished the
+ * last, and a NativeActivity gets each key twice, before the IME
+ * (marked AKEY_EVENT_FLAG_PREDISPATCH) and after it. Read once a
+ * frame, a mashed pad falls behind. So the queue is read on a thread
+ * of its own, which copies each event and finishes it at once; the
+ * poll applies the copies (android_input_poll_events). */
 
-      switch (type_event)
-      {
-         case AINPUT_EVENT_TYPE_MOTION:
-            if ((source & AINPUT_SOURCE_TOUCHPAD))
-               engine_handle_touchpad(android_app, event, port);
-            /* Only handle events from a touchscreen or mouse */
-            else if ((source & (AINPUT_SOURCE_TOUCHSCREEN
-                        | AINPUT_SOURCE_STYLUS | AINPUT_SOURCE_MOUSE)))
-               android_input_poll_event_type_motion(android, event,
-                     port, source);
-            else
-               engine_handle_dpad(android_app, event, port, source);
-            handled = 1;
-            break;
-         case AINPUT_EVENT_TYPE_KEY:
-            {
-               int keycode = AKeyEvent_getKeyCode(event);
+/* frameworks/native Input.h; not in the NDK */
+#define ANDROID_KEY_FLAG_PREDISPATCH 0x20000000
 
-               if (!keycode)
-                  break;
+/* Whether the poll reads a motion event as a stick's move, not as a
+ * touch, a mouse or a pen (android_input_event_apply) */
+static INLINE bool android_input_source_is_stick(int32_t source)
+{
+   return !(source & (AINPUT_SOURCE_TOUCHPAD | AINPUT_SOURCE_TOUCHSCREEN
+            | AINPUT_SOURCE_MOUSE_RELATIVE | AINPUT_SOURCE_STYLUS
+            | AINPUT_SOURCE_MOUSE));
+}
 
-               if (android_is_keyboard_id(id))
-               {
-                  android_input_poll_event_type_keyboard(
-                        event, keycode, &handled);
-                  android_input_poll_event_type_key(
-                        android_app, event, ANDROID_KEYBOARD_PORT,
-                        keycode, source, type_event, &handled);
-               }
-               else
-                  android_input_poll_event_type_key(android_app,
-                     event, port, keycode, source, type_event, &handled);
-            }
-            break;
-      }
+/* A hat axis as the poll reads it: -1, 0 or 1 */
+static INLINE int android_input_hat(float v)
+{
+   return (int)v < 0 ? -1 : (int)v > 0 ? 1 : 0;
+}
 
-      AInputQueue_finishEvent(android_app->inputQueue, event, handled);
+/* A stick's moves merge while they keep its hat where it is: the last
+ * holds every axis, and a hat pressed and let go is two records */
+static INLINE uint32_t android_input_stick_merge(int32_t device_id,
+      const float *axes)
+{
+   return 0x40000000u
+      | (((uint32_t)device_id & 0xffffu) << 8)
+      | ((uint32_t)(android_input_hat(axes[4]) + 1) << 2)
+      |  (uint32_t)(android_input_hat(axes[5]) + 1);
+}
+
+/* A stick's move: its axes */
+static void android_input_reader_stick(const AInputEvent *event,
+      android_input_fields_t *fields, size_t ptr)
+{
+   static const int32_t axes[ANDROID_JOYSTICK_AXES] = {
+      AXIS_X, AXIS_Y, AXIS_Z, AXIS_RZ, AXIS_HAT_X, AXIS_HAT_Y,
+      AXIS_LTRIGGER, AXIS_RTRIGGER, AXIS_BRAKE, AXIS_GAS };
+   size_t i;
+
+   if (p_AMotionEvent_getAxisValue)
+   {
+      for (i = 0; i < ANDROID_JOYSTICK_AXES; i++)
+         fields->axes[i] = AMotionEvent_getAxisValue(event, axes[i], ptr);
+   }
+   else
+   {
+      for (i = 0; i < ANDROID_JOYSTICK_AXES; i++)
+         fields->axes[i] = 0.0f;
+      fields->axes[0] = AMotionEvent_getX(event, ptr);
+      fields->axes[1] = AMotionEvent_getY(event, ptr);
    }
 }
 
-static void android_input_poll_input_default(android_input_t *android)
+/* A touch's, a mouse's or a pen's: its pointers, and the rest at the
+ * pointer the action names; how many pointers */
+static size_t android_input_reader_pointers(const AInputEvent *event,
+      android_input_event_t *ev, size_t count, size_t ptr)
 {
-   AInputEvent              *event = NULL;
-   struct android_app *android_app = (struct android_app*)g_android;
+   size_t i;
 
-   /* The queue is swapped out from under this poll: a destroyed input
-    * queue arrives as a NULL through APP_CMD_INPUT_CHANGED, and a
-    * LOOPER_ID_INPUT raised before that command was serviced is still
-    * delivered afterwards in the same pollOnce batch.
-    * android_input_discard_events guards the same pointer. */
-   if (!android_app || !android_app->inputQueue)
+   ev->down_time    = AMotionEvent_getDownTime(event);
+   ev->button_state = p_AMotionEvent_getButtonState
+      ? AMotionEvent_getButtonState(event) : 0;
+   ev->tool_type    = 0;
+   ev->pressure     = 1.0f;
+   ev->distance     = 0.0f;
+   ev->vscroll      = 0.0f;
+   ev->relative_x   = 0.0f;
+   ev->relative_y   = 0.0f;
+   for (i = 0; i < count && i < MAX_TOUCH; i++)
+   {
+      float major = AMotionEvent_getTouchMajor(event, i);
+      float minor = AMotionEvent_getTouchMinor(event, i);
+      ev->pointer[i].id    = AMotionEvent_getPointerId(event, i);
+      ev->pointer[i].x     = AMotionEvent_getX(event, i);
+      ev->pointer[i].y     = AMotionEvent_getY(event, i);
+      ev->pointer[i].major = (uint16_t)(major > 0.0f
+            ? (major < 65535.0f ? major : 65535.0f) : 0.0f);
+      ev->pointer[i].minor = (uint16_t)(minor > 0.0f
+            ? (minor < 65535.0f ? minor : 65535.0f) : 0.0f);
+      ev->pointer[i].angle = OVERLAY_CONTACT_ANGLE_Q(
+            AMotionEvent_getOrientation(event, i));
+      ev->pointer[i].pad   = 0;
+   }
+   ev->pointer_count = (int32_t)i;
+   if (ptr < count)
+   {
+      if (p_AMotionEvent_getToolType)
+         ev->tool_type = AMotionEvent_getToolType(event, ptr);
+      if (p_AMotionEvent_getPressure)
+         ev->pressure  = AMotionEvent_getPressure(event, ptr);
+      if (p_AMotionEvent_getAxisValue)
+      {
+         ev->distance   = AMotionEvent_getAxisValue(event,
+               AMOTION_EVENT_AXIS_DISTANCE, ptr);
+         ev->vscroll    = AMotionEvent_getAxisValue(event,
+               AMOTION_EVENT_AXIS_VSCROLL, ptr);
+         ev->relative_x = AMotionEvent_getAxisValue(event,
+               AMOTION_EVENT_AXIS_RELATIVE_X, ptr);
+         ev->relative_y = AMotionEvent_getAxisValue(event,
+               AMOTION_EVENT_AXIS_RELATIVE_Y, ptr);
+      }
+   }
+   return i;
+}
+
+/* One event: written into the ring, where the poll reads it, when
+ * there is something to apply. Returns how to finish it, handled (1)
+ * or not (0); -1 when AInputQueue_preDispatchEvent has taken it; -2
+ * when the ring has no room, and it is not taken. */
+static int android_input_reader_take(android_input_ring_writer_t *w,
+      AInputQueue *queue, AInputEvent *event, bool active)
+{
+   android_input_event_t *ev;
+   int32_t source;
+   int handled = 1;
+
+   /* Before the first input driver: the IME's, then the system's */
+   if (!active)
+      return AInputQueue_preDispatchEvent(queue, event) ? -1 : 0;
+
+   source = AInputEvent_getSource(event);
+   switch (AInputEvent_getType(event))
+   {
+      case AINPUT_EVENT_TYPE_KEY:
+         /* The copy before the IME is read and ends here, unless the
+          * system keyboard is up: then the IME has it first */
+         if (     retro_atomic_load_relaxed_int(&android_kbd_open)
+               && AInputQueue_preDispatchEvent(queue, event))
+            return -1;
+         /* read where the poll reads it; a key not kept leaves the slot
+          * to the next record */
+         if (!(ev = (android_input_event_t*)android_input_ring_slot(w,
+                     ANDROID_INPUT_KEY_BYTES, 0)))
+            return -2;
+         android_input_key_read(event, source, &ev->fields);
+         if (!ev->fields.keycode)
+            return 1;
+         if (android_kbd_takes_key(&ev->fields))
+            return 0;
+         if (     ev->fields.keycode == AKEYCODE_VOLUME_UP
+               || ev->fields.keycode == AKEYCODE_VOLUME_DOWN)
+         {
+            /* the system's: read once, after the IME */
+            if (ev->fields.flags & ANDROID_KEY_FLAG_PREDISPATCH)
+               return 0;
+            handled = 0;
+         }
+         android_input_ring_built(w, ANDROID_INPUT_KEY_BYTES, 0);
+         break;
+      case AINPUT_EVENT_TYPE_MOTION:
+         {
+            int32_t action = AMotionEvent_getAction(event);
+            size_t count   = AMotionEvent_getPointerCount(event);
+            size_t ptr     = (size_t)action
+               >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+            int32_t device = AInputEvent_getDeviceId(event);
+
+            if (android_input_source_is_stick(source))
+            {
+               /* the hat decides what the move may merge with; then the
+                * axes are read where the poll reads them */
+               float hat[ANDROID_JOYSTICK_AXES];
+               uint32_t merge;
+               hat[4] = p_AMotionEvent_getAxisValue
+                  ? AMotionEvent_getAxisValue(event, AXIS_HAT_X, ptr) : 0.0f;
+               hat[5] = p_AMotionEvent_getAxisValue
+                  ? AMotionEvent_getAxisValue(event, AXIS_HAT_Y, ptr) : 0.0f;
+               merge  = android_input_stick_merge(device, hat);
+               if (!(ev = (android_input_event_t*)android_input_ring_slot(w,
+                           ANDROID_INPUT_STICK_BYTES, merge)))
+                  return -2;
+               android_input_reader_stick(event, &ev->fields, ptr);
+               android_input_ring_built(w, ANDROID_INPUT_STICK_BYTES, merge);
+            }
+            else
+            {
+               size_t n = count < MAX_TOUCH ? count : MAX_TOUCH;
+               if (!(ev = (android_input_event_t*)android_input_ring_slot(w,
+                           ANDROID_INPUT_MOTION_BYTES(n), 0)))
+                  return -2;
+               n = android_input_reader_pointers(event, ev, count, ptr);
+               android_input_ring_built(w, ANDROID_INPUT_MOTION_BYTES(n), 0);
+            }
+            ev->fields.event_time = AMotionEvent_getEventTime(event);
+            ev->fields.type       = AINPUT_EVENT_TYPE_MOTION;
+            ev->fields.device_id  = device;
+            ev->fields.source     = source;
+            ev->fields.action     = action;
+            ev->fields.keycode    = 0;
+            ev->fields.flags      = 0;
+            ev->fields.meta_state = 0;
+         }
+         break;
+      default:
+         break;
+   }
+   return handled;
+}
+
+/* Reader thread: what the queue holds, while the ring has room; what
+ * was written is published once the queue is empty. False if it
+ * stopped for room. */
+static bool android_input_reader_drain(struct android_input_reader *r,
+      android_input_ring_writer_t *w, AInputQueue *queue)
+{
+   for (;;)
+   {
+      int handled;
+      AInputEvent *event = NULL;
+      bool active        = retro_atomic_load_acquire_int(&r->active) != 0;
+
+      /* room for the largest record, and a pad before it, besides what
+       * is built and not yet published: an event taken from the queue
+       * has to fit, as there is no putting it back */
+      if (     active
+            && retro_spsc_write_avail(&r->events) - (w->span ? w->used : 0)
+               < ANDROID_INPUT_MOTION_BYTES(MAX_TOUCH) * 2)
+      {
+         android_input_ring_publish(w);
+         return false;
+      }
+      if (AInputQueue_getEvent(queue, &event) < 0)
+      {
+         android_input_ring_publish(w);
+         return true;
+      }
+      handled = android_input_reader_take(w, queue, event, active);
+      if (handled >= 0)
+         AInputQueue_finishEvent(queue, event, handled);
+      else if (handled == -2)
+      {
+         /* cannot be: there was room for it */
+         RARCH_ERR("[Android] Input reader: an event did not fit.\n");
+         AInputQueue_finishEvent(queue, event, 0);
+      }
+   }
+}
+
+/* Reader thread: the ring is full. Until the app thread makes room,
+ * hands over a queue or stops the reader; the rest waits in the input
+ * queue, as it would for a window that is slow to finish. */
+static void android_input_reader_wait_room(struct android_input_reader *r,
+      int seen)
+{
+   int key = retro_eventcount_prepare_wait(&r->room);
+   if (     retro_spsc_write_avail(&r->events)
+               >= ANDROID_INPUT_MOTION_BYTES(MAX_TOUCH) * 2
+         || retro_atomic_load_acquire_int(&r->queue_seq) != seen
+         || retro_atomic_load_acquire_int(&r->quit))
+   {
+      retro_eventcount_cancel_wait(&r->room);
+      return;
+   }
+   retro_eventcount_commit_wait(&r->room, key);
+}
+
+static void android_input_reader_entry(void *data)
+{
+   struct android_app *android_app = (struct android_app*)data;
+   struct android_input_reader *r  = &android_app->input_reader;
+   AInputQueue *queue              = NULL;
+   int seen                        = 0;
+   ALooper *looper;
+   android_input_ring_writer_t w;
+
+   android_input_ring_writer_init(&w, &r->events);
+
+   sthread_setname("ra-input");
+   looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
+   ALooper_acquire(looper);
+   retro_atomic_store_release_ptr(&r->looper, looper);
+   retro_atomic_thread_fence_seq_cst();
+
+   for (;;)
+   {
+      int seq = retro_atomic_load_acquire_int(&r->queue_seq);
+
+      if (seq != seen)
+      {
+         AInputQueue *next = (AInputQueue*)
+            retro_atomic_load_acquire_ptr(&r->queue);
+         if (next != queue)
+         {
+            if (queue)
+               AInputQueue_detachLooper(queue);
+            if ((queue = next))
+               AInputQueue_attachLooper(queue, looper, LOOPER_ID_INPUT,
+                     NULL, NULL);
+         }
+         /* the old queue is let go: answer each command that handed
+          * one over */
+         for (; seen != seq; seen++)
+            android_lifecycle_done(&android_app->lc);
+      }
+
+      if (retro_atomic_load_acquire_int(&r->quit))
+         break;
+
+      if (queue && !android_input_reader_drain(r, &w, queue))
+         android_input_reader_wait_room(r, seen);
+      else
+         ALooper_pollOnce(-1, NULL, NULL, NULL);
+   }
+
+   if (queue)
+      AInputQueue_detachLooper(queue);
+}
+
+bool android_input_reader_start(struct android_app *android_app)
+{
+   struct android_input_reader *r = &android_app->input_reader;
+
+   android_input_resolve_calls();
+
+   if (     !retro_spsc_init(&r->events,
+               ANDROID_INPUT_RING_BYTES)
+         || !retro_eventcount_init(&r->room)
+         || !(r->thread = sthread_create(android_input_reader_entry,
+               android_app)))
+   {
+      RARCH_ERR("[Android] Failed to start the input reader.\n");
+      return false;
+   }
+   return true;
+}
+
+void android_input_reader_stop(struct android_app *android_app)
+{
+   struct android_input_reader *r = &android_app->input_reader;
+   ALooper *looper;
+
+   if (!r->thread)
       return;
 
-   /* Read all pending events. */
-   while (AInputQueue_hasEvents(android_app->inputQueue))
+   retro_atomic_store_release_int(&r->quit, 1);
+   retro_atomic_thread_fence_seq_cst();
+   if ((looper = (ALooper*)retro_atomic_load_acquire_ptr(&r->looper)))
+      ALooper_wake(looper);
+   retro_eventcount_notify(&r->room);
+   sthread_join(r->thread);
+   r->thread = NULL;
+
+   if ((looper = (ALooper*)retro_atomic_exchange_ptr(&r->looper, NULL)))
+      ALooper_release(looper);
+}
+
+/* App thread: the queue to read from now on, or NULL. The reader
+ * answers APP_CMD_INPUT_CHANGED once it has let go of the last one. */
+static void android_input_reader_set_queue(struct android_app *android_app,
+      AInputQueue *queue)
+{
+   struct android_input_reader *r = &android_app->input_reader;
+   ALooper *looper;
+
+   retro_atomic_store_release_ptr(&r->queue, queue);
+   (void)retro_atomic_fetch_add_int(&r->queue_seq, 1);
+   retro_atomic_thread_fence_seq_cst();
+   if ((looper = (ALooper*)retro_atomic_load_acquire_ptr(&r->looper)))
+      ALooper_wake(looper);
+   retro_eventcount_notify(&r->room);
+}
+
+/* ---- the poll's side ---- */
+
+/* A key press or release: false if the key went the other way earlier
+ * in this poll */
+static bool android_input_event_key_change(android_input_t *android,
+      const android_input_event_t *ev, int port, bool is_keyboard)
+{
+   int row    = is_keyboard ? ANDROID_KEYBOARD_PORT : port;
+   int action = ev->fields.action;
+   int keysym;
+
+   if (     row < 0 || row > ANDROID_KEYBOARD_PORT
+         || (     action != AKEY_EVENT_ACTION_DOWN
+               && action != AKEY_EVENT_ACTION_UP))
+      return true;
+   /* the bit android_key_state_write() sets or clears */
+   keysym = (row == ANDROID_KEYBOARD_PORT)
+      ? android_keycode_for_keyboard(ev->fields.keycode)
+      : ev->fields.keycode;
+   if (keysym < 0 || keysym >= LAST_KEYCODE)
+      return true;
+   return android_poll_changes_key(&android->changes, (unsigned)row,
+         (unsigned)keysym, BIT_GET(android_key_state[row], keysym) != 0,
+         action == AKEY_EVENT_ACTION_DOWN);
+}
+
+/* The fingers or pen a motion event puts down or lifts: false if one
+ * of them went the other way earlier in this poll */
+static bool android_input_event_pointers_change(android_input_t *android,
+      const android_input_event_t *ev)
+{
+   size_t first = (size_t)((ev->fields.action
+            & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK)
+         >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT);
+   size_t count = 1;
+   bool down    = false;
+
+   switch (ev->fields.action & AMOTION_EVENT_ACTION_MASK)
    {
-      while (AInputQueue_getEvent(android_app->inputQueue, &event) >= 0)
-      {
-         int32_t handled;
-         int source, type_event, id, port;
+      case AMOTION_EVENT_ACTION_DOWN:
+         first = 0;
+         down  = true;
+         break;
+      case AMOTION_EVENT_ACTION_UP:
+         first = 0;
+         break;
+      case AMOTION_EVENT_ACTION_POINTER_DOWN:
+         down  = true;
+         break;
+      case AMOTION_EVENT_ACTION_POINTER_UP:
+         break;
+      case AMOTION_EVENT_ACTION_CANCEL:
+         first = 0;
+         count = (size_t)ev->pointer_count;
+         break;
+      default:
+         return true;
+   }
+   if (first + count > (size_t)ev->pointer_count)
+      return true;
+   return android_poll_changes_pointers(&android->changes,
+         ev->fields.device_id, &ev->pointer[first].id,
+         sizeof(ev->pointer[0]), (unsigned)count, down);
+}
 
-         /* A pre-dispatched event belongs to the IME from here on and
-          * reappears in the queue if it goes unconsumed, so it can be
-          * neither read from, routed nor finished once this returns
-          * non-zero. */
-         if (AInputQueue_preDispatchEvent(android_app->inputQueue, event))
-            continue;
+/* Whether android_input_poll_event_type_motion() takes it for a mouse */
+static bool android_input_event_is_mouse(const android_input_event_t *ev)
+{
+   int source     = ev->fields.source;
+   bool is_stylus =  ev->tool_type == AMOTION_EVENT_TOOL_TYPE_STYLUS
+      || (     ev->tool_type != AMOTION_EVENT_TOOL_TYPE_FINGER
+            && (source & AINPUT_SOURCE_STYLUS) == AINPUT_SOURCE_STYLUS);
 
-         handled    = 1;
-         source     = AInputEvent_getSource(event);
-         type_event = AInputEvent_getType(event);
-         id         = android_input_get_id(event);
-         port       = android_input_get_id_port(android, id, source);
+   return (   (source & AINPUT_SOURCE_MOUSE) == AINPUT_SOURCE_MOUSE
+           || (source & AINPUT_SOURCE_MOUSE_RELATIVE)
+              == AINPUT_SOURCE_MOUSE_RELATIVE)
+      && !is_stylus;
+}
 
-         if (port < 0 && !android_is_keyboard_id(id))
-            port = android_input_recover_port(android, id);
+/* The mouse buttons a motion event presses or lets go of, as
+ * android_input_poll_event_type_motion() reads them: false if one of
+ * them went the other way earlier in this poll */
+static bool android_input_event_mouse_change(android_input_t *android,
+      const android_input_event_t *ev)
+{
+   int action   = ev->fields.action & AMOTION_EVENT_ACTION_MASK;
+   unsigned was = (android->mouse_l ? 1 : 0)
+                | (android->mouse_r ? 2 : 0)
+                | (android->mouse_m ? 4 : 0);
+   unsigned now = was;
 
-         if (port < 0 && !android_is_keyboard_id(id))
-            handle_hotplug(android, android_app,
-                  &port, id, source);
+   if (p_AMotionEvent_getButtonState)
+      now = ((ev->button_state & AMOTION_EVENT_BUTTON_PRIMARY)   ? 1 : 0)
+          | ((ev->button_state & AMOTION_EVENT_BUTTON_SECONDARY) ? 2 : 0)
+          | ((ev->button_state & AMOTION_EVENT_BUTTON_TERTIARY)  ? 4 : 0);
+   else if (action == AMOTION_EVENT_ACTION_DOWN)
+      now |= 1;
+   else if (action == AMOTION_EVENT_ACTION_UP)
+      now &= ~1u;
+   return android_poll_changes_mouse(&android->changes, was, now);
+}
 
-         switch (type_event)
-         {
-            case AINPUT_EVENT_TYPE_MOTION:
-               if ((source & AINPUT_SOURCE_TOUCHPAD))
-                  engine_handle_touchpad(android_app, event, port);
-               /* Only handle events from a touchscreen or mouse */
-               else if ((source & (AINPUT_SOURCE_TOUCHSCREEN
-                           | AINPUT_SOURCE_MOUSE_RELATIVE
-                           | AINPUT_SOURCE_STYLUS | AINPUT_SOURCE_MOUSE)))
-                  android_input_poll_event_type_motion(android, event,
-                        port, source);
-               else
-                  engine_handle_dpad(android_app, event, port, source);
-               break;
-            case AINPUT_EVENT_TYPE_KEY:
-               {
-                  int keycode = AKeyEvent_getKeyCode(event);
+/* The hat's directions a stick's move takes it to: false if one of
+ * them went the other way earlier in this poll */
+static bool android_input_event_hat_change(android_input_t *android,
+      struct android_app *android_app, const android_input_event_t *ev,
+      int port)
+{
+   unsigned was, now;
+   if (     port < 0 || port >= DEFAULT_MAX_PADS
+         || !p_AMotionEvent_getAxisValue)
+      return true;
+   was = android_poll_changes_hat_bits(android_app->hat_state[port][0],
+         android_app->hat_state[port][1]);
+   now = android_poll_changes_hat_bits(
+         android_input_hat(ev->fields.axes[4]),
+         android_input_hat(ev->fields.axes[5]));
+   return android_poll_changes_hat(&android->changes, (unsigned)port,
+         was, now);
+}
 
-                  if (!keycode)
-                     break;
+/* One event, applied where it lies as the poll applied the event itself:
+ * false, with nothing applied, if it has to wait for the next poll */
+static bool android_input_event_apply(android_input_t *android,
+      struct android_app *android_app, const android_input_event_t *ev)
+{
+   bool is_keyboard;
+   int source = ev->fields.source;
+   int port   = android_input_resolve_port(android, android_app,
+         android_input_map_id(ev->fields.device_id), source,
+         &is_keyboard);
 
-                  if (android_is_keyboard_id(id))
-                  {
-                     android_input_poll_event_type_keyboard(
-                           event, keycode, &handled);
-                     android_input_poll_event_type_key(
-                           android_app, event, ANDROID_KEYBOARD_PORT,
-                           keycode, source, type_event, &handled);
-                  }
-                  else
-                     android_input_poll_event_type_key(android_app,
-                           event, port, keycode, source, type_event, &handled);
-               }
-               break;
-         }
+   if (ev->fields.type == AINPUT_EVENT_TYPE_KEY)
+   {
+      int handled = 1;
+      if (!android_input_event_key_change(android, ev, port, is_keyboard))
+         return false;
+      android_input_key_fields(port, is_keyboard, &ev->fields, &handled);
+   }
+   else if ((source & AINPUT_SOURCE_TOUCHPAD))
+   {
+      if (!android_input_event_pointers_change(android, ev))
+         return false;
+      engine_handle_touchpad(android_app, ev, port);
+   }
+   /* Only handle events from a touchscreen or mouse */
+   else if ((source & (AINPUT_SOURCE_TOUCHSCREEN
+               | AINPUT_SOURCE_MOUSE_RELATIVE
+               | AINPUT_SOURCE_STYLUS | AINPUT_SOURCE_MOUSE)))
+   {
+#ifdef HAVE_OPENXR
+      /* XR controllers deliver input through OpenXR actions;
+       * window motion events would double up while the
+       * headset's controllers are set up. */
+      if (input_openxr_active())
+         return true;
+#endif
+      if (!(android_input_event_is_mouse(ev)
+               ? android_input_event_mouse_change(android, ev)
+               : android_input_event_pointers_change(android, ev)))
+         return false;
+      android_input_poll_event_type_motion(android, ev, port, source);
+   }
+   else
+   {
+      if (!android_input_event_hat_change(android, android_app, ev, port))
+         return false;
+      android_input_dpad_fields(android_app, port, ev->fields.axes,
+            p_AMotionEvent_getAxisValue != NULL);
+   }
+   return true;
+}
 
-         AInputQueue_finishEvent(android_app->inputQueue, event, handled);
-      }
+/* What the reader wrote since the last poll, in order and where it
+ * lies, up to the first event that would undo what an earlier one did
+ * in this poll (android_poll_changes.h): it and the rest wait for the
+ * next */
+static void android_input_poll_events(android_input_t *android,
+      struct android_app *android_app)
+{
+   const android_input_rec_t *rec;
+   android_input_ring_reader_t ring;
+   struct android_input_reader *r = &android_app->input_reader;
+
+   android_poll_changes_begin(&android->changes);
+   /* the mouse's moves in this poll are summed */
+   android->mouse_delta = VIDEO_POS_PACK(0, 0);
+
+   android_input_ring_reader_begin(&ring, &r->events);
+   while ((rec = android_input_ring_next(&ring)))
+   {
+      if (!android_input_event_apply(android, android_app,
+               (const android_input_event_t*)rec))
+         break;
+      android_input_ring_taken(&ring, rec);
+   }
+   if (android_input_ring_reader_end(&ring))
+      retro_eventcount_notify(&r->room);
+}
+
+/* The keys and stick moves the second display's window received since
+ * the last poll, handled as the input queue's are */
+static void android_input_poll_second_inputs(android_input_t *android,
+      struct android_app *android_app)
+{
+   android_input_fields_t in;
+   retro_spsc_t *ring = &android_app->second_display.inputs;
+
+   while (retro_spsc_read_avail(ring) >= sizeof(in))
+   {
+      bool is_keyboard;
+      int port;
+      int handled = 1;
+
+      retro_spsc_read(ring, &in, sizeof(in));
+      port = android_input_resolve_port(android, android_app,
+            android_input_map_id(in.device_id), in.source, &is_keyboard);
+      if (in.type == AINPUT_EVENT_TYPE_KEY)
+         android_input_key_fields(port, is_keyboard, &in, &handled);
+      else
+         android_input_dpad_fields(android_app, port, in.axes,
+               p_AMotionEvent_getAxisValue != NULL);
+      /* A canceled up comes as the focus leaves the window: not use */
+      if (     in.type != AINPUT_EVENT_TYPE_KEY
+            || !(in.flags & AKEY_EVENT_FLAG_CANCELED))
+         android_focus_second_input(&android_app->focus);
    }
 }
 
@@ -2503,12 +3206,15 @@ static void android_input_poll_user(android_input_t *android)
          (UINT64_C(1) << RETRO_SENSOR_GYROSCOPE_ENABLE)) &&
                android_app->gyroscopeSensor;
 
-   if (poll_accelerometer || poll_gyroscope)
+   /* Drained with both sensors off too: an event left in the queue
+    * keeps its fd readable, and android_input_poll() spins on it. */
    {
       ASensorEvent event;
       while (ASensorEventQueue_getEvents(
             android_app->sensorEventQueue, &event, 1) > 0)
       {
+         if (!poll_accelerometer && !poll_gyroscope)
+            continue;
          switch (event.type)
          {
             case ASENSOR_TYPE_ACCELEROMETER:
@@ -2586,23 +3292,13 @@ static void android_input_reinit(void)
        * destroy the presentation surface while retaining the OpenGL context or
        * Vulkan device. Recreate only the surface when supported before falling
        * back to a full video driver reinitialization. */
-      video_driver_state_t *state = video_state_get_ptr();
-      bool recreated              = false;
-
-#ifdef HAVE_THREADS
-      /* The callback null-checks the hook and reports failure, and the
-       * dispatch reports failure when the worker is gone, so either one
-       * falls through to the full reinitialization below. */
-      recreated = (video_thread_texture_handle(state->context_data,
-               android_ctx_create_surface_cb) != 0);
-#else
-      if (state->current_video_context.create_surface)
-         recreated = state->current_video_context.create_surface(
-               state->context_data);
-#endif
+      /* false when the context cannot be given a surface, when giving
+       * it one failed, or when the video thread is gone: each falls
+       * through to the full reinitialization below. */
+      bool recreated = video_context_surface_create();
 
       if (!recreated)
-         command_event(CMD_EVENT_REINIT, NULL);
+         input_driver_platform_request(INPUT_PLATFORM_REINIT_VIDEO);
    }
 
    android_app_write_cmd(android_app, APP_CMD_REINIT_DONE);
@@ -2610,16 +3306,122 @@ static void android_input_reinit(void)
 
 /* Handle all events.
  */
+/* The OS removed input device 'id': report the pad it was as
+ * disconnected. */
+static void android_input_pad_removed(android_input_t *android,
+      struct android_app *android_app, int id)
+{
+   int port;
+   char name[256];
+   int vendor_id  = 0;
+   int product_id = 0;
+
+   /* The poll does not run while the app is in the background, so a
+    * removal can be read long after it happened. If the id resolves
+    * again, the device came back under it in the meantime and there is
+    * nothing to report. */
+   name[0] = '\0';
+   if (engine_lookup_name(name, &vendor_id, &product_id, sizeof(name), id))
+      return;
+
+   /* A member of a group: the pad stays while others remain. The slot
+    * is the lead's; when the lead goes, the next member's. */
+   {
+      int32_t lead = input_groups_lead(&android_groups, id);
+      int32_t next = input_groups_leave(&android_groups, id);
+      unsigned i;
+      if (lead != id)
+         return;
+      if (next >= 0)
+      {
+         for (i = 0; i < (unsigned)android->pads_connected; i++)
+            if (android->pad_states[i].id == id)
+               android->pad_states[i].id = g_android->id[i] = next;
+         return;
+      }
+   }
+
+   port = android_pad_mark_removed(android->pad_states,
+         android->pads_connected, id);
+   if (port < 0)
+      return;
+
+   /* Nothing it held stays held: no release will arrive from a
+    * device that is gone. */
+   if (port < DEFAULT_MAX_PADS)
+   {
+      android_key_state_release_row(android_key_state[port],
+            android_key_state[ANDROID_KEYBOARD_PORT], LAST_KEYCODE);
+      memset(&android_press_group[port], 0, sizeof(android_press_group[port]));
+      memset(android_app->analog_state[port], 0,
+            sizeof(android_app->analog_state[port]));
+      memset(android_app->hat_state[port], 0,
+            sizeof(android_app->hat_state[port]));
+   }
+
+   android_app->id[port] = 0;
+
+   input_autoconfigure_disconnect(port, android->pad_states[port].name);
+}
+
+/* Take the removals the UI thread left since the last poll. */
+static void android_input_poll_removed(android_input_t *android,
+      struct android_app *android_app)
+{
+   unsigned i;
+   int ids[ANDROID_REMOVED_SLOTS];
+   unsigned count = android_removed_take(&android_removed_box, ids);
+
+   for (i = 0; i < count; i++)
+      android_input_pad_removed(android, android_app, ids[i]);
+}
+
+/* The presses the input block timeout kept back, shown now or held to
+ * the next poll; with it at 0, those it still holds are shown. The
+ * clock is read only on a poll a pad's button was pressed in: how new
+ * a press is, is all it is wanted for. */
+static void android_input_poll_press_groups(void)
+{
+   static bool any;
+   int64_t now = 0;
+   unsigned p;
+
+   if (!android_press_window_ns && !any)
+      return;
+   for (p = 0; p < DEFAULT_MAX_PADS && !now; p++)
+      if (android_press_group[p].any_fresh)
+      {
+         struct timespec ts;
+         clock_gettime(CLOCK_MONOTONIC, &ts);
+         now = (int64_t)ts.tv_sec * 1000000000 + ts.tv_nsec;
+      }
+   any = false;
+   for (p = 0; p < DEFAULT_MAX_PADS; p++)
+   {
+      android_press_group_t *g = &android_press_group[p];
+      if (!g->any_fresh && !g->any_held && !g->any_untap)
+         continue;
+      android_press_group_end(g, android_key_state[p], MAX_KEYS, now,
+            android_press_window_ns);
+      if (g->any_held || g->any_untap)
+         any = true;
+   }
+}
+
 static void android_input_poll(void *data)
 {
    int ident;
    int timeout;
+   int then;
    struct android_app *android_app = (struct android_app*)g_android;
    android_input_t *android        = (android_input_t*)data;
-   settings_t            *settings = config_get_ptr();
 
    /* Apply any text staged by the native (IME) keyboard. */
    android_keyboard_poll();
+
+   /* Report the pads the OS has removed since the last poll. */
+   if (android && android_app)
+      android_input_poll_removed(android, android_app);
 
    /* Backgrounded (APP_CMD_PAUSE/STOP set RUNLOOP_FLAG_IDLE): there is
     * nothing to do until the OS delivers the next command, and the
@@ -2631,20 +3433,19 @@ static void android_input_poll(void *data)
     * set site, and Android's doze accounting penalises exactly that.
     * First iteration blocks; once an event has woken us, drain the rest
     * without blocking so a burst (RESUME then INPUT_CHANGED) is handled
-    * in one call. */
-   timeout = settings->uints.input_block_timeout;
-   if (runloop_state_get_ptr()->flags & RUNLOOP_FLAG_IDLE)
-      timeout = -1;
+    * in one call. In the foreground it never waits: the input block
+    * timeout keeps presses back instead (android_press_group.h). */
+   android_poll_waits((runloop_get_flags() & RUNLOOP_FLAG_IDLE) != 0,
+         &timeout, &then);
+   android_press_window_ns =
+      (int64_t)input_config_get_block_timeout() * 1000000;
 
    while ((ident =
             ALooper_pollOnce(timeout, NULL, NULL, NULL)) >= 0)
    {
-      timeout = 0;
+      timeout = then;
       switch (ident)
       {
-         case LOOPER_ID_INPUT:
-            android_input_poll_input(android);
-            break;
          case LOOPER_ID_USER:
             android_input_poll_user(android);
             break;
@@ -2655,7 +3456,7 @@ static void android_input_poll(void *data)
 
       if (android_app->destroyRequested != 0)
       {
-         retroarch_ctl(RARCH_CTL_SET_SHUTDOWN, NULL);
+         input_driver_platform_request(INPUT_PLATFORM_SHUTDOWN);
          return;
       }
 
@@ -2665,27 +3466,24 @@ static void android_input_poll(void *data)
          return;
       }
    }
-}
 
-/* Dismiss queued input from before the input driver exists. ALooper
- * reports the queue readable until every event has been finished, so
- * leaving them in place spins the caller and holds the window
- * unresponsive until the dispatcher raises an ANR. Events are finished
- * unhandled: there is nowhere to route them yet, and the framework's
- * fallback handling is preferable to dropping them silently. */
-static void android_input_discard_events(struct android_app *android_app)
-{
-   AInputEvent *event = NULL;
-
-   if (!android_app->inputQueue)
-      return;
-
-   while (AInputQueue_getEvent(android_app->inputQueue, &event) >= 0)
+   if (android && android_app)
    {
-      if (AInputQueue_preDispatchEvent(android_app->inputQueue, event))
-         continue;
-      AInputQueue_finishEvent(android_app->inputQueue, event, 0);
+      android_input_poll_events(android, android_app);
+      /* After the looper: a ring write that woke it is settled now */
+      android_input_poll_second_touches(android, android_app);
+      android_input_poll_second_inputs(android, android_app);
    }
+
+   android_input_poll_press_groups();
+
+   /* each finger's contact, for the overlay's D-pad and face buttons */
+   if (android && android->pointer_count)
+      input_driver_publish_touch_contacts(android->contact,
+            android->contact_angle,
+            MIN(android->pointer_count, MAX_TOUCH));
+
+   android_input_focus_settle(android_app);
 }
 
 bool android_run_events(void *data)
@@ -2698,18 +3496,21 @@ bool android_run_events(void *data)
    {
       case LOOPER_ID_MAIN:
          android_input_poll_main_cmd();
-         break;
-      case LOOPER_ID_INPUT:
-         android_input_discard_events(android_app);
+         /* Nothing is loaded yet, so there is nothing to flush: the
+          * first runloop iteration performs any flush still pending.
+          * Acknowledge now rather than hold the UI thread. */
+         android_input_release_state_ack(android_app);
          break;
       default:
          break;
    }
 
+   android_input_focus_settle(android_app);
+
    /* Check if we are exiting. */
    if (android_app->destroyRequested != 0)
    {
-      retroarch_ctl(RARCH_CTL_SET_SHUTDOWN, NULL);
+      input_driver_platform_request(INPUT_PLATFORM_SHUTDOWN);
       return false;
    }
 
@@ -2719,13 +3520,31 @@ bool android_run_events(void *data)
    return true;
 }
 
+/* The keys the frontend asks about, for a port's binds: which are
+ * down. The driver evaluated the binds itself, for the RetroPad mask
+ * and for each button; the frontend does that for every driver that
+ * hands it the keys. */
+static void android_input_keys_down(void *data, unsigned port,
+      const uint16_t *keys, const uint8_t *bind, unsigned count,
+      uint32_t *down)
+{
+   unsigned i;
+   (void)port;
+   (void)bind;
+   if (!data)
+      return;
+   for (i = 0; i < count; i++)
+      if (     keys[i] < RETROK_LAST
+            && BIT_GET(android_key_state[ANDROID_KEYBOARD_PORT],
+               rarch_keysym_lut[keys[i]]))
+         down[i >> 5] |= (1u << (i & 31));
+}
+
 static int16_t android_input_state(
       void *data,
       const input_device_driver_t *joypad,
-      const input_device_driver_t *sec_joypad,
       rarch_joypad_info_t *joypad_info,
       const retro_keybind_set *binds,
-      bool keyboard_mapping_blocked,
       unsigned port,
       unsigned device,
       unsigned idx,
@@ -2742,40 +3561,10 @@ static int16_t android_input_state(
 
    switch (device)
    {
+      /* The RetroPad's buttons, where they are bound to keys, are the
+       * frontend's to answer: it asks android_input_keys_down() for the
+       * keys once a poll. */
       case RETRO_DEVICE_JOYPAD:
-         if (id == RETRO_DEVICE_ID_JOYPAD_MASK)
-         {
-            unsigned i;
-            int16_t ret = 0;
-
-            if (!keyboard_mapping_blocked)
-            {
-               for (i = 0; i < RARCH_FIRST_CUSTOM_BIND; i++)
-               {
-                  if (RETRO_KEYBIND_VALID(&binds[port][i]))
-                  {
-                     if (     (RETRO_KEYBIND_KEY(&binds[port][i]) && RETRO_KEYBIND_KEY(&binds[port][i]) < RETROK_LAST)
-                           && ANDROID_KEYBOARD_PORT_INPUT_PRESSED(binds[port], i))
-                        ret |= (1 << i);
-                  }
-               }
-            }
-
-            return ret;
-         }
-
-         if (id < RARCH_BIND_LIST_END)
-         {
-            if (RETRO_KEYBIND_VALID(&binds[port][id]))
-            {
-               if (     (RETRO_KEYBIND_KEY(&binds[port][id]) && RETRO_KEYBIND_KEY(&binds[port][id]) < RETROK_LAST)
-                     && ANDROID_KEYBOARD_PORT_INPUT_PRESSED(binds[port], id)
-                     && (id == RARCH_GAME_FOCUS_TOGGLE || !keyboard_mapping_blocked)
-                     )
-                  return 1;
-            }
-         }
-         break;
       case RETRO_DEVICE_ANALOG:
          break;
       case RETRO_DEVICE_KEYBOARD:
@@ -2788,25 +3577,49 @@ static int16_t android_input_state(
             switch (id)
             {
                case RETRO_DEVICE_ID_MOUSE_LEFT:
-                  return android->mouse_l || android_check_quick_tap(android);
+                  if (android->mouse_activated)
+                  {
+#ifdef DEBUG_ANDROID_INPUT
+                     RARCH_LOG("[Mouse Query] mouse_l=%d activated=%d\n",
+                               android->mouse_l, android->mouse_activated);
+#endif
+                     return android->mouse_l;
+                  }
+                  else
+                  {
+                     /* Suppress quick-tap emulation while a stylus is nearby;
+                      * only finger taps should trigger it. */
+                     bool allow_quick_tap;
+                     android_stylus_proximity_check_expire(android);
+                     allow_quick_tap = !android->stylus_proximity_active
+                                       && !g_hover_guard_active;
+
+                     if (allow_quick_tap)
+                        return android_check_quick_tap(android);
+                     else
+                     {
+                        android->quick_tap_time = 0; /* cancel any pending quick tap when stylus nearby */
+                        return 0;
+                     }
+                  }
                case RETRO_DEVICE_ID_MOUSE_RIGHT:
                   return android->mouse_r;
                case RETRO_DEVICE_ID_MOUSE_MIDDLE:
                   return android->mouse_m;
                case RETRO_DEVICE_ID_MOUSE_X:
                   if (device == RARCH_DEVICE_MOUSE_SCREEN)
-                     return android->mouse_x_viewport_screen;
+                     return VIDEO_POS_X(android->mouse_viewport_screen_pos);
 
-                  val = android->mouse_x_delta;
-                  android->mouse_x_delta = 0;
+                  val = VIDEO_POS_X(android->mouse_delta);
+                  VIDEO_POS_PUT_X(android->mouse_delta, 0);
                   /* flush delta after it has been read */
                   return val;
                case RETRO_DEVICE_ID_MOUSE_Y:
                   if (device == RARCH_DEVICE_MOUSE_SCREEN)
-                     return android->mouse_y_viewport_screen;
+                     return VIDEO_POS_Y(android->mouse_viewport_screen_pos);
 
-                  val = android->mouse_y_delta;
-                  android->mouse_y_delta = 0;
+                  val = VIDEO_POS_Y(android->mouse_delta);
+                  VIDEO_POS_PUT_Y(android->mouse_delta, 0);
                   /* flush delta after it has been read */
                   return val;
                case RETRO_DEVICE_ID_MOUSE_WHEELUP:
@@ -2829,25 +3642,25 @@ static int16_t android_input_state(
                /* Favor mouse for lightgun control. */
                case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
                   if (android->mouse_activated)
-                     return android->mouse_x_viewport_screen;
+                     return VIDEO_POS_X(android->mouse_viewport_screen_pos);
                   else if (idx < MAX_TOUCH)
-                     return android->pointer[idx].x;
+                     return VIDEO_POS_X(android->pointer[idx].pos);
                   return 0;
                case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
                   if (android->mouse_activated)
-                     return android->mouse_y_viewport_screen;
+                     return VIDEO_POS_Y(android->mouse_viewport_screen_pos);
                   else if (idx < MAX_TOUCH)
-                     return android->pointer[idx].y;
+                     return VIDEO_POS_Y(android->pointer[idx].pos);
                   return 0;
                /* Deprecated relative lightgun. */
                case RETRO_DEVICE_ID_LIGHTGUN_X:
-                  val                    = android->mouse_x_delta;
-                  android->mouse_x_delta = 0;
+                  val                    = VIDEO_POS_X(android->mouse_delta);
+                  VIDEO_POS_PUT_X(android->mouse_delta, 0);
                   /* flush delta after it has been read */
                   return val;
                case RETRO_DEVICE_ID_LIGHTGUN_Y:
-                  val                    = android->mouse_y_delta;
-                  android->mouse_y_delta = 0;
+                  val                    = VIDEO_POS_Y(android->mouse_delta);
+                  VIDEO_POS_PUT_Y(android->mouse_delta, 0);
                   /* flush delta after it has been read */
                   return val;
                case RETRO_DEVICE_ID_LIGHTGUN_CURSOR:
@@ -2859,11 +3672,29 @@ static int16_t android_input_state(
                case RETRO_DEVICE_ID_LIGHTGUN_TURBO:
                   return android->mouse_r || android->pointer_count == 2;
                case RETRO_DEVICE_ID_LIGHTGUN_TRIGGER:
-                  return android->mouse_l || android_check_quick_tap(android) || android->pointer_count == 1;
+                  if (android->mouse_activated)
+                     return android->mouse_l || android->pointer_count == 1;
+                  else
+                  {
+                     /* Suppress quick-tap emulation while a stylus is nearby;
+                      * only finger taps should trigger it. */
+                     bool allow_quick_tap;
+                     android_stylus_proximity_check_expire(android);
+                     allow_quick_tap = !android->stylus_proximity_active
+                                       && !g_hover_guard_active;
+
+                     if (allow_quick_tap)
+                        return android_check_quick_tap(android) || android->pointer_count == 1;
+                     else
+                     {
+                        android->quick_tap_time = 0; /* cancel any pending quick tap when stylus nearby */
+                        return android->pointer_count == 1;
+                     }
+                  }
                case RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN:
                   if (idx >= MAX_TOUCH)
                      return 0;
-                  return input_driver_pointer_is_offscreen(android->pointer[idx].x, android->pointer[idx].y);
+                  return input_driver_pointer_is_offscreen(VIDEO_POS_X(android->pointer[idx].pos), VIDEO_POS_Y(android->pointer[idx].pos));
             }
          }
          break;
@@ -2879,35 +3710,64 @@ static int16_t android_input_state(
                if (idx >= MAX_TOUCH)
                   return 0;
                if (device == RARCH_DEVICE_POINTER_SCREEN)
-                  return android->pointer[idx].full_x;
-               return android->pointer[idx].confined_x;
+                  return VIDEO_POS_X(android->pointer[idx].full_pos);
+               return VIDEO_POS_X(android->pointer[idx].confined_pos);
             case RETRO_DEVICE_ID_POINTER_Y:
                if (idx >= MAX_TOUCH)
                   return 0;
                if (device == RARCH_DEVICE_POINTER_SCREEN)
-                  return android->pointer[idx].full_y;
-               return android->pointer[idx].confined_y;
+                  return VIDEO_POS_Y(android->pointer[idx].full_pos);
+               return VIDEO_POS_Y(android->pointer[idx].confined_pos);
             case RETRO_DEVICE_ID_POINTER_PRESSED:
+#ifdef DEBUG_ANDROID_INPUT
+               RARCH_LOG("[PtrQuery] count=%d x0=%d y0=%d\n",
+                         android->pointer_count,
+                         android->pointer_count > 0 ? VIDEO_POS_X(android->pointer[0].confined_pos) : 0,
+                         android->pointer_count > 0 ? VIDEO_POS_Y(android->pointer[0].confined_pos) : 0);
+#endif
                /* On mobile platforms, touches outside screen / core viewport are not reported. */
                if (device == RARCH_DEVICE_POINTER_SCREEN)
                   return (idx < android->pointer_count) &&
-                     (android->pointer[idx].full_x != -0x8000) &&
-                     (android->pointer[idx].full_y != -0x8000);
+                     (VIDEO_POS_X(android->pointer[idx].full_pos) != -0x8000) &&
+                     (VIDEO_POS_Y(android->pointer[idx].full_pos) != -0x8000);
                return (idx < android->pointer_count) &&
-                  (android->pointer[idx].x != -0x8000) &&
-                  (android->pointer[idx].y != -0x8000);
+                  (VIDEO_POS_X(android->pointer[idx].pos) != -0x8000) &&
+                  (VIDEO_POS_Y(android->pointer[idx].pos) != -0x8000);
             case RETRO_DEVICE_ID_POINTER_IS_OFFSCREEN:
                if (idx >= MAX_TOUCH)
                   return 0;
-               return input_driver_pointer_is_offscreen(android->pointer[idx].x, android->pointer[idx].y);
+               return input_driver_pointer_is_offscreen(VIDEO_POS_X(android->pointer[idx].pos), VIDEO_POS_Y(android->pointer[idx].pos));
             case RETRO_DEVICE_ID_POINTER_COUNT:
                return android->pointer_count;
             case RARCH_DEVICE_ID_POINTER_BACK:
             {
                const struct retro_keybind *keyptr =
-                  &input_autoconf_binds[0][RARCH_MENU_TOGGLE];
+                  input_autoconf_bind(0, RARCH_MENU_TOGGLE);
                if (keyptr->joykey == 0)
                   return ANDROID_KEYBOARD_INPUT_PRESSED(AKEYCODE_BACK);
+            }
+         }
+         break;
+      case RARCH_DEVICE_POINTER_SECOND:
+         if (id == RETRO_DEVICE_ID_POINTER_COUNT)
+            return android->second_pointer_count;
+         if (idx < android->second_pointer_count)
+         {
+            const struct input_pointer *p = &android->second_pointer[idx];
+            switch (id)
+            {
+               case RETRO_DEVICE_ID_POINTER_X:
+                  return VIDEO_POS_X(p->confined_pos);
+               case RETRO_DEVICE_ID_POINTER_Y:
+                  return VIDEO_POS_Y(p->confined_pos);
+               case RETRO_DEVICE_ID_POINTER_PRESSED:
+                  return (VIDEO_POS_X(p->pos) != -0x8000)
+                     && (VIDEO_POS_Y(p->pos) != -0x8000);
+               case RETRO_DEVICE_ID_POINTER_IS_OFFSCREEN:
+                  return input_driver_pointer_is_offscreen(
+                        VIDEO_POS_X(p->pos), VIDEO_POS_Y(p->pos));
+               default:
+                  break;
             }
          }
          break;
@@ -2936,6 +3796,9 @@ static void android_input_free_input(void *data)
 
    android_app->input_alive         = false;
 
+   input_output_writer_free(android_haptic_writer);
+   android_haptic_writer = NULL;
+
 #ifdef HAVE_DYLIB
    dylib_close((dylib_t)libandroid_handle);
    libandroid_handle = NULL;
@@ -2945,8 +3808,8 @@ static void android_input_free_input(void *data)
 
    android_keyboard_free();
 
-   input_state_get_ptr()->flags &=
-      ~(INP_FLAG_NATIVE_KB_SHOWN | INP_FLAG_NATIVE_KB_AVAIL);
+   input_driver_set_native_keyboard_shown(false);
+   input_driver_set_native_keyboard_available(false);
 
    free(data);
 }
@@ -3139,30 +4002,30 @@ static void android_input_keypress_vibrate(void)
 {
    /* Late polling can reach this on a core's libco stack. Even entering
     * Java to post a Runnable is unsafe there: ART only knows the OS stack.
-    * Repeats within one iteration coalesce into a single buzz. */
-   android_keypress_vibrate_pending = true;
+    * Waking the haptic thread is not Java. Repeats before it gets to
+    * them coalesce into a single buzz. */
+   retro_atomic_store_release_int(&android_keypress_vibrate_pending, 1);
+   if (android_haptic_writer)
+      input_output_writer_wake(android_haptic_writer);
 }
 
-void android_input_flush_pending_haptics(void)
+/* The buzz, if one is pending and the app is in front: on the haptic
+ * thread, or on the runloop where there is none */
+static void android_input_haptic_now(void)
 {
    static const int keyboard_press = 3;
    struct android_app *android_app = g_android;
    JNIEnv *env;
 
-   if (!android_keypress_vibrate_pending)
+   if (!retro_atomic_exchange_int(&android_keypress_vibrate_pending, 0))
       return;
-
-   android_keypress_vibrate_pending = false;
-
-   if (!android_app)
+   if (!android_app || !android_app->doHapticFeedback)
       return;
 
    /* Feedback belongs to the current interaction, not a later resume. */
-   if (     android_app->destroyRequested
-         || android_app->activityState != APP_CMD_RESUME
-         || !android_app->window
-         || retro_atomic_load_relaxed_int(&android_app->unfocused)
-         || !android_app->doHapticFeedback)
+   if (     android_lifecycle_state(&android_app->lc) != APP_CMD_RESUME
+         || !android_app_window(android_app)
+         || retro_atomic_load_relaxed_int(&android_app->unfocused))
       return;
 
    if (!(env = jni_thread_getenv()))
@@ -3170,6 +4033,20 @@ void android_input_flush_pending_haptics(void)
 
    CALL_VOID_METHOD_PARAM(env, android_app->activity->clazz,
          android_app->doHapticFeedback, (jint)keyboard_press);
+}
+
+static void android_input_haptic_writer_cb(void *userdata, bool last)
+{
+   (void)userdata;
+   if (!last)
+      android_input_haptic_now();
+}
+
+void android_input_flush_pending_haptics(void)
+{
+   if (     !android_haptic_writer
+         && !(g_android && g_android->destroyRequested))
+      android_input_haptic_now();
 }
 
 input_driver_t input_android = {
@@ -3183,5 +4060,7 @@ input_driver_t input_android = {
    "android",
    android_input_grab_mouse,
    NULL,
-   android_input_keypress_vibrate
+   android_input_keypress_vibrate,
+   NULL,                         /* survives_video */
+   android_input_keys_down
 };

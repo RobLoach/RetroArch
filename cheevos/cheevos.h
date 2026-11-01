@@ -31,7 +31,7 @@ void rcheevos_change_disc(const char* new_disc_path, bool initial_disc);
 
 size_t rcheevos_get_serialize_size(void);
 bool rcheevos_get_serialized_data(void* buffer);
-bool rcheevos_set_serialized_data(void* buffer);
+bool rcheevos_set_serialized_data(const void* buffer, size_t size);
 
 bool rcheevos_unload(void);
 
@@ -45,6 +45,8 @@ void rcheevos_pause_hardcore(void);
 void rcheevos_hardcore_enabled_changed(void);
 void rcheevos_toggle_hardcore_paused(void);
 bool rcheevos_hardcore_active(void);
+/* Hardcore mode in force: on, with a game whose achievements are loaded */
+bool rcheevos_hardcore_in_game(void);
 
 bool rcheevos_is_pause_allowed(void);
 void rcheevos_spectating_changed(void);
@@ -61,22 +63,26 @@ int rcheevos_get_richpresence(char *s, size_t len);
 int rcheevos_get_game_badge_url(char *s, size_t len);
 
 void rcheevos_get_local_badge_filename(char badge_file[], size_t badge_file_size, const char* badge, bool locked);
-/* A texture handle, or 0 while the badge is on its way (or missing
- * and, with download_if_missing, now downloading); ask again on a
- * later frame. Never reads, decodes or uploads on the calling thread,
- * so any thread may ask. The handle belongs to the caller, who unloads
- * it. */
-uintptr_t rcheevos_get_badge_texture(const char* badge, bool locked, bool download_if_missing);
-/* Same, and says why a 0 is a 0: @pending is true while the file is
- * on disk and being loaded, which takes a few frames - a caller about
- * to draw a placeholder can sit those out - and false when the badge
- * is being downloaded, has failed, or was handed over. */
-uintptr_t rcheevos_get_badge_texture_ex(const char* badge, bool locked,
+
+struct gfx_surface;
+
+/* The badge's surface (gfx_surface.h; draw GFX_SURFACE_HANDLE of it),
+ * or NULL while the badge is on its way (or missing and, with
+ * download_if_missing, now downloading); ask again on a later frame.
+ * Never reads, decodes or uploads on the calling thread, so any thread
+ * may ask. The surface belongs to the caller, who frees it with
+ * gfx_surface_free. */
+struct gfx_surface *rcheevos_get_badge_texture(const char* badge, bool locked, bool download_if_missing);
+/* Same, and says why a NULL is a NULL: @pending is true while the file
+ * is on disk and being loaded, which takes a few frames - a caller
+ * about to draw a placeholder can sit those out - and false when the
+ * badge is being downloaded, has failed, or was handed over. */
+struct gfx_surface *rcheevos_get_badge_texture_ex(const char* badge, bool locked,
       bool download_if_missing, bool *pending);
-/* The server default badge ("00000"), same rules, except the handle is
- * lent: it stays the cache's, is good until the next
- * rcheevos_badge_cache_reset(), and the caller never unloads it. */
-uintptr_t rcheevos_get_default_badge_texture(void);
+/* The server default badge ("00000"), same rules, except the surface
+ * is lent: it stays the cache's, is good until the next
+ * rcheevos_badge_cache_reset(), and the caller never frees it. */
+struct gfx_surface *rcheevos_get_default_badge_texture(void);
 /* Main thread, once a frame: start the loads asked for from other
  * threads. One atomic load when there are none. */
 void rcheevos_badge_cache_service(void);

@@ -62,6 +62,7 @@ static void wpad_deregister(unsigned channel)
 
    input_autoconfigure_disconnect(slot, wpad_driver.ident);
    joypad_state.pads[slot].connected           = false;
+   pad_connection_release_slot(&joypad_state.pads[slot]);
    joypad_state.wpad.channel_slot_map[channel] = WPAD_INVALID_CHANNEL;
 }
 
@@ -183,7 +184,7 @@ static void wpad_update_touch_state(int16_t state[3][2],
 static void wpad_check_panic_button(uint32_t held_buttons)
 {
    if ((held_buttons & PANIC_BUTTON_MASK) == PANIC_BUTTON_MASK)
-      command_event(CMD_EVENT_QUIT, NULL);
+      input_driver_platform_request(INPUT_PLATFORM_QUIT);
 }
 
 static void wpad_poll(void)
@@ -280,7 +281,8 @@ static int16_t wpad_axis(unsigned port, uint32_t axis)
 
 static int16_t wpad_state(
       rarch_joypad_info_t *joypad_info,
-      const struct retro_keybind *binds,
+      const uint16_t *joykeys,
+      const uint32_t *joyaxes,
       unsigned port)
 {
    int i;
@@ -289,11 +291,8 @@ static int16_t wpad_state(
 
    for (i = 0; i < RARCH_FIRST_CUSTOM_BIND; i++)
    {
-      /* Auto-binds are per joypad, not per user. */
-      const uint64_t joykey  = (binds[i].joykey != NO_BTN)
-         ? binds[i].joykey  : joypad_info->auto_binds[i].joykey;
-      const uint32_t joyaxis = (binds[i].joyaxis != AXIS_NONE)
-         ? binds[i].joyaxis : joypad_info->auto_binds[i].joyaxis;
+      const uint64_t joykey  = joykeys[i];
+      const uint32_t joyaxis = joyaxes[i];
       if (
                (uint16_t)joykey != NO_BTN
             && wpad_button(port_idx, (uint16_t)joykey))

@@ -67,75 +67,7 @@ typedef struct record_avfoundation
    dispatch_queue_t encodingQueue;
 } record_avfoundation_t;
 
-/* Query AudioToolbox for the actual valid AAC encode sample rates
- * on this system, then pick the nearest one to the requested rate. */
-static double avfoundation_nearest_aac_sample_rate(double rate)
-{
-   AudioFormatPropertyID prop = kAudioFormatProperty_AvailableEncodeSampleRates;
-   AudioStreamBasicDescription desc;
-   UInt32 size = 0;
-   OSStatus status;
-
-   memset(&desc, 0, sizeof(desc));
-   desc.mFormatID = kAudioFormatMPEG4AAC;
-
-   status = AudioFormatGetPropertyInfo(prop, sizeof(desc), &desc, &size);
-   if (status == noErr && size > 0)
-   {
-      unsigned count = size / sizeof(AudioValueRange);
-      AudioValueRange *ranges = (AudioValueRange*)malloc(size);
-      if (ranges)
-      {
-         status = AudioFormatGetProperty(prop, sizeof(desc), &desc,
-               &size, ranges);
-         if (status == noErr)
-         {
-            double best      = 44100.0;
-            double best_dist = 1e9;
-            unsigned i;
-            for (i = 0; i < count; i++)
-            {
-               /* Clamp rate into this range's bounds, then measure distance */
-               double lo      = ranges[i].mMinimum;
-               double hi      = ranges[i].mMaximum;
-               double clamped = rate < lo ? lo : (rate > hi ? hi : rate);
-               double dist    = rate > clamped
-                              ? rate - clamped : clamped - rate;
-               if (dist < best_dist)
-               {
-                  best_dist = dist;
-                  best      = clamped;
-               }
-            }
-            free(ranges);
-            return best;
-         }
-         free(ranges);
-      }
-   }
-
-   /* Fallback: common safe rates if query fails */
-   {
-      static const double fallback[] = {
-         8000.0, 11025.0, 12000.0, 16000.0, 22050.0, 24000.0,
-         32000.0, 44100.0, 48000.0
-      };
-      double best      = 44100.0;
-      double best_dist = 1e9;
-      unsigned i;
-      for (i = 0; i < sizeof(fallback) / sizeof(fallback[0]); i++)
-      {
-         double dist = rate > fallback[i]
-                     ? rate - fallback[i] : fallback[i] - rate;
-         if (dist < best_dist)
-         {
-            best_dist = dist;
-            best      = fallback[i];
-         }
-      }
-      return best;
-   }
-}
+#include "record_avfoundation_audio.h"
 
 static void avfoundation_release_handle(record_avfoundation_t *handle)
 {
@@ -360,6 +292,23 @@ static void *avfoundation_record_init(const struct record_params *params)
             AVEncoderBitRateKey: @(audioBitRate)
          };
 
+         if (![handle->assetWriter canApplyOutputSettings:audioSettings
+                      forMediaType:AVMediaTypeAudio])
+         {
+            NSMutableDictionary *fallback =
+                  [NSMutableDictionary dictionaryWithDictionary:audioSettings];
+            [fallback removeObjectForKey:AVEncoderBitRateKey];
+            audioSettings = fallback;
+            if (![handle->assetWriter canApplyOutputSettings:audioSettings
+                         forMediaType:AVMediaTypeAudio])
+            {
+               RARCH_ERR("[AVFoundation] Unsupported AAC output settings\n");
+               avfoundation_release_handle(handle);
+               return NULL;
+            }
+            RARCH_WARN("[AVFoundation] AAC bitrate preset unsupported; using encoder default\n");
+         }
+
          /* Create audio input */
          handle->audioInput = [[AVAssetWriterInput alloc]
                                initWithMediaType:AVMediaTypeAudio
@@ -392,7 +341,7 @@ static void *avfoundation_record_init(const struct record_params *params)
       }
 
       RARCH_LOG("[AVFoundation] Initialized recording to %s (%ux%u @ %.2f fps, "
-                "video %u kbps, audio %u kbps)\n",
+                "video %u kbps, audio preset %u kbps)\n",
                 params->filename, handle->width, handle->height,
                 handle->fps, videoBitRate / 1000, audioBitRate / 1000);
    }
@@ -446,6 +395,7 @@ static bool avfoundation_record_push_video(void *data,
    record_avfoundation_t *handle = (record_avfoundation_t*)data;
    CVPixelBufferRef pixelBuffer  = NULL;
    CVReturn result;
+   __block bool success         = false;
 
    if (!handle || !video_data)
       return false;
@@ -595,15 +545,16 @@ static bool avfoundation_record_push_video(void *data,
 
       /* Append pixel buffer on encoding queue */
       dispatch_sync(handle->encodingQueue, ^{
-         if (handle->videoInput.readyForMoreMediaData)
-            [handle->pixelBufferAdaptor appendPixelBuffer:pixelBuffer
+         if (handle->assetWriter.status == AVAssetWriterStatusWriting
+               && handle->videoInput.readyForMoreMediaData)
+            success = [handle->pixelBufferAdaptor appendPixelBuffer:pixelBuffer
                                   withPresentationTime:presentationTime];
       });
 
       CVPixelBufferRelease(pixelBuffer);
    }
 
-   return true;
+   return success;
 }
 
 static bool avfoundation_record_push_audio(void *data,
@@ -614,6 +565,7 @@ static bool avfoundation_record_push_audio(void *data,
    CMBlockBufferRef blockBuffer         = NULL;
    CMFormatDescriptionRef formatDesc    = NULL;
    OSStatus status;
+   __block bool success                = false;
 
    if (!handle || !handle->audioInput || !audio_data || !audio_data->data)
       return false;
@@ -633,7 +585,6 @@ static bool avfoundation_record_push_audio(void *data,
       /* Create format description for raw PCM input at source rate.
        * AVAssetWriter handles conversion to the AAC output rate. */
       AudioStreamBasicDescription audioFormat;
-      memset(&audioFormat, 0, sizeof(audioFormat));
       audioFormat.mSampleRate       = handle->sourceSampleRate;
       audioFormat.mFormatID         = kAudioFormatLinearPCM;
       audioFormat.mFormatFlags      = kAudioFormatFlagIsSignedInteger
@@ -643,6 +594,7 @@ static bool avfoundation_record_push_audio(void *data,
       audioFormat.mBytesPerFrame    = sizeof(int16_t) * handle->channels;
       audioFormat.mChannelsPerFrame = handle->channels;
       audioFormat.mBitsPerChannel   = 16;
+      audioFormat.mReserved         = 0;
 
       status = CMAudioFormatDescriptionCreate(NULL, &audioFormat,
             0, NULL, 0, NULL, NULL, &formatDesc);
@@ -690,14 +642,15 @@ static bool avfoundation_record_push_audio(void *data,
 
       /* Append on encoding queue */
       dispatch_sync(handle->encodingQueue, ^{
-         if (handle->audioInput.readyForMoreMediaData)
-            [handle->audioInput appendSampleBuffer:sampleBuffer];
+         if (handle->assetWriter.status == AVAssetWriterStatusWriting
+               && handle->audioInput.readyForMoreMediaData)
+            success = [handle->audioInput appendSampleBuffer:sampleBuffer];
       });
 
       CFRelease(sampleBuffer);
    }
 
-   return true;
+   return success;
 }
 
 static bool avfoundation_record_finalize(void *data)

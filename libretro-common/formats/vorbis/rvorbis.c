@@ -588,6 +588,13 @@ static int ilog(int32_t n)
                   else                return 0; /* signed n returns 0 */
 }
 
+/* libvorbis' bound on a codebook's size: whatever it decodes passes,
+ * and every table sized from one fits in int */
+static int codebook_size_valid(int dimensions, int entries)
+{
+   return dimensions && entries && ilog(dimensions) + ilog(entries) <= 24;
+}
+
 #ifndef M_PI
   #define M_PI  3.14159265358979323846264f  /* from CRC */
 #endif
@@ -809,14 +816,14 @@ static int vorbis_validate(uint8_t *data)
 static int lookup1_values(int entries, int dim)
 {
    int r = (int) floor(exp((float) log((float) entries) / dim));
-   if ((int) floor(pow((float) r+1, dim)) <= entries)   /* (int) cast for MinGW warning; */
-      ++r;                                              /* floor() to avoid _ftol() when non-CRT */
+   if (floor(pow((float) r+1, dim)) <= entries)
+      ++r;
    /* On well-formed data these invariants hold; on malformed entries/dim
     * they can fail.  Return 0 so the caller (which already rejects a
     * zero lookup_values) errors out gracefully instead of asserting. */
    if (!(pow((float) r+1, dim) > entries))
       return 0;
-   if (!((int) floor(pow((float) r, dim)) <= entries))
+   if (!(floor(pow((float) r, dim)) <= entries))
       return 0;
    return r;
 }
@@ -2483,6 +2490,9 @@ static INLINE void rvq_neon_pair2(int32_t *e0, int32_t *e2,
 
 RVQ_WRAPS static void imdct_step3_iter0_loop_q(int n, int32_t *e, int i_off, int k_off, int32_t *A)
 {
+   int32_t *ee0 = e + i_off;
+   int32_t *ee2 = ee0 + k_off;
+   int i;
 #if RVQ_HAVE_NEON_MDCT
    {
       int32_t *ee0 = e + i_off;
@@ -2500,10 +2510,6 @@ RVQ_WRAPS static void imdct_step3_iter0_loop_q(int n, int32_t *e, int i_off, int
       return;
    }
 #endif
-
-   int32_t *ee0 = e + i_off;
-   int32_t *ee2 = ee0 + k_off;
-   int i;
 
    assert((n & 3) == 0);
    for (i=(n>>2); i > 0; --i)
@@ -2546,6 +2552,10 @@ RVQ_WRAPS static void imdct_step3_iter0_loop_q(int n, int32_t *e, int i_off, int
 
 RVQ_WRAPS static void imdct_step3_inner_r_loop_q(int lim, int32_t *e, int d0, int k_off, int32_t *A, int k1)
 {
+   int i;
+   int32_t k00_20, k01_21;
+   int32_t *e0 = e + d0;
+   int32_t *e2 = e0 + k_off;
 #if RVQ_HAVE_NEON_MDCT
    {
       int i;
@@ -2562,12 +2572,6 @@ RVQ_WRAPS static void imdct_step3_inner_r_loop_q(int lim, int32_t *e, int d0, in
       return;
    }
 #endif
-
-   int i;
-   int32_t k00_20, k01_21;
-
-   int32_t *e0 = e + d0;
-   int32_t *e2 = e0 + k_off;
 
    for (i=lim >> 2; i > 0; --i) {
       k00_20 = e0[-0] - e2[-0];
@@ -4639,6 +4643,8 @@ static int start_decoder_setup(vorb *f)
       x = get_bits(f, 8);
       y = get_bits(f, 8);
       c->entries = (get_bits(f, 8)<<16) + (y<<8) + x;
+      if (!codebook_size_valid(c->dimensions, c->entries))
+         return error(f, RVORBIS_invalid_setup);
       ordered = get_bits(f,1);
       c->sparse = ordered ? 0 : get_bits(f,1);
 
@@ -4804,15 +4810,17 @@ static int start_decoder_setup(vorb *f)
          {
             int len, sparse = c->sparse;
             /* pre-expand the lookup1-style multiplicands, to avoid a divide in the inner loop */
+            len = sparse ? c->sorted_entries : c->entries;
             if (sparse)
             {
                if (c->sorted_entries == 0)
                   goto skip;
-               c->multiplicands = (rvorbis_codetype *) setup_malloc(f, sizeof(c->multiplicands[0]) * c->sorted_entries * c->dimensions);
+               c->multiplicands = (rvorbis_codetype *) setup_malloc(f,
+                     sizeof(c->multiplicands[0]) * len * c->dimensions);
             } else
-               c->multiplicands = (rvorbis_codetype *) setup_malloc(f, sizeof(c->multiplicands[0]) * c->entries        * c->dimensions);
+               c->multiplicands = (rvorbis_codetype *) setup_malloc(f,
+                     sizeof(c->multiplicands[0]) * len * c->dimensions);
             if (!c->multiplicands) { setup_temp_free(f,mults,sizeof(mults[0])*c->lookup_values); return error(f, RVORBIS_outofmem); }
-            len = sparse ? c->sorted_entries : c->entries;
             for (j=0; j < len; ++j) {
                int z = sparse ? c->sorted_values[j] : j, div=1;
                for (k=0; k < c->dimensions; ++k) {

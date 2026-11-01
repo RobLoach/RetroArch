@@ -20,35 +20,44 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
-  samples-formats:
-    name: Build and run samples/formats
+  formats-core:
+    name: Core format decoders and containers
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    env:
+      APT_PKGS: build-essential ffmpeg clang ccache
+    timeout-minutes: 30
 
     steps:
-      - name: Install dependencies
-        timeout-minutes: 5
-        run: |
-          pkgs="build-essential ffmpeg"
-          if dpkg -s $pkgs >/dev/null 2>&1; then
-            echo "All packages already present on runner image; skipping apt."
-            exit 0
-          fi
-          for i in 1 2 3; do
-            sudo timeout 90 apt-get update -y \
-              -o Acquire::Retries=3 -o Acquire::http::Timeout=30 && break
-            echo "apt-get update failed (attempt $i); retrying in 10s"
-            sleep 10
-          done
-          sudo apt-get install -y \
-            -o Acquire::Retries=3 -o Acquire::http::Timeout=30 \
-            $pkgs
-
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Apt cache key
+        id: apt
+        run: sh .github/workflows/scripts/apt-cache-key.sh "$APT_PKGS"
+
+      - name: Restore apt cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.apt-cache
+          key: ${{ steps.apt.outputs.key }}
+          restore-keys: ${{ steps.apt.outputs.prefix }}
+
+      - name: Install dependencies
+        timeout-minutes: 20
+        run: sh .github/workflows/scripts/apt-install.sh $APT_PKGS
+
+      - name: Save apt cache
+        if: env.APT_CACHE_SAVE == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.apt-cache
+          key: ${{ steps.apt.outputs.key }}
+
+      - name: Link with lld
+        run: sh .github/workflows/scripts/use-lld.sh
+
       - name: Restore ccache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ~/.ccache
           key: ccache-${{ github.workflow }}-${{ github.job }}-${{ github.sha }}
@@ -58,12 +67,20 @@ jobs:
       - name: Enable ccache
         run: |
           set -eu
-          command -v ccache >/dev/null 2>&1 || sudo apt-get install -y -qq ccache
           export CCACHE_DIR="$HOME/.ccache"
           echo "CCACHE_DIR=$CCACHE_DIR" >> "$GITHUB_ENV"
           echo "/usr/lib/ccache" >> "$GITHUB_PATH"
-          ccache -M 500M
+          ccache -M 250M
           ccache -z
+
+      - name: HEVC hidden pictures and prior-output discard
+        run: make -C libretro-common/samples/formats/h265 output-flags-check SANITIZER=address,undefined
+
+      - name: HEVC parameter replacement and output ownership (TSan)
+        run: TSAN_OPTIONS=halt_on_error=1 make -C libretro-common/samples/formats/h265 -B output-flags-check SANITIZER=thread
+
+      - name: MP4 hidden-picture timestamps, seeks and partial input
+        run: make -C libretro-common/samples/formats/vp9 mp4-h26x-check SANITIZER=address,undefined
 
       - name: Build and run dts_lpcm_test (plain, ASan + UBSan)
         shell: bash
@@ -95,10 +112,10 @@ jobs:
           # decoder is for: every frame repacked to the plain core,
           # put in the IEC 61937 burst its sample count calls for, and
           # read back out of that burst byte for byte.
-          make clean all
+          make clean && make -j$(nproc) all
           ./dts_lpcm_test
           echo "[pass] dts_lpcm_test"
-          make clean all SANITIZER=address,undefined
+          make clean SANITIZER=address,undefined && make -j$(nproc) all SANITIZER=address,undefined
           ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./dts_lpcm_test
           echo "[pass] dts_lpcm_test (ASan)"
 
@@ -135,7 +152,7 @@ jobs:
           # paths and report a pass.  That count is kept per format, not
           # just in total, so one decoder quietly ceasing to accept its
           # seed cannot hide behind the other three.
-          make clean all SANITIZER=address,undefined
+          make clean SANITIZER=address,undefined && make -j$(nproc) all SANITIZER=address,undefined
           test -x image_decode_fuzz_test
           ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1 \
              timeout 120 ./image_decode_fuzz_test
@@ -200,8 +217,168 @@ jobs:
           # begin on, it must accept before the whole file has arrived
           # (or partial decoding is silently off), and it must be
           # monotonic in the prefix length.
-          make clean all SANITIZER=address,undefined
+          make clean SANITIZER=address,undefined && make -j$(nproc) all SANITIZER=address,undefined
           test -x image_avail_test
           ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1 \
              timeout 120 ./image_avail_test
           echo "[pass] image_avail_test"
+
+      - name: AV1 picture tools, frame prefixes, tiles and container packets (ASan + UBSan)
+        working-directory: libretro-common/samples/formats/av1
+        run: |
+          make check SANITIZER=address,undefined
+          python3 fixtures.py
+          python3 tile_fixtures.py
+          python3 frame_fixtures.py
+          python3 picture_fixtures.py
+          python3 reference_fixtures.py
+          python3 grain_fixtures.py
+          python3 state_fixtures.py
+
+      - name: Vulkan AV1 parameters against real streams (ASan + UBSan)
+        working-directory: samples/gfx/vulkan_video_caps
+        run: |
+          make av1_params_test SANITIZER=address,undefined
+          python3 av1_fixtures.py
+
+      - name: Build and run video_hdr_fp16_test (ASan + UBSan + LSan)
+        shell: bash
+        working-directory: samples/formats/video_hdr_fp16
+        run: |
+          set -eu
+          # HDR10 video to linear scRGB half floats: HEVC Main10 in MP4
+          # and VP9 profile 2 in WebM, tagged PQ, decode flat grey onto
+          # the PQ EOTF when asked into the caller's frame; their
+          # SDR-tagged twins, and any stream decoding into its own
+          # canvas, keep the 32-bit paths. Fixtures made with ffmpeg
+          # (libx265, libvpx-vp9) from known 10-bit grey.
+          make clean SANITIZER=address,undefined && make -j$(nproc) all SANITIZER=address,undefined
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1 \
+             timeout 120 ./video_hdr_fp16_test
+
+      - name: Build and run image_tile_gx_test (ASan + UBSan + LSan)
+        shell: bash
+        working-directory: samples/formats/image_tile_gx
+        run: |
+          set -eu
+          # The GameCube/Wii GX RGBA8 tiling the gx driver's overlays
+          # are sampled in, which runs nowhere but on the console. It
+          # is checked against the layout's definition and against
+          # the band conversion it replaced, over every size up to
+          # 70x44 so widths and heights off a multiple of four - where
+          # the source pitch and the tile width part ways - are all
+          # covered.
+          make clean SANITIZER=address,undefined && make -j$(nproc) all SANITIZER=address,undefined
+          test -x image_tile_gx_test
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1 \
+             timeout 120 ./image_tile_gx_test
+
+      - name: ccache statistics
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: ccache -sv
+
+      - name: Save ccache
+        # Only master's pushes keep a cache: pull requests restore
+        # master's, so one push does not evict the next one's.
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ github.workflow }}-${{ github.job }}-${{ github.sha }}
+
+  vp9-matroska:
+    name: VP9 and Matroska codec conformance
+    runs-on: ubuntu-latest
+    env:
+      APT_PKGS: build-essential ffmpeg clang ccache
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Apt cache key
+        id: apt
+        run: sh .github/workflows/scripts/apt-cache-key.sh "$APT_PKGS"
+
+      - name: Restore apt cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.apt-cache
+          key: ${{ steps.apt.outputs.key }}
+          restore-keys: ${{ steps.apt.outputs.prefix }}
+
+      - name: Install dependencies
+        timeout-minutes: 20
+        run: sh .github/workflows/scripts/apt-install.sh $APT_PKGS
+
+      - name: Save apt cache
+        if: env.APT_CACHE_SAVE == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.apt-cache
+          key: ${{ steps.apt.outputs.key }}
+
+      - name: Link with lld
+        run: sh .github/workflows/scripts/use-lld.sh
+
+      - name: Restore ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ github.workflow }}-${{ github.job }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ github.workflow }}-${{ github.job }}-
+
+      - name: Enable ccache
+        run: |
+          set -eu
+          export CCACHE_DIR="$HOME/.ccache"
+          echo "CCACHE_DIR=$CCACHE_DIR" >> "$GITHUB_ENV"
+          echo "/usr/lib/ccache" >> "$GITHUB_PATH"
+          ccache -M 250M
+          ccache -z
+
+      - name: VP9 sessions and WebM GPU dispatch (ASan + UBSan)
+        working-directory: libretro-common/samples/formats/vp9
+        run: |
+          make check stream-check h26x-check h26x-color-check pixel-check SANITIZER=address,undefined
+          make stack-check CC=gcc
+          make stack-check CC=clang
+          H26X_TEST_THREADS=4 make h26x-check h26x-color-check SANITIZER=address,undefined
+
+      - name: Matroska concurrent decode and output ownership (TSan)
+        working-directory: libretro-common/samples/formats/vp9
+        run: |
+          make -B rwebm_h26x_stream_test rwebm_h26x_hw_test SANITIZER=thread
+          H26X_TEST_THREADS=4 TSAN_OPTIONS=halt_on_error=1 make h26x-check SANITIZER=thread
+
+      - name: ccache statistics
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: ccache -sv
+
+      - name: Save ccache
+        # Only master's pushes keep a cache: pull requests restore
+        # master's, so one push does not evict the next one's.
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ github.workflow }}-${{ github.job }}-${{ github.sha }}
+
+  samples-formats:
+    name: Build and run samples/formats
+    runs-on: ubuntu-latest
+    needs: [formats-core, vp9-matroska]
+    if: always()
+    timeout-minutes: 1
+    steps:
+      - name: Require both format suites
+        env:
+          FORMATS_RESULT: ${{ needs.formats-core.result }}
+          CODECS_RESULT: ${{ needs.vp9-matroska.result }}
+        run: |
+          test "$FORMATS_RESULT" = success
+          test "$CODECS_RESULT" = success

@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 compiler     := gcc
 TARGET       := pipeline_format_test
 
@@ -7,7 +9,7 @@ INCDIRS := -I$(LIBRETRO_COMM_DIR)/include -I$(CORE_DIR) \
 	-I$(CORE_DIR)/deps -I$(CORE_DIR)/deps/stb
 
 CC      := $(compiler)
-flags   += -std=gnu99 -g
+flags   += -std=gnu99 -g1
 
 SOURCES_C := \
 	pipeline_format_test.c \
@@ -56,11 +58,11 @@ ifneq ($(SAN),)
    SANITIZER := $(SAN)
 endif
 ifneq ($(SANITIZER),)
-   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g $(CFLAGS)
+   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g1 $(CFLAGS)
    LDFLAGS := -fsanitize=$(SANITIZER) $(LDFLAGS)
 endif
 
-OBJS := $(SOURCES_C:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES_C:.c=.o))
 
 all: $(TARGET)
 
@@ -70,6 +72,10 @@ stubs_retroarch.o: ../pipeline_clocked/stubs_retroarch.c
 %.o: %.c
 	$(CC) $(INCDIRS) $(CFLAGS) $(flags) -c -o$@ $<
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) $(INCDIRS) $(CFLAGS) $(flags) -c -o$@ $<
+
 $(TARGET): $(OBJS)
 	$(CC) -o$@ $(OBJS) $(LDFLAGS)
 
@@ -77,6 +83,7 @@ check: $(TARGET)
 	./$(TARGET)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(OBJS)
 	rm -f $(TARGET)
 

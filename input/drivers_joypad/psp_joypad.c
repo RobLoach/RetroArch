@@ -67,9 +67,6 @@ static SceCtrlActuator actuators[DEFAULT_MAX_PADS] = {0};
 static uint64_t pad_state[DEFAULT_MAX_PADS];
 static int16_t analog_state[DEFAULT_MAX_PADS][3][2];
 
-/* TODO/FIXME - global referenced outside */
-extern uint64_t lifecycle_state;
-
 static const char *psp_joypad_name(unsigned pad)
 {
 #ifdef VITA
@@ -200,7 +197,8 @@ static int16_t psp_joypad_axis(unsigned port, uint32_t joyaxis)
 
 static int16_t psp_joypad_state(
       rarch_joypad_info_t *joypad_info,
-      const struct retro_keybind *binds,
+      const uint16_t *joykeys,
+      const uint32_t *joyaxes,
       unsigned port)
 {
    unsigned i;
@@ -212,11 +210,8 @@ static int16_t psp_joypad_state(
 
    for (i = 0; i < RARCH_FIRST_CUSTOM_BIND; i++)
    {
-      /* Auto-binds are per joypad, not per user. */
-      const uint64_t joykey  = (binds[i].joykey != NO_BTN)
-         ? binds[i].joykey  : joypad_info->auto_binds[i].joykey;
-      const uint32_t joyaxis = (binds[i].joyaxis != AXIS_NONE)
-         ? binds[i].joyaxis : joypad_info->auto_binds[i].joyaxis;
+      const uint64_t joykey  = joykeys[i];
+      const uint32_t joyaxis = joyaxes[i];
       if (
                (uint16_t)joykey != NO_BTN 
             && (pad_state[port_idx] & (UINT64_C(1) << (uint16_t)joykey))
@@ -236,9 +231,8 @@ static void psp_joypad_poll(void)
    unsigned player;
    unsigned players_count      = DEFAULT_MAX_PADS;
 #if defined(VITA)
-   settings_t *settings        = config_get_ptr();
-   bool input_backtouch_enable = settings->bools.input_backtouch_enable;
-   bool input_backtouch_toggle = settings->bools.input_backtouch_toggle;
+   bool input_backtouch_enable = input_config_get_backtouch_enable();
+   bool input_backtouch_toggle = input_config_get_backtouch_toggle();
 #endif
 
 #ifdef PSP
@@ -280,8 +274,6 @@ static void psp_joypad_poll(void)
 
    CtrlSetSamplingMode(DEFAULT_SAMPLING_MODE);
 
-   BIT64_CLEAR(lifecycle_state, RARCH_MENU_TOGGLE);
-
    for (player = 0; player < players_count; player++)
    {
       unsigned j, k;
@@ -310,15 +302,13 @@ static void psp_joypad_poll(void)
          analog_state[i][1][0] = analog_state[i][1][1] = 
          analog_state[i][2][0] = analog_state[i][2][1] = 0;
 
-#if defined(SN_TARGET_PSP2) || defined(VITA)
       if (ret < 0)
          continue;
-#endif
 #if defined(VITA)
       /* The system keyboard (psp_input.c) is modal and reads the pad
        * itself; the buttons that drive it must not also drive the
        * menu behind it. */
-      if (input_state_get_ptr()->flags & INP_FLAG_NATIVE_KB_SHOWN)
+      if (input_driver_native_keyboard_shown())
          continue;
       /* The touch panels stand in for L2/R2/L3/R3 in-game only.  In
        * the menu the front panel is the pointer and the rear one is
@@ -327,7 +317,7 @@ static void psp_joypad_poll(void)
       if (sceKernelGetModelForCDialog() == SCE_KERNEL_MODEL_VITA
          && input_backtouch_enable
 #ifdef HAVE_MENU
-         && !(menu_state_get_ptr()->flags & MENU_ST_FLAG_ALIVE)
+         && !menu_driver_alive()
 #endif
          )
       {

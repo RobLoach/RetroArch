@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := task_file_transfer_test
 
 # Path back to the repo root from this sample dir.  The unit under
@@ -47,7 +49,7 @@ SOURCES := task_file_transfer_test.c \
 # absent from that switch while both push paths set them, so those
 # loads finished without the mixer handler ever running.  HAVE_RMP4
 # and HAVE_RH264 build the real demuxer for the moov-at-EOF lane.
-CFLAGS  += -Wall -std=gnu99 -g -O1 \
+CFLAGS  += -Wall -std=gnu99 -g1 -O1 \
            -DHAVE_THREADS -DHAVE_AUDIOMIXER -DHAVE_MMAP \
            -DHAVE_64BIT_OFFSETS -DHAVE_RMP4 -DHAVE_RH264 -D_GNU_SOURCE \
            -I$(REPO_ROOT) \
@@ -59,7 +61,7 @@ LDFLAGS += -lpthread -lm
 # everything set above instead of adding to it.
 CFLAGS += $(EXTRA_CFLAGS)
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
 ifneq ($(SANITIZER),)
    CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer $(CFLAGS)
@@ -69,6 +71,10 @@ endif
 all: $(TARGET)
 
 %.o: %.c
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(TARGET): $(OBJS)
@@ -89,6 +95,7 @@ sweep:
 	@echo "sweep clean"
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJS)
 
 .PHONY: all sweep clean

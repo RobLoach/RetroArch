@@ -122,7 +122,8 @@ static int16_t ctr_joypad_axis(unsigned port_num, uint32_t joyaxis)
 
 static int16_t ctr_joypad_state(
       rarch_joypad_info_t *joypad_info,
-      const struct retro_keybind *binds,
+      const uint16_t *joykeys,
+      const uint32_t *joyaxes,
       unsigned port)
 {
    int i;
@@ -134,11 +135,8 @@ static int16_t ctr_joypad_state(
 
    for (i = 0; i < RARCH_FIRST_CUSTOM_BIND; i++)
    {
-      /* Auto-binds are per joypad, not per user. */
-      const uint64_t joykey  = (binds[i].joykey != NO_BTN)
-         ? binds[i].joykey  : joypad_info->auto_binds[i].joykey;
-      const uint32_t joyaxis = (binds[i].joyaxis != AXIS_NONE)
-         ? binds[i].joyaxis : joypad_info->auto_binds[i].joyaxis;
+      const uint64_t joykey  = joykeys[i];
+      const uint32_t joyaxis = joyaxes[i];
 
       if ((uint16_t)joykey != NO_BTN &&
             (pad_state & (1 << (uint16_t)joykey)))
@@ -193,11 +191,7 @@ static void ctr_joypad_poll(void)
    analog_state[0][RETRO_DEVICE_INDEX_ANALOG_RIGHT] [RETRO_DEVICE_ID_ANALOG_Y] = -ctr_joypad_fix_range(state_tmp_right_analog.dy);
 }
 
-static bool ctr_joypad_query_pad(unsigned pad)
-{
-   /* FIXME */
-   return pad < MAX_USERS && pad_state;
-}
+static bool ctr_joypad_query_pad(unsigned pad) { return pad == 0; }
 
 static void ctr_joypad_destroy(void) { }
 

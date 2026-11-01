@@ -71,6 +71,9 @@
 
 #include "companion_core.h"
 
+/* the entries and macros there can be (input_driver.c) */
+#define COMPANION_SHORTCUTS_MAX 16
+
 #define COMPANION_NO_SELECTION ((size_t)-1)
 
 #ifdef HAVE_NETWORKING
@@ -87,6 +90,13 @@ struct companion_core
 {
    companion_callbacks_t cb;
    void *ud;
+
+   /* Controller shortcuts as last read: each row's number, combinations
+    * first; 0 is an empty row's, which adds the lowest number free */
+   uint8_t shortcut_number[2 * (COMPANION_SHORTCUTS_MAX + 1)];
+   uint8_t shortcut_new[2];   /* the empty rows' numbers */
+   uint8_t shortcut_combos;   /* rows that are combinations */
+   uint8_t shortcut_rows;
 
    /* Playlist files (*.lpl) in the playlist directory. */
    struct string_list *playlist_files;
@@ -130,17 +140,20 @@ struct companion_core
    struct companion_browse_job
    {
       char dir[PATH_MAX_LENGTH];
-      unsigned gen;
       struct string_list *list;
       uint64_t *size;
       int64_t  *mtime;
-      bool done, ok;
+      int gen;
+      /* Stored by the worker, release, after everything above. */
+      retro_atomic_int_t done;
+      bool ok;
    } *browse_job;
-   unsigned browse_gen;
+   /* Written by the UI thread only; the worker reads it between
+    * entries to see whether its job has been superseded. */
+   retro_atomic_int_t browse_gen;
    enum companion_browse_column browse_sort_col;
    bool browse_sort_desc;
 #ifdef HAVE_THREADS
-   slock_t   *browse_lock;
    sthread_t *browse_thread;
 #endif
 
@@ -396,6 +409,129 @@ void companion_core_free(companion_core_t *core)
    free(core->browse_size);
    free(core->browse_mtime);
    free(core);
+}
+
+/* --- Controller shortcuts ------------------------------------------------ */
+
+static size_t companion_shortcut_spec(bool macro, unsigned n, char *s, size_t len)
+{
+   return macro ? input_macro_spec(n, s, len) : input_entry_spec(n, s, len);
+}
+
+size_t companion_core_shortcut_count(companion_core_t *core)
+{
+   unsigned kind;
+   if (!core)
+      return 0;
+   core->shortcut_rows = 0;
+   for (kind = 0; kind < 2; kind++)
+   {
+      unsigned n, had = 0;
+      char buf[8];
+      core->shortcut_new[kind] = 0;
+      for (n = 1; n <= 255; n++)
+      {
+         if (companion_shortcut_spec(kind == 1, n, buf, sizeof(buf)))
+         {
+            if (had < COMPANION_SHORTCUTS_MAX)
+               core->shortcut_number[core->shortcut_rows++] = (uint8_t)n;
+            had++;
+         }
+         else if (!core->shortcut_new[kind])
+            core->shortcut_new[kind] = (uint8_t)n;
+      }
+      /* the empty row, while there is room for another */
+      if (had < COMPANION_SHORTCUTS_MAX && core->shortcut_new[kind])
+         core->shortcut_number[core->shortcut_rows++] = 0;
+      if (!kind)
+         core->shortcut_combos = core->shortcut_rows;
+   }
+   return core->shortcut_rows;
+}
+
+bool companion_core_shortcut_is_macro(companion_core_t *core, size_t i)
+{
+   return core && i < core->shortcut_rows && i >= core->shortcut_combos;
+}
+
+/* Row @i's number: its own, or the one the empty row adds */
+static unsigned companion_shortcut_number(companion_core_t *core, size_t i)
+{
+   if (!core || i >= core->shortcut_rows)
+      return 0;
+   if (core->shortcut_number[i])
+      return core->shortcut_number[i];
+   return core->shortcut_new[i >= core->shortcut_combos ? 1 : 0];
+}
+
+const char *companion_core_shortcut_label(companion_core_t *core, size_t i,
+      char *s, size_t len)
+{
+   bool macro = companion_core_shortcut_is_macro(core, i);
+   if (!s || !len)
+      return "";
+   s[0] = '\0';
+   if (!core || i >= core->shortcut_rows)
+      return s;
+   if (!core->shortcut_number[i])
+      strlcpy(s, macro ? "New macro" : "New combination", len);
+   else
+      snprintf(s, len, "%s %u", macro ? "Macro" : "Combination",
+            (unsigned)core->shortcut_number[i]);
+   return s;
+}
+
+const char *companion_core_shortcut_get(companion_core_t *core, size_t i,
+      char *s, size_t len)
+{
+   if (!s || !len)
+      return "";
+   s[0] = '\0';
+   if (core && i < core->shortcut_rows && core->shortcut_number[i])
+      companion_shortcut_spec(companion_core_shortcut_is_macro(core, i),
+            core->shortcut_number[i], s, len);
+   return s;
+}
+
+bool companion_core_shortcut_set(companion_core_t *core, size_t i,
+      const char *text)
+{
+   bool macro    = companion_core_shortcut_is_macro(core, i);
+   unsigned n    = companion_shortcut_number(core, i);
+   bool done;
+   if (!n || !text)
+      return false;
+   while (*text == ' ' || *text == '\t')
+      text++;
+   if (!*text)
+      done = macro ? input_macro_remove(n) : input_entry_remove(n);
+   else
+      done = macro ? input_macro_set(n, text) : input_entry_add(n, text);
+   return done || !*text;
+}
+
+const char *companion_core_shortcut_help(companion_core_t *core, bool macro,
+      char *s, size_t len)
+{
+   size_t at;
+   (void)core;
+   if (!s || !len)
+      return "";
+   if (macro)
+   {
+      strlcpy(s, "Steps with commas between, each buttons of the RetroPad"
+            " with + between them (or - for none) and the frames it lasts:"
+            " \"down 2, down+right 2, - 1, a 4\". A combination starts it"
+            " with the target macro_N.", len);
+      return s;
+   }
+   at = strlcpy(s, "Buttons and a key with + between them, then : and what"
+         " it does; before the colon \"held 2s\" or \"pressed 80%\" if"
+         " wanted: \"l3+r3 : menu_toggle\", \"start held 2s : quit\"."
+         " It can do: ", len);
+   if (at < len)
+      input_entry_targets(s + at, len - at);
+   return s;
 }
 
 /* --- Options table (Qt's View > Options) --------------------------------- */
@@ -714,7 +850,7 @@ float companion_core_shader_param_current(companion_core_t *core, size_t i)
    (void)core;
    if (!s || i >= s->num_parameters)
       return 0.0f;
-   return s->parameters[i].current;
+   return video_shader_param_get(&s->parameters[i]);
 }
 
 void companion_core_shader_param_set(companion_core_t *core, size_t i, float v)
@@ -725,7 +861,7 @@ void companion_core_shader_param_set(companion_core_t *core, size_t i, float v)
       return;
    if (v < s->parameters[i].minimum) v = s->parameters[i].minimum;
    if (v > s->parameters[i].maximum) v = s->parameters[i].maximum;
-   s->parameters[i].current = v;
+   video_shader_param_set(&s->parameters[i], v);
 }
 
 void companion_core_shader_param_reset(companion_core_t *core, size_t i)
@@ -734,7 +870,7 @@ void companion_core_shader_param_reset(companion_core_t *core, size_t i)
    (void)core;
    if (!s || i >= s->num_parameters)
       return;
-   s->parameters[i].current = s->parameters[i].initial;
+   video_shader_param_set(&s->parameters[i], s->parameters[i].initial);
 }
 
 const char *companion_core_shader_path(companion_core_t *core)
@@ -1712,26 +1848,17 @@ static void companion_core_scan_finished(retro_task_t *task,
 }
 #endif
 
-bool companion_core_request_scan(companion_core_t *core, const char *path,
-      bool directory, bool show_hidden_files)
+bool companion_core_request_scan(companion_core_t *core, const char *path)
 {
 #ifdef HAVE_LIBRETRODB
-   settings_t *settings = config_get_ptr();
-
    if (!core || string_is_empty(path))
       return false;
 
    companion_core_scan_owner = core;
-   return task_push_dbscan(
-         settings->paths.directory_playlist,
-         settings->paths.path_content_database,
-         path, directory, show_hidden_files,
-         companion_core_scan_finished);
+   return task_push_dbscan(path, companion_core_scan_finished);
 #else
    (void)core;
    (void)path;
-   (void)directory;
-   (void)show_hidden_files;
    return false;
 #endif
 }
@@ -1772,11 +1899,6 @@ const char *companion_core_pref_initial_playlist(companion_core_t *core)
 bool companion_core_pref_suggest_loaded_core_first(companion_core_t *core)
 {
    return core && config_get_ptr()->bools.desktop_menu_suggest_loaded_core_first;
-}
-
-bool companion_core_pref_show_hidden_files(companion_core_t *core)
-{
-   return core && config_get_ptr()->bools.show_hidden_files;
 }
 
 int companion_core_pref_last_tab(companion_core_t *core)
@@ -2493,7 +2615,7 @@ static void companion_core_stat(const char *path, bool is_dir,
 /* Enumerate @job->dir into the job (list sorted folders first, then
  * per-entry size / mtime). Runs on the worker; between entries it
  * checks whether it has been superseded and stops early if so. Sets
- * job->done last. @core is only read for the generation under the lock. */
+ * job->done last. @core is only read for the generation. */
 static void companion_core_browse_enumerate(companion_core_t *core,
       struct companion_browse_job *job)
 {
@@ -2550,22 +2672,12 @@ static void companion_core_browse_enumerate(companion_core_t *core,
 #endif
       companion_core_stat(p,
             list->elems[i].attr.i == RARCH_DIRECTORY, &job->size[i], &job->mtime[i]);
-      /* superseded? stop enumerating this directory */
-      if ((i & 63) == 63)
+      /* superseded? stop enumerating this directory, after one stat
+       * at most, so the UI thread's join returns at once */
+      if (retro_atomic_load_acquire_int(&core->browse_gen) != job->gen)
       {
-         bool stale;
-#ifdef HAVE_THREADS
-         slock_lock(core->browse_lock);
-#endif
-         stale = core->browse_gen != job->gen;
-#ifdef HAVE_THREADS
-         slock_unlock(core->browse_lock);
-#endif
-         if (stale)
-         {
-            string_list_free(list);
-            goto fail;
-         }
+         string_list_free(list);
+         goto fail;
       }
    }
    job->list = list;
@@ -2579,16 +2691,13 @@ fail:
 static void companion_core_browse_thread(void *ud)
 {
    companion_core_t *core = (companion_core_t*)ud;
-   struct companion_browse_job *job;
-   slock_lock(core->browse_lock);
-   job = core->browse_job;
-   slock_unlock(core->browse_lock);
+   /* Set before this thread was created and left alone until it is
+    * joined. */
+   struct companion_browse_job *job = core->browse_job;
    if (!job)
       return;
    companion_core_browse_enumerate(core, job);
-   slock_lock(core->browse_lock);
-   job->done = true;
-   slock_unlock(core->browse_lock);
+   retro_atomic_store_release_int(&job->done, 1);
 }
 #endif
 
@@ -2610,16 +2719,10 @@ static void companion_core_browse_worker_stop(companion_core_t *core)
    if (core->browse_thread)
    {
       /* Make whatever it is doing stale so it stops between entries. */
-      slock_lock(core->browse_lock);
-      core->browse_gen++;
-      slock_unlock(core->browse_lock);
+      retro_atomic_store_release_int(&core->browse_gen,
+            retro_atomic_load_relaxed_int(&core->browse_gen) + 1);
       sthread_join(core->browse_thread);
       core->browse_thread = NULL;
-   }
-   if (core->browse_lock)
-   {
-      slock_free(core->browse_lock);
-      core->browse_lock = NULL;
    }
 #endif
    companion_core_browse_job_free(core->browse_job);
@@ -2786,11 +2889,9 @@ static void companion_core_browse_poll(companion_core_t *core)
 #ifdef HAVE_THREADS
    if (!core->browse_job)
       return;
-   slock_lock(core->browse_lock);
    job     = core->browse_job;
-   done    = job->done;
-   current = (job->gen == core->browse_gen);
-   slock_unlock(core->browse_lock);
+   done    = retro_atomic_load_acquire_int(&job->done) != 0;
+   current = (job->gen == retro_atomic_load_relaxed_int(&core->browse_gen));
    if (!done)
       return;
    sthread_join(core->browse_thread);
@@ -2838,17 +2939,12 @@ bool companion_core_browse_open(companion_core_t *core, const char *path)
    strlcpy(job->dir, dir_buf, sizeof(job->dir));
 
 #ifdef HAVE_THREADS
-   if (!core->browse_lock)
-      core->browse_lock = slock_new();
-   if (core->browse_lock)
    {
       /* Supersede whatever is running: it stops between entries and
        * its result is discarded in poll(); this one starts once it has
        * been joined (a second thread is never spawned alongside). */
-      slock_lock(core->browse_lock);
-      core->browse_gen++;
-      job->gen = core->browse_gen;
-      slock_unlock(core->browse_lock);
+      job->gen = retro_atomic_load_relaxed_int(&core->browse_gen) + 1;
+      retro_atomic_store_release_int(&core->browse_gen, job->gen);
       if (core->browse_thread)
       {
          sthread_join(core->browse_thread);  /* returns promptly: stale */
@@ -2864,7 +2960,7 @@ bool companion_core_browse_open(companion_core_t *core, const char *path)
       core->browse_job = NULL;
    }
 #endif
-   job->gen = core->browse_gen;
+   job->gen = retro_atomic_load_relaxed_int(&core->browse_gen);
    companion_core_browse_enumerate(core, job);
    if (job->ok)
    {
@@ -3192,7 +3288,7 @@ void companion_core_prepare_show_window(companion_core_t *core)
    if (!core)
       return;
 
-   if (input_state_get_ptr()->flags & INP_FLAG_GRAB_MOUSE_STATE)
+   if (input_driver_mouse_grabbed())
       command_event(CMD_EVENT_GRAB_MOUSE_TOGGLE, NULL);
    if (video_st && video_st->poke && video_st->poke->show_mouse)
       video_st->poke->show_mouse(video_st->data, true);

@@ -68,6 +68,7 @@
 
 #include "../../../input/input_overlay.h"
 
+#include "../../../gfx/gfx_surface.h"
 #include "stubs_retroarch.h"
 
 #ifdef HAVE_THREADS
@@ -87,6 +88,61 @@ static const unsigned page_map[NUM_PAGES][2] = { { 0, 1 }, { 1, 2 } };
 static const unsigned img_w[NUM_IMAGES]      = { 16, 8, 32 };
 static const unsigned img_h[NUM_IMAGES]      = { 16, 24, 4 };
 static uint32_t       img_sum[NUM_IMAGES];
+
+/* The image pack_new() makes a BC1 DDS of, the way the loader leaves
+ * one (a payload and no pixels); NUM_IMAGES for none. Image 1, the one
+ * on both pages. */
+#define BCN_IMAGE 1
+static unsigned pack_bcn_image = NUM_IMAGES;
+static uint32_t bcn_sum_bytes;  /* its blocks, as a driver gets them  */
+static uint32_t bcn_sum_rgba;   /* its pixels, decoded on their own   */
+
+static void put32(uint8_t *p, uint32_t v)
+{
+   p[0] = (uint8_t)v;
+   p[1] = (uint8_t)(v >> 8);
+   p[2] = (uint8_t)(v >> 16);
+   p[3] = (uint8_t)(v >> 24);
+}
+
+/* A DXT1 file of @w x @h, multiples of 4, into @buf; its length */
+static size_t dds_bc1_make(uint8_t *buf, unsigned w, unsigned h)
+{
+   unsigned b, blocks = (w / 4) * (h / 4);
+   uint8_t *p         = buf + 128;
+   memset(buf, 0, 128);
+   put32(buf +   0, 0x20534444u);           /* "DDS " */
+   put32(buf +   4, 124);
+   put32(buf +   8, 0x1007u | 0x80000u);    /* caps|h|w|pf|linearsize */
+   put32(buf +  12, h);
+   put32(buf +  16, w);
+   put32(buf +  20, blocks * 8);
+   put32(buf +  76, 32);
+   put32(buf +  80, 0x4u);                  /* DDPF_FOURCC */
+   memcpy(buf + 84, "DXT1", 4);
+   put32(buf + 108, 0x1000u);               /* DDSCAPS_TEXTURE */
+   for (b = 0; b < blocks; b++, p += 8)
+   {
+      /* color0 > color1: four colours, no transparency */
+      put32(p,     0xf800u | ((b * 0x841u) << 16));
+      put32(p + 4, 0x1b2c3d4eu * (b + 1));
+   }
+   return 128 + (size_t)blocks * 8;
+}
+
+static bool dds_bc1_load(struct texture_image *img, unsigned w,
+      unsigned h, bool compressed)
+{
+   uint8_t buf[128 + 32 * 8];
+   image_texture_request_t req;
+   size_t len = dds_bc1_make(buf, w, h);
+   memset(&req, 0, sizeof(req));
+   memset(img, 0, sizeof(*img));
+   req.want_compressed = compressed;
+   img->supports_rgba  = false;
+   return image_texture_load_buffer_request(img, IMAGE_TYPE_DDS,
+         buf, len, &req, NULL, NULL);
+}
 
 /* --- the driver's overlay interface ------------------------------ */
 
@@ -188,6 +244,22 @@ static input_overlay_t *pack_new(const video_overlay_interface_t *iface,
       for (j = 0; j < NUM_PAGES * 2 && !img; j++)
          if (page_map[j / 2][j % 2] == i)
             img = &ol->overlays[j / 2].descs[j % 2].image;
+      if (i == pack_bcn_image)
+      {
+         struct texture_image ref;
+         CHECK(dds_bc1_load(img, img_w[i], img_h[i], true)
+               && img->compressed && !img->pixels,
+               "bcn: the DDS did not load as a payload");
+         CHECK(dds_bc1_load(&ref, img_w[i], img_h[i], false) && ref.pixels,
+               "bcn: the DDS did not decode");
+         bcn_sum_bytes = img->compressed
+            ? stub_checksum_bytes(img->compressed->mips[0].data,
+                  img->compressed->mips[0].size) : 0;
+         bcn_sum_rgba  = ref.pixels ? stub_checksum(&ref) : 0;
+         image_texture_free(&ref);
+         ol->images[i] = img;
+         continue;
+      }
       img->width  = img_w[i];
       img->height = img_h[i];
       img->pixels = (uint32_t*)malloc(n * sizeof(uint32_t));
@@ -230,6 +302,16 @@ static void pack_free(input_overlay_t *ol)
       free(ol->overlays[i].descs);
    }
    free(ol->overlays);
+   free(ol->anim_stream);
+   free(ol->anim_player);
+   free(ol->anim_resend);
+   if (ol->anim_2frame_pix)
+      for (i = 0; i < ol->num_images; i++)
+         free(ol->anim_2frame_pix[i]);
+   free(ol->anim_2frame_pix);
+   free(ol->anim_2frame);
+   free(ol->anim_2frame_cur);
+   free(ol->anim_2frame_pressed);
    free(ol);
 }
 
@@ -548,20 +630,336 @@ static void lane_threaded_freed_in_flight(void)
 }
 #endif
 
+/* A looping animated image whose frame the driver drops: the frame is
+ * marked and sent again from its slot, and only then reaches the
+ * texture. Direct, and under the wrapper, where the drop comes back
+ * through the surface's release. */
+static void lane_anim_dropped(bool threaded)
+{
+   static int dummy_stream;
+   unsigned before = failures;
+   const char *lane = threaded ? "threaded, dropped animation frame"
+                               : "dropped animation frame";
+   input_overlay_t *ol;
+   gfx_surface_t *s;
+   drv_reset();
+#ifdef HAVE_THREADS
+   stub_thread_active    = threaded;
+   stub_thread_wins_race = threaded;
+#endif
+   ol = pack_new(&iface_textures, NUM_IMAGES);
+   ol->anim_stream    = (void**)calloc(NUM_IMAGES, sizeof(void*));
+   ol->anim_player    = (void**)calloc(NUM_IMAGES, sizeof(void*));
+   ol->anim_resend    = (uint8_t*)calloc(NUM_IMAGES, sizeof(uint8_t));
+   ol->anim_stream[0] = &dummy_stream; /* image 0 animates */
+   pack_show(ol, 0);
+   input_overlay_load_page(ol);
+#ifdef HAVE_THREADS
+   if (threaded)
+      video_thread_async_poll();
+#endif
+   s = ol->surfaces ? (gfx_surface_t*)ol->surfaces[0] : NULL;
+   CHECK(s && s->num_slots == 1 && s->handle, "%s: no animated surface", lane);
+   if (s && s->num_slots == 1 && s->handle)
+   {
+      struct texture_image want;
+      uint32_t sum;
+      size_t p, n = VIDEO_SCALE_AREA(s->dims);
+      for (p = 0; p < n; p++)
+         s->slots[0][p] = 0xff00ff00u ^ (uint32_t)p;
+      memset(&want, 0, sizeof(want));
+      want.width  = VIDEO_SCALE_W(s->dims);
+      want.height = VIDEO_SCALE_H(s->dims);
+      want.pixels = s->slots[0];
+      sum         = stub_checksum(&want);
+
+      stub_drop_updates = 1;
+      CHECK(input_overlay_anim_submit(ol, 0), "%s: not taken", lane);
+#ifdef HAVE_THREADS
+      if (threaded)
+         video_thread_async_poll();
+#endif
+      CHECK(ol->anim_resend[0], "%s: not marked to go again", lane);
+      CHECK(stub_texture_get(s->handle)->checksum != sum,
+            "%s: the dropped frame reached the texture", lane);
+      CHECK(input_overlay_anim_submit(ol, 0), "%s: resend not taken", lane);
+#ifdef HAVE_THREADS
+      if (threaded)
+         video_thread_async_poll();
+#endif
+      CHECK(!ol->anim_resend[0] && stub_texture_get(s->handle)->checksum == sum,
+            "%s: the frame sent again did not land", lane);
+   }
+   stub_drop_updates = 0;
+   pack_free(ol);
+#ifdef HAVE_THREADS
+   stub_thread_active = stub_thread_wins_race = false;
+#endif
+   printf("[%s] %s lane\n", failures == before ? "pass" : "fail", lane);
+}
+
+/* A two-frame image is one texture, both frames stacked with a row of
+ * each repeated between them: a page that shows it is pointed at the
+ * frame it shows, and a press moves the rectangle and uploads nothing.
+ * The stacked frames go once the texture is in. Direct, and under the
+ * wrapper. */
+static unsigned atlas_geoms;
+static int      atlas_entry;
+static float    atlas_v, atlas_h;
+
+static void drv_tex_geom(void *data, unsigned image,
+      float x, float y, float w, float h)
+{
+   (void)data; (void)x; (void)w;
+   atlas_geoms++;
+   atlas_entry = (int)image;
+   atlas_v     = y;
+   atlas_h     = h;
+}
+
+static const video_overlay_interface_t iface_atlas = {
+   NULL, drv_load, drv_load_tex, drv_tex_geom, NULL, NULL, NULL
+};
+
+static void lane_two_frame_atlas(bool threaded)
+{
+   static int dummy_stream;
+   unsigned before = failures;
+   const char *lane = threaded ? "threaded, two-frame atlas"
+                               : "two-frame atlas";
+   unsigned w = img_w[0], h = img_h[0], rows = 2 * h + 2;
+   uint32_t *stack, sum;
+   struct texture_image want;
+   input_overlay_t *ol;
+   gfx_surface_t *s;
+   size_t p;
+
+   drv_reset();
+   atlas_geoms = 0;
+   atlas_entry = -1;
+#ifdef HAVE_THREADS
+   stub_thread_active    = threaded;
+   stub_thread_wins_race = threaded;
+#endif
+   ol = pack_new(&iface_atlas, NUM_IMAGES);
+   ol->anim_stream         = (void**)calloc(NUM_IMAGES, sizeof(void*));
+   ol->anim_player         = (void**)calloc(NUM_IMAGES, sizeof(void*));
+   ol->anim_resend         = (uint8_t*)calloc(NUM_IMAGES, sizeof(uint8_t));
+   ol->anim_2frame         = (uint8_t*)calloc(NUM_IMAGES, sizeof(uint8_t));
+   ol->anim_2frame_cur     = (uint8_t*)calloc(NUM_IMAGES, sizeof(uint8_t));
+   ol->anim_2frame_pressed = (uint8_t*)calloc(NUM_IMAGES, sizeof(uint8_t));
+   ol->anim_2frame_pix     = (uint32_t**)calloc(NUM_IMAGES, sizeof(uint32_t*));
+   ol->anim_stream[0]      = &dummy_stream; /* image 0 is a pair */
+   ol->anim_2frame[0]      = INPUT_OVERLAY_2FRAME_PAIR;
+   stack = (uint32_t*)malloc((size_t)w * rows * sizeof(uint32_t));
+   for (p = 0; p < (size_t)w * rows; p++)
+      stack[p] = 0xff000000u | (uint32_t)(p * 2654435761u);
+   ol->anim_2frame_pix[0] = stack;
+   memset(&want, 0, sizeof(want));
+   want.width  = w;
+   want.height = rows;
+   want.pixels = stack;
+   sum         = stub_checksum(&want);
+
+   pack_show(ol, 0);
+   input_overlay_load_page(ol);
+#ifdef HAVE_THREADS
+   if (threaded)
+   {
+      video_thread_async_poll();
+      input_overlay_promote_textures(ol);
+   }
+#endif
+   s = ol->surfaces ? (gfx_surface_t*)ol->surfaces[0] : NULL;
+   CHECK(s && s->handle && !s->num_slots
+         && VIDEO_SCALE_W(s->dims) == w && VIDEO_SCALE_H(s->dims) == rows,
+         "%s: not one texture of both frames", lane);
+   CHECK(ol->anim_2frame[0] == INPUT_OVERLAY_2FRAME_ATLAS,
+         "%s: not marked as stacked", lane);
+   if (s && s->handle)
+      CHECK(stub_texture_get(s->handle)->checksum == sum,
+            "%s: the texture is not the stack", lane);
+   CHECK(!ol->anim_2frame_pix[0], "%s: the stack was kept after its upload", lane);
+   CHECK(atlas_geoms == 1 && atlas_entry == 0 && atlas_v == 0.0f
+         && atlas_h == (float)h / (float)rows,
+         "%s: the page was not pointed at the first frame (%u calls, entry %d, %f+%f)",
+         lane, atlas_geoms, atlas_entry, atlas_v, atlas_h);
+
+   /* pressed: the rectangle moves past the first frame and the two
+    * repeated rows; nothing is uploaded */
+   {
+      unsigned loads = stub_tex_loads;
+      ol->anim_2frame_cur[0] = 1;
+      input_overlay_atlas_frames(ol, 0);
+      CHECK(atlas_geoms == 2 && atlas_entry == 0
+            && atlas_v == (float)(h + 2) / (float)rows
+            && atlas_h == (float)h / (float)rows,
+            "%s: a press did not move the rectangle to the second frame", lane);
+      CHECK(stub_tex_loads == loads
+            && (!s || !s->handle || stub_texture_get(s->handle)->checksum == sum),
+            "%s: a press uploaded something", lane);
+      /* the other page does not show it: nothing to point */
+      pack_show(ol, 1);
+      input_overlay_atlas_frames(ol, 0);
+      CHECK(atlas_geoms == 2, "%s: a page without the image was pointed", lane);
+   }
+   pack_free(ol);
+#ifdef HAVE_THREADS
+   stub_thread_active = stub_thread_wins_race = false;
+#endif
+   printf("[%s] %s lane\n", failures == before ? "pass" : "fail", lane);
+}
+
+/* A DDS image comes from the loader as its BC1 blocks and no pixels.
+ * A driver that samples BC1 gets the blocks as one texture; one that
+ * does not, or a page that goes through load(), gets them decoded, on
+ * both pages that show the image. */
+static void lane_bcn(const char *lane, const video_overlay_interface_t *iface,
+      bool samples, bool decline)
+{
+   unsigned pg, before = failures;
+   bool textures       = iface->load_textures && !decline;
+   input_overlay_t *ol;
+
+   drv_reset();
+   stub_samples_bc1   = samples;
+   drv_decline        = decline;
+   pack_bcn_image     = BCN_IMAGE;
+   ol                 = pack_new(iface, NUM_IMAGES);
+   pack_bcn_image     = NUM_IMAGES;
+   img_sum[BCN_IMAGE] = (textures && samples) ? bcn_sum_bytes : bcn_sum_rgba;
+
+   for (pg = 0; pg < NUM_PAGES; pg++)
+   {
+      enum input_overlay_page r;
+      pack_show(ol, pg);
+      r = input_overlay_load_page(ol);
+      CHECK(r == (textures ? INPUT_OVERLAY_PAGE_TEXTURES
+               : INPUT_OVERLAY_PAGE_PIXELS),
+            "%s: page %u went as %d", lane, pg, (int)r);
+      CHECK(drv_null_pixels == 0, "%s: page %u had no pixels", lane, pg);
+      check_page(lane, pg);
+   }
+
+   if (textures)
+   {
+      const struct stub_texture *t = ol->page_textures
+         ? stub_texture_get(ol->page_textures[BCN_IMAGE]) : NULL;
+      CHECK(stub_tex_loads == NUM_IMAGES,
+            "%s: %u uploads for %u unique images", lane, stub_tex_loads,
+            NUM_IMAGES);
+      CHECK(t && t->bcn == samples, "%s: the texture is %s", lane,
+            !t ? "missing" : t->bcn ? "the blocks" : "decoded");
+      CHECK(!ol->images[BCN_IMAGE]->compressed
+            && !ol->images[BCN_IMAGE]->pixels,
+            "%s: the image outlived its upload", lane);
+      CHECK(ol->images[BCN_IMAGE]->width == img_w[BCN_IMAGE],
+            "%s: the image lost its size", lane);
+      CHECK(input_overlay_has_source(ol), "%s: pack is not reusable", lane);
+      input_overlay_release_textures(ol);
+      CHECK(stub_tex_live == 0, "%s: %u textures outlived the release",
+            lane, stub_tex_live);
+   }
+   else
+   {
+      CHECK(drv_loads == NUM_PAGES, "%s: load() reached %u times", lane,
+            drv_loads);
+      CHECK(stub_tex_live == 0, "%s: %u textures held for nothing", lane,
+            stub_tex_live);
+      CHECK(input_overlay_has_source(ol), "%s: pack is not reusable", lane);
+   }
+
+   pack_free(ol);
+   printf("[%s] %s lane\n", failures == before ? "pass" : "fail", lane);
+}
+
+#ifdef HAVE_THREADS
+/* Under the wrapper the blocks are posted, not uploaded on the caller.
+ * Until the handle lands the page goes through load(), decoded; then
+ * it moves over to the blocks and both the payload and the decode go.
+ * With @free_early the pack is released and freed while the upload is
+ * still queued: the video thread then reads a payload that went with
+ * the surface, and nothing outlives the completion. */
+static void lane_bcn_threaded(const char *lane, bool free_early)
+{
+   unsigned before = failures;
+   input_overlay_t *ol;
+
+   drv_reset();
+   stub_thread_active    = true;
+   stub_thread_wins_race = false;
+   stub_samples_bc1      = true;
+   pack_bcn_image        = BCN_IMAGE;
+   ol                    = pack_new(&iface_textures, NUM_IMAGES);
+   pack_bcn_image        = NUM_IMAGES;
+   img_sum[BCN_IMAGE]    = bcn_sum_rgba;
+
+   CHECK(input_overlay_load_page(ol) == INPUT_OVERLAY_PAGE_PIXELS,
+         "%s: page 0 did not go through load() while pending", lane);
+   CHECK(drv_null_pixels == 0, "%s: load() had no pixels", lane);
+   check_page(lane, 0);
+   CHECK(stub_tex_loads == 0, "%s: uploaded on the caller (%u)", lane,
+         stub_tex_loads);
+
+   if (free_early)
+   {
+      input_overlay_release_textures(ol);
+      pack_free(ol);
+      CHECK(stub_video_thread_run() == NUM_IMAGES,
+            "%s: the uploads were not all queued", lane);
+      video_thread_async_poll();
+      CHECK(stub_tex_live == 0, "%s: %u textures outlived the pack", lane,
+            stub_tex_live);
+   }
+   else
+   {
+      const struct stub_texture *t;
+      CHECK(stub_video_thread_run() == NUM_IMAGES,
+            "%s: the uploads were posted more than once", lane);
+      video_thread_async_poll();
+      img_sum[BCN_IMAGE] = bcn_sum_bytes;
+      CHECK(input_overlay_promote_textures(ol), "%s: not promoted", lane);
+      check_page(lane, 0);
+      t = ol->page_textures
+         ? stub_texture_get(ol->page_textures[BCN_IMAGE]) : NULL;
+      CHECK(t && t->bcn, "%s: the texture is not the blocks", lane);
+      CHECK(!ol->images[BCN_IMAGE]->compressed
+            && !ol->images[BCN_IMAGE]->pixels,
+            "%s: the image outlived its upload", lane);
+      pack_free(ol);
+      CHECK(stub_tex_live == 0, "%s: %u textures outlived the pack", lane,
+            stub_tex_live);
+   }
+
+   stub_thread_active = false;
+   printf("[%s] %s lane\n", failures == before ? "pass" : "fail", lane);
+}
+#endif
+
 int main(void)
 {
    lane_textures();
+   lane_bcn("bcn, sampled",  &iface_textures, true,  false);
+   lane_bcn("bcn, decoded",  &iface_textures, false, false);
+   lane_bcn("bcn, declined", &iface_textures, true,  true);
+   lane_bcn("bcn, load()",   &iface_pixels,   true,  false);
    lane_pixels("declined",     &iface_textures, true,  false);
    lane_pixels("no such path", &iface_pixels,   false, false);
    lane_pixels("upload fails", &iface_textures, false, true);
    lane_load_fails();
    lane_no_images();
+   lane_anim_dropped(false);
+   lane_two_frame_atlas(false);
 #ifdef HAVE_THREADS
+   lane_anim_dropped(true);
+   lane_two_frame_atlas(true);
    lane_threaded_prompt();
    lane_threaded_late();
    lane_threaded_late_refused("threaded, late and declined", true,  false);
    lane_threaded_late_refused("threaded, late and failed",   false, true);
    lane_threaded_freed_in_flight();
+   lane_bcn_threaded("bcn, threaded",                false);
+   lane_bcn_threaded("bcn, threaded, freed in flight", true);
 #endif
 
    if (failures)

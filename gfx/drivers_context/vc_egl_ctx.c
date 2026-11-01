@@ -207,6 +207,9 @@ static void gfx_ctx_vc_destroy(void *data)
       if (vc->egl.hw_ctx)
          eglDestroyContext(vc->egl.dpy, vc->egl.hw_ctx);
 
+      if (vc->egl.hw_surf)
+         eglDestroySurface(vc->egl.dpy, vc->egl.hw_surf);
+
       if (vc->eglimage_ctx)
       {
          egl_bind_api(EGL_OPENVG_API);
@@ -242,6 +245,7 @@ static void gfx_ctx_vc_destroy(void *data)
 
    vc->egl.ctx      = NULL;
    vc->egl.hw_ctx   = NULL;
+   vc->egl.hw_surf  = NULL;
    vc->eglimage_ctx = NULL;
    vc->egl.surf     = NULL;
    vc->pbuff_surf   = NULL;
@@ -477,11 +481,8 @@ static bool gfx_ctx_vc_set_video_mode(void *data,
 static enum gfx_ctx_api gfx_ctx_vc_get_api(void *data) { return vc_api; }
 
 static void gfx_ctx_vc_input_driver(void *data,
-      const char *name,
-      input_driver_t **input, void **input_data)
+      const char *name)
 {
-   *input      = NULL;
-   *input_data = NULL;
 }
 
 static bool gfx_ctx_vc_has_focus(void *data) { return g_egl_inited; }

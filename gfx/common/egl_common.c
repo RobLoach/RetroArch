@@ -90,6 +90,10 @@ typedef EGLBoolean(*PFN_EGL_GET_CONFIG_ATTRIB) (EGLDisplay dpy,
 					EGLint attribute, EGLint * value);
 typedef EGLBoolean(*PFN_EGL_SWAP_BUFFERS) (EGLDisplay dpy, EGLSurface surface);
 typedef EGLBoolean(*PFN_EGL_SWAP_INTERVAL) (EGLDisplay dpy, EGLint interval);
+typedef EGLSurface(*PFN_EGL_GET_CURRENT_SURFACE) (EGLint readdraw);
+typedef EGLSurface(*PFN_EGL_CREATE_PBUFFER_SURFACE) (EGLDisplay dpy,
+					     EGLConfig config,
+					     const EGLint * attrib_list);
 
 static PFN_EGL_QUERY_SURFACE             _egl_query_surface;
 static PFN_EGL_GET_PROC_ADDRESS          _egl_get_proc_address;
@@ -110,6 +114,8 @@ static PFN_EGL_QUERY_STRING              _egl_query_string;
 static PFN_EGL_GET_CONFIG_ATTRIB         _egl_get_config_attrib;
 static PFN_EGL_SWAP_BUFFERS              _egl_swap_buffers;
 static PFN_EGL_SWAP_INTERVAL             _egl_swap_interval;
+static PFN_EGL_GET_CURRENT_SURFACE       _egl_get_current_surface;
+static PFN_EGL_CREATE_PBUFFER_SURFACE    _egl_create_pbuffer_surface;
 
 #else
 #define _egl_query_surface(a, b, c, d) eglQuerySurface(a, b, c, d)
@@ -131,6 +137,8 @@ static PFN_EGL_SWAP_INTERVAL             _egl_swap_interval;
 #define _egl_get_config_attrib(a, b, c, d) eglGetConfigAttrib(a, b, c, d)
 #define _egl_swap_buffers(a, b) eglSwapBuffers(a, b)
 #define _egl_swap_interval(a, b) eglSwapInterval(a, b)
+#define _egl_get_current_surface(a) eglGetCurrentSurface(a)
+#define _egl_create_pbuffer_surface(a, b, c) eglCreatePbufferSurface(a, b, c)
 #endif
 
 bool egl_init_dll(void)
@@ -180,6 +188,10 @@ bool egl_init_dll(void)
                egl_dll, "eglSwapBuffers");
          _egl_swap_interval         = (PFN_EGL_SWAP_INTERVAL)dylib_proc(
                egl_dll, "eglSwapInterval");
+         _egl_get_current_surface   = (PFN_EGL_GET_CURRENT_SURFACE)dylib_proc(
+               egl_dll, "eglGetCurrentSurface");
+         _egl_create_pbuffer_surface = (PFN_EGL_CREATE_PBUFFER_SURFACE)dylib_proc(
+               egl_dll, "eglCreatePbufferSurface");
       }
    }
 
@@ -342,6 +354,9 @@ void egl_destroy(egl_ctx_data_t *egl)
       if (egl->hw_ctx != EGL_NO_CONTEXT)
          _egl_destroy_context(egl->dpy, egl->hw_ctx);
 
+      if (egl->hw_surf != EGL_NO_SURFACE)
+         _egl_destroy_surface(egl->dpy, egl->hw_surf);
+
       if (egl->surf != EGL_NO_SURFACE)
          _egl_destroy_surface(egl->dpy, egl->surf);
       egl_terminate(egl->dpy);
@@ -355,6 +370,7 @@ void egl_destroy(egl_ctx_data_t *egl)
 
    egl->ctx      = EGL_NO_CONTEXT;
    egl->hw_ctx   = EGL_NO_CONTEXT;
+   egl->hw_surf  = EGL_NO_SURFACE;
    egl->surf     = EGL_NO_SURFACE;
    egl->dpy      = EGL_NO_DISPLAY;
    egl->config   = 0;
@@ -363,17 +379,138 @@ void egl_destroy(egl_ctx_data_t *egl)
    frontend_driver_destroy_signal_handler_state();
 }
 
+static bool egl_display_has_extension(EGLDisplay dpy, const char *ext)
+{
+   const char *exts = _egl_query_string(dpy, EGL_EXTENSIONS);
+   return exts && strstr(exts, ext);
+}
+
+#ifndef __EMSCRIPTEN__
+/* A 1x1 pbuffer the core's context can be made current with: on the
+ * context's own config where that config has pbuffers, else on one
+ * with the same buffers, which is what eglMakeCurrent asks of a
+ * surface and a context. */
+static EGLSurface egl_create_hw_pbuffer(egl_ctx_data_t *egl)
+{
+   static const EGLint keys[] = {
+      EGL_RED_SIZE, EGL_GREEN_SIZE, EGL_BLUE_SIZE, EGL_ALPHA_SIZE,
+      EGL_DEPTH_SIZE, EGL_STENCIL_SIZE, EGL_RENDERABLE_TYPE
+   };
+   static const EGLint pbuffer_attribs[] = {
+      EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE
+   };
+   EGLConfig configs[64];
+   EGLint want[7];
+   EGLint attribs[17];
+   EGLint surface_type = 0;
+   EGLint count        = 0;
+   EGLint i;
+   unsigned k;
+
+   if (     _egl_get_config_attrib(egl->dpy, egl->config,
+               EGL_SURFACE_TYPE, &surface_type)
+         && (surface_type & EGL_PBUFFER_BIT))
+      return _egl_create_pbuffer_surface(egl->dpy, egl->config,
+            pbuffer_attribs);
+
+   for (k = 0; k < 7; k++)
+   {
+      want[k] = 0;
+      _egl_get_config_attrib(egl->dpy, egl->config, keys[k], &want[k]);
+      attribs[k * 2]     = keys[k];
+      attribs[k * 2 + 1] = want[k];
+   }
+   attribs[14] = EGL_SURFACE_TYPE;
+   attribs[15] = EGL_PBUFFER_BIT;
+   attribs[16] = EGL_NONE;
+
+   if (!_egl_choose_config(egl->dpy, attribs, configs, 64, &count))
+      return EGL_NO_SURFACE;
+
+   /* The sizes asked for are minimums; the buffers have to match. */
+   for (i = 0; i < count; i++)
+   {
+      for (k = 0; k < 6; k++)
+      {
+         EGLint have = 0;
+         if (     !_egl_get_config_attrib(egl->dpy, configs[i], keys[k], &have)
+               || have != want[k])
+            break;
+      }
+      if (k == 6)
+         return _egl_create_pbuffer_surface(egl->dpy, configs[i],
+               pbuffer_attribs);
+   }
+   return EGL_NO_SURFACE;
+}
+#endif
+
+/* The core's context, current on a thread that does not hold the
+ * window surface. No surface at all where the display allows it - a
+ * hardware core renders into the framebuffer objects the driver hands
+ * it - and a pbuffer of its own where it does not. */
+static bool egl_bind_hw_offscreen(egl_ctx_data_t *egl, EGLContext ctx)
+{
+   if (     egl_display_has_extension(egl->dpy, "EGL_KHR_surfaceless_context")
+         && _egl_make_current(egl->dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, ctx))
+      return true;
+#ifndef __EMSCRIPTEN__
+   if (egl->hw_surf == EGL_NO_SURFACE)
+      egl->hw_surf = egl_create_hw_pbuffer(egl);
+   if (     egl->hw_surf != EGL_NO_SURFACE
+         && _egl_make_current(egl->dpy, egl->hw_surf, egl->hw_surf, ctx))
+      return true;
+#endif
+   return false;
+}
+
 void egl_bind_hw_render(egl_ctx_data_t *egl, bool enable)
 {
-   egl->use_hw_ctx     = enable;
+   /* Whether a shared context is made is decided before the context
+    * exists; a bind after that is a bind, not a change of mind. */
+   if (egl->ctx == EGL_NO_CONTEXT)
+      egl->use_hw_ctx  = enable;
 
    if (egl->dpy  == EGL_NO_DISPLAY)
       return;
    if (egl->surf == EGL_NO_SURFACE)
       return;
+
+   /* The threaded wrapper's hardware ring takes the core's context on
+    * the main thread while the driver's own holds the window surface
+    * on the video thread. GLX and WGL bind one drawable on two threads;
+    * EGL does not - eglMakeCurrent fails with EGL_BAD_ACCESS, the core
+    * is left with no context, and its first glGetString returns NULL.
+    * So a thread that does not hold the window surface gets the core's
+    * context without it. */
+   /* The core's context is the shared one where there is one; where the
+    * platform has none (GFX_CTX_FLAGS_NO_SHARED_CONTEXT) the ring hands
+    * the driver's own context to the core's thread, off the surface, and
+    * takes it back for the present with the surface. */
+   if (     enable
+         && _egl_get_current_surface(EGL_DRAW) != egl->surf)
+   {
+      if (!egl_bind_hw_offscreen(egl, egl->hw_ctx != EGL_NO_CONTEXT
+               ? egl->hw_ctx : egl->ctx))
+      {
+         RARCH_ERR("[EGL] The core's context could not be made current off the window surface.\n");
+         egl_report_error();
+      }
+      return;
+   }
+
    _egl_make_current(egl->dpy, egl->surf,
          egl->surf,
-         enable ? egl->hw_ctx : egl->ctx);
+         (enable && egl->hw_ctx != EGL_NO_CONTEXT) ? egl->hw_ctx : egl->ctx);
+}
+
+/* True when a shared context was asked for and could not be made: the
+ * driver then reports GFX_CTX_FLAGS_NO_SHARED_CONTEXT and the ring
+ * hands the one context between the threads. */
+bool egl_no_shared_context(const egl_ctx_data_t *egl)
+{
+   return egl && egl->use_hw_ctx && egl->ctx != EGL_NO_CONTEXT
+      && egl->hw_ctx == EGL_NO_CONTEXT;
 }
 
 void egl_release_current(egl_ctx_data_t *egl)
@@ -381,6 +518,76 @@ void egl_release_current(egl_ctx_data_t *egl)
    if (!egl || egl->dpy == EGL_NO_DISPLAY)
       return;
    _egl_make_current(egl->dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+}
+
+bool egl_shared_context_new(egl_ctx_data_t *egl, EGLenum api,
+      gfx_ctx_shared_context_t *out)
+{
+   EGLContext ctx;
+   EGLSurface surf = EGL_NO_SURFACE;
+
+   memset(out, 0, sizeof(*out));
+   if (     egl->dpy == EGL_NO_DISPLAY
+         || egl->ctx == EGL_NO_CONTEXT
+         || !egl->ctx_attribs_ok)
+      return false;
+   /* A context is of the thread's bound client API. */
+   if (!_egl_bind_api(api))
+      return false;
+   if ((ctx = _egl_create_context(egl->dpy, egl->config, egl->ctx,
+               egl->ctx_attribs)) == EGL_NO_CONTEXT)
+   {
+      RARCH_ERR("[EGL] A shared context could not be made.\n");
+      egl_report_error();
+      return false;
+   }
+   if (!egl_display_has_extension(egl->dpy, "EGL_KHR_surfaceless_context"))
+   {
+#ifndef __EMSCRIPTEN__
+      surf = egl_create_hw_pbuffer(egl);
+#endif
+      if (surf == EGL_NO_SURFACE)
+      {
+         RARCH_ERR("[EGL] A shared context has no surface of its own.\n");
+         _egl_destroy_context(egl->dpy, ctx);
+         return false;
+      }
+   }
+   out->kind             = GFX_CTX_SHARED_EGL;
+   out->display          = egl->dpy;
+   out->config           = egl->config;
+   out->context          = ctx;
+   out->surface          = surf;
+   out->api              = api;
+   out->get_proc_address = egl_get_proc_address;
+   return true;
+}
+
+bool egl_shared_context_bind(gfx_ctx_shared_context_t *ctx, bool bind)
+{
+   EGLSurface surf;
+   if (ctx->kind != GFX_CTX_SHARED_EGL)
+      return false;
+   if (!bind)
+      return _egl_make_current(ctx->display, EGL_NO_SURFACE,
+            EGL_NO_SURFACE, EGL_NO_CONTEXT);
+   /* A new thread starts on EGL_OPENGL_ES_API. */
+   if (!_egl_bind_api((EGLenum)ctx->api))
+      return false;
+   surf = ctx->surface ? (EGLSurface)ctx->surface : EGL_NO_SURFACE;
+   return _egl_make_current(ctx->display, surf, surf,
+         (EGLContext)ctx->context);
+}
+
+void egl_shared_context_free(gfx_ctx_shared_context_t *ctx)
+{
+   if (ctx->kind != GFX_CTX_SHARED_EGL)
+      return;
+   if (ctx->surface)
+      _egl_destroy_surface(ctx->display, (EGLSurface)ctx->surface);
+   if (ctx->context)
+      _egl_destroy_context(ctx->display, (EGLContext)ctx->context);
+   memset(ctx, 0, sizeof(*ctx));
 }
 
 void egl_swap_buffers(void *data)
@@ -705,6 +912,23 @@ bool egl_init_context(egl_ctx_data_t *egl,
    return true;
 }
 
+/* Kept for egl_shared_context_new, whole or not at all. */
+static void egl_keep_context_attribs(egl_ctx_data_t *egl,
+      const EGLint *attribs)
+{
+   size_t i = 0;
+   egl->ctx_attribs_ok = false;
+   for (; attribs && attribs[i] != EGL_NONE; i += 2)
+   {
+      if (i + 2 >= ARRAY_SIZE(egl->ctx_attribs))
+         return;
+      egl->ctx_attribs[i]     = attribs[i];
+      egl->ctx_attribs[i + 1] = attribs[i + 1];
+   }
+   egl->ctx_attribs[i] = EGL_NONE;
+   egl->ctx_attribs_ok = true;
+}
+
 bool egl_create_context(egl_ctx_data_t *egl, const EGLint *egl_attribs)
 {
    EGLContext ctx = _egl_create_context(egl->dpy, egl->config, EGL_NO_CONTEXT,
@@ -713,17 +937,21 @@ bool egl_create_context(egl_ctx_data_t *egl, const EGLint *egl_attribs)
    if (ctx == EGL_NO_CONTEXT)
       return false;
 
-   egl->ctx    = ctx;
-   egl->hw_ctx = NULL;
+   egl_keep_context_attribs(egl, egl_attribs);
+   egl->ctx     = ctx;
+   egl->hw_ctx  = NULL;
+   egl->hw_surf = EGL_NO_SURFACE;
 
    if (egl->use_hw_ctx)
    {
       egl->hw_ctx = _egl_create_context(egl->dpy, egl->config, egl->ctx,
             egl_attribs);
-      RARCH_LOG("[EGL] Created shared context: %p.\n", (void*)egl->hw_ctx);
-
+      /* Without one the driver still comes up: it reports that it
+       * cannot share, and a hardware core is handed this context. */
       if (egl->hw_ctx == EGL_NO_CONTEXT)
-         return false;
+         RARCH_WARN("[EGL] No shared context: the core will be handed the driver's.\n");
+      else
+         RARCH_LOG("[EGL] Created shared context: %p.\n", (void*)egl->hw_ctx);
    }
 
    return true;
@@ -742,29 +970,31 @@ void egl_set_surface_opaque(bool opaque)
    egl_surface_opaque = opaque;
 }
 
-static bool egl_display_has_extension(EGLDisplay dpy, const char *ext)
+/* A window surface's attributes, five of them, for the main window and
+ * secondary ones alike. */
+static void egl_window_attribs(egl_ctx_data_t *egl, EGLint *window_attribs)
 {
-   const char *exts = _egl_query_string(dpy, EGL_EXTENSIONS);
-   return exts && strstr(exts, ext);
-}
-
-bool egl_create_surface(egl_ctx_data_t *egl, void *native_window)
-{
-   EGLint window_attribs[] = {
-	   EGL_RENDER_BUFFER, EGL_BACK_BUFFER,
-	   EGL_NONE, EGL_NONE,
-	   EGL_NONE,
-   };
-
-   if (!egl_destroy_surface(egl))
-      return false;
-
+   window_attribs[0] = EGL_RENDER_BUFFER;
+   window_attribs[1] = EGL_BACK_BUFFER;
+   window_attribs[2] = EGL_NONE;
+   window_attribs[3] = EGL_NONE;
+   window_attribs[4] = EGL_NONE;
    if (     egl_surface_opaque
          && egl_display_has_extension(egl->dpy, "EGL_EXT_present_opaque"))
    {
       window_attribs[2] = EGL_PRESENT_OPAQUE_EXT;
       window_attribs[3] = EGL_TRUE;
    }
+}
+
+bool egl_create_surface(egl_ctx_data_t *egl, void *native_window)
+{
+   EGLint window_attribs[5];
+
+   if (!egl_destroy_surface(egl))
+      return false;
+
+   egl_window_attribs(egl, window_attribs);
 
    egl->surf = _egl_create_window_surface(egl->dpy, egl->config, (NativeWindowType)native_window, window_attribs);
 
@@ -798,6 +1028,45 @@ bool egl_destroy_surface(egl_ctx_data_t *egl)
    egl->surf = EGL_NO_SURFACE;
    return true;
 }
+
+#ifdef HAVE_VIDEO_WINDOWS
+EGLSurface egl_window_surface_new(egl_ctx_data_t *egl, void *native_window)
+{
+   EGLint window_attribs[5];
+   if (egl->dpy == EGL_NO_DISPLAY || egl->ctx == EGL_NO_CONTEXT)
+      return EGL_NO_SURFACE;
+   egl_window_attribs(egl, window_attribs);
+   return _egl_create_window_surface(egl->dpy, egl->config,
+         (NativeWindowType)native_window, window_attribs);
+}
+
+bool egl_window_surface_bind(egl_ctx_data_t *egl, EGLSurface surf,
+      bool interval)
+{
+   EGLSurface target = surf != EGL_NO_SURFACE ? surf : egl->surf;
+   if (     egl->dpy == EGL_NO_DISPLAY
+         || egl->ctx == EGL_NO_CONTEXT
+         || target   == EGL_NO_SURFACE
+         || !_egl_make_current(egl->dpy, target, target, egl->ctx))
+      return false;
+   /* The interval is the current draw surface's own */
+   if (interval && surf != EGL_NO_SURFACE)
+      _egl_swap_interval(egl->dpy, 0);
+   return true;
+}
+
+bool egl_window_surface_swap(egl_ctx_data_t *egl, EGLSurface surf)
+{
+   return _egl_swap_buffers(egl->dpy, surf) == EGL_TRUE;
+}
+
+void egl_window_surface_free(egl_ctx_data_t *egl, EGLSurface surf)
+{
+   if (_egl_get_current_surface(EGL_DRAW) == surf)
+      egl_window_surface_bind(egl, EGL_NO_SURFACE, false);
+   _egl_destroy_surface(egl->dpy, surf);
+}
+#endif
 
 #ifndef EGL_COLOR_COMPONENT_TYPE_EXT
 #define EGL_COLOR_COMPONENT_TYPE_EXT       0x3339

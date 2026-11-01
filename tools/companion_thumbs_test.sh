@@ -40,6 +40,7 @@ SRCS="ui/companion/companion_thumbs.c \
       ui/companion/test/companion_thumbs_test.c \
       $LC/formats/image_texture.c \
       $LC/formats/image_transfer.c \
+      $LC/formats/video_player.c \
       $LC/formats/data_transfer.c \
       $LC/memmap/memmap.c \
       $LC/formats/tga/rtga.c \
@@ -78,7 +79,7 @@ $CC -std=c89 -ansi -pedantic -Werror=pedantic -Wno-long-long -Wall -Wextra \
    -Wno-unused-parameter -Werror=declaration-after-statement -D_GNU_SOURCE \
    $INC -DRARCH_INTERNAL -DHAVE_RPNG -c ui/companion/companion_thumbs.c -o "$OUT/c89.o"
 
-$CC -std=gnu99 -O1 -g $SAN -Wall -Wextra -Wno-unused-parameter \
+$CC -std=gnu99 -O1 -g1 $SAN -Wall -Wextra -Wno-unused-parameter \
    $INC $DEFS $SRCS -o "$OUT/companion_thumbs_test" -lpthread -lm -lz
 
 # The video-hover test needs an MP4 whose frames are distinct solid

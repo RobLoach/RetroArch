@@ -21,7 +21,6 @@ TARGET := retrodos.exe
 
 RARCH_CONSOLE = 0
 HAVE_SHADERPIPELINE = 0
-HAVE_SPIRV_CROSS = 0
 HAVE_PATCH = 1
 HAVE_LUA = 0
 HAVE_CONFIGFILE = 1
@@ -39,7 +38,7 @@ HAVE_RPNG = 1
 HAVE_RJPEG = 1
 HAVE_RBMP = 1
 HAVE_7ZIP = 1
-HAVE_IMAGEVIEWER = 1
+HAVE_IMAGEVIEWER = 0
 HAVE_LIBRETRODB = 0
 HAVE_DSP_FILTER = 1
 HAVE_VIDEO_FILTER = 1
@@ -92,7 +91,6 @@ OBJ := frontend/frontend_salamander.o \
 		 libretro-common/file/config_file_io.o \
 		 libretro-common/streams/file_stream.o \
 		 libretro-common/vfs/vfs_implementation.o \
-		 libretro-common/hash/lrc_hash.o \
 		 libretro-common/time/rtime.o \
 		 verbosity.o
 

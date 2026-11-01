@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET       := data_transfer_source_test
 TARGET_TEST2 := data_transfer_prefix_test
 TARGET_TEST3 := data_transfer_window_test
@@ -18,12 +20,12 @@ COMMON_SOURCES := \
 	$(LIBRETRO_COMM_DIR)/time/rtime.c \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 
-COMMON_OBJS := $(COMMON_SOURCES:.c=.o)
+COMMON_OBJS := $(call sample_objs,$(COMMON_SOURCES:.c=.o))
 OBJS        := data_transfer_source_test.o data_transfer_prefix_test.o \
 	data_transfer_window_test.o data_transfer_pool_scrub_test.o \
 	$(COMMON_OBJS)
 
-CFLAGS += -Wall -pedantic -std=gnu99 -g -O0 -I$(LIBRETRO_COMM_DIR)/include
+CFLAGS += -Wall -pedantic -std=gnu99 -g1 -O0 -I$(LIBRETRO_COMM_DIR)/include
 
 ifneq ($(SANITIZER),)
    CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer $(CFLAGS)
@@ -35,11 +37,22 @@ all: $(TARGET) $(TARGET_TEST2) $(TARGET_TEST3) $(TARGET_TEST4)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 $(TARGET): data_transfer_source_test.o $(COMMON_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(TARGET_TEST2): data_transfer_prefix_test.o $(COMMON_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
+
+ifeq ($(COUNT_IO),1)
+data_transfer_prefix_test.o: CFLAGS += -DDT_COUNT_IO
+$(TARGET_TEST2): LDFLAGS += -Wl,--wrap=filestream_read
+data_transfer_window_test.o: CFLAGS += -DDT_COUNT_IO
+$(TARGET_TEST3): LDFLAGS += -Wl,--wrap=filestream_seek -Wl,--wrap=filestream_read
+endif
 
 $(TARGET_TEST3): data_transfer_window_test.o $(COMMON_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -48,6 +61,7 @@ $(TARGET_TEST4): data_transfer_pool_scrub_test.o $(COMMON_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(TARGET_TEST2) $(TARGET_TEST3) $(TARGET_TEST4) $(OBJS)
 
 .PHONY: clean

@@ -100,6 +100,8 @@ jobs:
             ./vfs_seek_contract_test
             ./vfs_mapped_ptr_test
             ./vfs_v5_metadata_test
+            ./vfs_readahead_test
+            ./vfs_close_result_test
           }
           # Mapping on (what the platform actually ships), mapping off
           # with the descriptor path forced (what the consoles have),
@@ -141,14 +143,34 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # The system upgrade runs in the action: an msys2-runtime update
+      # kills every MSYS2 process, which a run step's own shell would
+      # not survive.
       - uses: msys2/setup-msys2@v2
         with:
           msystem: ${{ matrix.sys }}
           update: true
-          install: >-
-            base-devel
-          pacboy: >-
-            toolchain:p
+
+      - name: Install packages
+        shell: msys2 {0}
+        run: |
+          # A mirror that stalls or rate-limits (HTTP 429) fails pacman's
+          # whole transaction; what it fetched stays in the cache, so a
+          # retry fetches only the rest, one file at a time after a
+          # growing wait so a shared runner's rate limit can clear.
+          # pacman waits out a slow mirror instead of aborting;
+          # timeout-minutes bounds a hang.
+          p=$MINGW_PACKAGE_PREFIX
+          pkgs="base-devel $p-toolchain"
+          for i in 1 2 3 4 5; do
+            pacman -S --noconfirm --needed --disable-download-timeout $pkgs &&
+            exit 0
+            [ $i = 5 ] && break
+            echo "package install failed (attempt $i); retrying in $((30 * i))s, serial downloads"
+            sed -i -e '/^#*ParallelDownloads/d' -e '/^\[options\]/a ParallelDownloads = 1' /etc/pacman.conf
+            sleep $((30 * i))
+          done
+          exit 1
 
       - name: Build and run
         working-directory: libretro-common/samples/file/vfs
@@ -175,6 +197,15 @@ jobs:
           # Exercises the Win32 CreateFileMapping/MapViewOfFile
           # backend, which no other job in the tree reaches.
           ./vfs_mapped_ptr_test.exe
+          # Mapped read-ahead: PrefetchVirtualMemory, the pre-Windows 8
+          # toucher thread (forced) and neither.
+          ./vfs_readahead_test.exe
+          RETRO_VFS_PREFETCH=touch ./vfs_readahead_test.exe
+          RETRO_VFS_PREFETCH=none ./vfs_readahead_test.exe
+          # ... and never on, or stalling, the reader's thread.
+          ./vfs_prefetch_offthread_test.exe
+          # The descriptor path's close() result, with PS2's semantics.
+          ./vfs_close_result_test.exe
 
       # The Win64 fastjmp_set stores xmm6-xmm15 with movaps and faults
       # on a misaligned buffer. Linux has no such stores, so the Linux

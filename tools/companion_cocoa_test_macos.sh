@@ -26,6 +26,7 @@ CSRCS="ui/companion/companion_core.c \
        ui/companion/test/companion_core_test.c \
        playlist.c core_option_manager.c $LC/lists/nested_list.c $LC/file/config_file_io.c \
        $LC/formats/json/rjson.c $LC/formats/image_texture.c $LC/formats/image_transfer.c \
+       $LC/formats/video_player.c \
        $LC/formats/data_transfer.c $LC/formats/png/rpng.c $LC/formats/png/rpng_apng.c \
        $LC/formats/png/rpng_encode.c $LC/file/rpng_file.c $LC/formats/tga/rtga.c $LC/memmap/memmap.c $LC/memory/mem_stats.c \
        $LC/streams/file_stream.c $LC/streams/file_stream_transforms.c $LC/streams/interface_stream.c \
@@ -37,17 +38,19 @@ CSRCS="ui/companion/companion_core.c \
        $LC/string/stdstring.c $LC/string/rstrtod.c $LC/compat/compat_strl.c $LC/compat/compat_strldup.c \
        $LC/compat/compat_posix_string.c $LC/compat/compat_strcasestr.c $LC/compat/fopen_utf8.c \
        $LC/encodings/encoding_utf.c $LC/encodings/encoding_crc32.c $LC/encodings/encoding_deflate.c \
-       $LC/hash/lrc_hash.c $LC/time/rtime.c $LC/features/features_cpu.c $LC/rthreads/rthreads.c"
+       $LC/hash/lrc_hash.c $LC/time/rtime.c $LC/features/features_cpu.c $LC/rthreads/rthreads.c \
+       $LC/rthreads/tpool.c \
+       $LC/rthreads/retro_eventcount.c"
 
 OBJS=""
 for f in $CSRCS; do
    o="$OUT/$(echo "$f" | tr '/' '_').o"
-   $CC -std=gnu99 -O1 -g -w $INC $DEFS -c "$f" -o "$o"
+   $CC -std=gnu99 -O1 -g1 -w $INC $DEFS -c "$f" -o "$o"
    OBJS="$OBJS $o"
 done
 # MRC (no -fobjc-arc): the file supports both; the GNUstep run is MRC too.
-$CC -x objective-c -O1 -g -w $INC $DEFS -c ui/drivers/ui_cocoa_companion.m -o "$OUT/driver.o"
-$CC -x objective-c -O1 -g -w $INC $DEFS -c ui/companion/test/companion_cocoa_test.m -o "$OUT/test.o"
+$CC -x objective-c -O1 -g1 -w $INC $DEFS -c ui/drivers/ui_cocoa_companion.m -o "$OUT/driver.o"
+$CC -x objective-c -O1 -g1 -w $INC $DEFS -c ui/companion/test/companion_cocoa_test.m -o "$OUT/test.o"
 $CC -o "$OUT/companion_cocoa_test" "$OUT/driver.o" "$OUT/test.o" $OBJS \
    -framework Cocoa -framework QuartzCore -lz -lpthread -lobjc
 

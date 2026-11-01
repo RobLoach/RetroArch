@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := overlay_budget_test
 
 # The unit under test is the shipping tasks/task_overlay.c, compiled
@@ -19,8 +21,10 @@ LIBRETRO_COMM_DIR := $(REPO_ROOT)/libretro-common
 SOURCES := overlay_budget_test.c \
            $(REPO_ROOT)/tasks/task_overlay.c \
            $(REPO_ROOT)/tasks/task_nbio_slice.c \
+           $(LIBRETRO_COMM_DIR)/formats/image_texture_set.c \
            $(LIBRETRO_COMM_DIR)/queues/task_queue.c \
            $(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
+           $(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c \
            $(LIBRETRO_COMM_DIR)/file/config_file.c \
            $(LIBRETRO_COMM_DIR)/file/config_file_io.c \
            $(LIBRETRO_COMM_DIR)/file/file_path.c \
@@ -40,9 +44,9 @@ SOURCES := overlay_budget_test.c \
            $(LIBRETRO_COMM_DIR)/hash/lrc_hash.c \
            $(LIBRETRO_COMM_DIR)/encodings/encoding_crc32.c
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
-CFLAGS  += -Wall -std=gnu99 -g -DHAVE_THREADS -DHAVE_OVERLAY \
+CFLAGS  += -Wall -std=gnu99 -g1 -DHAVE_THREADS -DHAVE_OVERLAY -DHAVE_RPNG \
            -I$(LIBRETRO_COMM_DIR)/include -I$(REPO_ROOT)
 LDFLAGS += -lpthread -lm
 
@@ -57,10 +61,15 @@ all: $(TARGET)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJS)
 
 .PHONY: clean all

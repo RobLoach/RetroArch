@@ -26,6 +26,20 @@
  *      that broke gl2 on Android. So: two pages over one set of
  *      textures, switch, drop, and use the textures afterwards.
  *
+ *   3. Frame memory. FrameView lendFramebuffer: hands a core the
+ *      contents of a shared-storage MTLBuffer at the tight row pitch
+ *      (width * bpp), as the threaded wrapper's frame buffers are, and
+ *      a frame pushed from one - a window into it included - is
+ *      blitted out of the buffer with a source offset and the pitch as
+ *      bytes per row. So: for the widths cores use, odd ones too, in
+ *      BGRA8 and R16Uint (RGB565's texture), make the buffer, write a
+ *      pattern from the CPU, blit a window out at its offset, and read
+ *      it back - the window's pixels, not the buffer's corner. Then,
+ *      once the blit's command buffer reports completed, write again
+ *      and blit again: the second write is what the GPU reads, which is
+ *      the ordering a lend that checks the status and never waits
+ *      relies on.
+ *
  * A failure here is a real defect in an assumption the design rests
  * on, not a test artefact.
  */
@@ -183,6 +197,107 @@ static void lane_borrowed_textures(id<MTLDevice> dev)
    free(px);
 }
 
+/* Frame memory: a shared buffer at the tight pitch, a window blitted
+ * out of it at its offset, and a CPU write once the reader completed. */
+static void lane_lent_framebuffer(id<MTLDevice> dev, id<MTLCommandQueue> q,
+      MTLPixelFormat fmt, unsigned bpp, unsigned width, unsigned height)
+{
+   NSUInteger stride = (NSUInteger)width * bpp;
+   const unsigned win_x = 8, win_y = 4, win_w = width - 16, win_h = height - 8;
+   id<MTLBuffer>  loan;
+   id<MTLTexture> dst;
+   MTLTextureDescriptor *td;
+   unsigned pass;
+
+   loan = [dev newBufferWithLength:stride * height
+                           options:MTLResourceStorageModeShared];
+   CHECK(loan != nil, "lent framebuffer: buffer %ux%u fmt %u", width, height, (unsigned)fmt);
+   if (!loan)
+      return;
+
+   td = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:fmt
+                                                           width:win_w
+                                                          height:win_h
+                                                       mipmapped:NO];
+   td.usage = MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite;
+#if TARGET_OS_OSX
+   td.storageMode = MTLStorageModeManaged;
+#else
+   td.storageMode = MTLStorageModeShared;
+#endif
+   dst = [dev newTextureWithDescriptor:td];
+   CHECK(dst != nil, "lent framebuffer: window texture");
+   if (!dst)
+      return;
+
+   /* Two passes: the second writes the buffer again once the first
+    * blit's command buffer reports completed, as a lend that never
+    * waits checks, and must be what the GPU reads. */
+   for (pass = 1; pass <= 2; pass++)
+   {
+      unsigned x, y;
+      uint8_t *base = (uint8_t *)loan.contents;
+      id<MTLCommandBuffer> cb;
+      id<MTLBlitCommandEncoder> bce;
+
+      /* Pixel (x, y) carries x + y * width + pass in its low bits,
+       * so a window's origin and stride both show in the read-back. */
+      for (y = 0; y < height; y++)
+         for (x = 0; x < width; x++)
+         {
+            uint32_t v = x + y * width + pass;
+            uint8_t *px = base + y * stride + x * bpp;
+            if (bpp == 4)
+               *(uint32_t *)px = v;
+            else
+               *(uint16_t *)px = (uint16_t)v;
+         }
+
+      cb  = [q commandBuffer];
+      bce = [cb blitCommandEncoder];
+      [bce copyFromBuffer:loan
+             sourceOffset:(NSUInteger)win_y * stride + (NSUInteger)win_x * bpp
+        sourceBytesPerRow:stride
+      sourceBytesPerImage:0
+               sourceSize:MTLSizeMake(win_w, win_h, 1)
+                toTexture:dst
+         destinationSlice:0
+         destinationLevel:0
+        destinationOrigin:MTLOriginMake(0, 0, 0)];
+#if TARGET_OS_OSX
+      [bce synchronizeResource:dst];
+#endif
+      [bce endEncoding];
+      [cb commit];
+      [cb waitUntilCompleted];
+      CHECK(cb.status >= MTLCommandBufferStatusCompleted,
+            "lent framebuffer: a completed blit reports status %ld",
+            (long)cb.status);
+
+      {
+         /* The window's four corners, read back from the blit's target. */
+         const unsigned cx[4] = { 0, win_w - 1, 0,         win_w - 1 };
+         const unsigned cy[4] = { 0, 0,         win_h - 1, win_h - 1 };
+         unsigned c;
+         for (c = 0; c < 4; c++)
+         {
+            uint8_t  px[4] = { 0, 0, 0, 0 };
+            uint32_t got, want = (cx[c] + win_x) + (cy[c] + win_y) * width + pass;
+            [dst getBytes:px
+               bytesPerRow:bpp
+                fromRegion:MTLRegionMake2D(cx[c], cy[c], 1, 1)
+               mipmapLevel:0];
+            got = (bpp == 4) ? *(uint32_t *)px : *(uint16_t *)px;
+            if (bpp == 2)
+               want &= 0xffff;
+            CHECK(got == want,
+                  "lent framebuffer %ux%u fmt %u pass %u: window pixel (%u,%u) read %u, wanted %u",
+                  width, height, (unsigned)fmt, pass, cx[c], cy[c], got, want);
+         }
+      }
+   }
+}
+
 int main(void)
 {
    @autoreleasepool
@@ -204,11 +319,21 @@ int main(void)
 
       lane_in_place_update(dev, q);
       lane_borrowed_textures(dev);
+      /* The widths cores lend at: the harness core's 320, beetle-psx's
+       * 700 scanout surface, a 640 line, and an odd one, whose pitch no
+       * linear texture would take */
+      lane_lent_framebuffer(dev, q, MTLPixelFormatBGRA8Unorm, 4, 320, 240);
+      lane_lent_framebuffer(dev, q, MTLPixelFormatBGRA8Unorm, 4, 700, 480);
+      lane_lent_framebuffer(dev, q, MTLPixelFormatBGRA8Unorm, 4, 640, 480);
+      lane_lent_framebuffer(dev, q, MTLPixelFormatBGRA8Unorm, 4, 255, 224);
+      lane_lent_framebuffer(dev, q, MTLPixelFormatR16Uint,    2, 320, 240);
+      lane_lent_framebuffer(dev, q, MTLPixelFormatR16Uint,    2, 700, 480);
+      lane_lent_framebuffer(dev, q, MTLPixelFormatR16Uint,    2, 255, 224);
    }
 
    if (!failures)
-      printf("[pass] metal_texture_update: in-place updates and borrowed "
-             "textures behave\n");
+      printf("[pass] metal_texture_update: in-place updates, borrowed "
+             "textures and the lent framebuffer behave\n");
    printf(failures ? "FAIL\n" : "PASS\n");
    return failures ? 1 : 0;
 }

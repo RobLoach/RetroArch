@@ -36,6 +36,11 @@
 #include <stdlib.h>
 int  g_vk_validation_errors;
 int  g_vk_validation_warnings;
+/* When set, an error line containing it is printed nowhere and counted
+ * here instead: for a test whose scenario is itself what the layer
+ * objects to, and which must still be clean in every other respect. */
+const char *g_vk_validation_expect;
+int  g_vk_validation_expected;
 static void vk_log(const char *fmt, va_list ap)
 {
    char line[4096];
@@ -46,8 +51,13 @@ static void vk_log(const char *fmt, va_list ap)
     * which arrive at INFO severity, as warnings. */
    if (strstr(line, "ERROR Validation"))
    {
-      g_vk_validation_errors++;
-      fputs(line, stderr);
+      if (g_vk_validation_expect && strstr(line, g_vk_validation_expect))
+         g_vk_validation_expected++;
+      else
+      {
+         g_vk_validation_errors++;
+         fputs(line, stderr);
+      }
    }
    else if (strstr(line, "WARNING Validation"))
    {
@@ -73,6 +83,8 @@ void *config_get_ptr(void) { return s_settings; }
 void *video_state_get_ptr(void) { static char st[1 << 16]; return st; }
 
 const char *msg_hash_to_str(int e) { (void)e; return "stub"; }
+const char *stub_video_ident = "vulkan";
+const char *video_driver_get_ident(void) { return stub_video_ident; }
 
 void video_driver_set_gpu_api_devices(int api, void *list) { (void)api; (void)list; }
 void video_driver_set_gpu_api_version_string(const char *s) { (void)s; }
@@ -80,6 +92,15 @@ void video_driver_cache_context_ack_set(void) { }
 uint32_t video_driver_get_disp_flags(void) { return 0; }
 /* The emulated mailbox derives its waits from this. */
 float video_driver_get_refresh_rate(void) { return 60.0f; }
+/* The core's declared rate: what a test says it is */
+float stub_core_hz = 0.0f;
+float video_driver_get_core_hz(void) { return stub_core_hz; }
 void video_driver_modify_disp_flags(uint32_t s, uint32_t c) { (void)s; (void)c; }
 /* No display peak known: HDR metadata keeps the driver's own value */
 float video_driver_hdr_metadata_peak(float driver_value) { return driver_value; }
+void video_driver_set_hdr_output_mode(unsigned mode) { (void)mode; }
+/* No devices published here: the index stands and nothing is listed */
+int video_driver_gpu_index_resolve(int api, int index, void *list)
+{ (void)api; (void)list; return index; }
+void *video_driver_get_gpu_api_devices(int api)
+{ (void)api; return NULL; }

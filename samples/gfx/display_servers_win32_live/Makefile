@@ -14,6 +14,7 @@ CC        := x86_64-w64-mingw32-gcc
 
 SOURCES := display_servers_win32_live_test.c \
            $(REPO_ROOT)/gfx/display_servers/dispserv_win32.c \
+           $(REPO_ROOT)/gfx/gfx_media_display.c \
            $(REPO_ROOT)/gfx/display_servers/win32_modeline_adl.c \
            $(REPO_ROOT)/gfx/display_servers/win32_modeline_ati.c \
            $(REPO_ROOT)/gfx/display_servers/win32_modeline_pstrip.c \
@@ -25,10 +26,11 @@ SOURCES := display_servers_win32_live_test.c \
            $(REPO_ROOT)/gfx/modeline/modeline_ini.c \
            $(REPO_ROOT)/libretro-common/compat/compat_strl.c \
            $(REPO_ROOT)/libretro-common/rthreads/rthreads.c \
+           $(REPO_ROOT)/libretro-common/rthreads/retro_eventcount.c \
            $(REPO_ROOT)/libretro-common/features/features_cpu.c \
            $(REPO_ROOT)/libretro-common/time/rtime.c
 
-CFLAGS  += -Wall -std=gnu99 -g -O0 \
+CFLAGS  += -Wall -std=gnu99 -g1 -O0 \
            -DHAVE_MODELINE -DHAVE_THREADS -DRARCH_INTERNAL -DHAVE_MENU \
            -DMODELINE_STANDALONE -include live_log.h \
            -I$(REPO_ROOT) \
@@ -47,7 +49,7 @@ VPATH := $(sort $(dir $(SOURCES)))
 # the test defines.
 NO_MACROS := $(filter-out -include live_log.h -DMODELINE_STANDALONE,$(CFLAGS))
 obj/dispserv_win32.o obj/win32_modeline_adl.o obj/win32_modeline_ati.o obj/win32_modeline_pstrip.o obj/win32_modeline_resync.o: CFLAGS := $(NO_MACROS)
-obj/compat_strl.o obj/rthreads.o obj/features_cpu.o obj/rtime.o: CFLAGS := $(NO_MACROS)
+obj/compat_strl.o obj/rthreads.o obj/retro_eventcount.o obj/features_cpu.o obj/rtime.o: CFLAGS := $(NO_MACROS)
 obj/display_servers_win32_live_test.o: CFLAGS := $(NO_MACROS)
 
 all: $(TARGET)

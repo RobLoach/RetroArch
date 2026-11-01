@@ -48,6 +48,7 @@ RETRO_BEGIN_DECLS
 #define RESAMPLER_SIMD_AVX2     (1 << 12)
 #define RESAMPLER_SIMD_VFPU     (1 << 13)
 #define RESAMPLER_SIMD_PS       (1 << 14)
+#define RESAMPLER_SIMD_AVX512   (1 << 22)
 
 enum resampler_quality
 {
@@ -165,6 +166,10 @@ typedef void (*resampler_process_t)(void *_data, struct resampler_data *data);
  * on the thread that resamples. */
 typedef void (*resampler_reset_t)(void *data);
 
+/* A new instance over data's tables with a fresh stream of its own,
+ * freed like any other. */
+typedef void *(*resampler_sibling_t)(void *data);
+
 /* What a backend reads of the settings the frontend exposes. One that
  * reads neither leaves this zero, and the frontend has no control to
  * offer for it. */
@@ -193,6 +198,10 @@ typedef struct retro_resampler
 
    /* RESAMPLER_CAP_*, zero for a backend that reads neither. */
    unsigned caps;
+
+   /* Optional: NULL where the backend has no tables worth sharing, and
+    * the caller makes a fresh instance instead. */
+   resampler_sibling_t  sibling;
 } retro_resampler_t;
 
 typedef struct audio_frame_float
@@ -216,6 +225,7 @@ typedef struct retro_resampler_int16
    void (*process)(void *, struct resampler_data_int16 *);
    void (*reset)(void *);
    void (*free)(void *);
+   void *(*sibling)(void *);
 } retro_resampler_int16_t;
 
 /* Builds the int16 counterpart of @short_ident - the short_ident of a

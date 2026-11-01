@@ -28,6 +28,7 @@
 
 #include "../input_driver.h"
 #include "../../configuration.h"
+#include "../../gfx/common/sdl3_common.h"
 #include "../../tasks/tasks_internal.h"
 #include "../../verbosity.h"
 
@@ -43,6 +44,12 @@ typedef struct _sdl3_joypad
    uint16_t        rumble[2];   /* raw magnitude per retro_rumble_effect (strong/weak) */
    bool            sensor_accel; /* Whether or not the sensor has been connected. */
    bool            sensor_gyro;
+   /* sensor sub-device 1 (RETRO_SENSOR_SUBDEVICE): the part in the left
+    * hand, a Wii Remote's Nunchuk or the left Joy-Con of a pair, which
+    * SDL reports as its _L sensors */
+   bool            sensor_accel_l;
+   bool            sensor_gyro_l;
+   uint8_t         touch_fingers; /* the first touchpad's, at most two */
 } sdl3_joypad_t;
 
 /**
@@ -51,6 +58,31 @@ typedef struct _sdl3_joypad
  * @todo Move away from static globals.
  */
 static sdl3_joypad_t sdl3_joypads[MAX_USERS];
+
+/* The player each slot's lights show, as set_player() told it, from 1;
+ * 0 for none, SDL3_PLAYER_UNTOLD for the slot's own. Kept across a
+ * disconnect, so a pad plugged in there is lit as it starts. */
+#define SDL3_PLAYER_UNTOLD 0xFF
+static uint8_t sdl3_joypad_players[MAX_USERS];
+
+static const uint8_t sdl3_joypad_led[MAX_USERS][3] = {
+   {   0,   0, 255 }, /* Blue */
+   { 255,   0,   0 }, /* Red */
+   {   0, 255,   0 }, /* Green */
+   { 255, 255,   0 }, /* Yellow */
+   {   0, 255, 255 }, /* Cyan */
+   { 255,   0, 255 }, /* Magenta */
+   {   0,   0, 128 }, /* Navy */
+   { 128,   0,   0 }, /* Maroon */
+   {   0, 128,   0 }, /* Dark Green */
+   { 128, 128,   0 }, /* Olive */
+   {   0, 128, 128 }, /* Teal */
+   { 128,   0, 128 }, /* Purple */
+   { 128, 128, 255 }, /* Sky Blue */
+   { 255, 128, 128 }, /* Light Pink */
+   { 255, 255, 255 }, /* White */
+   { 128, 128, 128 }  /* Gray */
+};
 
 static const char *sdl3_joypad_name(unsigned pad)
 {
@@ -82,10 +114,35 @@ static uint8_t sdl3_joypad_get_hat(sdl3_joypad_t *pad, unsigned hat)
 static int16_t sdl3_joypad_get_axis(sdl3_joypad_t *pad, unsigned axis)
 {
    if (pad->gamepad)
+   {
+      /* SDL's HIDAPI driver for PS3 controllers exposes additional axes
+       * past the Gamepad API's six, representing pressure sensitive
+       * buttons. */
+      if (axis >= SDL_GAMEPAD_AXIS_COUNT)
+      {
+         /* Ensure pressure sensitive buttons rest at 0, like triggers do. */
+         int32_t pressure = SDL_GetJoystickAxis(pad->joypad, (int)axis);
+         return (int16_t)((pressure + 32768) / 2);
+      }
       return SDL_GetGamepadAxis(pad->gamepad, (SDL_GamepadAxis)axis);
+   }
    else if (pad->joypad)
       return SDL_GetJoystickAxis(pad->joypad, (int)axis);
    return 0;
+}
+
+/* A PS3 controller (0x054c/0x0268) with more axes than a gamepad's six
+ * is under SDL's own driver for it, which gives ten more: how hard its
+ * buttons are pressed. The axes are what says so, not the hint that
+ * turns the driver on: its default is SDL's and differs by platform
+ * (on for macOS, off elsewhere), and asking for it with a default of
+ * off said no on macOS, where the axes were there. */
+static bool sdl3_joypad_has_pressure_axes(SDL_Joystick *joypad,
+      int32_t vendor, int32_t product)
+{
+   return vendor  == 0x054c
+       && product == 0x0268
+       && SDL_GetNumJoystickAxes(joypad) > SDL_GAMEPAD_AXIS_COUNT;
 }
 
 static bool sdl3_joypad_set_rumble_gain(unsigned pad, unsigned gain)
@@ -95,6 +152,44 @@ static bool sdl3_joypad_set_rumble_gain(unsigned pad, unsigned gain)
 
    sdl3_joypads[pad].rumble_gain = (gain > 100) ? 100 : gain;
    return true;
+}
+
+/* Shows the slot's player on the pad: its player number, and its LED
+ * in that player's colour. The slot's own until set_player() says. */
+static void sdl3_joypad_show_player(unsigned slot)
+{
+   SDL_Joystick *joypad = sdl3_joypads[slot].joypad;
+   unsigned player      = sdl3_joypad_players[slot] == SDL3_PLAYER_UNTOLD
+      ? slot + 1 : sdl3_joypad_players[slot];
+
+   if (!joypad)
+      return;
+   if (SDL_GetJoystickPlayerIndex(joypad) != (int)player - 1)
+      SDL_SetJoystickPlayerIndex(joypad, (int)player - 1);
+   if (player > 0 && player <= MAX_USERS)
+      SDL_SetJoystickLED(joypad, sdl3_joypad_led[player - 1][0],
+            sdl3_joypad_led[player - 1][1], sdl3_joypad_led[player - 1][2]);
+   else
+      SDL_SetJoystickLED(joypad, 0, 0, 0);
+}
+
+/* The gamepad subsystem is SDL's own, not the video driver's */
+static bool sdl3_joypad_survives_video(void)
+{
+   return SDL_WasInit(SDL_INIT_GAMEPAD) != 0;
+}
+
+static void sdl3_joypad_set_player(unsigned pad, unsigned player)
+{
+   if (pad >= MAX_USERS)
+      return;
+   if (player > MAX_USERS)
+      player = 0;
+   if (sdl3_joypad_players[pad] == player)
+      return;
+   sdl3_joypad_players[pad] = (uint8_t)player;
+   if (sdl3_joypads[pad].jid)
+      sdl3_joypad_show_player(pad);
 }
 
 static void sdl3_joypad_connect(SDL_JoystickID jid)
@@ -121,13 +216,16 @@ static void sdl3_joypad_connect(SDL_JoystickID jid)
 
       if (!gamepad || !joypad)
       {
-         RARCH_ERR("[SDL3] Couldn't open gamepad %" SDL_PRIu32 ": %s.\n", jid, SDL_GetError());
+         RARCH_WARN("[SDL3] Couldn't open gamepad %" SDL_PRIu32 ", opening it as a joystick: %s.\n",
+               jid, SDL_GetError());
          if (gamepad)
             SDL_CloseGamepad(gamepad);
-         return;
+         gamepad = NULL;
+         joypad  = NULL;
       }
    }
-   else
+
+   if (!joypad)
    {
       joypad = SDL_OpenJoystick(jid);
       if (!joypad)
@@ -176,9 +274,7 @@ static void sdl3_joypad_connect(SDL_JoystickID jid)
 
    /* Seed the rumble gain from the saved setting so it applies on connect. */
    {
-      settings_t *settings = config_get_ptr();
-      if (settings)
-         sdl3_joypad_set_rumble_gain((unsigned int)slot, settings->uints.input_rumble_gain);
+      sdl3_joypad_set_rumble_gain((unsigned int)slot, input_config_get_rumble_gain());
    }
 
    if (gamepad)
@@ -187,47 +283,26 @@ static void sdl3_joypad_connect(SDL_JoystickID jid)
       product = SDL_GetGamepadProduct(gamepad);
 
 #ifdef WEBOS
-   if (vendor == 0x9999 && product == 0x9999)
-   {
-      RARCH_WARN("[SDL] Ignoring pad #%d (vendor: %d; product: %d).\n", jid, vendor, product);
-      if (pad->joypad)
-         SDL_CloseJoystick(pad->joypad);
-
-      pad->joypad = NULL;
-      return;
-   }
-#endif
-
-      /* Ensure the player index matches the slot. */
-      if (SDL_GetGamepadPlayerIndex(gamepad) != slot)
-         SDL_SetGamepadPlayerIndex(gamepad, slot);
-
-      /* Set the LED to match the player number. */
-      switch (slot) {
-         case 0: SDL_SetGamepadLED(gamepad, 0, 0, 255); break;       /* Blue */
-         case 1: SDL_SetGamepadLED(gamepad, 255, 0, 0); break;       /* Red */
-         case 2: SDL_SetGamepadLED(gamepad, 0, 255, 0); break;       /* Green */
-         case 3: SDL_SetGamepadLED(gamepad, 255, 255, 0); break;     /* Yellow */
-         case 4: SDL_SetGamepadLED(gamepad, 0, 255, 255); break;     /* Cyan */
-         case 5: SDL_SetGamepadLED(gamepad, 255, 0, 255); break;     /* Magenta */
-         case 6: SDL_SetGamepadLED(gamepad, 0, 0, 128); break;       /* Navy */
-         case 7: SDL_SetGamepadLED(gamepad, 128, 0, 0); break;       /* Maroon */
-         case 8: SDL_SetGamepadLED(gamepad, 0, 128, 0); break;       /* Dark Green */
-         case 9: SDL_SetGamepadLED(gamepad, 128, 128, 0); break;     /* Olive */
-         case 10: SDL_SetGamepadLED(gamepad, 0, 128, 128); break;    /* Teal */
-         case 11: SDL_SetGamepadLED(gamepad, 128, 0, 128); break;    /* Purple */
-         case 12: SDL_SetGamepadLED(gamepad, 128, 128, 255); break;  /* Sky Blue */
-         case 13: SDL_SetGamepadLED(gamepad, 255, 128, 128); break;  /* Light Pink */
-         case 14: SDL_SetGamepadLED(gamepad, 255, 255, 255); break;  /* White */
-         case 15: SDL_SetGamepadLED(gamepad, 128, 128, 128); break;  /* Gray */
-         default: SDL_SetGamepadLED(gamepad, 0, 0, 0); break;
+      /* The slot keeps its sensor state, as on a disconnect. */
+      if (vendor == 0x9999 && product == 0x9999)
+      {
+         RARCH_WARN("[SDL3] Ignoring pad #%" SDL_PRIu32 " (vendor: %d; product: %d).\n",
+               jid, vendor, product);
+         SDL_CloseGamepad(gamepad);
+         pad->jid     = 0;
+         pad->gamepad = NULL;
+         pad->joypad  = NULL;
+         return;
       }
+#endif
    }
    else
    {
       vendor = SDL_GetJoystickVendor(joypad);
       product = SDL_GetJoystickProduct(joypad);
    }
+
+   sdl3_joypad_show_player((unsigned)slot);
 
    input_autoconfigure_connect_ex(
          sdl3_joypad_name(slot),
@@ -255,6 +330,12 @@ static void sdl3_joypad_connect(SDL_JoystickID jid)
       pad->num_axes    = SDL_GAMEPAD_AXIS_COUNT;
       pad->num_buttons = SDL_GAMEPAD_BUTTON_COUNT;
       pad->num_hats    = 0;
+      if (sdl3_joypad_has_pressure_axes(joypad, vendor, product))
+      {
+         pad->num_axes = (unsigned)SDL_GetNumJoystickAxes(joypad);
+         RARCH_LOG("[SDL3] Pad #%d: reading %u pressure-sensitive button axes.\n",
+               slot, pad->num_axes - SDL_GAMEPAD_AXIS_COUNT);
+      }
    }
    else
    {
@@ -283,12 +364,25 @@ static void sdl3_joypad_connect(SDL_JoystickID jid)
          SDL_SetGamepadSensorEnabled(gamepad, SDL_SENSOR_ACCEL, true);
       if (has_gyro && pad->sensor_gyro)
          SDL_SetGamepadSensorEnabled(gamepad, SDL_SENSOR_GYRO, true);
+      if (pad->sensor_accel_l && SDL_GamepadHasSensor(gamepad, SDL_SENSOR_ACCEL_L))
+         SDL_SetGamepadSensorEnabled(gamepad, SDL_SENSOR_ACCEL_L, true);
+      if (pad->sensor_gyro_l && SDL_GamepadHasSensor(gamepad, SDL_SENSOR_GYRO_L))
+         SDL_SetGamepadSensorEnabled(gamepad, SDL_SENSOR_GYRO_L, true);
+
+      if (SDL_GetNumGamepadTouchpads(gamepad) > 0)
+      {
+         int fingers        = SDL_GetNumGamepadTouchpadFingers(gamepad, 0);
+         pad->touch_fingers = (uint8_t)(fingers > INPUT_PAD_VIEW_TOUCHES
+               ? INPUT_PAD_VIEW_TOUCHES : fingers > 0 ? fingers : 0);
+      }
    }
 }
 
 static void sdl3_joypad_disconnect(SDL_JoystickID jid)
 {
-   for (int i = 0; i < MAX_USERS; i++)
+   int i;
+
+   for (i = 0; i < MAX_USERS; i++)
    {
       if (sdl3_joypads[i].jid != jid)
          continue;
@@ -304,11 +398,15 @@ static void sdl3_joypad_disconnect(SDL_JoystickID jid)
 
       /* Keep the requested sensor state so it can be restored on reconnect. */
       {
-         bool sensor_accel = sdl3_joypads[i].sensor_accel;
-         bool sensor_gyro  = sdl3_joypads[i].sensor_gyro;
+         bool sensor_accel   = sdl3_joypads[i].sensor_accel;
+         bool sensor_gyro    = sdl3_joypads[i].sensor_gyro;
+         bool sensor_accel_l = sdl3_joypads[i].sensor_accel_l;
+         bool sensor_gyro_l  = sdl3_joypads[i].sensor_gyro_l;
          memset(&sdl3_joypads[i], 0, sizeof(sdl3_joypads[i]));
-         sdl3_joypads[i].sensor_accel = sensor_accel;
-         sdl3_joypads[i].sensor_gyro  = sensor_gyro;
+         sdl3_joypads[i].sensor_accel   = sensor_accel;
+         sdl3_joypads[i].sensor_gyro    = sensor_gyro;
+         sdl3_joypads[i].sensor_accel_l = sensor_accel_l;
+         sdl3_joypads[i].sensor_gyro_l  = sensor_gyro_l;
       }
       return;
    }
@@ -316,8 +414,9 @@ static void sdl3_joypad_disconnect(SDL_JoystickID jid)
 
 static void sdl3_joypad_destroy(void)
 {
+   int i;
 
-   for (int i = 0; i < MAX_USERS; i++)
+   for (i = 0; i < MAX_USERS; i++)
    {
       if (sdl3_joypads[i].gamepad)
          SDL_CloseGamepad(sdl3_joypads[i].gamepad);
@@ -337,19 +436,17 @@ static void sdl3_joypad_destroy(void)
  */
 static int sdl3_joypad_load_gamecontrollerdb(void)
 {
-   settings_t *settings = config_get_ptr();
+   const char *autoconfig_dir = input_config_get_autoconfig_dir();
    char path[PATH_MAX_LENGTH];
    void *buf = NULL;
    int64_t len = 0;
    int num_mappings = 0;
    SDL_IOStream *io;
 
-   if (     settings == NULL
-         || !settings->bools.input_autodetect_enable
-         || settings->paths.directory_autoconfig[0] == '\0')
+   if (!autoconfig_dir)
       return 0;
 
-   fill_pathname_join_special(path, settings->paths.directory_autoconfig, "sdl3/gamecontrollerdb.cfg", sizeof(path));
+   fill_pathname_join_special(path, autoconfig_dir, "sdl3/gamecontrollerdb.cfg", sizeof(path));
    if (filestream_read_file(path, &buf, &len) == 0 || len == 0)
    {
       RARCH_WARN("[SDL3] Failed to load gamepad mappings from \"%s\".\n", path);
@@ -371,12 +468,16 @@ static int sdl3_joypad_load_gamecontrollerdb(void)
  */
 static void *sdl3_joypad_init(void *data)
 {
+   SDL_InitFlags sdl_subsystem_flags;
+
 #if SDL_VERSION_ATLEAST(3, 2, 0)
    /* Gamepad driver hints. */
    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_WII, "1");
 #endif
+   /* input_joypad_background gates unfocused pads in the frontend. */
+   SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
-   SDL_InitFlags sdl_subsystem_flags = SDL_WasInit(0);
+   sdl_subsystem_flags = SDL_WasInit(0);
 
    if (sdl_subsystem_flags == 0)
    {
@@ -391,6 +492,7 @@ static void *sdl3_joypad_init(void *data)
 
    /* Set the initial state of the joypad system. */
    memset(sdl3_joypads, 0, sizeof(sdl3_joypads));
+   memset(sdl3_joypad_players, SDL3_PLAYER_UNTOLD, sizeof(sdl3_joypad_players));
    sdl3_joypad_load_gamecontrollerdb();
 
    /* Ensure we know about any already connected devices. */
@@ -455,6 +557,28 @@ static int32_t sdl3_joypad_button(unsigned port, uint16_t joykey)
    return sdl3_joypad_button_state(&sdl3_joypads[port], joykey);
 }
 
+/* Every plain button of the pad at once, as sdl3_joypad_button()
+ * gives them one by one; hats are read through sdl3_joypad_button()
+ * with a hat key. This is what lets the frontend copy the pad once a
+ * poll (the snapshot bridge in input_driver.c): a read in this driver
+ * is a call into SDL, and this is the one walk of the buttons a poll. */
+static void sdl3_joypad_get_buttons(unsigned port, input_bits_t *state)
+{
+   unsigned i, n;
+   sdl3_joypad_t *pad;
+
+   BIT256_CLEAR_ALL_PTR(state);
+   if (port >= MAX_USERS)
+      return;
+   pad = &sdl3_joypads[port];
+   if (!pad->joypad)
+      return;
+   n = (pad->num_buttons < 256) ? pad->num_buttons : 256;
+   for (i = 0; i < n; i++)
+      if (sdl3_joypad_get_button(pad, i))
+         BIT256_SET_PTR(state, i);
+}
+
 static int16_t sdl3_joypad_axis_state(sdl3_joypad_t *pad, uint32_t joyaxis)
 {
    if (AXIS_NEG_GET(joyaxis) < pad->num_axes)
@@ -491,7 +615,8 @@ static int16_t sdl3_joypad_axis(unsigned port, uint32_t joyaxis)
 
 static int16_t sdl3_joypad_state(
       rarch_joypad_info_t *joypad_info,
-      const struct retro_keybind *binds,
+      const uint16_t *joykeys,
+      const uint32_t *joyaxes,
       unsigned port)
 {
    int i;
@@ -506,11 +631,8 @@ static int16_t sdl3_joypad_state(
 
    for (i = 0; i < RARCH_FIRST_CUSTOM_BIND; i++)
    {
-      /* Auto-binds are per joypad, not per user. */
-      const uint64_t joykey = (binds[i].joykey != NO_BTN)
-         ? binds[i].joykey : joypad_info->auto_binds[i].joykey;
-      const uint32_t joyaxis = (binds[i].joyaxis != AXIS_NONE)
-         ? binds[i].joyaxis : joypad_info->auto_binds[i].joyaxis;
+      const uint64_t joykey = joykeys[i];
+      const uint32_t joyaxis = joyaxes[i];
 
       if (
                (uint16_t)joykey != NO_BTN
@@ -530,7 +652,10 @@ static void sdl3_joypad_poll(void)
 {
    SDL_Event event;
 
-   SDL_PumpEvents();
+   /* Detects devices too: before the read, so the flush below can't
+    * drop what it adds. */
+   if (!sdl3_pump_input_events())
+      SDL_UpdateGamepads();
 
    while (SDL_PeepEvents(&event, 1, SDL_GETEVENT,
             SDL_EVENT_JOYSTICK_ADDED, SDL_EVENT_JOYSTICK_REMOVED) > 0)
@@ -546,10 +671,11 @@ static void sdl3_joypad_poll(void)
       }
    }
 
-   SDL_UpdateGamepads();
-
-   /* Flush all remaining gamepad/joystick input events, since we handle it directly. */
-   SDL_FlushEvents(SDL_EVENT_JOYSTICK_AXIS_MOTION, SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED);
+   /* Flush all remaining gamepad/joystick input events, since we handle
+    * it directly. Hotplug is left for the next poll. */
+   SDL_FlushEvents(SDL_EVENT_JOYSTICK_AXIS_MOTION, SDL_EVENT_JOYSTICK_BUTTON_UP);
+   SDL_FlushEvents(SDL_EVENT_JOYSTICK_BATTERY_UPDATED,
+         SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED);
 }
 
 static bool sdl3_joypad_set_rumble(unsigned pad,
@@ -574,11 +700,11 @@ static bool sdl3_joypad_set_rumble(unsigned pad,
    low  = (uint16_t)((sdl3_joypads[pad].rumble[RETRO_RUMBLE_STRONG] * sdl3_joypads[pad].rumble_gain) / 100);
    high = (uint16_t)((sdl3_joypads[pad].rumble[RETRO_RUMBLE_WEAK] * sdl3_joypads[pad].rumble_gain) / 100);
 
-   /* The frontend re-issues rumble every frame, so just use an arbitrary duration. */
+   /* A core may set rumble once and leave it on: ~32 s, as udev */
    if (sdl3_joypads[pad].gamepad)
-      return SDL_RumbleGamepad(sdl3_joypads[pad].gamepad, low, high, 5000);
+      return SDL_RumbleGamepad(sdl3_joypads[pad].gamepad, low, high, 0x7FFF);
    else if (sdl3_joypads[pad].joypad)
-      return SDL_RumbleJoystick(sdl3_joypads[pad].joypad, low, high, 5000);
+      return SDL_RumbleJoystick(sdl3_joypads[pad].joypad, low, high, 0x7FFF);
 
    return false;
 }
@@ -603,6 +729,28 @@ static bool sdl3_joypad_set_sensor_state(unsigned pad,
       return false;
 
    gamepad = sdl3_joypads[pad].gamepad;
+
+   if (RETRO_SENSOR_INDEX(action) == 1)
+   {
+      unsigned base  = RETRO_SENSOR_BASE(action);
+      bool gyro      =    base == RETRO_SENSOR_GYROSCOPE_ENABLE
+                       || base == RETRO_SENSOR_GYROSCOPE_DISABLE;
+      bool enable    =    base == RETRO_SENSOR_GYROSCOPE_ENABLE
+                       || base == RETRO_SENSOR_ACCELEROMETER_ENABLE;
+      SDL_SensorType type = gyro ? SDL_SENSOR_GYRO_L : SDL_SENSOR_ACCEL_L;
+
+      if (     !gyro
+            && base != RETRO_SENSOR_ACCELEROMETER_ENABLE
+            && base != RETRO_SENSOR_ACCELEROMETER_DISABLE)
+         return false;
+      if (gyro)
+         sdl3_joypads[pad].sensor_gyro_l  = enable;
+      else
+         sdl3_joypads[pad].sensor_accel_l = enable;
+      if (gamepad && SDL_GamepadHasSensor(gamepad, type))
+         return SDL_SetGamepadSensorEnabled(gamepad, type, enable);
+      return !enable;
+   }
 
    switch (action)
    {
@@ -646,6 +794,7 @@ static bool sdl3_joypad_get_sensor_input(unsigned pad, unsigned id, float *value
 {
    SDL_SensorType sensor_type;
    float sensor_data[3];
+   bool left;
 
    if (pad >= MAX_USERS)
       return false;
@@ -653,10 +802,15 @@ static bool sdl3_joypad_get_sensor_input(unsigned pad, unsigned id, float *value
    if (!sdl3_joypads[pad].gamepad)
       return false;
 
+   if (RETRO_SENSOR_INDEX(id) > 1)
+      return false;
+   left = RETRO_SENSOR_INDEX(id) == 1;
+   id   = RETRO_SENSOR_BASE(id);
+
    if ((id >= RETRO_SENSOR_ACCELEROMETER_X) && (id <= RETRO_SENSOR_ACCELEROMETER_Z))
-      sensor_type = SDL_SENSOR_ACCEL;
+      sensor_type = left ? SDL_SENSOR_ACCEL_L : SDL_SENSOR_ACCEL;
    else if ((id >= RETRO_SENSOR_GYROSCOPE_X) && (id <= RETRO_SENSOR_GYROSCOPE_Z))
-      sensor_type = SDL_SENSOR_GYRO;
+      sensor_type = left ? SDL_SENSOR_GYRO_L : SDL_SENSOR_GYRO;
    else
       return false;
 
@@ -688,6 +842,38 @@ static bool sdl3_joypad_get_sensor_input(unsigned pad, unsigned id, float *value
    return true;
 }
 
+static bool sdl3_joypad_get_touchpad(unsigned pad, input_pad_view_t *view)
+{
+   unsigned i;
+   uint8_t down = 0;
+   SDL_Gamepad *gamepad;
+
+   if (     pad >= MAX_USERS
+         || !(gamepad = sdl3_joypads[pad].gamepad)
+         || !sdl3_joypads[pad].touch_fingers)
+      return false;
+
+   for (i = 0; i < sdl3_joypads[pad].touch_fingers; i++)
+   {
+      bool on;
+      float x, y;
+      if (     SDL_GetGamepadTouchpadFinger(gamepad, 0, (int)i, &on, &x, &y, NULL)
+            && on)
+      {
+         /* 0..1 across, as -0x7fff..0x7fff */
+         int32_t tx      = (int32_t)(x * 65534.0f) - 0x7fff;
+         int32_t ty      = (int32_t)(y * 65534.0f) - 0x7fff;
+         view->touch[i]  = (uint32_t)(uint16_t)(int16_t)tx
+                         | ((uint32_t)(uint16_t)(int16_t)ty << 16);
+         down           |= (uint8_t)(1 << i);
+      }
+   }
+   if (SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_TOUCHPAD))
+      down |= INPUT_PAD_TOUCH_PRESS;
+   view->touch_down = down;
+   return true;
+}
+
 /**
  * Queries whether or not the joypad is still connected.
  *
@@ -706,7 +892,7 @@ input_device_driver_t sdl3_joypad = {
    sdl3_joypad_destroy,
    sdl3_joypad_button,
    sdl3_joypad_state,
-   NULL, /* get_buttons */
+   sdl3_joypad_get_buttons,
    sdl3_joypad_axis,
    sdl3_joypad_poll,
    sdl3_joypad_set_rumble,
@@ -715,4 +901,10 @@ input_device_driver_t sdl3_joypad = {
    sdl3_joypad_get_sensor_input,
    sdl3_joypad_name,
    "sdl3",
+   NULL, /* get_bt_host */
+   NULL, /* set_bt_host */
+   sdl3_joypad_survives_video,
+   sdl3_joypad_set_player,
+   NULL, /* view */
+   sdl3_joypad_get_touchpad
 };

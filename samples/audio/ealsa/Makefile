@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := ealsa_test
 
 LIBRETRO_COMM_DIR := ../../../libretro-common
@@ -19,11 +21,11 @@ CFLAGS  += -std=gnu99 -Wall $(INCDIRS) -DRARCH_INTERNAL -DHAVE_THREADS -DHAVE_TI
 LDFLAGS += -lm
 
 ifneq ($(SANITIZER),)
-   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g $(CFLAGS)
+   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g1 $(CFLAGS)
    LDFLAGS := -fsanitize=$(SANITIZER) $(LDFLAGS)
 endif
 
-OBJS := $(SOURCES_C:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES_C:.c=.o))
 
 all: $(TARGET)
 
@@ -33,7 +35,12 @@ $(TARGET): $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(OBJS) $(TARGET)
 
 .PHONY: all clean

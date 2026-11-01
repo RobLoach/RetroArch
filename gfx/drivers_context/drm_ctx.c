@@ -43,6 +43,10 @@
 #include "../../config.h"
 #endif
 
+#ifdef HAVE_UDEV
+#include <libudev.h>
+#endif
+
 #include "../../configuration.h"
 #include "../../verbosity.h"
 #include "../../frontend/frontend_driver.h"
@@ -75,6 +79,15 @@ typedef struct gfx_ctx_drm_data
 #ifdef HAVE_EGL
    egl_ctx_data_t egl;
 #endif
+#ifdef HAVE_UDEV
+   struct udev *udev;
+   struct udev_monitor *hotplug;
+   dev_t hotplug_dev;
+   int hotplug_fd;
+   /* The monitor's revents from the flip wait, read in check_window,
+    * which runs on the same thread */
+   short hotplug_revents;
+#endif
    struct gbm_bo *bo;
    struct gbm_bo *next_bo;
    struct gbm_surface *gbm_surface;
@@ -83,10 +96,17 @@ typedef struct gfx_ctx_drm_data
    int interval;
    unsigned fb_width;
    unsigned fb_height;
+   /* Taken when the context is made, which a change of the setting
+    * redoes: swap_buffers runs on the thread that draws */
+   unsigned max_swapchain_images;
    bool core_hw_context_enable;
    bool waiting_for_flip;
    bool leased;
    bool lease_lost;
+   bool async_flip;
+   bool async_flip_refused;
+   /* The vsync setting, latched where the main thread waits */
+   bool video_vsync;
    /* The GPUs the GL GPU index chooses from, as published to the menu */
    struct string_list *gl_gpu_list;
    /* HDR10: what the sink takes, and the connector properties changed
@@ -103,6 +123,9 @@ typedef struct gfx_ctx_drm_data
    bool hdr_capable;
    bool hdr10;
    bool hdr_props_set;
+#ifdef HAVE_UDEV
+   bool display_lost;
+#endif
 } gfx_ctx_drm_data_t;
 
 struct drm_fb
@@ -111,30 +134,6 @@ struct drm_fb
    uint32_t fb_id;
 };
 
-/*
- * https://github.com/libretro/RetroArch/pull/11590
- * https://www.raspberrypi.org/documentation/configuration/config-txt/video.md
- */
-typedef struct hdmi_timings
-{
-   int h_active_pixels; /* Horizontal pixels (width) */
-   int h_sync_polarity; /* Invert HSync polarity */
-   int h_front_porch;   /* Horizontal forward padding from DE active edge */
-   int h_sync_pulse;    /* HSync pulse width in pixel clocks */
-   int h_back_porch;    /* Vertical back padding from DE active edge */
-   int v_active_lines;  /* Vertical pixels height (lines) */
-   int v_sync_polarity; /* Invert vsync polarity */
-   int v_front_porch;   /* Vertical forward padding from DE active edge */
-   int v_sync_pulse;    /* VSync pulse width in pixel clocks */
-   int v_back_porch;    /* Vertical back padding from DE active edge */
-   int v_sync_offset_a; /* Leave at zero */
-   int v_sync_offset_b; /* Leave at zero */
-   int pixel_rep;       /* Leave at zero */
-   int frame_rate;      /* Screen refresh rate in Hz */
-   int interlaced;      /* Leave at zero */
-   int pixel_freq;      /* Clock frequency (width*height*framerate) */
-   int aspect_ratio;
-} hdmi_timings_t;
 
 static enum gfx_ctx_api drm_api           = GFX_CTX_NONE;
 /* 24 for XRGB8888 scanout, 30 for the XRGB2101010 of HDR10 */
@@ -142,27 +141,6 @@ static unsigned drm_fb_depth               = 24;
 static drmModeModeInfo gfx_ctx_crt_switch_mode;
 static bool switch_mode                   = false;
 
-static float mode_vrefresh(drmModeModeInfo *mode)
-{
-   return  mode->clock * 1000.00f / (mode->htotal * mode->vtotal);
-}
-
-static void dump_mode(drmModeModeInfo *mode, int index)
-{
-   RARCH_DBG("[KMS] Mode details:  #%i %s %.2f %d %d %d %d %d %d %d %d %d\n",
-      index,
-      mode->name,
-      mode_vrefresh(mode),
-      mode->hdisplay,
-      mode->hsync_start,
-      mode->hsync_end,
-      mode->htotal,
-      mode->vdisplay,
-      mode->vsync_start,
-      mode->vsync_end,
-      mode->vtotal,
-      mode->clock);
-}
 
 static EGLint *gfx_ctx_drm_egl_fill_attribs(
       gfx_ctx_drm_data_t *drm, EGLint *attr)
@@ -387,130 +365,6 @@ error:
 #endif
 
 
-/* Get the mode from video_state */
-bool gfx_ctx_drm_get_mode_from_video_state(drmModeModeInfoPtr modeInfo)
-{
-#ifdef HAVE_MODELINE
-   video_driver_state_t *video_st = video_state_get_ptr();
-   if (video_st->crt_switch_st.vdisplay >= 1)
-   {
-      modeInfo->clock       = video_st->crt_switch_st.clock;
-      modeInfo->hdisplay    = video_st->crt_switch_st.hdisplay;
-      modeInfo->hsync_start = video_st->crt_switch_st.hsync_start;
-      modeInfo->hsync_end   = video_st->crt_switch_st.hsync_end;
-      modeInfo->htotal      = video_st->crt_switch_st.htotal;
-      modeInfo->vdisplay    = video_st->crt_switch_st.vdisplay;
-      modeInfo->vsync_start = video_st->crt_switch_st.vsync_start;
-      modeInfo->vsync_end   = video_st->crt_switch_st.vsync_end;
-      modeInfo->vtotal      = video_st->crt_switch_st.vtotal;
-      modeInfo->flags       = (video_st->crt_switch_st.interlace ? DRM_MODE_FLAG_INTERLACE : 0)
-         | (video_st->crt_switch_st.doublescan ? DRM_MODE_FLAG_DBLSCAN : 0)
-         | (video_st->crt_switch_st.hsync      ? DRM_MODE_FLAG_PHSYNC  : DRM_MODE_FLAG_NHSYNC)
-         | (video_st->crt_switch_st.vsync      ? DRM_MODE_FLAG_PVSYNC  : DRM_MODE_FLAG_NVSYNC);
-      modeInfo->hskew       = 0;
-      modeInfo->vscan       = 0;
-      modeInfo->vrefresh    = video_st->crt_switch_st.vrefresh;
-      modeInfo->type        = DRM_MODE_TYPE_USERDEF;
-
-      snprintf(modeInfo->name, DRM_DISPLAY_MODE_LEN, "RetroArch_CRT-%dx%d@%.02f%s"
-            , video_st->crt_switch_st.hdisplay
-            , video_st->crt_switch_st.vdisplay
-            , mode_vrefresh(modeInfo)
-            , video_st->crt_switch_st.interlace ? "i" : "");
-      dump_mode(modeInfo, 0);
-      /* consider the mode read and removed */
-      video_st->crt_switch_st.vdisplay = 0;
-      return true;
-   }
-#endif
-   return false;
-}
-
-/* Load custom hdmi timings from config */
-static bool gfx_ctx_drm_load_mode(drmModeModeInfoPtr modeInfo)
-{
-   settings_t *settings     = config_get_ptr();
-   char *crt_switch_timings = settings->arrays.crt_switch_timings;
-
-   if (modeInfo && crt_switch_timings && *crt_switch_timings)
-   {
-      hdmi_timings_t timings;
-      int *timings_fields[17];
-      int i;
-      char *p = crt_switch_timings;
-      char *endptr;
-
-      timings_fields[0]  = &timings.h_active_pixels;
-      timings_fields[1]  = &timings.h_sync_polarity;
-      timings_fields[2]  = &timings.h_front_porch;
-      timings_fields[3]  = &timings.h_sync_pulse;
-      timings_fields[4]  = &timings.h_back_porch;
-      timings_fields[5]  = &timings.v_active_lines;
-      timings_fields[6]  = &timings.v_sync_polarity;
-      timings_fields[7]  = &timings.v_front_porch;
-      timings_fields[8]  = &timings.v_sync_pulse;
-      timings_fields[9]  = &timings.v_back_porch;
-      timings_fields[10] = &timings.v_sync_offset_a;
-      timings_fields[11] = &timings.v_sync_offset_b;
-      timings_fields[12] = &timings.pixel_rep;
-      timings_fields[13] = &timings.frame_rate;
-      timings_fields[14] = &timings.interlaced;
-      timings_fields[15] = &timings.pixel_freq;
-      timings_fields[16] = &timings.aspect_ratio;
-
-      for (i = 0; i < 17; i++)
-      {
-         long val;
-
-         /* Skip whitespace */
-         while (*p == ' ' || *p == '\t')
-            p++;
-
-         if (*p == '\0')
-         {
-            RARCH_ERR("[KMS] Malformed mode requested: %s.\n", crt_switch_timings);
-            return false;
-         }
-
-         endptr = NULL;
-         val    = strtol(p, &endptr, 10);
-
-         if (endptr == p)
-         {
-            RARCH_ERR("[KMS] Malformed mode requested: %s.\n", crt_switch_timings);
-            return false;
-         }
-
-         *timings_fields[i] = (int)val;
-         p = endptr;
-      }
-
-      memset(modeInfo, 0, sizeof(drmModeModeInfo));
-      modeInfo->clock       = timings.pixel_freq / 1000;
-      modeInfo->hdisplay    = timings.h_active_pixels;
-      modeInfo->hsync_start = modeInfo->hdisplay + timings.h_front_porch;
-      modeInfo->hsync_end   = modeInfo->hsync_start + timings.h_sync_pulse;
-      modeInfo->htotal      = modeInfo->hsync_end + timings.h_back_porch;
-      modeInfo->hskew       = 0;
-      modeInfo->vdisplay    = timings.v_active_lines;
-      modeInfo->vsync_start = modeInfo->vdisplay + (timings.v_front_porch * (timings.interlaced ? 2 : 1));
-      modeInfo->vsync_end   = modeInfo->vsync_start + (timings.v_sync_pulse * (timings.interlaced ? 2 : 1));
-      modeInfo->vtotal      = modeInfo->vsync_end + (timings.v_back_porch * (timings.interlaced ? 2 : 1));
-      modeInfo->vscan       = 0; /* TODO: ?? */
-      modeInfo->vrefresh    = timings.frame_rate;
-      modeInfo->flags       = timings.interlaced ? DRM_MODE_FLAG_INTERLACE : 0;
-      modeInfo->flags      |= timings.v_sync_polarity ? DRM_MODE_FLAG_NVSYNC : DRM_MODE_FLAG_PVSYNC;
-      modeInfo->flags      |= timings.h_sync_polarity ? DRM_MODE_FLAG_NHSYNC : DRM_MODE_FLAG_PHSYNC;
-      modeInfo->type        = 0;
-      snprintf(modeInfo->name, DRM_DISPLAY_MODE_LEN, "CRT_%ux%u_%u",
-               modeInfo->hdisplay, modeInfo->vdisplay, modeInfo->vrefresh);
-
-      return true;
-   }
-
-   return false;
-}
-
 static void drm_fb_destroy_callback(struct gbm_bo *bo, void *data)
 {
    struct drm_fb *fb = (struct drm_fb*)data;
@@ -556,10 +410,89 @@ static void gfx_ctx_drm_swap_interval(void *data, int interval)
 {
    gfx_ctx_drm_data_t *drm = (gfx_ctx_drm_data_t*)data;
    drm->interval           = interval;
+   drm->video_vsync        = config_get_ptr()->bools.video_vsync;
 
    if (interval > 1)
       RARCH_WARN("[KMS] Swap intervals > 1 currently not supported. Will use swap interval of 1.\n");
 }
+
+#ifdef HAVE_UDEV
+static void gfx_ctx_drm_hotplug_init(gfx_ctx_drm_data_t *drm, int fd)
+{
+   struct stat st;
+   int flags;
+
+   drm->hotplug_fd = -1;
+
+   if (fstat(fd, &st) != 0 || !(drm->udev = udev_new()))
+      return;
+   drm->hotplug_dev = st.st_rdev;
+
+   if (!(drm->hotplug = udev_monitor_new_from_netlink(drm->udev, "udev")))
+      return;
+   if (     udev_monitor_filter_add_match_subsystem_devtype(drm->hotplug,
+               "drm", "drm_minor") < 0
+         || udev_monitor_enable_receiving(drm->hotplug) < 0
+         || (drm->hotplug_fd = udev_monitor_get_fd(drm->hotplug)) < 0
+         || (flags = fcntl(drm->hotplug_fd, F_GETFL)) < 0
+         || fcntl(drm->hotplug_fd, F_SETFL, flags | O_NONBLOCK) < 0)
+   {
+      udev_monitor_unref(drm->hotplug);
+      drm->hotplug    = NULL;
+      drm->hotplug_fd = -1;
+   }
+}
+
+static void gfx_ctx_drm_hotplug_deinit(gfx_ctx_drm_data_t *drm)
+{
+   if (drm->hotplug)
+      udev_monitor_unref(drm->hotplug);
+   if (drm->udev)
+      udev_unref(drm->udev);
+   drm->hotplug         = NULL;
+   drm->udev            = NULL;
+   drm->hotplug_fd      = -1;
+   drm->hotplug_revents = 0;
+}
+
+/* The flip wait polls the monitor alongside the card, so a frame
+ * with nothing queued costs nothing here */
+static void gfx_ctx_drm_hotplug_read(gfx_ctx_drm_data_t *drm)
+{
+   struct udev_device *dev;
+   bool changed         = false;
+   short revents        = drm->hotplug_revents;
+
+   drm->hotplug_revents = 0;
+
+   if (revents & (POLLERR | POLLHUP | POLLNVAL))
+   {
+      RARCH_WARN("[KMS] Hotplug monitor failed, no longer watching.\n");
+      gfx_ctx_drm_hotplug_deinit(drm);
+      return;
+   }
+
+   while ((dev = udev_monitor_receive_device(drm->hotplug)))
+   {
+      const char *val;
+
+      if (     udev_device_get_devnum(dev) == drm->hotplug_dev
+            && (val = udev_device_get_property_value(dev, "HOTPLUG"))
+            && string_is_equal(val, "1"))
+         changed = true;
+      udev_device_unref(dev);
+   }
+
+   if (     changed
+         && drm_hotplug_needs_restart(g_drm_fd,
+               config_get_ptr()->uints.video_monitor_index,
+               &drm->display_lost))
+   {
+      RARCH_LOG("[KMS] Display changed, restarting the video driver.\n");
+      video_driver_modify_disp_flags(VIDEO_FLAG_DRIVER_REINIT, 0);
+   }
+}
+#endif
 
 static void gfx_ctx_drm_check_window(void *data, bool *quit,
       bool *resize, unsigned *dims)
@@ -567,6 +500,10 @@ static void gfx_ctx_drm_check_window(void *data, bool *quit,
    *resize = false;
    *quit   = (bool)frontend_driver_get_signal_handler_state();
    *dims = VIDEO_SCALE_PACK(g_drm_mode->hdisplay, g_drm_mode->vdisplay);
+#ifdef HAVE_UDEV
+   if (((gfx_ctx_drm_data_t*)data)->hotplug_revents)
+      gfx_ctx_drm_hotplug_read((gfx_ctx_drm_data_t*)data);
+#endif
 }
 
 static void drm_flip_handler(int fd, unsigned frame,
@@ -587,7 +524,13 @@ static bool gfx_ctx_drm_wait_flip(gfx_ctx_drm_data_t *drm, bool block)
 
    while (drm->waiting_for_flip)
    {
+#ifdef HAVE_UDEV
+      if (!drm_wait_flip_hotplug(timeout,
+               drm->hotplug_revents ? -1 : drm->hotplug_fd,
+               &drm->hotplug_revents))
+#else
       if (!drm_wait_flip(timeout))
+#endif
          break;
    }
 
@@ -668,6 +611,26 @@ static bool gfx_ctx_drm_queue_flip(gfx_ctx_drm_data_t *drm)
       switch_mode = false;
    }
 
+   /* Vsync off tears, while fast-forward with vsync on drops frames
+    * as Vulkan's MAILBOX does; a refused async flip (a format or
+    * layout change, as around a mode switch) waits for vblank this
+    * once */
+   if (     drm->interval == 0
+         && drm->async_flip
+         && !drm->video_vsync)
+   {
+      if (drmModePageFlip(g_drm_fd, g_crtc_id, fb->fb_id,
+            DRM_MODE_PAGE_FLIP_EVENT | DRM_MODE_PAGE_FLIP_ASYNC,
+            &drm->waiting_for_flip) == 0)
+         return true;
+
+      if (!drm->async_flip_refused)
+      {
+         drm->async_flip_refused = true;
+         RARCH_WARN("[KMS] Async page flip refused: %s.\n", strerror(errno));
+      }
+   }
+
    if (drmModePageFlip(g_drm_fd, g_crtc_id, fb->fb_id,
          DRM_MODE_PAGE_FLIP_EVENT, &drm->waiting_for_flip) == 0)
       return true;
@@ -689,8 +652,7 @@ static bool gfx_ctx_drm_queue_flip(gfx_ctx_drm_data_t *drm)
 static void gfx_ctx_drm_swap_buffers(void *data)
 {
    gfx_ctx_drm_data_t        *drm = (gfx_ctx_drm_data_t*)data;
-   settings_t *settings           = config_get_ptr();
-   unsigned max_swapchain_images  = settings->uints.video_max_swapchain_images;
+   unsigned max_swapchain_images  = drm->max_swapchain_images;
 
    /* Recreate the surface */
    if (switch_mode)
@@ -959,6 +921,10 @@ static void gfx_ctx_drm_destroy_resources(gfx_ctx_drm_data_t *drm)
          | VIDEO_FLAG_HDR10_SUPPORT
          | VIDEO_FLAG_SCRGB_SUPPORT);
 
+#ifdef HAVE_UDEV
+   gfx_ctx_drm_hotplug_deinit(drm);
+#endif
+
 #ifdef HAVE_EGL
    egl_destroy(&drm->egl);
 #endif
@@ -999,7 +965,11 @@ static void *gfx_ctx_drm_init(void *video_driver)
 
    if (!drm)
       return NULL;
-   drm->fd = -1;
+   drm->fd                   = -1;
+#ifdef HAVE_UDEV
+   drm->hotplug_fd           = -1;
+#endif
+   drm->max_swapchain_images = settings->uints.video_max_swapchain_images;
 
    gpu_descriptors = dir_list_new("/dev/dri", NULL, false, true, false, false);
 
@@ -1033,6 +1003,9 @@ static void *gfx_ctx_drm_init(void *video_driver)
     * the others in their usual order after it; the display follows the
     * card, through GBM. */
    drm->gl_gpu_list = egl_gpu_list_new();
+   if (drm->gl_gpu_list && settings)
+      settings->ints.gl_gpu_index = video_driver_gpu_index_resolve(
+            drm_api, settings->ints.gl_gpu_index, drm->gl_gpu_list);
    if (drm->gl_gpu_list && settings->ints.gl_gpu_index > 0)
    {
       if ((preferred = egl_gpu_device_file(settings->ints.gl_gpu_index)))
@@ -1090,18 +1063,22 @@ nextgpu:
 
    drm_setup(fd);
 
+#ifdef HAVE_WAYLAND
 have_device:
+#endif
    /* Choose the optimal video mode for get_video_size():
      - video mode issued by switchres through the CRT module
      - custom timings from configuration
      - else the current video mode from the CRTC
      - otherwise pick first connector mode */
-   if (gfx_ctx_drm_get_mode_from_video_state(&gfx_ctx_crt_switch_mode))
+   if (drm_mode_from_crt_switch(&gfx_ctx_crt_switch_mode))
    {
       drm->fb_width  = gfx_ctx_crt_switch_mode.hdisplay;
       drm->fb_height = gfx_ctx_crt_switch_mode.vdisplay;
    }
-   else if (gfx_ctx_drm_load_mode(&gfx_ctx_crt_switch_mode))
+   else if (drm_mode_from_timings(
+            config_get_ptr()->arrays.crt_switch_timings,
+            &gfx_ctx_crt_switch_mode))
    {
       drm->fb_width  = gfx_ctx_crt_switch_mode.hdisplay;
       drm->fb_height = gfx_ctx_crt_switch_mode.vdisplay;
@@ -1142,6 +1119,18 @@ have_device:
 
    g_drm_fd                       = fd;
 
+#ifdef HAVE_UDEV
+   /* A lease is for one connector */
+   if (!drm->leased)
+      gfx_ctx_drm_hotplug_init(drm, fd);
+#endif
+
+   {
+      uint64_t cap                = 0;
+      drm->async_flip             = drmGetCap(fd,
+            DRM_CAP_ASYNC_PAGE_FLIP, &cap) == 0 && cap;
+   }
+
    video_driver_display_type_set(RARCH_DISPLAY_KMS);
 
    return drm;
@@ -1164,7 +1153,7 @@ static bool gfx_ctx_drm_set_video_mode(void *data,
    unsigned width  = VIDEO_SCALE_W(dims);
    unsigned height = VIDEO_SCALE_H(dims);
    float refresh_mod;
-   int i, ret                      = 0;
+   int ret                         = 0;
    struct drm_fb *fb               = NULL;
    struct gbm_bo *bo               = NULL;
    gfx_ctx_drm_data_t *drm         = (gfx_ctx_drm_data_t*)data;
@@ -1184,7 +1173,7 @@ static bool gfx_ctx_drm_set_video_mode(void *data,
    /* Find desired video mode, and use that.
     * If not fullscreen, we get desired windowed size,
     * which is not appropriate. */
-   if (gfx_ctx_drm_get_mode_from_video_state(&gfx_ctx_crt_switch_mode))
+   if (drm_mode_from_crt_switch(&gfx_ctx_crt_switch_mode))
    {
       RARCH_DBG("[KMS] New mode detected: %dx%d.\n", gfx_ctx_crt_switch_mode.hdisplay, gfx_ctx_crt_switch_mode.vdisplay);
       g_drm_mode     = &gfx_ctx_crt_switch_mode;
@@ -1209,35 +1198,8 @@ static bool gfx_ctx_drm_set_video_mode(void *data,
       }
       else
       {
-         /* Try to match refresh_rate as closely as possible.
-          *
-          * Lower resolutions tend to have multiple supported
-          * refresh rates as well.
-          */
-         drmModeModeInfo *mode     = NULL;
-         float minimum_fps_diff    = 0.0f;
-         float mode_vrefresh       = 0.0f;
-         g_drm_mode                = 0;
-
-         /* Find best match. */
-         for (i = 0; i < g_drm_connector->count_modes; i++)
-         {
-            float diff;
-            mode                   = &g_drm_connector->modes[i];
-
-            if (   (width  != mode->hdisplay)
-                || (height != mode->vdisplay))
-               continue;
-
-            mode_vrefresh          = drm_calc_refresh_rate(mode);
-            diff                   = fabsf(refresh_mod * mode_vrefresh - video_refresh_rate);
-
-            if (!g_drm_mode || diff < minimum_fps_diff)
-            {
-               g_drm_mode          = mode;
-               minimum_fps_diff    = diff;
-            }
-         }
+         g_drm_mode = drm_find_mode(g_drm_connector, width, height,
+               refresh_mod, video_refresh_rate);
       }
    }
 
@@ -1337,6 +1299,7 @@ static bool gfx_ctx_drm_set_video_mode(void *data,
          g_crtc_id, fb->fb_id, 0, 0, &g_connector_id, 1, g_drm_mode)) < 0)
       goto error;
 
+   video_driver_set_hdr_output_mode(drm->hdr10 ? 1 : 0);
    return true;
 
 error:
@@ -1361,43 +1324,11 @@ static void gfx_ctx_drm_destroy(void *data)
 }
 
 static void gfx_ctx_drm_input_driver(void *data,
-      const char *joypad_name,
-      input_driver_t **input, void **input_data)
+      const char *joypad_name)
 {
-   settings_t *settings = config_get_ptr();
-
-   /* We cannot use the X11 input driver for DRM/KMS, and udev may be restricted */
-   if (   string_is_equal(settings->arrays.input_driver, "x")
-       || string_is_equal(settings->arrays.input_driver, "udev"))
-   {
-#ifdef HAVE_UDEV
-      {
-         /* Try to set it to udev */
-         void *udev = input_driver_init_wrap(&input_udev, joypad_name);
-         if (udev)
-         {
-            *input       = &input_udev;
-            *input_data  = udev;
-            return;
-         }
-      }
-#endif
-#if defined(__linux__) && !defined(ANDROID)
-      {
-         /* Try to set it to linuxraw if not available or failed to initialize */
-         void *linuxraw = input_driver_init_wrap(&input_linuxraw, joypad_name);
-         if (linuxraw)
-         {
-            *input       = &input_linuxraw;
-            *input_data  = linuxraw;
-            return;
-         }
-      }
-#endif
-   }
-
-   *input      = NULL;
-   *input_data = NULL;
+   /* no input driver of this context's own: the frontend starts the
+    * one that goes with a display that has no window system */
+   input_driver_video_window(INPUT_WINDOW_KMS, NULL);
 }
 
 static bool gfx_ctx_drm_has_focus(void *data) { return true; }
@@ -1473,7 +1404,7 @@ static uint32_t gfx_ctx_drm_get_flags(void *data)
 
    if (string_is_equal(video_driver_get_ident(), "glcore"))
    {
-#if defined(HAVE_SLANG) && defined(HAVE_SPIRV_CROSS)
+#if defined(HAVE_SLANG) && (defined(HAVE_SPIRV_CROSS) || defined(HAVE_RSLC))
       BIT32_SET(flags, GFX_CTX_FLAGS_SHADERS_SLANG);
 #endif
    }

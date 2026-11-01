@@ -26,13 +26,15 @@
 #define CHEEVO_QUEUE_SIZE 8
 
 static mpsc_stack_t gfx_widget_achievement_pending;
+/* Set from any thread: the owner rereads the appearance settings */
+static retro_atomic_int_t gfx_widget_achievement_appearance_dirty;
 
 typedef struct cheevo_popup
 {
    char* title;
    char* subtitle;
    char* badge_name;
-   uintptr_t badge;
+   gfx_surface_t *badge;
 } cheevo_popup;
 
 enum
@@ -62,7 +64,7 @@ struct cheevo_popup_msg
    char *title;
    char *subtitle;
    char *badge_name;
-   uintptr_t badge;
+   gfx_surface_t *badge;
 };
 
 struct gfx_widget_achievement_popup_state
@@ -121,6 +123,7 @@ static void gfx_widget_achievement_popup_drain_free(void)
       free(node->title);
       free(node->subtitle);
       free(node->badge_name);
+      gfx_surface_free(node->badge);
       free(node);
    }
 }
@@ -251,7 +254,7 @@ static void gfx_widget_achievement_popup_frame(void* data, void* userdata)
             NULL);
 
          /* Icon */
-         if (p_dispwidget->gfx_widgets_icons_textures[MENU_WIDGETS_ICON_ACHIEVEMENT])
+         if (GFX_SURFACE_HANDLE(p_dispwidget->gfx_widgets_icons_textures[MENU_WIDGETS_ICON_ACHIEVEMENT]))
          {
             gfx_display_blend_begin(dispctx, video_info->userdata);
 
@@ -260,8 +263,8 @@ static void gfx_widget_achievement_popup_frame(void* data, void* userdata)
                p_disp,
                VIDEO_SCALE_PACK(video_width, video_height),
                VIDEO_SCALE_PACK(state->height, state->height),
-               p_dispwidget->gfx_widgets_icons_textures[
-                  MENU_WIDGETS_ICON_ACHIEVEMENT],
+               GFX_SURFACE_HANDLE(p_dispwidget->gfx_widgets_icons_textures[
+                  MENU_WIDGETS_ICON_ACHIEVEMENT]),
                screen_pos_x,
                screen_pos_y,
                0.0f, /* rad */
@@ -294,7 +297,7 @@ static void gfx_widget_achievement_popup_frame(void* data, void* userdata)
             p_disp,
             VIDEO_SCALE_PACK(video_width, video_height),
             VIDEO_SCALE_PACK(state->height, state->height),
-            state->queue[state->queue_read_index].badge,
+            GFX_SURFACE_HANDLE(state->queue[state->queue_read_index].badge),
             screen_pos_x,
             screen_pos_y,
             0.0f, /* rad */
@@ -394,11 +397,8 @@ static void gfx_widget_achievement_popup_free_current(
       state->queue[state->queue_read_index].badge_name = NULL;
    }
 
-   if (state->queue[state->queue_read_index].badge)
-   {
-      video_driver_texture_unload(&state->queue[state->queue_read_index].badge);
-      state->queue[state->queue_read_index].badge = 0;
-   }
+   gfx_surface_free(state->queue[state->queue_read_index].badge);
+   state->queue[state->queue_read_index].badge = NULL;
 
    state->queue_read_index = (state->queue_read_index + 1) % ARRAY_SIZE(state->queue);
 }
@@ -547,9 +547,8 @@ static void gfx_widgets_update_cheevos_appearance_state(void)
 
 void gfx_widgets_update_cheevos_appearance(void)
 {
-   gfx_widgets_state_lock();
-   gfx_widgets_update_cheevos_appearance_state();
-   gfx_widgets_state_unlock();
+   retro_atomic_store_release_int(
+         &gfx_widget_achievement_appearance_dirty, 1);
 }
 
 static void gfx_widget_achievement_popup_start(
@@ -574,7 +573,9 @@ static void gfx_widget_achievement_popup_start(
    state->slide_v = 0.0f;
 
    /* Store settings to prevent lookup every _frame */
-   gfx_widgets_update_cheevos_appearance();
+   retro_atomic_store_relaxed_int(
+         &gfx_widget_achievement_appearance_dirty, 0);
+   gfx_widgets_update_cheevos_appearance_state();
 
    /* Slide vertical onto screen */
    anim_slide.cb = gfx_widget_achievement_popup_unfold;
@@ -592,16 +593,17 @@ static void gfx_widgets_push_achievement_state(const char* title, const char* su
 {
    struct cheevo_popup_msg *node;
 
-   /* The badge texture fetch may itself round-trip to the video
-    * thread, so it happens here, before anything queue-shaped. */
-   uintptr_t badge_id = rcheevos_get_badge_texture(badge, false, true);
+   gfx_surface_t *badge_s = rcheevos_get_badge_texture(badge, false, true);
 
    if (!(node = (struct cheevo_popup_msg *)malloc(sizeof(*node))))
+   {
+      gfx_surface_free(badge_s);
       return;
+   }
    node->title      = strdup(title);
    node->subtitle   = strdup(subtitle);
-   node->badge      = badge_id;
-   node->badge_name = badge_id ? NULL : strdup(badge);
+   node->badge      = badge_s;
+   node->badge_name = badge_s ? NULL : strdup(badge);
 
    mpsc_stack_push(&gfx_widget_achievement_pending, &node->link);
 }
@@ -625,6 +627,12 @@ static void gfx_widget_achievement_popup_iterate(void *user_data,
    mpsc_stack_node_t *link =
          mpsc_stack_reverse(mpsc_stack_drain(&gfx_widget_achievement_pending));
 
+   if (     retro_atomic_load_relaxed_int(
+               &gfx_widget_achievement_appearance_dirty)
+         && retro_atomic_cas_int(
+               &gfx_widget_achievement_appearance_dirty, 1, 0))
+      gfx_widgets_update_cheevos_appearance_state();
+
    while (link)
    {
       struct cheevo_popup_msg *node = (struct cheevo_popup_msg *)link;
@@ -645,6 +653,7 @@ static void gfx_widget_achievement_popup_iterate(void *user_data,
             free(node->title);
             free(node->subtitle);
             free(node->badge_name);
+            gfx_surface_free(node->badge);
             free(node);
             continue;
          }

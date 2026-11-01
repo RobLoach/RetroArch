@@ -23,7 +23,9 @@
 #include <retro_common_api.h>
 #include <retro_assert.h>
 #include <rthreads/rthreads.h>
+#include <rthreads/retro_eventcount.h>
 #include <retro_atomic.h>
+#include <queues/retro_triple_buffer.h>
 #include <lists/string_list.h>
 #include <string/stdstring.h>
 
@@ -34,6 +36,7 @@ extern "C" {
 #include <libavdevice/avdevice.h>
 #include <libavcodec/avcodec.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
 
 #ifdef __cplusplus
@@ -87,6 +90,7 @@ typedef struct ffmpeg_camera
    AVDictionary *options;
    AVPacket *packet;
    AVFrame *camera_frame;
+   int video_stream_index;
    unsigned requested_dims;          /* VIDEO_SCALE_PACK */
    uint8_t *target_planes[4];
    int target_linesizes[4];
@@ -98,18 +102,18 @@ typedef struct ffmpeg_camera
     * See https://ffmpeg.org/ffmpeg-devices.html#Input-Devices for details. */
    char url[512];
 
-   uint8_t *target_buffers[2];
+   /* Converted frames, from the poll thread to the core's poll: the
+    * thread fills one, the core reads the newest finished one, and
+    * neither waits for the other. */
+   uint8_t *target_buffers[3];
+   retro_triple_buffer_t frames;
    size_t target_buffer_length;
-   slock_t *target_buffer_lock;
    /* The poll thread's loop condition: the main thread sets it in
-    * stop(), the thread reads it every turn, and nothing else is
-    * held on either side - target_buffer_lock covers the frame, not
-    * this. It was a volatile bool, which is not a synchronisation
-    * primitive: it stops the compiler caching the load and orders
-    * nothing, so the thread has no guarantee of seeing what the main
-    * thread wrote before it. */
+    * stop(), the thread reads it every turn. */
    retro_atomic_int_t done;
-   uint8_t *active_buffer;
+   retro_atomic_int_t poll_epoch;
+   retro_eventcount_t read_retry;
+   bool read_retry_init;
 } ffmpeg_camera_t;
 
 static void ffmpeg_camera_free(void *data);
@@ -190,6 +194,23 @@ static void ffmpeg_camera_get_source_url(ffmpeg_camera_t *ffmpeg, const AVDevice
    strlcpy(ffmpeg->url, device->device_description, sizeof(ffmpeg->url));
 }
 
+static int ffmpeg_camera_interrupt(void *opaque)
+{
+   ffmpeg_camera_t *ffmpeg = (ffmpeg_camera_t*)opaque;
+   return retro_atomic_load_acquire_int(&ffmpeg->done);
+}
+
+static int ffmpeg_camera_open_input(ffmpeg_camera_t *ffmpeg, AVDictionary **options)
+{
+   ffmpeg->format_context = avformat_alloc_context();
+   if (!ffmpeg->format_context)
+      return AVERROR(ENOMEM);
+   ffmpeg->format_context->interrupt_callback.callback = ffmpeg_camera_interrupt;
+   ffmpeg->format_context->interrupt_callback.opaque = ffmpeg;
+   return avformat_open_input(&ffmpeg->format_context, ffmpeg->url,
+         ffmpeg->input_format, options);
+}
+
 static int ffmpeg_camera_open_device(ffmpeg_camera_t *ffmpeg)
 {
    AVDictionaryEntry *e  = NULL;
@@ -243,7 +264,7 @@ static int ffmpeg_camera_open_device(ffmpeg_camera_t *ffmpeg)
    }
 #endif
 
-   ret = avformat_open_input(&ffmpeg->format_context, ffmpeg->url, ffmpeg->input_format, &options);
+   ret = ffmpeg_camera_open_input(ffmpeg, &options);
    if (ret < 0)
    {
       char msg[AV_ERROR_MAX_STRING_SIZE];
@@ -260,7 +281,7 @@ static int ffmpeg_camera_open_device(ffmpeg_camera_t *ffmpeg)
          /* Try with just the basic framerate option */
          av_dict_set(&options, "framerate", "30", 0);
 
-         ret = avformat_open_input(&ffmpeg->format_context, ffmpeg->url, ffmpeg->input_format, &options);
+         ret = ffmpeg_camera_open_input(ffmpeg, &options);
          if (ret < 0)
          {
             av_make_error_string(msg, AV_ERROR_MAX_STRING_SIZE, ret);
@@ -268,7 +289,7 @@ static int ffmpeg_camera_open_device(ffmpeg_camera_t *ffmpeg)
             av_dict_free(&options);
 
             /* Last resort: try with no options at all */
-            ret = avformat_open_input(&ffmpeg->format_context, ffmpeg->url, ffmpeg->input_format, NULL);
+            ret = ffmpeg_camera_open_input(ffmpeg, NULL);
             if (ret < 0)
             {
                av_make_error_string(msg, AV_ERROR_MAX_STRING_SIZE, ret);
@@ -288,7 +309,7 @@ static int ffmpeg_camera_open_device(ffmpeg_camera_t *ffmpeg)
       /* If we're not already requesting the default format... */
       if (ffmpeg->options)
       {
-         ret = avformat_open_input(&ffmpeg->format_context, ffmpeg->url, ffmpeg->input_format, NULL);
+         ret = ffmpeg_camera_open_input(ffmpeg, NULL);
          if (ret < 0)
          {
             char msg[AV_ERROR_MAX_STRING_SIZE];
@@ -340,6 +361,12 @@ static void *ffmpeg_camera_init(const char *device, uint64_t caps, unsigned dims
    }
 
    ffmpeg->requested_dims   = dims;
+   ffmpeg->read_retry_init = retro_eventcount_init(&ffmpeg->read_retry);
+   if (!ffmpeg->read_retry_init)
+   {
+      RARCH_ERR("[FFMPEG] Failed to initialize capture wakeup.\n");
+      goto error;
+   }
 
    avdevice_register_all();
    RARCH_LOG("[FFMPEG] Initialized libavdevice.\n");
@@ -437,6 +464,7 @@ static void ffmpeg_camera_free(void *data)
    ffmpeg_camera_stop(ffmpeg);
 
    av_dict_free(&ffmpeg->options);
+   retro_eventcount_free(&ffmpeg->read_retry);
 
    free(ffmpeg);
 }
@@ -445,13 +473,13 @@ static void ffmpeg_camera_poll_thread(void *data);
 
 static bool ffmpeg_camera_start(void *data)
 {
-   const AVDictionaryEntry *prev = NULL;
    ffmpeg_camera_t *ffmpeg    = (ffmpeg_camera_t*)data;
    int ret                    = 0;
    AVStream *stream           = NULL;
    AVDictionary *options      = NULL;
    const AVDictionaryEntry *e = NULL;
    int target_buffer_length   = 0;
+   unsigned i;
 
    /* TODO: Check the actual format context, not just the pointer */
    if (ffmpeg->format_context)
@@ -460,6 +488,7 @@ static bool ffmpeg_camera_start(void *data)
       return true;
    }
 
+   retro_atomic_store_release_int(&ffmpeg->done, 0);
    ret = ffmpeg_camera_open_device(ffmpeg);
    if (ret < 0)
       goto error;
@@ -473,7 +502,7 @@ static bool ffmpeg_camera_start(void *data)
       goto error;
    }
 
-   ret = avformat_find_stream_info(ffmpeg->format_context, &options);
+   ret = avformat_find_stream_info(ffmpeg->format_context, NULL);
    if (ret < 0)
    {
       char msg[AV_ERROR_MAX_STRING_SIZE];
@@ -482,7 +511,7 @@ static bool ffmpeg_camera_start(void *data)
       goto error;
    }
 
-   while ((e = av_dict_get(options, "", prev, AV_DICT_IGNORE_SUFFIX)))
+   while ((e = av_dict_get(options, "", e, AV_DICT_IGNORE_SUFFIX)))
    {
       RARCH_WARN("[FFMPEG] Unrecognized option on video input device: %s=%s.\n", e->key, e->value);
    }
@@ -497,6 +526,7 @@ static bool ffmpeg_camera_start(void *data)
       goto error;
    }
    stream = ffmpeg->format_context->streams[ret];
+   ffmpeg->video_stream_index = stream->index;
 
    RARCH_LOG("[FFMPEG] Using video stream #%d with decoder \"%s\" (%s).\n", ret, ffmpeg->decoder->name, ffmpeg->decoder->long_name);
 
@@ -531,7 +561,7 @@ static bool ffmpeg_camera_start(void *data)
       goto error;
    }
 
-   ret = avcodec_open2(ffmpeg->decoder_context, ffmpeg->decoder, &options);
+   ret = avcodec_open2(ffmpeg->decoder_context, ffmpeg->decoder, NULL);
    if (ret < 0)
    {
       char msg[AV_ERROR_MAX_STRING_SIZE];
@@ -540,7 +570,7 @@ static bool ffmpeg_camera_start(void *data)
       goto error;
    }
 
-   while ((e = av_dict_get(options, "", prev, AV_DICT_IGNORE_SUFFIX)))
+   while ((e = av_dict_get(options, "", e, AV_DICT_IGNORE_SUFFIX)))
    {
       RARCH_WARN("[FFMPEG] Unrecognized option on video input device: %s=%s.\n", e->key, e->value);
    }
@@ -569,28 +599,30 @@ static bool ffmpeg_camera_start(void *data)
          ? VIDEO_SCALE_H(ffmpeg->requested_dims)
          : (unsigned)ffmpeg->decoder_context->height);
 
-   target_buffer_length = av_image_alloc(
-      ffmpeg->target_planes,
-      ffmpeg->target_linesizes,
+   target_buffer_length = av_image_get_buffer_size(
+      AV_PIX_FMT_BGRA,
       VIDEO_SCALE_W(ffmpeg->target_dims),
       VIDEO_SCALE_H(ffmpeg->target_dims),
-      AV_PIX_FMT_BGRA,
       1
    );
    if (target_buffer_length < 0)
    {
       char msg[AV_ERROR_MAX_STRING_SIZE];
       av_make_error_string(msg, AV_ERROR_MAX_STRING_SIZE, target_buffer_length);
-      RARCH_ERR("[FFMPEG] Failed to allocate target plane: %s.\n", msg);
+      RARCH_ERR("[FFMPEG] Failed to calculate target size: %s.\n", msg);
       goto error;
    }
 
-   /* target buffer aligned to 4 bytes because it's exposed to the core as a uint32_t[] */
+   /* Aligned and padded for swscale's direct output. */
    ffmpeg->target_buffer_length = target_buffer_length;
-   ffmpeg->target_buffers[0]    = (uint8_t*)memalign_alloc(4, target_buffer_length);
-   ffmpeg->target_buffers[1]    = (uint8_t*)memalign_alloc(4, target_buffer_length);
-   ffmpeg->active_buffer = ffmpeg->target_buffers[0];
-   if (!ffmpeg->target_buffers[0] || !ffmpeg->target_buffers[1])
+   ffmpeg->target_linesizes[0] = VIDEO_SCALE_W(ffmpeg->target_dims) * 4;
+   for (i = 0; i < 3; i++)
+      if ((ffmpeg->target_buffers[i] = (uint8_t*)memalign_alloc(32,
+                  (size_t)target_buffer_length + AV_INPUT_BUFFER_PADDING_SIZE)))
+         /* black until the first frame is in */
+         memset(ffmpeg->target_buffers[i], 0,
+               (size_t)target_buffer_length + AV_INPUT_BUFFER_PADDING_SIZE);
+   if (!ffmpeg->target_buffers[0] || !ffmpeg->target_buffers[1] || !ffmpeg->target_buffers[2])
    {
       RARCH_ERR("[FFMPEG] Failed to allocate target %d-byte buffer for %dx%d %s-formatted video data.\n",
          target_buffer_length,
@@ -624,12 +656,8 @@ static bool ffmpeg_camera_start(void *data)
       goto error;
    }
 
-   ffmpeg->target_buffer_lock = slock_new();
-   if (!ffmpeg->target_buffer_lock)
-   {
-      RARCH_ERR("[FFMPEG] Failed to create target buffer lock.\n");
-      goto error;
-   }
+   retro_triple_buffer_init(&ffmpeg->frames, ffmpeg->target_buffers[0],
+         ffmpeg->target_buffers[1], ffmpeg->target_buffers[2]);
 
    ffmpeg->poll_thread = sthread_create(ffmpeg_camera_poll_thread, ffmpeg);
    if (!ffmpeg->poll_thread)
@@ -640,6 +668,7 @@ static bool ffmpeg_camera_start(void *data)
 
    return true;
 error:
+   av_dict_free(&options);
    ffmpeg_camera_stop(ffmpeg);
 
    return false;
@@ -648,6 +677,7 @@ error:
 static void ffmpeg_camera_stop(void *data)
 {
    ffmpeg_camera_t *ffmpeg = (ffmpeg_camera_t*)data;
+   unsigned i;
 
    /* The thread first. It is the other user of the decoder - it sends
     * every packet it reads and receives every frame - and an
@@ -655,16 +685,18 @@ static void ffmpeg_camera_stop(void *data)
     * cannot happen while the thread is still in there. This used to
     * flush and then join. */
    retro_atomic_store_release_int(&ffmpeg->done, 1);
+   if (ffmpeg->read_retry_init)
+      retro_eventcount_notify(&ffmpeg->read_retry);
    sthread_join(ffmpeg->poll_thread); /* wait for the thread to finish, then free it */
 
    if (!ffmpeg->format_context)
    {
       RARCH_LOG("[FFMPEG] Camera %s is already stopped, no flush needed.\n", ffmpeg->url);
    }
-   else
+   else if (ffmpeg->decoder_context)
    {
       int ret = avcodec_send_packet(ffmpeg->decoder_context, NULL);
-      if (ret < 0)
+      if (ret < 0 && ret != AVERROR_EOF)
       {
          char msg[AV_ERROR_MAX_STRING_SIZE];
          av_make_error_string(msg, AV_ERROR_MAX_STRING_SIZE, ret);
@@ -675,28 +707,65 @@ static void ffmpeg_camera_stop(void *data)
    /* these functions are noops for NULL pointers */
    ffmpeg->poll_thread = NULL;
 
-   slock_free(ffmpeg->target_buffer_lock);
-   ffmpeg->target_buffer_lock = NULL;
-
    sws_freeContext(ffmpeg->scale_context);
    ffmpeg->scale_context = NULL;
 
-   memalign_free(ffmpeg->target_buffers[0]);
-   memalign_free(ffmpeg->target_buffers[1]);
-   ffmpeg->active_buffer = NULL;
-   ffmpeg->target_buffers[0] = NULL;
-   ffmpeg->target_buffers[1] = NULL;
+   for (i = 0; i < 3; i++)
+   {
+      memalign_free(ffmpeg->target_buffers[i]);
+      ffmpeg->target_buffers[i] = NULL;
+   }
+   /* a poll between stop and start is handed no frame */
+   retro_triple_buffer_init(&ffmpeg->frames, NULL, NULL, NULL);
+   memset(ffmpeg->target_planes, 0, sizeof(ffmpeg->target_planes));
    ffmpeg->target_buffer_length = 0;
    ffmpeg->target_dims = 0;
 
    av_frame_free(&ffmpeg->camera_frame);
-   av_freep(&ffmpeg->target_buffers[0]);
    memset(ffmpeg->target_linesizes, 0, sizeof(ffmpeg->target_linesizes));
 
    av_packet_free(&ffmpeg->packet);
    avcodec_free_context(&ffmpeg->decoder_context);
    avformat_close_input(&ffmpeg->format_context);
    RARCH_LOG("[FFMPEG] Closed video input device %s.\n", ffmpeg->url);
+}
+
+static int ffmpeg_camera_frame_colorspace(ffmpeg_camera_t *ffmpeg)
+{
+   const AVFrame *frame = ffmpeg->camera_frame;
+   const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(
+         (enum AVPixelFormat)frame->format);
+   enum AVColorSpace space = frame->colorspace;
+   enum AVColorRange range = frame->color_range;
+   const int *coefficients;
+   int full_range;
+
+   if (space == AVCOL_SPC_UNSPECIFIED)
+      space = ffmpeg->decoder_context->colorspace;
+   if (range == AVCOL_RANGE_UNSPECIFIED)
+      range = ffmpeg->decoder_context->color_range;
+   full_range = range == AVCOL_RANGE_JPEG;
+   if (range == AVCOL_RANGE_UNSPECIFIED)
+   {
+      /* Preserve the scaler's full-range defaults for RGB, gray and YUVJ. */
+      full_range = desc && ((desc->flags & AV_PIX_FMT_FLAG_RGB)
+            || desc->nb_components <= 2);
+      switch ((enum AVPixelFormat)frame->format)
+      {
+         case AV_PIX_FMT_YUVJ420P:
+         case AV_PIX_FMT_YUVJ422P:
+         case AV_PIX_FMT_YUVJ444P:
+         case AV_PIX_FMT_YUVJ440P:
+         case AV_PIX_FMT_YUVJ411P:
+            full_range = 1;
+            break;
+         default:
+            break;
+      }
+   }
+   coefficients = sws_getCoefficients(space);
+   return sws_setColorspaceDetails(ffmpeg->scale_context,
+         coefficients, full_range, coefficients, 1, 0, 1 << 16, 1 << 16);
 }
 
 static void ffmpeg_camera_poll_thread(void *data)
@@ -708,18 +777,48 @@ static void ffmpeg_camera_poll_thread(void *data)
 
    while (!retro_atomic_load_acquire_int(&ffmpeg->done))
    {
+      int poll_epoch = retro_atomic_load_acquire_int(&ffmpeg->poll_epoch);
       int ret = av_read_frame(ffmpeg->format_context, ffmpeg->packet);
+      bool draining = ret == AVERROR_EOF;
+      bool retry_packet = false;
+      bool progress = false;
+      if (ret == AVERROR_EXIT && retro_atomic_load_acquire_int(&ffmpeg->done))
+         break;
+      if (ret == AVERROR(EAGAIN) || ret == AVERROR(EINTR))
+      {
+         /* Retry unavailable input only when the frontend requests a frame. */
+         while (!retro_atomic_load_acquire_int(&ffmpeg->done)
+               && retro_atomic_load_acquire_int(&ffmpeg->poll_epoch) == poll_epoch)
+         {
+            int key = retro_eventcount_prepare_wait(&ffmpeg->read_retry);
+            if (retro_atomic_load_acquire_int(&ffmpeg->done)
+                  || retro_atomic_load_acquire_int(&ffmpeg->poll_epoch) != poll_epoch)
+               retro_eventcount_cancel_wait(&ffmpeg->read_retry);
+            else
+               retro_eventcount_commit_wait(&ffmpeg->read_retry, key);
+         }
+         continue;
+      }
       /* Read the raw data from the camera. If that fails... */
-      if (ret < 0)
+      if (ret < 0 && !draining)
       {
          char msg[AV_ERROR_MAX_STRING_SIZE];
          av_make_error_string(msg, AV_ERROR_MAX_STRING_SIZE, ret);
          RARCH_ERR("[FFMPEG] Failed to read frame: %s.\n", msg);
-         continue;
+         break;
       }
 
-      ret = avcodec_send_packet(ffmpeg->decoder_context, ffmpeg->packet);
-      if (ret < 0)
+      if (!draining && ffmpeg->packet->stream_index != ffmpeg->video_stream_index)
+         goto done_loop;
+
+retry_send:
+      retry_packet = false;
+      progress = false;
+      ret = avcodec_send_packet(ffmpeg->decoder_context,
+            draining ? NULL : ffmpeg->packet);
+      if (ret == AVERROR(EAGAIN))
+         retry_packet = true;
+      else if (ret < 0)
       { /* Send the raw data to the decoder. If that fails... */
          if (ret == AVERROR_EOF)
          {
@@ -735,12 +834,16 @@ static void ffmpeg_camera_poll_thread(void *data)
          goto done_loop;
       }
 
-      /* video streams consist of exactly one frame per packet */
+receive_frame:
+      if (retro_atomic_load_acquire_int(&ffmpeg->done))
+         goto done_loop;
       ret = avcodec_receive_frame(ffmpeg->decoder_context, ffmpeg->camera_frame);
 
       /* Send the decoded data to the camera frame. If that fails... */
       if (ret < 0)
       {
+         if (ret == AVERROR(EAGAIN) && retry_packet && progress)
+            goto retry_send;
          /* These error codes mean no new frame, but not necessarily a problem */
          if (!(ret == AVERROR_EOF || ret == AVERROR(EAGAIN)))
          {
@@ -751,10 +854,31 @@ static void ffmpeg_camera_poll_thread(void *data)
 
          goto done_loop;
       }
+      progress = true;
 
       retro_assert(ffmpeg->decoder->type == AVMEDIA_TYPE_VIDEO);
 
+      /* Decoded dimensions and format can change after opening the device. */
+      ffmpeg->scale_context = sws_getCachedContext(ffmpeg->scale_context,
+            ffmpeg->camera_frame->width, ffmpeg->camera_frame->height,
+            (enum AVPixelFormat)ffmpeg->camera_frame->format,
+            VIDEO_SCALE_W(ffmpeg->target_dims),
+            VIDEO_SCALE_H(ffmpeg->target_dims), AV_PIX_FMT_BGRA,
+            SWS_BILINEAR, NULL, NULL, NULL);
+      if (!ffmpeg->scale_context)
+      {
+         RARCH_ERR("[FFMPEG] Failed to configure frame scaler.\n");
+         goto done_loop;
+      }
+
+      if (ffmpeg_camera_frame_colorspace(ffmpeg) < 0)
+      {
+         RARCH_ERR("[FFMPEG] Failed to configure frame colorspace.\n");
+         goto done_loop;
+      }
+
       /* sws_scale_frame is tidier but isn't as widely available */
+      ffmpeg->target_planes[0] = (uint8_t*)retro_triple_buffer_back(&ffmpeg->frames);
       ret = sws_scale(
          ffmpeg->scale_context,
          (const uint8_t *const *)ffmpeg->camera_frame->data,
@@ -774,30 +898,16 @@ static void ffmpeg_camera_poll_thread(void *data)
          goto done_loop;
       }
 
-      slock_lock(ffmpeg->target_buffer_lock);
-      ret = av_image_copy_to_buffer(
-         ffmpeg->active_buffer,
-         ffmpeg->target_buffer_length,
-         (const uint8_t *const *)ffmpeg->target_planes,
-         ffmpeg->target_linesizes,
-         AV_PIX_FMT_BGRA,
-         VIDEO_SCALE_W(ffmpeg->target_dims),
-         VIDEO_SCALE_H(ffmpeg->target_dims),
-         1
-      );
-      if (ret >= 0)
-         ffmpeg->active_buffer = ffmpeg->active_buffer == ffmpeg->target_buffers[0] ? ffmpeg->target_buffers[1] : ffmpeg->target_buffers[0];
-      slock_unlock(ffmpeg->target_buffer_lock);
-      if (ret < 0)
-      {
-         char msg[AV_ERROR_MAX_STRING_SIZE];
-         av_make_error_string(msg, AV_ERROR_MAX_STRING_SIZE, ret);
-         RARCH_ERR("[FFMPEG] Failed to copy frame to buffer: %s.\n", msg);
-         goto done_loop;
-      }
-   done_loop:
-      /* must be called when we're done with it */
+      retro_triple_buffer_publish(&ffmpeg->frames);
       av_frame_unref(ffmpeg->camera_frame);
+      goto receive_frame;
+   done_loop:
+      /* av_read_frame() fills the packet afresh each turn and does not
+       * release what it held */
+      av_packet_unref(ffmpeg->packet);
+      av_frame_unref(ffmpeg->camera_frame);
+      if (draining)
+         break;
    }
 
    /* every operation in this function needs this packet */
@@ -806,9 +916,11 @@ static void ffmpeg_camera_poll_thread(void *data)
 
 static bool ffmpeg_camera_poll(void *data,
    retro_camera_frame_raw_framebuffer_t frame_raw_cb,
-   retro_camera_frame_opengl_texture_t frame_gl_cb)
+   retro_camera_frame_opengl_texture_t frame_gl_cb,
+   retro_camera_frame_planar_t frame_planar_cb)
 {
    ffmpeg_camera_t *ffmpeg = (ffmpeg_camera_t*)data;
+   (void)frame_planar_cb;
 
    if (!ffmpeg->format_context)
    {
@@ -822,11 +934,11 @@ static bool ffmpeg_camera_poll(void *data,
       return false;
    }
 
-   slock_lock(ffmpeg->target_buffer_lock);
-   frame_raw_cb((uint32_t*)ffmpeg->active_buffer,
+   retro_atomic_fetch_add_int(&ffmpeg->poll_epoch, 1);
+   retro_eventcount_notify(&ffmpeg->read_retry);
+   frame_raw_cb((uint32_t*)retro_triple_buffer_front(&ffmpeg->frames),
          VIDEO_SCALE_W(ffmpeg->target_dims), VIDEO_SCALE_H(ffmpeg->target_dims),
          ffmpeg->target_linesizes[0]);
-   slock_unlock(ffmpeg->target_buffer_lock);
 
    return true;
 }

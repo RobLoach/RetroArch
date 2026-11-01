@@ -307,7 +307,7 @@ struct raw_result
 {
    uint8_t            *strict;
    uint8_t            *accept;
-   struct string_list *headers;
+   char *headers;
    size_t              strict_len;
    size_t              accept_len;
    int                 status;
@@ -352,7 +352,7 @@ static void raw_transfer(const char *url, struct raw_result *out)
    out->err     = net_http_error(http) ? 1 : 0;
    out->strict  = net_http_data(http, &out->strict_len, false);
    out->accept  = net_http_data(http, &out->accept_len, true);
-   out->headers = net_http_headers_ex(http, true);
+   out->headers = net_http_headers_take(http, true);
    out->ran     = 1;
 
    net_http_delete(http);
@@ -366,8 +366,7 @@ static void raw_result_free(struct raw_result *r)
       free(r->accept);
    else if (r->strict)
       free(r->strict);
-   if (r->headers)
-      string_list_free(r->headers);
+   free(r->headers);
 }
 
 /* The contract every transport failure owes, wherever it died. */
@@ -396,7 +395,7 @@ static void assert_no_response(const char *label, struct raw_result *r)
          "%s: accept_err length %lu, expected 0", label,
          (unsigned long)r->accept_len);
    CHECK(!r->headers,
-         "%s: net_http_headers_ex(accept_err=true) returned a header "
+         "%s: net_http_headers_take(accept_err=true) returned a header "
          "list for a response that never arrived", label);
 }
 
@@ -559,6 +558,7 @@ struct cb_observation
    int   data_present;
    int   body_present;
    int   status;
+   char  err[128];
 };
 
 static struct cb_observation g_obs;
@@ -576,6 +576,8 @@ static void failure_cb(retro_task_t *task, void *task_data,
    g_obs.data_present = data != NULL;
    g_obs.body_present = (data && data->data);
    g_obs.status       = data ? data->status : 0;
+   if (err)
+      snprintf(g_obs.err, sizeof(g_obs.err), "%s", err);
    pthread_mutex_unlock(&g_cb_lock);
 }
 
@@ -651,6 +653,25 @@ static void test_task_unmuted(void)
    run_task_lane("unmuted", false);
 }
 
+static void test_task_http_status(void)
+{
+   char url[128];
+
+   printf("  task layer, 404\n");
+   if (!server_start(SRV_NOT_FOUND))
+   {
+      printf("    SKIP: could not start loopback server\n");
+      return;
+   }
+   snprintf(url, sizeof(url), "http://127.0.0.1:%d/x", g_port);
+   memset(&g_obs, 0, sizeof(g_obs));
+   task_push_http_transfer(url, true, NULL, failure_cb, NULL);
+   task_queue_wait(NULL, NULL);
+   CHECK(!strcmp(g_obs.err, "Download failed: HTTP 404."),
+         "404: callback error \"%s\"", g_obs.err);
+   server_stop();
+}
+
 /* ================================================================= */
 
 int main(void)
@@ -674,6 +695,7 @@ int main(void)
    task_queue_init(true, NULL);
    test_task_muted();
    test_task_unmuted();
+   test_task_http_status();
    task_queue_deinit();
 
    net_http_deinit();

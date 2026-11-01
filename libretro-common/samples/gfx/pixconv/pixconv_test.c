@@ -12,12 +12,163 @@
 #include <stdint.h>
 
 #include <gfx/scaler/pixconv.h>
+#include <gfx/scaler/scaler.h>
+#include <gfx/video_frame.h>
 
 #define ROW_W 263
 #define ROWS  ((0x10000 + ROW_W - 1) / ROW_W)
 #define NPIX  (ROW_W * ROWS)
 
 static unsigned failures;
+
+static void test_abgr_scaler(void)
+{
+   struct scaler_ctx ctx;
+   struct scaler_ctx *scaler = &ctx;
+   uint32_t input[27], output[30];
+   unsigned alpha, x, y;
+   memset(&ctx, 0, sizeof(ctx));
+   ctx.in_width = ctx.out_width = 7;
+   ctx.in_height = ctx.out_height = 3;
+   ctx.in_fmt = SCALER_FMT_ABGR8888;
+   ctx.out_fmt = SCALER_FMT_ARGB8888;
+   ctx.in_stride = 9 * sizeof(uint32_t);
+   ctx.out_stride = 10 * sizeof(uint32_t);
+   if (!scaler_ctx_gen_filter(&ctx))
+   {
+      printf("FAIL: ABGR to ARGB scaler unavailable\n");
+      failures++;
+      return;
+   }
+   for (alpha = 0; alpha < 256; alpha++)
+   {
+      memset(input, 0xa5, sizeof(input));
+      memset(output, 0x5a, sizeof(output));
+      for (y = 0; y < 3; y++)
+         for (x = 0; x < 7; x++)
+            input[y * 9 + x] = (alpha << 24) | ((x + 17) << 16)
+               | ((y + 33) << 8) | (x + y + 49);
+      scaler_ctx_scale_direct(scaler, output, input);
+      for (y = 0; y < 3; y++)
+         for (x = 0; x < 10; x++)
+         {
+            uint32_t expected = x < 7 ? (alpha << 24)
+               | ((x + y + 49) << 16) | ((y + 33) << 8) | (x + 17)
+               : 0x5a5a5a5au;
+            if (output[y * 10 + x] != expected)
+               failures++;
+         }
+   }
+   scaler_ctx_gen_reset(&ctx);
+}
+
+/* A same-format conversion at one size copies each row's own pixels:
+ * into a rectangle inside a larger image the rest of every row stays
+ * as it was, and the last row stops at the rectangle's edge rather than
+ * running a stride past it. For each pixel size. */
+static void test_copy_into_rect(void)
+{
+   static const enum scaler_pix_fmt fmts[3] = {
+      SCALER_FMT_RGB565, SCALER_FMT_BGR24, SCALER_FMT_ARGB8888
+   };
+   static const unsigned bpps[3] = { 2, 3, 4 };
+   unsigned f;
+   for (f = 0; f < 3; f++)
+   {
+      struct scaler_ctx ctx;
+      struct scaler_ctx *scaler = &ctx;
+      unsigned bpp = bpps[f];
+      /* 5x3 into an image 12x4 at column 2 */
+      uint8_t input[3 * 16 * 4];
+      uint8_t output[4 * 12 * 4];
+      unsigned x, y, b;
+      memset(&ctx, 0, sizeof(ctx));
+      ctx.in_width   = ctx.out_width  = 5;
+      ctx.in_height  = ctx.out_height = 3;
+      ctx.in_fmt     = ctx.out_fmt    = fmts[f];
+      ctx.in_stride  = (int)(16 * bpp);
+      ctx.out_stride = (int)(12 * bpp);
+      if (!scaler_ctx_gen_filter(&ctx))
+      {
+         printf("FAIL: same-format copy unavailable (%u bpp)\n", bpp);
+         failures++;
+         continue;
+      }
+      for (b = 0; b < sizeof(input); b++)
+         input[b] = (uint8_t)(b * 7 + 1);
+      memset(output, 0x5a, sizeof(output));
+      scaler_ctx_scale_direct(scaler, output + 2 * bpp, input);
+      for (y = 0; y < 4; y++)
+         for (x = 0; x < 12; x++)
+            for (b = 0; b < bpp; b++)
+            {
+               uint8_t got  = output[(y * 12 + x) * bpp + b];
+               uint8_t want = (y < 3 && x >= 2 && x < 7)
+                  ? input[y * 16 * bpp + (x - 2) * bpp + b] : 0x5a;
+               if (got != want)
+               {
+                  printf("FAIL: %u bpp copy at (%u,%u) byte %u: %02x, "
+                        "want %02x\n", bpp, x, y, b, got, want);
+                  failures++;
+                  x = 12;
+                  y = 4;
+                  break;
+               }
+            }
+      scaler_ctx_gen_reset(&ctx);
+   }
+}
+
+/* A converter made before its size is known, as the frontend makes its
+ * 0RGB1555 one: generated at 0 x 0, then given each frame's size and
+ * run. It must come up, own no intermediate frames (an unscaled
+ * conversion runs between the caller's buffers), and convert. */
+static void test_sizeless_converter(void)
+{
+   struct scaler_ctx ctx;
+   struct scaler_ctx *scaler = &ctx;
+   uint16_t input[5 * 3], output[6 * 3], expect;
+   unsigned x, y;
+   memset(&ctx, 0, sizeof(ctx));
+   ctx.scaler_type = SCALER_TYPE_POINT;
+   ctx.in_fmt      = SCALER_FMT_0RGB1555;
+   ctx.out_fmt     = SCALER_FMT_RGB565;
+   if (!scaler_ctx_gen_filter(&ctx))
+   {
+      printf("FAIL: 0RGB1555 to RGB565 converter refused at 0 x 0\n");
+      failures++;
+      return;
+   }
+   if (ctx.frame_arena || ctx.filter_arena)
+   {
+      printf("FAIL: an unscaled converter owns intermediate frames\n");
+      failures++;
+   }
+   for (y = 0; y < 3; y++)
+      for (x = 0; x < 5; x++)
+         input[y * 5 + x] = (uint16_t)(0x1234 + y * 977 + x * 131);
+   memset(output, 0x5a, sizeof(output));
+   ctx.in_width   = ctx.out_width  = 5;
+   ctx.in_height  = ctx.out_height = 3;
+   ctx.in_stride  = 5 * sizeof(uint16_t);
+   ctx.out_stride = 6 * sizeof(uint16_t);
+   scaler_ctx_scale_direct(scaler, output, input);
+   for (y = 0; y < 3; y++)
+      for (x = 0; x < 6; x++)
+      {
+         if (x < 5)
+            conv_0rgb1555_rgb565(&expect, &input[y * 5 + x], 1, 1, 2, 2);
+         else
+            expect = 0x5a5a;
+         if (output[y * 6 + x] != expect)
+         {
+            printf("FAIL: sizeless converter pixel %u,%u: %04x, not %04x\n",
+                  x, y, output[y * 6 + x], expect);
+            failures++;
+         }
+      }
+   scaler_ctx_gen_reset(&ctx);
+}
 
 static uint32_t x5(uint32_t v) { return (v << 3) | (v >> 2); }
 static uint32_t x6(uint32_t v) { return (v << 2) | (v >> 4); }
@@ -210,6 +361,35 @@ static void test_32_sources(uint32_t *in32, uint8_t *out24,
             ((c >> 16) & 0xff) | (c & 0xff00) | ((c & 0xff) << 16));
    }
 
+   /* A negative output stride flips the image: the last row's start
+    * as the destination, each row written above the one before. */
+   memset(out24, 0x5a, NPIX * 3);
+   conv_argb8888_bgr24(out24 + (size_t)(ROWS - 1) * ROW_W * 3, in32,
+         ROW_W, ROWS, -(int)(ROW_W * 3), ROW_W * 4);
+   for (i = 0; i < NPIX; i++)
+   {
+      unsigned       row = i / ROW_W;
+      unsigned       x   = i % ROW_W;
+      const uint8_t *p   = out24 + ((size_t)(ROWS - 1 - row) * ROW_W + x) * 3;
+      check("conv_argb8888_bgr24 bottom-up", i, (uint32_t)p[0]
+            | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16),
+            in32[i] & 0x00ffffffu);
+   }
+
+   memset(out24, 0x5a, NPIX * 3);
+   conv_abgr8888_bgr24(out24 + (size_t)(ROWS - 1) * ROW_W * 3, in32,
+         ROW_W, ROWS, -(int)(ROW_W * 3), ROW_W * 4);
+   for (i = 0; i < NPIX; i++)
+   {
+      unsigned       row = i / ROW_W;
+      unsigned       x   = i % ROW_W;
+      const uint8_t *p   = out24 + ((size_t)(ROWS - 1 - row) * ROW_W + x) * 3;
+      uint32_t       c   = in32[i];
+      check("conv_abgr8888_bgr24 bottom-up", i, (uint32_t)p[0]
+            | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16),
+            ((c >> 16) & 0xff) | (c & 0xff00) | ((c & 0xff) << 16));
+   }
+
    memset(out32, 0x5a, NPIX * sizeof(*out32));
    conv_argb8888_abgr8888(out32, in32, ROW_W, ROWS, ROW_W * 4, ROW_W * 4);
    for (i = 0; i < NPIX; i++)
@@ -299,7 +479,217 @@ static void test_32_to_16(uint32_t *in, uint16_t *out)
             | ((c >> 3) & 0x1f);
       check("conv_argb8888_0rgb1555", i, out[i], want);
    }
+
+   conv_argb8888_rgb565(out, in, ROW_W, ROWS, ROW_W * 2, ROW_W * 4);
+   for (i = 0; i < NPIX; i++)
+   {
+      uint32_t c = in[i];
+      check("conv_argb8888_rgb565", i, out[i],
+            (((c >> 19) & 0x1f) << 11) | (((c >> 10) & 0x3f) << 5)
+            | ((c >> 3) & 0x1f));
+   }
+   for (i = 0; i < NPIX; i++)
+      in[i] = ref_565_rgb(i & 0xffff) | ((i & 0xff) << 24);
+   conv_argb8888_rgb565(out, in, ROW_W, ROWS, ROW_W * 2, ROW_W * 4);
+   for (i = 0; i < NPIX; i++)
+      check("conv_argb8888_rgb565 roundtrip", i, out[i], i & 0xffff);
 }
+
+static void test_rgb565_inplace(const uint32_t *input)
+{
+   static uint32_t src[3 * 72], arena[3 * 72], expected[3 * 72];
+   uint8_t *buf = (uint8_t*)malloc(NPIX * 4 + 16);
+   unsigned i, width, padded, x, y;
+   if (!buf)
+   {
+      failures++;
+      return;
+   }
+   memcpy(buf, input, NPIX * 4);
+   memset(buf + NPIX * 4, 0x5a, 16);
+   conv_argb8888_rgb565(buf, buf, ROW_W, ROWS, ROW_W * 2, ROW_W * 4);
+   for (i = 0; i < NPIX; i++)
+   {
+      uint16_t got;
+      uint32_t c = input[i];
+      memcpy(&got, buf + i * 2, 2);
+      check("RGB565 in-place pixels", i, got,
+            (((c >> 19) & 31) << 11) | (((c >> 10) & 63) << 5) | ((c >> 3) & 31));
+   }
+   for (i = NPIX * 2; i < NPIX * 4 + 16; i++)
+      check("RGB565 in-place write bounds", i, buf[i],
+            i < NPIX * 4 ? ((const uint8_t*)input)[i] : 0x5a);
+   free(buf);
+
+   for (i = 0; i < 3 * 72; i++)
+      src[i] = i * 2654435761u;
+   for (width = 0; width <= 65; width++)
+      for (padded = 0; padded < 2; padded++)
+      {
+         unsigned ip = (width + 3) * 4;
+         unsigned op = padded ? ip : ip / 2;
+         memcpy(arena, src, sizeof(arena));
+         memcpy(expected, src, sizeof(expected));
+         for (y = 0; y < 3; y++)
+            for (x = 0; x < width; x++)
+            {
+               uint32_t c = src[y * (width + 3) + x];
+               uint16_t p = (uint16_t)((((c >> 19) & 31) << 11)
+                     | (((c >> 10) & 63) << 5) | ((c >> 3) & 31));
+               memcpy((uint8_t*)expected + y * op + x * 2, &p, 2);
+            }
+         conv_argb8888_rgb565(arena, arena, width, 3, op, ip);
+         if (memcmp(arena, expected, sizeof(arena)))
+         {
+            printf("FAIL RGB565 in-place width=%u padded=%u\n", width, padded);
+            failures++;
+         }
+      }
+}
+
+static void test_rgb565_widths(void)
+{
+   uint32_t in[3 * 40];
+   uint16_t out[3 * 40];
+   unsigned width, flip, y, x;
+   for (x = 0; x < 3 * 40; x++)
+      in[x] = x * 2654435761u;
+   for (width = 0; width <= 33; width++)
+      for (flip = 0; flip < 4; flip++)
+      {
+         unsigned stride = width + 3;
+         memset(out, 0x5a, sizeof(out));
+         conv_argb8888_rgb565(out + ((flip & 2) ? 2 * stride : 0),
+               in + ((flip & 1) ? 2 * stride : 0), width, 3,
+               (flip & 2) ? -(int)stride * 2 : (int)stride * 2,
+               (flip & 1) ? -(int)stride * 4 : (int)stride * 4);
+         for (y = 0; y < 3; y++)
+            for (x = 0; x < stride; x++)
+            {
+               uint32_t c = in[((flip & 1) ? 2 - y : y) * stride + x];
+               uint16_t want = x < width
+                  ? (uint16_t)((((c >> 19) & 0x1f) << 11)
+                        | (((c >> 10) & 0x3f) << 5) | ((c >> 3) & 0x1f))
+                  : 0x5a5a;
+               check("conv_argb8888_rgb565 widths/strides", y * stride + x,
+                     out[((flip & 2) ? 2 - y : y) * stride + x], want);
+            }
+      }
+}
+
+static void test_rgb565_scaling(enum scaler_pix_fmt fmt,
+      enum scaler_type type, unsigned ow, unsigned oh, unsigned flip)
+{
+   struct scaler_ctx ctx, ref_ctx;
+   unsigned bpp = fmt == SCALER_FMT_BGR24 ? 3
+      : (fmt == SCALER_FMT_RGB565 ? 2 : 4);
+   unsigned ip = 67 * bpp;
+   unsigned op = (ow + 5) * 2;
+   unsigned rp = (ow + 5) * 4;
+   unsigned x, y;
+   uint8_t *src = (uint8_t*)malloc((size_t)ip * 48);
+   uint32_t *canonical = (uint32_t*)malloc(64 * 48 * 4);
+   uint16_t *out = (uint16_t*)malloc((size_t)op * oh);
+   uint32_t *ref = (uint32_t*)malloc((size_t)rp * oh);
+   if (!src || !canonical || !out || !ref)
+   {
+      failures++;
+      goto free_buffers;
+   }
+   fill_random(src, (size_t)ip * 48, 0x5eed1234u);
+   if (fmt == SCALER_FMT_BGR24)
+      conv_bgr24_argb8888(canonical, src, 64, 48, 64 * 4, ip);
+   else if (fmt == SCALER_FMT_RGB565)
+      conv_rgb565_argb8888(canonical, src, 64, 48, 64 * 4, ip);
+   else
+      for (y = 0; y < 48; y++)
+         memcpy(canonical + y * 64, src + y * ip, 64 * 4);
+   memset(out, 0x5a, (size_t)op * oh);
+   memset(ref, 0x5a, (size_t)rp * oh);
+   memset(&ctx, 0, sizeof(ctx));
+   ctx.in_width = 64;
+   ctx.in_height = 48;
+   ctx.out_width = ow;
+   ctx.out_height = oh;
+   ctx.in_fmt = fmt;
+   ctx.out_fmt = SCALER_FMT_RGB565;
+   ctx.scaler_type = type;
+   ctx.in_stride = (flip & 1) ? -(int)ip : (int)ip;
+   ctx.out_stride = (flip & 2) ? -(int)op : (int)op;
+   ref_ctx = ctx;
+   ref_ctx.in_fmt = ref_ctx.out_fmt = SCALER_FMT_ARGB8888;
+   ref_ctx.in_stride = (flip & 1) ? -64 * 4 : 64 * 4;
+   ref_ctx.out_stride = (flip & 2) ? -(int)rp : (int)rp;
+   if (!scaler_ctx_gen_filter(&ctx) || !scaler_ctx_gen_filter(&ref_ctx))
+   {
+      printf("FAIL: RGB565 scaler fmt=%d mode=%d %ux%u\n",
+            (int)fmt, (int)type, ow, oh);
+      failures++;
+   }
+   else
+   {
+      scaler_ctx_scale(&ctx, (uint8_t*)out + ((flip & 2) ? (oh - 1) * op : 0),
+            src + ((flip & 1) ? 47 * ip : 0));
+      scaler_ctx_scale(&ref_ctx, (uint8_t*)ref + ((flip & 2) ? (oh - 1) * rp : 0),
+            canonical + ((flip & 1) ? 47 * 64 : 0));
+      for (y = 0; y < oh; y++)
+         for (x = 0; x < ow + 5; x++)
+         {
+            uint32_t c = ref[y * (ow + 5) + x];
+            uint16_t want = x < ow
+               ? (uint16_t)((((c >> 19) & 0x1f) << 11)
+                     | (((c >> 10) & 0x3f) << 5) | ((c >> 3) & 0x1f))
+               : 0x5a5a;
+            check("RGB565 scaler pixels/padding", y * (ow + 5) + x,
+                  out[y * (ow + 5) + x], want);
+         }
+   }
+   scaler_ctx_gen_reset(&ctx);
+   scaler_ctx_gen_reset(&ref_ctx);
+free_buffers:
+   free(src);
+   free(canonical);
+   free(out);
+   free(ref);
+}
+
+#ifdef PIXCONV_TEST_HOOKS
+/* pixconv.c's cap on its run-time tier (SSE2 = 0, AVX2 = 1, AVX-512 = 2);
+ * this build compiles the wide paths in. */
+extern int pixconv_tier_cap;
+
+/* Every row width up to 100 at odd strides, so each length of the wide
+ * paths' tails (the AVX-512 one is masked) meets every misalignment;
+ * the guard word after each row must survive. */
+static void test_16_to_32_widths(const char *name, conv_fn fn,
+      uint32_t (*ref)(uint32_t))
+{
+   static uint16_t in[3 * 112];
+   static uint32_t out[3 * 112];
+   int width, row, x;
+   for (x = 0; x < 3 * 112; x++)
+      in[x] = (uint16_t)(x * 2654435761u >> 7);
+   for (width = 1; width <= 100; width++)
+   {
+      int stride = width + 1 + (width & 3);
+      for (x = 0; x < 3 * 112; x++)
+         out[x] = 0x5a5a5a5au;
+      fn(out, in, width, 3, stride * 4, stride * 2);
+      for (row = 0; row < 3; row++)
+      {
+         for (x = 0; x < width; x++)
+            check(name, (unsigned)(row * stride + x),
+                  out[row * stride + x],
+                  0xff000000u | ref(in[row * stride + x]));
+         if (out[row * stride + width] != 0x5a5a5a5au)
+         {
+            printf("FAIL %s width %d: wrote past the row\n", name, width);
+            failures++;
+         }
+      }
+   }
+}
+#endif
 
 int main(void)
 {
@@ -321,6 +711,36 @@ int main(void)
       in16[i] = (uint16_t)i;
 
    test_helpers();
+   test_sizeless_converter();
+   test_abgr_scaler();
+   test_copy_into_rect();
+
+#ifdef PIXCONV_TEST_HOOKS
+   /* Each tier the CPU allows, widest last; the full runs below then
+    * use the widest. */
+   {
+      int cap;
+      for (cap = 0; cap <= 2; cap++)
+      {
+         pixconv_tier_cap = cap;
+         test_16_to_32("conv_rgb565_argb8888", conv_rgb565_argb8888,
+               in16, out32, ref_565_rgb, 0xff000000u);
+         test_16_to_32("conv_rgb565_abgr8888", conv_rgb565_abgr8888,
+               in16, out32, ref_565_bgr, 0xff000000u);
+         test_16_to_32_widths("conv_rgb565_argb8888", conv_rgb565_argb8888,
+               ref_565_rgb);
+         test_16_to_32_widths("conv_rgb565_abgr8888", conv_rgb565_abgr8888,
+               ref_565_bgr);
+         for (i = 0; i < NPIX; i++)
+            in16[i] = (uint16_t)(i & 0x7fff);
+         test_16_to_32("conv_0rgb1555_argb8888", conv_0rgb1555_argb8888,
+               in16, out32, ref_1555_rgb, 0xff000000u);
+         for (i = 0; i < NPIX; i++)
+            in16[i] = (uint16_t)i;
+      }
+      pixconv_tier_cap = -1;
+   }
+#endif
 
    test_16_to_32("conv_rgb565_argb8888", conv_rgb565_argb8888,
          in16, out32, ref_565_rgb, 0xff000000u);
@@ -345,6 +765,21 @@ int main(void)
          in16, out16, ref_1555_565);
 
    test_32_to_16(in32, out16);
+   test_rgb565_inplace(in32);
+   test_rgb565_widths();
+   {
+      static const enum scaler_pix_fmt fmts[] = {
+         SCALER_FMT_ARGB8888, SCALER_FMT_BGR24, SCALER_FMT_RGB565
+      };
+      static const unsigned sizes[][2] = { {64, 48}, {24, 16}, {80, 64} };
+      unsigned f, t, s, flip;
+      for (f = 0; f < 3; f++)
+         for (t = SCALER_TYPE_POINT; t <= SCALER_TYPE_SINC; t++)
+            for (s = 0; s < 3; s++)
+               for (flip = 0; flip < 4; flip++)
+                  test_rgb565_scaling(fmts[f], (enum scaler_type)t,
+                        sizes[s][0], sizes[s][1], flip);
+   }
    test_32_sources(in32, out24, out32);
    test_bgr24_sources(out24_src, out32, out16);
    test_yuyv(out24_src, out32);

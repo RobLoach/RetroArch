@@ -18,6 +18,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Vector runs over pixels that are only copied (see
+ * softfilter_copyrun.h) */
+#include "softfilter_copyrun.h"
+
 #ifdef RARCH_INTERNAL
 #define softfilter_get_implementation twoxsai_get_implementation
 #define softfilter_thread_data twoxsai_softfilter_thread_data
@@ -25,6 +29,8 @@
 #endif
 
 #define TWOXSAI_SCALE 2
+
+
 
 struct softfilter_thread_data
 {
@@ -36,7 +42,9 @@ struct softfilter_thread_data
    unsigned width;
    unsigned height;
    int first;
-   int last;
+   /* frame rows below this worker's slice, which its neighbourhood
+    * may read into */
+   unsigned below;
 };
 
 struct filter_data
@@ -44,6 +52,8 @@ struct filter_data
    unsigned threads;
    struct softfilter_thread_data *workers;
    unsigned in_fmt;
+   /* The copy runs for this machine (NULL without a vector tier) */
+   struct softfilter_copyrun copyrun;
 };
 
 static unsigned twoxsai_generic_input_fmts(void)
@@ -80,6 +90,7 @@ static void *twoxsai_generic_create(const struct softfilter_config *config,
     * so force single threaded operation... */
    filt->threads = threads;
    filt->in_fmt  = in_fmt;
+      softfilter_copy3_pick(&filt->copyrun, simd);
    return filt;
 }
 
@@ -211,8 +222,82 @@ static void twoxsai_generic_destroy(void *data)
          out += 2
 #endif
 
+#ifdef SOFTFILTER_HAVE_COPYRUN
+/* The full rule for pixel x of a row, with its neighbourhood clamped as
+ * in the plain loops below. One function per format, for both the
+ * vector and the one-by-one paths. */
+#define TWOXSAI_FULL_FN(NAME, TYPE, INTERP, INTERP2) \
+static SOFTFILTER_FORCE_INLINE void NAME(const TYPE *row, unsigned x, \
+      unsigned width, unsigned prevline, unsigned nextline, \
+      unsigned nextline2, TYPE *dst, unsigned dst_stride) \
+{ \
+   const TYPE *in  = row + x; \
+   TYPE *out       = dst + 2 * x; \
+   unsigned finish = width - x; \
+   int xm1         = (finish < width) ? -1 : 0; \
+   int xp1         = (finish > 1) ? 1 : 0; \
+   int xp2         = (finish > 2) ? 2 : (int)finish - 1; \
+   twoxsai_declare_variables(TYPE, in, prevline, nextline, nextline2, \
+         xm1, xp1, xp2); \
+   twoxsai_function(twoxsai_result, INTERP, INTERP2); \
+   (void)in; \
+   (void)out; \
+}
+
+TWOXSAI_FULL_FN(twoxsai_full_rgb565, uint16_t,
+      twoxsai_interpolate_rgb565, twoxsai_interpolate2_rgb565)
+TWOXSAI_FULL_FN(twoxsai_full_xrgb8888, uint32_t,
+      twoxsai_interpolate_xrgb8888, twoxsai_interpolate2_xrgb8888)
+
+/* The full rule over pixels x0 up to x1 of a row, in the plain loop's
+ * own form: what the vector path runs for stretches of pixels it does
+ * not try vectors on, so that detail costs what it did. */
+#define TWOXSAI_SEG_FN(NAME, TYPE, INTERP, INTERP2) \
+static void NAME(const TYPE *row, unsigned x0, unsigned x1, \
+      unsigned width, unsigned prevline, unsigned nextline, \
+      unsigned nextline2, TYPE *dst, unsigned dst_stride) \
+{ \
+   const TYPE *in = row + x0; \
+   TYPE *out      = dst + 2 * x0; \
+   unsigned finish; \
+   for (finish = width - x0; finish > width - x1; finish -= 1) \
+   { \
+      int xm1 = (finish < width) ? -1 : 0; \
+      int xp1 = (finish > 1) ? 1 : 0; \
+      int xp2 = (finish > 2) ? 2 : (int)finish - 1; \
+      twoxsai_declare_variables(TYPE, in, prevline, nextline, nextline2, \
+            xm1, xp1, xp2); \
+      twoxsai_function(twoxsai_result, INTERP, INTERP2); \
+   } \
+}
+
+TWOXSAI_SEG_FN(twoxsai_seg_rgb565, uint16_t,
+      twoxsai_interpolate_rgb565, twoxsai_interpolate2_rgb565)
+TWOXSAI_SEG_FN(twoxsai_seg_xrgb8888, uint32_t,
+      twoxsai_interpolate_xrgb8888, twoxsai_interpolate2_xrgb8888)
+
+static void twoxsai_vec_xrgb8888(const struct filter_data *filt,
+      unsigned width, unsigned height,
+      int first, unsigned below, const uint32_t *src,
+      unsigned src_stride, uint32_t *dst, unsigned dst_stride)
+{
+   SOFTFILTER_COPYRUN_ROWS(uint32_t, twoxsai_full_xrgb8888, twoxsai_seg_xrgb8888,
+         filt->copyrun.xrgb8888, filt->copyrun.lanes_xrgb8888)
+}
+
+static void twoxsai_vec_rgb565(const struct filter_data *filt,
+      unsigned width, unsigned height,
+      int first, unsigned below, const uint16_t *src,
+      unsigned src_stride, uint16_t *dst, unsigned dst_stride)
+{
+   SOFTFILTER_COPYRUN_ROWS(uint16_t, twoxsai_full_rgb565, twoxsai_seg_rgb565,
+         filt->copyrun.rgb565, filt->copyrun.lanes_rgb565)
+}
+#endif /* SOFTFILTER_HAVE_COPYRUN */
+
+#ifndef SOFTFILTER_HAVE_COPYRUN
 static void twoxsai_generic_xrgb8888(unsigned width, unsigned height,
-      int first, int last, uint32_t *src,
+      int first, unsigned below, uint32_t *src,
       unsigned src_stride, uint32_t *dst, unsigned dst_stride)
 {
    unsigned finish;
@@ -226,8 +311,13 @@ static void twoxsai_generic_xrgb8888(unsigned width, unsigned height,
        * a worker that does not start at the top can always read back
        * into the preceding slice. */
       unsigned prevline   = (first == 0 && row == 0) ? 0 : src_stride;
-      unsigned nextline   = (last && height <= 1) ? 0 : src_stride;
-      unsigned nextline2  = (last && height <= 2) ? nextline : 2 * src_stride;
+      /* Rows below this one in the frame: the rest of this slice and
+       * the slices after it. Clamped against the frame, not the
+       * slice: a worker whose slice ends a row above the bottom,
+       * behind a one-row slice, would otherwise read past it. */
+      unsigned rows_below = (height - 1) + below;
+      unsigned nextline   = rows_below >= 1 ? src_stride : 0;
+      unsigned nextline2  = rows_below >= 2 ? 2 * src_stride : nextline;
 
       for (finish = width; finish; finish -= 1)
       {
@@ -257,7 +347,7 @@ static void twoxsai_generic_xrgb8888(unsigned width, unsigned height,
 }
 
 static void twoxsai_generic_rgb565(unsigned width, unsigned height,
-      int first, int last, uint16_t *src,
+      int first, unsigned below, uint16_t *src,
       unsigned src_stride, uint16_t *dst, unsigned dst_stride)
 {
    unsigned finish;
@@ -271,8 +361,13 @@ static void twoxsai_generic_rgb565(unsigned width, unsigned height,
        * a worker that does not start at the top can always read back
        * into the preceding slice. */
       unsigned prevline   = (first == 0 && row == 0) ? 0 : src_stride;
-      unsigned nextline   = (last && height <= 1) ? 0 : src_stride;
-      unsigned nextline2  = (last && height <= 2) ? nextline : 2 * src_stride;
+      /* Rows below this one in the frame: the rest of this slice and
+       * the slices after it. Clamped against the frame, not the
+       * slice: a worker whose slice ends a row above the bottom,
+       * behind a one-row slice, would otherwise read past it. */
+      unsigned rows_below = (height - 1) + below;
+      unsigned nextline   = rows_below >= 1 ? src_stride : 0;
+      unsigned nextline2  = rows_below >= 2 ? 2 * src_stride : nextline;
 
       for (finish = width; finish; finish -= 1)
       {
@@ -301,6 +396,8 @@ static void twoxsai_generic_rgb565(unsigned width, unsigned height,
    }
 }
 
+#endif
+
 static void twoxsai_work_cb_rgb565(void *data, void *thread_data)
 {
    struct softfilter_thread_data *thr =
@@ -309,11 +406,19 @@ static void twoxsai_work_cb_rgb565(void *data, void *thread_data)
    uint16_t *output                   = (uint16_t*)thr->out_data;
    unsigned width                     = thr->width;
    unsigned height                    = thr->height;
-   twoxsai_generic_rgb565(width, height,
-         thr->first, thr->last, input,
+#ifdef SOFTFILTER_HAVE_COPYRUN
+   twoxsai_vec_rgb565((const struct filter_data*)data, width, height,
+         thr->first, thr->below, input,
          (unsigned)(thr->in_pitch / SOFTFILTER_BPP_RGB565),
          output,
          (unsigned)(thr->out_pitch / SOFTFILTER_BPP_RGB565));
+#else
+   twoxsai_generic_rgb565(width, height,
+         thr->first, thr->below, input,
+         (unsigned)(thr->in_pitch / SOFTFILTER_BPP_RGB565),
+         output,
+         (unsigned)(thr->out_pitch / SOFTFILTER_BPP_RGB565));
+#endif
 }
 
 static void twoxsai_work_cb_xrgb8888(void *data, void *thread_data)
@@ -324,11 +429,19 @@ static void twoxsai_work_cb_xrgb8888(void *data, void *thread_data)
    uint32_t *output                   = (uint32_t*)thr->out_data;
    unsigned width                     = thr->width;
    unsigned height                    = thr->height;
-   twoxsai_generic_xrgb8888(width, height,
-         thr->first, thr->last, input,
+#ifdef SOFTFILTER_HAVE_COPYRUN
+   twoxsai_vec_xrgb8888((const struct filter_data*)data, width, height,
+         thr->first, thr->below, input,
          (unsigned)(thr->in_pitch / SOFTFILTER_BPP_XRGB8888),
          output,
          (unsigned)(thr->out_pitch / SOFTFILTER_BPP_XRGB8888));
+#else
+   twoxsai_generic_xrgb8888(width, height,
+         thr->first, thr->below, input,
+         (unsigned)(thr->in_pitch / SOFTFILTER_BPP_XRGB8888),
+         output,
+         (unsigned)(thr->out_pitch / SOFTFILTER_BPP_XRGB8888));
+#endif
 }
 
 static void twoxsai_generic_packets(void *data,
@@ -360,7 +473,7 @@ static void twoxsai_generic_packets(void *data,
        * outside their given buffer.
        */
       thr->first             = y_start;
-      thr->last              = y_end == height;
+      thr->below             = height - y_end;
 
       if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
          packets[i].work     = twoxsai_work_cb_rgb565;

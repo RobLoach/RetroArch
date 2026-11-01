@@ -15,6 +15,8 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stddef.h>
+
 #include <compat/strl.h>
 #include <string/stdstring.h>
 #include <file/config_file.h>
@@ -30,6 +32,10 @@
 #include "config.h"
 #endif
 
+#include <retro_atomic.h>
+#include <queues/mpsc_stack.h>
+#include <queues/retro_retire.h>
+
 #ifdef HAVE_THREADS
 #include <rthreads/rthreads.h>
 #endif
@@ -41,11 +47,11 @@
 #include "file_path_special.h"
 
 #if defined(__WINRT__) || defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP
-#include "uwp/uwp_func.h"
+#include "os/uwp/uwp_func.h"
 #endif
 
 #if defined(ANDROID)
-#include "play_feature_delivery/play_feature_delivery.h"
+#include "os/android/play_feature_delivery.h"
 #ifdef __MACH__
 #include <TargetConditionals.h>
 #endif
@@ -105,22 +111,34 @@ static core_info_state_t core_info_st = {
    NULL
 };
 
-#ifdef HAVE_THREADS
-/* Guards publication and teardown of core_info_st.curr_list.
- *
- * The list is built, replaced and freed on the main thread, but it
- * is *read* from task threads - the content scanner calls
- * core_info_database_supports_content_path() and
- * core_info_database_match_archive_member() from
- * task_database_iterate_crc_lookup(). Closing content runs
- * driver_uninit() -> core_info_deinit_list() on the main thread with
- * no regard for a scan that is still in flight, so without this lock
- * a worker walks a list that has just been freed.
- *
- * Created once, before the first list is ever published, and
- * deliberately never destroyed: core_info_st is a process-lifetime
- * singleton and the lock has to outlive any task thread that could
- * still be sitting inside a reader. */
+/* A list and its link on the retired stack; freed as the list. */
+typedef struct
+{
+   core_info_list_t  list;
+   mpsc_stack_node_t retired;
+} core_info_list_box_t;
+
+#if defined(HAVE_THREADS) && defined(RETRO_RETIRE_LOCK_FREE)
+#define CORE_INFO_LOCK_FREE
+/* curr_list is the main thread's. Task threads - the content scanner's
+ * core_info_database_claim() - read the list published in
+ * core_info_shared between entering and leaving; a list taken down is
+ * freed once none is in, by the main thread or the last reader out
+ * (retro_retire.h). */
+static retro_atomic_ptr_t core_info_shared;
+static retro_retire_t     core_info_retire;
+
+static void core_info_list_free(core_info_list_t *core_info_list);
+
+static void core_info_retired_free(mpsc_stack_node_t *node)
+{
+   core_info_list_free(&((core_info_list_box_t*)((char*)node
+         - offsetof(core_info_list_box_t, retired)))->list);
+}
+#elif defined(HAVE_THREADS)
+/* Guards publication and teardown of curr_list against
+ * core_info_database_claim() on a task thread. Never destroyed: it
+ * has to outlive any task thread still inside a reader. */
 static slock_t *core_info_list_mutex = NULL;
 
 #define CORE_INFO_LIST_LOCK() \
@@ -134,7 +152,9 @@ static slock_t *core_info_list_mutex = NULL;
       if (core_info_list_mutex) \
          slock_unlock(core_info_list_mutex); \
    } while (0)
-#else
+#endif
+
+#ifndef CORE_INFO_LIST_LOCK
 #define CORE_INFO_LIST_LOCK()   do { } while (0)
 #define CORE_INFO_LIST_UNLOCK() do { } while (0)
 #endif
@@ -2031,6 +2051,13 @@ static size_t core_info_list_resolve_all_extensions(
             if (!tok_end)
                tok_end = end;
             tok_len = tok_end - p;
+            /* "/" is one core's directory support, not a file
+             * extension every core list consumer should match */
+            if (tok_len == 1 && *p == '/')
+            {
+               p = tok_end + 1;
+               continue;
+            }
             CORE_INFO_EXT_INSERT(p, tok_len, scr->slots,
                   scr->token_buf, token_pos, _TOKEN_BUF,
                   unique_count, total_chars, _HASH_MASK);
@@ -2041,6 +2068,11 @@ static size_t core_info_list_resolve_all_extensions(
 
 #ifdef HAVE_7ZIP
    CORE_INFO_EXT_INSERT("7z", STRLEN_CONST("7z"), scr->slots,
+         scr->token_buf, token_pos, _TOKEN_BUF, unique_count,
+         total_chars, _HASH_MASK);
+#endif
+#ifdef HAVE_RRAR
+   CORE_INFO_EXT_INSERT("rar", STRLEN_CONST("rar"), scr->slots,
          scr->token_buf, token_pos, _TOKEN_BUF, unique_count,
          total_chars, _HASH_MASK);
 #endif
@@ -2173,7 +2205,8 @@ static core_info_list_t *core_info_list_new(const char *path,
    if (!path_list)
       return NULL;
 
-   if (!(core_info_list = (core_info_list_t*)malloc(sizeof(*core_info_list))))
+   if (!(core_info_list = (core_info_list_t*)malloc(
+               sizeof(core_info_list_box_t))))
    {
       core_info_path_list_free(path_list);
       return NULL;
@@ -2501,12 +2534,16 @@ void core_info_deinit_list(void)
     * followed by core_info_free_current_core() (or a fresh
     * core_info_load() once a new list exists) before the entry can
     * be read again. */
-   /* Detach first, free afterwards. Once the NULL store has been
-    * published under the lock no reader can reach 'list' any more
-    * (they all re-read curr_list while holding the lock), so the
-    * free itself does not need to be inside the critical section -
-    * and keeping it out means a scan thread is never blocked for
-    * the length of a full list teardown. */
+#ifdef CORE_INFO_LOCK_FREE
+   if (!(list = p_coreinfo->curr_list))
+      return;
+   p_coreinfo->curr_list = NULL;
+   retro_atomic_store_release_ptr(&core_info_shared, NULL);
+   retro_retire(&core_info_retire, &((core_info_list_box_t*)list)->retired,
+         core_info_retired_free);
+#else
+   /* Detached under the lock, freed outside it: no reader reaches
+    * the list once the NULL is published. */
    CORE_INFO_LIST_LOCK();
    list                  = p_coreinfo->curr_list;
    p_coreinfo->curr_list = NULL;
@@ -2514,6 +2551,7 @@ void core_info_deinit_list(void)
 
    if (list)
       core_info_list_free(list);
+#endif
 }
 
 bool core_info_init_list(
@@ -2524,7 +2562,7 @@ bool core_info_init_list(
    core_info_state_t *p_coreinfo          = &core_info_st;
    core_info_list_t  *list                = NULL;
 
-#ifdef HAVE_THREADS
+#if defined(HAVE_THREADS) && !defined(CORE_INFO_LOCK_FREE)
    /* Main thread only, and always reached before the first list
     * becomes visible to a task thread. */
    if (!core_info_list_mutex)
@@ -2548,6 +2586,9 @@ bool core_info_init_list(
    CORE_INFO_LIST_LOCK();
    p_coreinfo->curr_list                  = list;
    CORE_INFO_LIST_UNLOCK();
+#ifdef CORE_INFO_LOCK_FREE
+   retro_atomic_store_release_ptr(&core_info_shared, list);
+#endif
 
    /* Remember the parameters of this scan so
     * core_info_list_is_current() can identify redundant rescans. */
@@ -2770,89 +2811,72 @@ bool core_info_core_file_id_is_equal(const char *core_path_a,
    return !strcmp(core_file_id_a, core_file_id_b);
 }
 
-bool core_info_database_match_archive_member(const char *database_path)
+struct string_list *core_info_database_claim(
+      const char *database_path, bool *match_archive_member)
 {
-   char      *database           = NULL;
-   const char      *new_path     = path_basename_nocompression(
+   union string_list_elem_attr attr;
+   struct string_list *exts      = NULL;
+   char *database                = NULL;
+   const char *new_path          = path_basename_nocompression(
          database_path);
-   core_info_state_t *p_coreinfo = NULL;
-   if (!new_path || !*new_path)
-      return false;
-   if (!(database = strdup(new_path)))
-      return false;
-   path_remove_extension(database);
-   p_coreinfo                     = &core_info_st;
+   const core_info_list_t *list  = NULL;
+#ifndef CORE_INFO_LOCK_FREE
+   core_info_state_t *p_coreinfo = &core_info_st;
+#endif
 
-   /* Task thread reader - see the comment in
-    * core_info_database_supports_content_path(). */
+   *match_archive_member         = false;
+   if (!new_path || !*new_path)
+      return NULL;
+   if (!(database = strdup(new_path)))
+      return NULL;
+   path_remove_extension(database);
+   attr.i                        = 0;
+
+   /* On a task thread, while the main thread may take the list down. */
+#ifdef CORE_INFO_LOCK_FREE
+   retro_retire_enter(&core_info_retire);
+   list = (const core_info_list_t*)
+         retro_atomic_load_acquire_ptr(&core_info_shared);
+#else
    CORE_INFO_LIST_LOCK();
-   if (p_coreinfo->curr_list)
+   list = p_coreinfo->curr_list;
+#endif
+   if (list)
    {
       size_t i;
 
-      for (i = 0; i < p_coreinfo->curr_list->count; i++)
+      for (i = 0; i < list->count; i++)
       {
-         const core_info_t *info = &p_coreinfo->curr_list->list[i];
-
-         if (!(info->flags & CORE_INFO_FLAG_DATABASE_MATCH_ARCHIVE_MEMBER))
-             continue;
-
-         if (!string_list_find_elem(info->databases_list, database))
-             continue;
-
-         CORE_INFO_LIST_UNLOCK();
-         free(database);
-         return true;
-      }
-   }
-   CORE_INFO_LIST_UNLOCK();
-
-   free(database);
-   return false;
-}
-
-bool core_info_database_supports_content_path(
-      const char *database_path, const char *path)
-{
-   char      *database           = NULL;
-   const char      *new_path     = path_basename(database_path);
-   core_info_state_t *p_coreinfo = NULL;
-   if (!new_path || !*new_path)
-      return false;
-   if (!(database = strdup(new_path)))
-      return false;
-   path_remove_extension(database);
-   p_coreinfo                    = &core_info_st;
-
-   /* Called from the content scanner on a task thread. The whole
-    * walk has to be under the lock, not just the NULL check - the
-    * main thread can free the list out from under us at any point
-    * between the two. */
-   CORE_INFO_LIST_LOCK();
-   if (p_coreinfo->curr_list)
-   {
-      size_t i;
-
-      for (i = 0; i < p_coreinfo->curr_list->count; i++)
-      {
-         const core_info_t *info = &p_coreinfo->curr_list->list[i];
-
-         if (!string_list_find_elem(info->supported_extensions_list,
-                  path_get_extension(path)))
-            continue;
+         size_t j;
+         const core_info_t *info = &list->list[i];
+         const struct string_list *core_exts =
+            info->supported_extensions_list;
 
          if (!string_list_find_elem(info->databases_list, database))
             continue;
 
-         CORE_INFO_LIST_UNLOCK();
-         free(database);
-         return true;
+         if (info->flags & CORE_INFO_FLAG_DATABASE_MATCH_ARCHIVE_MEMBER)
+            *match_archive_member = true;
+
+         if (!core_exts || !core_exts->size)
+            continue;
+
+         if (!exts && !(exts = string_list_new()))
+            break;
+
+         for (j = 0; j < core_exts->size; j++)
+            if (!string_list_find_elem(exts, core_exts->elems[j].data))
+               string_list_append(exts, core_exts->elems[j].data, attr);
       }
    }
+#ifdef CORE_INFO_LOCK_FREE
+   retro_retire_leave(&core_info_retire, core_info_retired_free);
+#else
    CORE_INFO_LIST_UNLOCK();
+#endif
 
    free(database);
-   return false;
+   return exts;
 }
 
 size_t core_info_list_get_display_name(

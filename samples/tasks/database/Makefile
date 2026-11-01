@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 compiler     := gcc
 extra_flags  :=
 use_neon     := 0
@@ -57,10 +59,10 @@ LDFLAGS += -O2
 endif
 
 ifeq (debug,$(build))
-extra_flags += -O0 -g
-CFLAGS += -O0 -g
-CXXFLAGS += -O0 -g
-LDFLAGS += -O0 -g
+extra_flags += -O0 -g1
+CFLAGS += -O0 -g1
+CXXFLAGS += -O0 -g1
+LDFLAGS += -O0 -g1
 endif
 
 ifneq ($(SANITIZER),)
@@ -135,13 +137,32 @@ SOURCES_C := \
 	$(LIBRETRO_COMM_DIR)/streams/trans_stream.c \
 	$(LIBRETRO_COMM_DIR)/streams/trans_stream_pipe.c \
 	$(LIBRETRO_COMM_DIR)/streams/trans_stream_deflate.c \
+	$(LIBRETRO_COMM_DIR)/streams/trans_stream_rzstd.c \
 	$(LIBRETRO_COMM_DIR)/encodings/encoding_deflate.c \
 	$(LIBRETRO_COMM_DIR)/file/archive_file_zlib.c \
+	$(LIBRETRO_COMM_DIR)/file/archive_file_zstd.c \
+	$(LIBRETRO_COMM_DIR)/file/archive_file_bz2.c \
+	$(LIBRETRO_COMM_DIR)/file/archive_file_rar.c \
+	$(LIBRETRO_COMM_DIR)/formats/rar/rrar_archive.c \
+	$(LIBRETRO_COMM_DIR)/formats/rar/rrar_ppmd7.c \
+	$(LIBRETRO_COMM_DIR)/encodings/encoding_rzstd.c \
+	$(LIBRETRO_COMM_DIR)/encodings/encoding_xxh64.c \
+	$(LIBRETRO_COMM_DIR)/encodings/encoding_rbzip2.c \
 	$(LIBRETRO_COMM_DIR)/string/stdstring.c \
 	$(LIBRETRO_COMM_DIR)/time/rtime.c \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 
-DEFINES    = -DHAVE_LIBRETRODB -DHAVE_COMPRESSION
+# For the scan test: a lost wake, the scan's or a reader's, shows as a
+# stall rather than a 100 ms watchdog, and the reader cutoff suits its
+# fixtures.  The objects are shared, so the index and budget tests and
+# database_task build task_database.c with these too.
+# SCAN_TEST_DEFINES= clears them, and SCAN_DEFINES adds more
+# (-DSCAN_READERS_MAX=0).
+SCAN_TEST_DEFINES ?= -DSCAN_READER_PARK_USEC=30000000 \
+	-DSCAN_READER_CUTOFF=65536
+DEFINES    = -DHAVE_LIBRETRODB -DHAVE_COMPRESSION \
+	-DHAVE_RZSTD -DHAVE_RBZIP2 -DHAVE_RRAR \
+	$(SCAN_TEST_DEFINES) $(SCAN_DEFINES)
 
 LIBS += -lm
 
@@ -161,7 +182,8 @@ endif
 
 ifeq ($(HAVE_THREADS), 1)
 SOURCES_C +=  \
-				 $(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
+				 $(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
+				 $(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c
 DEFINES += -DHAVE_THREADS
 
 ifeq (,$(findstring MSYS,$(uname -s)))
@@ -175,24 +197,29 @@ INCFLAGS  := $(INCDIRS)
 CFLAGS    += $(DEFINES)
 CXXFLAGS  += $(DEFINES)
 
-OBJECTS    = $(SOURCES_C:.c=.o)
+OBJECTS    = $(call sample_objs,$(SOURCES_C:.c=.o))
 
 # The index pairing test links the same objects but its own entry
 # point, so the scanner's main() is swapped out for it.
 SCAN_TEST         := database_scan_test
 SCAN_TEST_MAIN    := $(CORE_DIR)/samples/tasks/database/database_scan_test.o
-SCAN_TEST_OBJECTS  = $(filter-out $(CORE_DIR)/samples/tasks/database/main.o,$(OBJECTS)) \
+SCAN_TEST_OBJECTS  = $(filter-out $(call sample_objs,$(CORE_DIR)/samples/tasks/database/main.o),$(OBJECTS)) \
 	$(SCAN_TEST_MAIN)
 
 INDEX_TEST        := database_index_test
 INDEX_TEST_MAIN   := $(CORE_DIR)/samples/tasks/database/database_index_test.o
-INDEX_TEST_OBJECTS = $(filter-out $(CORE_DIR)/samples/tasks/database/main.o,$(OBJECTS)) \
+INDEX_TEST_OBJECTS = $(filter-out $(call sample_objs,$(CORE_DIR)/samples/tasks/database/main.o),$(OBJECTS)) \
 	$(INDEX_TEST_MAIN)
 
 BEGIN_TEST        := scan_begin_budget_test
 BEGIN_TEST_MAIN   := $(CORE_DIR)/samples/tasks/database/scan_begin_budget_test.o
-BEGIN_TEST_OBJECTS = $(filter-out $(CORE_DIR)/samples/tasks/database/main.o,$(OBJECTS)) \
+BEGIN_TEST_OBJECTS = $(filter-out $(call sample_objs,$(CORE_DIR)/samples/tasks/database/main.o),$(OBJECTS)) \
 	$(BEGIN_TEST_MAIN)
+
+CLAIM_TEST        := core_info_claim_test
+CLAIM_TEST_MAIN   := $(CORE_DIR)/samples/tasks/database/core_info_claim_test.o
+CLAIM_TEST_OBJECTS = $(filter-out $(call sample_objs,$(CORE_DIR)/samples/tasks/database/main.o),$(OBJECTS)) \
+	$(CLAIM_TEST_MAIN)
 
 OBJOUT   = -o
 LINKOUT  = -o
@@ -217,26 +244,72 @@ $(INDEX_TEST)$(EXE_EXT): $(INDEX_TEST_OBJECTS)
 	$(LD)  $(LINKOUT)$@ $(SHARED) $(INDEX_TEST_OBJECTS) $(LDFLAGS) $(LIBS)
 
 # Builds its own databases, so it needs nothing but a writable dir.
+# The wraps count the scanner's database walks and parks, slow chosen
+# reads and tell the scan's own from its readers', spend its window,
+# count and refuse reader pushes, count queue worker starts, count an
+# archive's stored-CRC and directory reads, fail a chosen serial's
+# query, order the database and content lists, count reader passes,
+# hold chosen lookups, count an archive's member hits a step and hold
+# a chosen index build in one step.
+SCAN_TEST_WRAPS := -Wl,--wrap=libretrodb_open -Wl,--wrap=task_queue_park \
+	-Wl,--wrap=intfstream_crc_step -Wl,--wrap=rm3u_is_m3u \
+	-Wl,--wrap=task_nbio_slice_open -Wl,--wrap=task_nbio_slice_close \
+	-Wl,--wrap=task_queue_push \
+	-Wl,--wrap=file_archive_get_file_crc32_and_size \
+	-Wl,--wrap=file_archive_parse_file_iterate \
+	-Wl,--wrap=bin_to_hex_alloc -Wl,--wrap=dir_list_new \
+	-Wl,--wrap=task_queue_is_threaded \
+	-Wl,--wrap=database_info_list_new_crc \
+	-Wl,--wrap=database_info_index_job_new \
+	-Wl,--wrap=database_info_dir_init_from_list \
+	-Wl,--wrap=database_info_index_job_step \
+	-Wl,--wrap=task_nbio_slice_within_budget \
+	-Wl,--wrap=fill_pathname_join_delim
+ifeq ($(HAVE_THREADS), 1)
+SCAN_TEST_WRAPS += -Wl,--wrap=sthread_create
+endif
 $(SCAN_TEST)$(EXE_EXT): $(SCAN_TEST_OBJECTS)
-	$(LD)  $(LINKOUT)$@ $(SHARED) $(SCAN_TEST_OBJECTS) $(LDFLAGS) $(LIBS)
+	$(LD)  $(LINKOUT)$@ $(SHARED) $(SCAN_TEST_OBJECTS) $(LDFLAGS) $(SCAN_TEST_WRAPS) $(LIBS)
 
 $(BEGIN_TEST)$(EXE_EXT): $(BEGIN_TEST_OBJECTS)
-	$(LD)  $(LINKOUT)$@ $(SHARED) $(BEGIN_TEST_OBJECTS) $(LDFLAGS) $(LIBS)
+	$(LD)  $(LINKOUT)$@ $(SHARED) $(BEGIN_TEST_OBJECTS) $(LDFLAGS) \
+	      -Wl,--wrap=task_nbio_slice_open $(LIBS)
 
-check: $(INDEX_TEST)$(EXE_EXT) $(SCAN_TEST)$(EXE_EXT) $(BEGIN_TEST)$(EXE_EXT)
+# Needs a writable dir for its core info.
+$(CLAIM_TEST)$(EXE_EXT): $(CLAIM_TEST_OBJECTS)
+	$(LD)  $(LINKOUT)$@ $(SHARED) $(CLAIM_TEST_OBJECTS) $(LDFLAGS) $(LIBS)
+
+# The scan test runs twice in one root: what a run leaves behind must
+# not decide the next one's checks. A sanitized build gives the budget
+# test its sanitizer's allowance, as CI does.
+check: $(INDEX_TEST)$(EXE_EXT) $(SCAN_TEST)$(EXE_EXT) $(BEGIN_TEST)$(EXE_EXT) \
+	$(CLAIM_TEST)$(EXE_EXT)
 	./$(INDEX_TEST)$(EXE_EXT)
-	./$(SCAN_TEST)$(EXE_EXT)
-	./$(BEGIN_TEST)$(EXE_EXT)
+	root=$$(mktemp -d) && ./$(CLAIM_TEST)$(EXE_EXT) "$$root"; r=$$?; \
+	   rm -rf "$$root"; exit $$r
+	root=$$(mktemp -d) && ./$(SCAN_TEST)$(EXE_EXT) "$$root" \
+	   && ./$(SCAN_TEST)$(EXE_EXT) "$$root"; r=$$?; rm -rf "$$root"; exit $$r
+	./$(BEGIN_TEST)$(EXE_EXT) $(if $(SANITIZER),sanitize)
 
 %.o: %.c
+	$(CC) $(INCFLAGS) $(CFLAGS) -c $(OBJOUT)$@ $<
+
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
 	$(CC) $(INCFLAGS) $(CFLAGS) -c $(OBJOUT)$@ $<
 
 %.o: %.cpp
 	$(CXX) $(INCFLAGS) $(CXXFLAGS) -c $(OBJOUT)$@ $<
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).cpp
+	@mkdir -p $(@D)
+	$(CXX) $(INCFLAGS) $(CXXFLAGS) -c $(OBJOUT)$@ $<
+
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(OBJECTS) $(INDEX_TEST_MAIN) $(SCAN_TEST_MAIN) $(BEGIN_TEST_MAIN) \
+	      $(CLAIM_TEST_MAIN) \
 	      $(TARGET)$(EXE_EXT) $(INDEX_TEST)$(EXE_EXT) $(SCAN_TEST)$(EXE_EXT) \
-	      $(BEGIN_TEST)$(EXE_EXT)
+	      $(BEGIN_TEST)$(EXE_EXT) $(CLAIM_TEST)$(EXE_EXT)
 
 .PHONY: all check clean

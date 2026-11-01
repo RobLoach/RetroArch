@@ -2,7 +2,7 @@
  * track with a NULL filename, then seek by sector and read.
  *
  * This is a different cdfs path from reading a file sequentially, and
- * cdfs_backend_compare.c does not reach it. cheevos_rvz aside, every
+ * cdfs_backend_compare.c does not reach it. RVZ aside, every
  * hash of a CHD goes through cdfs_seek_sector and cdfs_read_file in
  * rc_hash_handle_chd_read_sector, so a reader that agrees on file
  * contents and disagrees on seeks would still produce wrong hashes.
@@ -39,10 +39,18 @@ int main(int argc, char **argv)
    for (s = 0; s < nsec && s < 4096; s++)
    {
       uint32_t k = (s * 2654435761u) % (nsec < 4096 ? nsec : 4096);
-      size_t got;
+      int64_t got;
       cdfs_seek_sector(&f, k);
-      got = (size_t)cdfs_read_file(&f, buf, sizeof(buf));
-      if (got) { d = h64(buf, got, d); hit++; }
+      got = cdfs_read_file(&f, buf, sizeof(buf));
+      if (got != sizeof(buf))
+      {
+         printf("    sector read failed\n");
+         cdfs_close_file(&f);
+         cdfs_close_track(t);
+         return 1;
+      }
+      d = h64(buf, (size_t)got, d);
+      hit++;
    }
    printf("    %u scattered sector reads  %016llx\n", hit, d);
    cdfs_close_file(&f);

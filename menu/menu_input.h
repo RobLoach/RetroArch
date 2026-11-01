@@ -166,6 +166,11 @@ struct menu_bind_axis_state
    /* Locked axis state. If we configured an axis,
     * avoid having the same axis state trigger something again right away. */
    int16_t locked_axes[MENU_MAX_AXES];
+   /* Axes bound as a trigger at the start of their pull (see
+    * menu_bind_trigger.h), one bit each: the rest of the pull is not
+    * a second press, so they are passed over until they are back at
+    * rest. */
+   uint32_t trigger_pulled;
 };
 
 struct menu_bind_state
@@ -173,7 +178,11 @@ struct menu_bind_state
    rarch_timer_t timer_timeout;
    rarch_timer_t timer_hold;
 
-   struct retro_keybind *output;
+   /* The bind being captured: whose, and which. Where it is stored is
+    * asked for when it is read or written, and is not held here from
+    * one frame to the next. */
+   unsigned out_user;
+   unsigned out_id;
    struct retro_keybind buffer;
 
    struct menu_bind_state_port state[MAX_USERS];
@@ -206,8 +215,7 @@ enum menu_inp_ptr_hwst_flags
  * common to mouse + touchscreen hardware */
 typedef struct menu_input_pointer_hw_state
 {
-   int16_t x;
-   int16_t y;
+   uint32_t pos;       /* x, y: VIDEO_POS_PACK */
    uint16_t flags;
 } menu_input_pointer_hw_state_t;
 
@@ -221,10 +229,8 @@ typedef struct menu_input_pointer
    float y_accel;
    enum menu_pointer_type type;
    enum menu_input_pointer_press_direction press_direction;
-   int16_t x;
-   int16_t y;
-   int16_t dx;
-   int16_t dy;
+   uint32_t pos;       /* x, y: VIDEO_POS_PACK */
+   uint32_t delta;     /* dx, dy: VIDEO_POS_PACK */
    uint16_t flags;
 } menu_input_pointer_t;
 
@@ -253,13 +259,21 @@ enum menu_input_dialog_kb_text_type
    MENU_INPUT_DIALOG_KB_TYPE_NUMBER
 };
 
+enum menu_input_dialog_type
+{
+   MENU_INPUT_DIALOG_TYPE_NEW = 0,
+   MENU_INPUT_DIALOG_TYPE_EDIT
+};
+
 typedef struct menu_input_ctx_line
 {
    const char *label;
    const char *label_setting;
+   const char *initial_text;
    unsigned type;
    unsigned idx;
    enum menu_input_dialog_kb_text_type text_type;
+   enum menu_input_dialog_type dialog_type;
    input_keyboard_line_complete_t cb;
 } menu_input_ctx_line_t;
 
@@ -274,6 +288,13 @@ void menu_input_get_pointer_state(menu_input_pointer_t *copy_target);
 bool menu_input_dialog_start(menu_input_ctx_line_t *line);
 
 const char *menu_input_dialog_get_buffer(void);
+
+/* The label of the text entry that is open. */
+const char *menu_input_dialog_get_kb_label(void);
+
+/* Whether the menu is up, for code that has no other business with
+ * the menu's state. */
+bool menu_driver_alive(void);
 
 bool menu_input_dialog_start_search(void);
 

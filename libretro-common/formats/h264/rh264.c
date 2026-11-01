@@ -1,4 +1,54 @@
-/* rh264 -- clean-room H.264 decoder (amalgamated single TU).
+/* SPDX-License-Identifier: MIT AND BSD-2-Clause
+ * Original decoder code:
+ *
+ * Copyright (C) 2026 The RetroArch team
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ * OpenH264-derived CAVLC tables:
+ *
+ * Copyright (c) 2013, Cisco Systems
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice, this
+ *   list of conditions and the following disclaimer in the documentation and/or
+ *   other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* rh264 -- self-contained H.264 decoder.
  * Public API: include/formats/rh264.h. CAVLC tables extracted from libopenh264
  * encoder rodata (verified prefix-free), inverted into per-instance
  * lookup tables at open.
@@ -163,7 +213,11 @@ typedef struct { int valid,profile_idc,level_idc,log2_max_frame_num,pic_order_cn
    tb,   /* qpprime_y_zero_transform_bypass_flag */
    poc_type1_always_zero,
    poc1_offset_non_ref, poc1_offset_ttb, poc1_ncycle,
-   vui_num_reorder; /* VUI max_num_reorder_frames, -1 when not signalled */
+   vui_num_reorder, /* VUI max_num_reorder_frames, -1 when not signalled */
+   /* kept for a hardware decoder (rh264_hw_sps_t) */
+   sps_id, constraint_flags, gaps_allowed, frame_cropping,
+   crop_l, crop_r, crop_t, crop_b;
+   rh264_video_color_t color;
    int32_t poc1_offset_ref[256]; /* offset_for_ref_frame (POC type 1)  */
    int bit_depth_luma, bit_depth_chroma;   /* 8 outside the High profiles */
    int scaling_present;         /* seq_scaling_matrix_present_flag */
@@ -178,7 +232,8 @@ typedef struct { int valid,entropy_coding_mode_flag,pic_order_present_flag,pic_i
    deblocking_filter_control_present,constrained_intra_pred_flag,chroma_qp_index_offset,
    transform_8x8_mode,chroma_qp_index_offset2,
    scaling_present; uint8_t sl_present[12],sl_usedef[12],
-   sl4[6][16],sl8[6][64]; } rh264_pps;
+   sl4[6][16],sl8[6][64];
+   int pps_id, sps_id, pic_init_qs; } rh264_pps;
 static const uint8_t rh264_zigzag4[16]={0,1,4,8,5,2,3,6,9,12,13,10,7,11,14,15};
 /* Field-coded macroblocks scan their coefficients in a different order
  * (Tables 8-12 and 8-13): a line's vertical neighbour within a field is
@@ -239,7 +294,9 @@ static void rh264_read_scaling_list(rh264_bits *b, uint8_t *out, int size,
 }
 static int rh264_parse_sps(const uint8_t *rbsp,size_t size,rh264_sps *s){
    rh264_bits b; int i; memset(s,0,sizeof(*s)); rh264_bits_init(&b,rbsp,size);
-   s->profile_idc=rh264_un(&b,8); rh264_un(&b,8); s->level_idc=rh264_un(&b,8); rh264_ue(&b);
+   s->profile_idc=rh264_un(&b,8); s->constraint_flags=rh264_un(&b,8);
+   s->level_idc=rh264_un(&b,8);
+   { uint32_t id=rh264_ue(&b); if(id>31u) return 0; s->sps_id=(int)id; }
    s->chroma_format_idc=1; s->bit_depth_luma=8; s->bit_depth_chroma=8;
    if(s->profile_idc==100||s->profile_idc==110||s->profile_idc==122||s->profile_idc==244||
       s->profile_idc==44||s->profile_idc==83||s->profile_idc==86||s->profile_idc==118||
@@ -290,7 +347,7 @@ static int rh264_parse_sps(const uint8_t *rbsp,size_t size,rh264_sps *s){
       s->poc1_offset_non_ref=rh264_se(&b); s->poc1_offset_ttb=rh264_se(&b);
       n=rh264_ue(&b); if(n>255) return 0; s->poc1_ncycle=n;
       for(i=0;i<n;i++) s->poc1_offset_ref[i]=rh264_se(&b); }
-   s->max_num_ref_frames=rh264_ue(&b); rh264_u1(&b);
+   s->max_num_ref_frames=rh264_ue(&b); s->gaps_allowed=rh264_u1(&b);
    /* Geometry is attacker-controlled: rh264_ue can hand back anything up
     * to 0xFFFFFFFF, which lands in these ints as a huge or negative
     * count and reaches the frame allocator's size arithmetic.  Bound it
@@ -316,7 +373,8 @@ static int rh264_parse_sps(const uint8_t *rbsp,size_t size,rh264_sps *s){
       * Those macroblocks are still decoded and still take part in the
       * deblocking of the visible ones. */
      s->frame_mbs=mbh;
-     if(rh264_u1(&b)){ cl=rh264_ue(&b); cr=rh264_ue(&b);
+     if(rh264_u1(&b)){ s->frame_cropping=1;
+                       cl=rh264_ue(&b); cr=rh264_ue(&b);
                        ct=rh264_ue(&b); cb=rh264_ue(&b); }
      /* Cropping is attacker-controlled too: keep each offset inside the
       * coded picture so the products below cannot overflow, then require
@@ -339,17 +397,27 @@ static int rh264_parse_sps(const uint8_t *rbsp,size_t size,rh264_sps *s){
         * coded picture.  crop_x is always even (sw is 2) and crop_y is
         * even whenever chroma subsamples vertically (sh is then even),
         * so the chroma window origin below is exact. */
-       s->crop_x=sw*(int)cl; s->crop_y=sh*(int)ct; } }
+       s->crop_x=sw*(int)cl; s->crop_y=sh*(int)ct;
+       s->crop_l=(int)cl; s->crop_r=(int)cr;
+       s->crop_t=(int)ct; s->crop_b=(int)cb; } }
    /* VUI, walked only as far as max_num_reorder_frames (E.1.1), which bounds
     * how many decoded pictures can precede a given picture in output order
     * and so sets the display reorder delay. Absent VUI or an early end of
     * data leaves it unsignalled (-1). */
    s->vui_num_reorder=-1;
+   s->color.primaries=s->color.transfer=s->color.matrix=2;
    if(rh264_u1(&b)){
       if(rh264_u1(&b)){ if(rh264_un(&b,8)==255){ rh264_un(&b,16); rh264_un(&b,16); } }
       if(rh264_u1(&b)) rh264_u1(&b);
-      if(rh264_u1(&b)){ rh264_un(&b,3); rh264_u1(&b);
-         if(rh264_u1(&b)){ rh264_un(&b,8); rh264_un(&b,8); rh264_un(&b,8); } }
+      if(rh264_u1(&b)){ rh264_un(&b,3);
+         s->color.video_signal_present=1;
+         s->color.full_range=rh264_u1(&b);
+         if(rh264_u1(&b)){
+            if(b.bitpos>b.size*8||b.size*8-b.bitpos<24) return 0;
+            s->color.description_present=1;
+            s->color.primaries=rh264_un(&b,8);
+            s->color.transfer=rh264_un(&b,8);
+            s->color.matrix=rh264_un(&b,8); } }
       if(rh264_u1(&b)){ rh264_ue(&b); rh264_ue(&b); }
       if(rh264_u1(&b)){ rh264_un(&b,32); rh264_un(&b,32); rh264_u1(&b); }
       { int hrd0,hrd1,k;
@@ -377,7 +445,10 @@ static int rh264_parse_sps(const uint8_t *rbsp,size_t size,rh264_sps *s){
 static int rh264_parse_pps(const uint8_t *rbsp,size_t size,rh264_pps *p,
       int chroma444){
    rh264_bits b; memset(p,0,sizeof(*p)); rh264_bits_init(&b,rbsp,size);
-   rh264_ue(&b); rh264_ue(&b); p->entropy_coding_mode_flag=rh264_u1(&b);
+   { uint32_t pid=rh264_ue(&b), sid=rh264_ue(&b);
+     if(pid>255u||sid>31u) return 0;
+     p->pps_id=(int)pid; p->sps_id=(int)sid; }
+   p->entropy_coding_mode_flag=rh264_u1(&b);
    p->pic_order_present_flag=rh264_u1(&b);
    if(rh264_ue(&b)!=0) return 0;
    p->num_ref_idx_l0_default=rh264_ue(&b)+1;
@@ -392,7 +463,7 @@ static int rh264_parse_pps(const uint8_t *rbsp,size_t size,rh264_pps *p,
    { int32_t q = rh264_se(&b) + 26;
      if (q < -36 || q > 51) return 0;
      p->pic_init_qp = (int)q; }
-   rh264_se(&b); p->chroma_qp_index_offset=rh264_se(&b);
+   p->pic_init_qs=rh264_se(&b)+26; p->chroma_qp_index_offset=rh264_se(&b);
    p->deblocking_filter_control_present=rh264_u1(&b); p->constrained_intra_pred_flag=rh264_u1(&b);
    if(rh264_u1(&b)) return 0;   /* redundant_pic_cnt_present unsupported */
    p->chroma_qp_index_offset2=p->chroma_qp_index_offset;
@@ -520,7 +591,8 @@ typedef struct { int first_mb_in_slice,slice_type,pic_parameter_set_id,frame_num
    num_ref_idx_l0,num_ref_idx_l1,direct_spatial_mv_pred_flag,
    cabac_init_idc,frame_num_val,
    nmod,nmod1,wp_valid,luma_log2_denom,chroma_log2_denom,
-   slice_alpha_c0_offset,slice_beta_offset,n_mmco,idr_ltr;
+   slice_alpha_c0_offset,slice_beta_offset,n_mmco,idr_ltr,
+   poc_bottom_delta;
    uint8_t mmco_op[RH264_MAX_REFS*2];
    int32_t mmco_a[RH264_MAX_REFS*2], mmco_b[RH264_MAX_REFS*2];
    int8_t mod_op[34],mod_op1[34]; int32_t mod_val[34],mod_val1[34];
@@ -556,7 +628,8 @@ static int rh264_parse_slice_header_adv(rh264_bits *b,int nal_unit_type,int nal_
    if(sh->is_idr) sh->idr_pic_id=rh264_ue(b);
    if(sps->pic_order_cnt_type==0){
       sh->poc_lsb=rh264_un(b,sps->log2_max_poc_lsb);
-      if(pps->pic_order_present_flag&&!sh->field_pic_flag) rh264_se(b);
+      if(pps->pic_order_present_flag&&!sh->field_pic_flag)
+         sh->poc_bottom_delta=rh264_se(b);
    } else if(sps->pic_order_cnt_type==1&&!sps->poc_type1_always_zero){
       sh->poc1_delta0=rh264_se(b);
       if(pps->pic_order_present_flag) sh->poc1_delta1=rh264_se(b);
@@ -778,6 +851,19 @@ static void rh264_dequant4x4(int32_t *blk,int qP,int has_dc_sep,
    }
    if(has_dc_sep) blk[0]=dc;
 }
+/* The 4x4 scale of rh264_dequant4x4 as one multiplier a raster position
+ * for dequantising coefficient by coefficient, (c * qm[i] + 32) >> 6:
+ * the scale times 2^(per + 2).  For qP / 6 >= 4 that is c * scale <<
+ * (per - 4) exactly, the low six bits of the product being zero; below,
+ * (c * scale + 2^(3 - per)) >> (4 - per) with numerator and divisor
+ * scaled alike.  At most 7395 << 16, so it fits. */
+static void rh264_qmul4(int32_t *qm, int qP, const uint8_t *w)
+{
+   int i, per = qP / 6, rem = qP % 6;
+   for (i = 0; i < 16; i++)
+      qm[i] = (int32_t)((uint32_t)((int32_t)w[i]
+            * rh264_dequant4_v[rem][rh264_dequant4_idx[i]]) << (per + 2));
+}
 /* 8.5.12.2 residual inverse transform.  The row pass runs four rows in
  * parallel over transposed data, then one transpose feeds the identical
  * column pass, so the same butterfly serves both directions. */
@@ -841,7 +927,7 @@ static void rh264_ihadamard4x4(const int32_t *in,int32_t *out){
 
 
 /* ==================== rh264_cavlc_ct.h ==================== */
-/* CAVLC VLC tables extracted from openh264 WelsEnc forward tables,
+/* Base CAVLC tables adapted from OpenH264 encoder tables (BSD-2-Clause);
  * verified prefix-free. All {len,code}. */
 static const uint8_t rh264_ct_len[4][17][4]={
  {{1,0,0,0},{6,2,0,0},{8,6,3,0},{9,8,7,5},{10,9,8,6},{11,10,9,7},{13,11,10,8},{13,13,11,9},{13,13,13,10},{14,14,13,11},{14,14,14,13},{15,15,14,14},{15,15,15,14},{16,15,15,15},{16,16,16,15},{16,16,16,16},{16,16,16,16},},
@@ -951,6 +1037,7 @@ static const uint8_t rh264_rb_code[8][15]={
 };
 /* coeff_token for the chroma DC block of a 4:2:2 macroblock (nC == -2,
  * eight coefficients).  Indexed [trailing_ones][total_coeff]. */
+/* H.264 Tables 9-5 and 9-9: 4:2:2 chroma DC. */
 static const uint8_t rh264_ctc422_len[4][9]={
    { 1, 7, 7, 9, 9,10,11,12,13},
    { 0, 2, 7, 7, 9,10,11,12,12},
@@ -1647,9 +1734,6 @@ static RH264_INLINE void rh264_pcm_put(const rh264_frame *f, uint8_t *p,
  * samples; the frame's sample width (bsh: 0 for a byte per sample, 1
  * for two) picks the instantiation.  The 8-bit path is exactly what
  * the kernels were before the split. */
-#define RH264_K2(f, name, p1, p2, ...) \
-   do { if ((f)->bsh) rh264_##name##_16((uint16_t*)(p1), (uint16_t*)(p2), __VA_ARGS__, (f)->bd); \
-        else          rh264_##name##_8 ((p1), (p2), __VA_ARGS__, 8); } while (0)
 static void rh264_add_bypass(const rh264_frame *f, uint8_t *dst, int stride,
       const int32_t *r, int rstride, int w, int h)
 {  if (f->bsh) rh264_add_bypass_16((uint16_t*)dst, stride, r, rstride, w, h, f->bd);
@@ -1717,7 +1801,6 @@ static void rh264_avg_block(const rh264_frame *f, uint8_t *d, int dstride,
       const uint8_t *s0, int s0s, const uint8_t *s1, int s1s, int w, int h)
 {  if (f->bsh) rh264_avg_block_16((uint16_t*)d, dstride, (const uint16_t*)s0, s0s, (const uint16_t*)s1, s1s, w, h, f->bd);
    else        rh264_avg_block_8(d, dstride, s0, s0s, s1, s1s, w, h, 8); }
-#undef RH264_K2
 
 /* Macroblock position from its address.  With macroblock-adaptive
  * frame/field coding the picture is scanned in vertical PAIRS:
@@ -2881,6 +2964,28 @@ typedef struct rh264_mv_s {
    int8_t  dir;   /* motion came from direct derivation (CABAC contexts)    */
 } rh264_mv;
 
+/* Every cell of a slice's working grid to "not decoded yet" (ref -2, the
+ * other list and the picture ids -1, no motion).  A run of such cells is
+ * built once and block-copied over the grid, rather than storing every
+ * field of every cell. */
+#define RH264_MVG_RUN 16
+static void rh264_mvg_reset(rh264_mv *mvg, size_t n)
+{
+   rh264_mv run[RH264_MVG_RUN];
+   size_t i;
+   memset(&run[0], 0, sizeof(run[0]));
+   run[0].ref  = -2;
+   run[0].ref1 = -1;
+   run[0].pic  = -1;
+   run[0].pic1 = -1;
+   for (i = 1; i < RH264_MVG_RUN; i++)
+      run[i] = run[0];
+   for (i = 0; i + RH264_MVG_RUN <= n; i += RH264_MVG_RUN)
+      memcpy(mvg + i, run, sizeof(run));
+   if (i < n)
+      memcpy(mvg + i, run, (n - i) * sizeof(run[0]));
+}
+
 /* median of three */
 static RH264_INLINE int rh264_median3(int a, int b, int c)
 {
@@ -3033,10 +3138,10 @@ static void rh264_mv_fill_pic(rh264_mv *grid, int gw, int gx, int gy,
  * inter neighbour treated as unavailable (8.3.1.1). */
 static void rh264_inter_clear_i4mode(rh264_frame *f, int mbx, int mby)
 {
-   int gw = f->mbw * 4, cx, cy;
-   for (cy = 0; cy < 4; cy++)
-      for (cx = 0; cx < 4; cx++)
-         f->i4mode[(mby * 4 + cy) * gw + mbx * 4 + cx] = 0xff;
+   int gw = f->mbw * 4, cy;
+   uint8_t *m = f->i4mode + (size_t)(mby * 4) * gw + mbx * 4;
+   for (cy = 0; cy < 4; cy++, m += gw)
+      memset(m, 0xff, 4);
 }
 
 /* Motion-compensate a luma partition (bw x bh px at MB-relative bx,by) from
@@ -3179,21 +3284,29 @@ static void rh264_inter_pred_block(rh264_frame *f, const rh264_frame *ref,
  * 4:4:4. */
 static void rh264_nzc_clear(rh264_frame *f, int mbx, int mby)
 {
-   int cx, cy;
+   /* a row of the macroblock's flags at a time, through locals: the
+    * byte stores would otherwise have the frame's pointers reread */
+   uint8_t *u = f->nzC[0], *v = f->nzC[1];
+   int cy;
    if (f->c444)
    {
       int gw = f->mbw * 4;
-      for (cy = 0; cy < 4; cy++) for (cx = 0; cx < 4; cx++)
+      size_t o = (size_t)(mby*4)*gw + mbx*4;
+      for (cy = 0; cy < 4; cy++, o += gw)
       {
-         f->nzC[0][(mby*4+cy)*gw + mbx*4+cx] = 0;
-         f->nzC[1][(mby*4+cy)*gw + mbx*4+cx] = 0;
+         memset(u + o, 0, 4);
+         memset(v + o, 0, 4);
       }
-      return;
    }
-   for (cy = 0; cy < f->cmbh/4; cy++) for (cx = 0; cx < 2; cx++)
+   else
    {
-      f->nzC[0][(mby*(f->cmbh/4)+cy)*(f->mbw*2) + mbx*2+cx] = 0;
-      f->nzC[1][(mby*(f->cmbh/4)+cy)*(f->mbw*2) + mbx*2+cx] = 0;
+      int rows = f->cmbh/4, cw = f->mbw*2;
+      size_t o = (size_t)(mby*rows)*cw + mbx*2;
+      for (cy = 0; cy < rows; cy++, o += cw)
+      {
+         u[o] = 0; u[o + 1] = 0;
+         v[o] = 0; v[o + 1] = 0;
+      }
    }
 }
 
@@ -3309,9 +3422,13 @@ static void rh264_weight_pred(rh264_frame *f, const rh264_slice_hdr *sh,
    if (refidx < 0) refidx = 0;
    if (refidx > 31) refidx = 31;
    lw = sh->wp_lw[refidx]; lo = RH264_BDS(f, sh->wp_lo[refidx]); ld = sh->luma_log2_denom;
-   for (y = 0; y < bh; y++)
-      rh264_wp_row(f, f->Y + RH264_OFF(f, (oy+y)*f->ystride + ox), bw, lw,
-            ld >= 1 ? 1 << (ld-1) : 0, ld, lo);
+   /* a weight of 2^denom and no offset gives every sample back as it
+    * was (8-270, the rounding half below the divisor): the default for
+    * a reference without weights of its own, so skipped */
+   if (lw != (1 << ld) || lo)
+      for (y = 0; y < bh; y++)
+         rh264_wp_row(f, f->Y + RH264_OFF(f, (oy+y)*f->ystride + ox), bw, lw,
+               ld >= 1 ? 1 << (ld-1) : 0, ld, lo);
    {
       /* 4:2:2 keeps the luma height; 4:4:4 the luma width too */
       int c422 = (f->cmbh == 16) && !f->c444;
@@ -3325,6 +3442,8 @@ static void rh264_weight_pred(rh264_frame *f, const rh264_slice_hdr *sh,
       for (c = 0; c < 2; c++)
       {
          int cw = sh->wp_cw[refidx][c], co = RH264_BDS(f, sh->wp_co[refidx][c]);
+         if (cw == (1 << cd) && !co)
+            continue;
          for (y = 0; y < cbh; y++)
             rh264_wp_row(f, planes[c] + RH264_OFF(f, (coy+y)*f->cstride + cox), cbw, cw,
                   cd >= 1 ? 1 << (cd-1) : 0, cd, co);
@@ -3388,7 +3507,6 @@ static int rh264_decode_pslice(rh264_bits *b, const rh264_sps *sps,
    int gwmax = f->mbw * 4, ghmax = f->mbh * 4;
    int skip_run = -1;
    int prev_skipped = 0;
-   int gi;
    f->qp = sh->slice_qp;
    f->chroma_qp_offset = pps->chroma_qp_index_offset;
    f->constrained_intra = pps->constrained_intra_pred_flag;
@@ -3396,15 +3514,6 @@ static int rh264_decode_pslice(rh264_bits *b, const rh264_sps *sps,
    f->tb = sps->tb;
    if (nrefs < 1) return -1;
 
-   /* Reset the MV grid so cells belonging to not-yet-decoded macroblocks are
-    * treated as unavailable predictors (ref = -1). Decoded partitions fill
-    * their cells as the slice progresses, giving correct neighbour
-    * availability in raster order (6.4.11.7 / 8.4.1.3). */
-   for (gi = 0; gi < gwmax * ghmax; gi++)
-   {
-      rh264_mv z; memset(&z, 0, sizeof(z));
-      z.ref = -2; z.ref1 = -1; z.pic = -1; z.pic1 = -1; mvg[gi] = z;
-   }
 
    /* Reset the per-frame coefficient/mode context. These arrays feed the nC
     * neighbour derivation for CAVLC coeff_token (9.2.1) and the intra-4x4
@@ -3750,9 +3859,11 @@ static void rh264_weight_pred_list(rh264_frame *f, const rh264_slice_hdr *sh,
    tlw = list ? sh->wp1_lw : sh->wp_lw; tlo = list ? sh->wp1_lo : sh->wp_lo;
    tcw = list ? sh->wp1_cw : sh->wp_cw; tco = list ? sh->wp1_co : sh->wp_co;
    lw = tlw[refidx]; lo = RH264_BDS(f, tlo[refidx]); ld = sh->luma_log2_denom;
-   for (y = 0; y < bh; y++)
-      rh264_wp_row(f, f->Y + RH264_OFF(f, (oy+y)*f->ystride + ox), bw, lw,
-            ld >= 1 ? 1 << (ld-1) : 0, ld, lo);
+   /* identity weights skipped, as in rh264_weight_pred */
+   if (lw != (1 << ld) || lo)
+      for (y = 0; y < bh; y++)
+         rh264_wp_row(f, f->Y + RH264_OFF(f, (oy+y)*f->ystride + ox), bw, lw,
+               ld >= 1 ? 1 << (ld-1) : 0, ld, lo);
    {
       int c422 = (f->cmbh == 16) && !f->c444;
       int cox = f->c444 ? ox : (ox >> 1);
@@ -3765,6 +3876,8 @@ static void rh264_weight_pred_list(rh264_frame *f, const rh264_slice_hdr *sh,
       for (c = 0; c < 2; c++)
       {
          int cw = tcw[refidx][c], co = RH264_BDS(f, tco[refidx][c]);
+         if (cw == (1 << cd) && !co)
+            continue;
          for (y = 0; y < cbh; y++)
             rh264_wp_row(f, planes[c] + RH264_OFF(f, (coy+y)*f->cstride + cox), cbw, cw,
                   cd >= 1 ? 1 << (cd-1) : 0, cd, co);
@@ -3805,8 +3918,14 @@ static void rh264_b_pred_block(rh264_frame *f, const rh264_bctx *bc,
          /* offsets in the sample domain (<< (bd - 8)) before averaging */
          int o  = (RH264_BDS(f, sh->wp_lo[r0 > 31 ? 31 : r0])
                  + RH264_BDS(f, sh->wp1_lo[r1 > 31 ? 31 : r1]) + 1) >> 1;
-         rh264_bi_block(f, f->Y + RH264_OFF(f, oy*f->ystride + ox), f->ystride,
-               t0y, 16, t1y, 16, bw, bh, w0, w1, 1 << ld, ld + 1, o);
+         /* both weights 2^denom and no offset make it the plain
+          * rounded average, ((a + b) 2^denom + 2^denom) >> (denom + 1) */
+         if (w0 == (1 << ld) && w1 == w0 && !o)
+            rh264_avg_block(f, f->Y + RH264_OFF(f, oy*f->ystride + ox),
+                  f->ystride, t0y, 16, t1y, 16, bw, bh);
+         else
+            rh264_bi_block(f, f->Y + RH264_OFF(f, oy*f->ystride + ox), f->ystride,
+                  t0y, 16, t1y, 16, bw, bh, w0, w1, 1 << ld, ld + 1, o);
          for (c = 0; c < 2; c++)
          {
             const uint8_t *s0 = c ? t0v : t0u, *s1 = c ? t1v : t1u;
@@ -3815,22 +3934,40 @@ static void rh264_b_pred_block(rh264_frame *f, const rh264_bctx *bc,
             int cw1 = sh->wp1_cw[r1 > 31 ? 31 : r1][c];
             int co  = (RH264_BDS(f, sh->wp_co[r0 > 31 ? 31 : r0][c])
                      + RH264_BDS(f, sh->wp1_co[r1 > 31 ? 31 : r1][c]) + 1) >> 1;
-            rh264_bi_block(f, pl + RH264_OFF(f, coy*f->cstride + cox), f->cstride,
-                  s0, cs, s1, cs, cbw, cbh, cw0, cw1, 1 << cd, cd + 1, co);
+            if (cw0 == (1 << cd) && cw1 == cw0 && !co)
+               rh264_avg_block(f, pl + RH264_OFF(f, coy*f->cstride + cox),
+                     f->cstride, s0, cs, s1, cs, cbw, cbh);
+            else
+               rh264_bi_block(f, pl + RH264_OFF(f, coy*f->cstride + cox), f->cstride,
+                     s0, cs, s1, cs, cbw, cbh, cw0, cw1, 1 << cd, cd + 1, co);
          }
       }
       else if (bc->wbidc == 2)
       {
          int w1 = bc->w1imp[r0 > 31 ? 31 : r0][r1 > 31 ? 31 : r1];
          int w0 = 64 - w1;
-         rh264_bi_block(f, f->Y + RH264_OFF(f, oy*f->ystride + ox), f->ystride,
-               t0y, 16, t1y, 16, bw, bh, w0, w1, 32, 6, 0);
-         for (c = 0; c < 2; c++)
+         if (w1 == 32)
          {
-            const uint8_t *s0 = c ? t0v : t0u, *s1 = c ? t1v : t1u;
-            uint8_t *pl = c ? f->V : f->U;
-            rh264_bi_block(f, pl + RH264_OFF(f, coy*f->cstride + cox), f->cstride,
-                  s0, cs, s1, cs, cbw, cbh, w0, w1, 32, 6, 0);
+            /* equal implicit weights: (32a + 32b + 32) >> 6, the plain
+             * rounded average */
+            rh264_avg_block(f, f->Y + RH264_OFF(f, oy*f->ystride + ox),
+                  f->ystride, t0y, 16, t1y, 16, bw, bh);
+            for (c = 0; c < 2; c++)
+               rh264_avg_block(f, (c ? f->V : f->U)
+                     + RH264_OFF(f, coy*f->cstride + cox), f->cstride,
+                     c ? t0v : t0u, cs, c ? t1v : t1u, cs, cbw, cbh);
+         }
+         else
+         {
+            rh264_bi_block(f, f->Y + RH264_OFF(f, oy*f->ystride + ox), f->ystride,
+                  t0y, 16, t1y, 16, bw, bh, w0, w1, 32, 6, 0);
+            for (c = 0; c < 2; c++)
+            {
+               const uint8_t *s0 = c ? t0v : t0u, *s1 = c ? t1v : t1u;
+               uint8_t *pl = c ? f->V : f->U;
+               rh264_bi_block(f, pl + RH264_OFF(f, coy*f->cstride + cox), f->cstride,
+                     s0, cs, s1, cs, cbw, cbh, w0, w1, 32, 6, 0);
+            }
          }
       }
       else
@@ -3869,20 +4006,16 @@ static RH264_INLINE int rh264_rsd(int x)
  * within one quarter-pel. */
 static RH264_INLINE int rh264_col_zero(const rh264_mv *c)
 {
-   int ax, ay;
-   if (c->ref == 0)
-   {
-      ax = c->mvx < 0 ? -c->mvx : c->mvx;
-      ay = c->mvy < 0 ? -c->mvy : c->mvy;
-      if ((ax >> 1) == 0 && (ay >> 1) == 0) return 1;
-   }
-   if (c->ref == -1 && c->ref1 == 0)
-   {
-      ax = c->mvx1 < 0 ? -c->mvx1 : c->mvx1;
-      ay = c->mvy1 < 0 ? -c->mvy1 : c->mvy1;
-      if ((ax >> 1) == 0 && (ay >> 1) == 0) return 1;
-   }
-   return 0;
+   /* evaluated whole rather than branched on: whether the co-located
+    * block sits still is as unpredictable as the picture.  A component
+    * within one quarter-pel is v + 1 in 0..2 */
+   unsigned z0 = (unsigned)(c->ref == 0)
+               & (unsigned)((unsigned)(c->mvx + 1) <= 2u)
+               & (unsigned)((unsigned)(c->mvy + 1) <= 2u);
+   unsigned z1 = (unsigned)(c->ref == -1) & (unsigned)(c->ref1 == 0)
+               & (unsigned)((unsigned)(c->mvx1 + 1) <= 2u)
+               & (unsigned)((unsigned)(c->mvy1 + 1) <= 2u);
+   return (int)(z0 | z1);
 }
 
 /* Spatial direct per-macroblock preparation (8.4.1.2.2): the minimum
@@ -3930,6 +4063,13 @@ static int rh264_b_direct_cells(const rh264_bctx *bc, rh264_mv *mvg,
    int cgx = bc->d8x8 ? mbx * 4 + rh264_rsd(bx4) : gx;
    int cgy = bc->d8x8 ? mby * 4 + rh264_rsd(by4) : gy;
    const rh264_mv *col = &bc->colg[cgy * gwmax + cgx];
+   /* every cell of the run gets the same motion: one cell is built,
+    * both lists, and copied over the run */
+   rh264_mv z;
+   int x, y;
+   memset(&z, 0, sizeof(z));
+   z.dir = 1;   /* direct blocks are left out of their neighbours'
+                 * reference-index contexts (9.3.3.1.1.6) */
    if (bc->direct_spatial)
    {
       int r0 = l0r, r1 = l1r;
@@ -3943,18 +4083,28 @@ static int rh264_b_direct_cells(const rh264_bctx *bc, rh264_mv *mvg,
          if (r1 < 0) { m1x = m1y = 0; }
          else if (colzero && r1 == 0) { m1x = m1y = 0; }
       }
-      rh264_mv_fill_list(mvg, gwmax, gx, gy, n4, n4, 0, r0 < 0 ? 0 : m0x,
-            r0 < 0 ? 0 : m0y, r0, r0 < 0 ? -1 : bc->pid0[r0],
-            r0 < 0 ? 0 : bc->l0poc[r0], 0);
-      rh264_mv_fill_list(mvg, gwmax, gx, gy, n4, n4, 1, r1 < 0 ? 0 : m1x,
-            r1 < 0 ? 0 : m1y, r1, r1 < 0 ? -1 : bc->pid1[r1],
-            r1 < 0 ? 0 : bc->l1poc[r1], 0);
+      z.ref = (int8_t)r0;
+      if (r0 >= 0)
+      {
+         z.mvx = (int16_t)m0x; z.mvy = (int16_t)m0y;
+         z.pic = (int8_t)bc->pid0[r0]; z.refpoc0 = bc->l0poc[r0];
+      }
+      else
+         z.pic = -1;
+      z.ref1 = (int8_t)r1;
+      if (r1 >= 0)
+      {
+         z.mvx1 = (int16_t)m1x; z.mvy1 = (int16_t)m1y;
+         z.pic1 = (int8_t)bc->pid1[r1]; z.refpoc1 = bc->l1poc[r1];
+      }
+      else
+         z.pic1 = -1;
    }
    else
    {
       /* Temporal (8.4.1.2.3): scale the co-located vector by the POC
        * distances; its reference maps into the current list 0 by picture. */
-      int cref, cmx, cmy, cpoc;
+      int cref, cmx = 0, cmy = 0, cpoc = 0;
       if (col->ref >= 0)
       { cref = col->ref; cmx = col->mvx; cmy = col->mvy; cpoc = col->refpoc0; }
       else if (col->ref1 >= 0)
@@ -3962,10 +4112,8 @@ static int rh264_b_direct_cells(const rh264_bctx *bc, rh264_mv *mvg,
       else cref = -1;
       if (cref < 0)
       {
-         rh264_mv_fill_list(mvg, gwmax, gx, gy, n4, n4, 0, 0, 0, 0,
-               bc->pid0[0], bc->l0poc[0], 0);
-         rh264_mv_fill_list(mvg, gwmax, gx, gy, n4, n4, 1, 0, 0, 0,
-               bc->pid1[0], bc->l1poc[0], 0);
+         z.ref  = 0; z.pic  = (int8_t)bc->pid0[0]; z.refpoc0 = bc->l0poc[0];
+         z.ref1 = 0; z.pic1 = (int8_t)bc->pid1[0]; z.refpoc1 = bc->l1poc[0];
       }
       else
       {
@@ -3984,20 +4132,19 @@ static int rh264_b_direct_cells(const rh264_bctx *bc, rh264_mv *mvg,
             m1x = m0x - cmx;
             m1y = m0y - cmy;
          }
-         rh264_mv_fill_list(mvg, gwmax, gx, gy, n4, n4, 0, m0x, m0y, mi,
-               bc->pid0[mi], bc->l0poc[mi], 0);
-         rh264_mv_fill_list(mvg, gwmax, gx, gy, n4, n4, 1, m1x, m1y, 0,
-               bc->pid1[0], bc->l1poc[0], 0);
+         z.mvx  = (int16_t)m0x; z.mvy  = (int16_t)m0y;
+         z.ref  = (int8_t)mi;   z.pic  = (int8_t)bc->pid0[mi];
+         z.refpoc0 = bc->l0poc[mi];
+         z.mvx1 = (int16_t)m1x; z.mvy1 = (int16_t)m1y;
+         z.ref1 = 0;            z.pic1 = (int8_t)bc->pid1[0];
+         z.refpoc1 = bc->l1poc[0];
       }
    }
+   for (y = 0; y < n4; y++)
    {
-      /* Direct blocks are excluded from the reference-index context of
-       * their neighbours (9.3.3.1.1.6), so the cells remember how their
-       * motion came about. */
-      int x, y;
-      for (y = 0; y < n4; y++)
-         for (x = 0; x < n4; x++)
-            mvg[(gy + y) * gwmax + gx + x].dir = 1;
+      rh264_mv *row = &mvg[(gy + y) * gwmax + gx];
+      for (x = 0; x < n4; x++)
+         row[x] = z;
    }
    return 0;
 }
@@ -4012,8 +4159,12 @@ static int rh264_b_direct_cells(const rh264_bctx *bc, rh264_mv *mvg,
  * and it can run once over the widest uniform block. */
 static RH264_INLINE int rh264_mv_same(const rh264_mv *a, const rh264_mv *b)
 {
-   return a->ref  == b->ref  && a->mvx  == b->mvx  && a->mvy  == b->mvy
-       && a->ref1 == b->ref1 && a->mvx1 == b->mvx1 && a->mvy1 == b->mvy1;
+   /* the four vector components as one word, the comparisons combined
+    * without branching */
+   uint64_t va, vb;
+   memcpy(&va, &a->mvx, 8);
+   memcpy(&vb, &b->mvx, 8);
+   return (va == vb) & (a->ref == b->ref) & (a->ref1 == b->ref1);
 }
 
 /* Compensate one quadrant off its cells: one 8x8 block when the four
@@ -4168,7 +4319,6 @@ static int rh264_decode_bslice(rh264_bits *b, const rh264_sps *sps,
    int gwmax = f->mbw * 4, ghmax = f->mbh * 4;
    int prev_skipped = 0;
    int skip_run = -1;
-   int gi;
    f->qp = sh->slice_qp;
    f->chroma_qp_offset = pps->chroma_qp_index_offset;
    f->constrained_intra = pps->constrained_intra_pred_flag;
@@ -4176,11 +4326,6 @@ static int rh264_decode_bslice(rh264_bits *b, const rh264_sps *sps,
    f->tb = sps->tb;
    if (bc->n0 < 1 || bc->n1 < 1) return -1;
 
-   for (gi = 0; gi < gwmax * ghmax; gi++)
-   {
-      rh264_mv z; memset(&z, 0, sizeof(z));
-      z.ref = -2; z.ref1 = -1; z.pic = -1; z.pic1 = -1; mvg[gi] = z;
-   }
    /* the coefficient/mode context describes the picture being decoded; a
     * continuation slice must keep what earlier slices of it produced */
    if (sh->first_mb_in_slice == 0)
@@ -4484,6 +4629,19 @@ static RH264_INLINE int rh264_bs_mvcmp(int ax, int ay, int bx, int by,
         || ay - by >= mvlim || by - ay >= mvlim);
 }
 
+/* Whether two cells carry the same motion from the same pictures: both
+ * vectors and the four reference fields, compared as two words */
+static RH264_INLINE int rh264_mv_same_pic(const rh264_mv *a, const rh264_mv *b)
+{
+   uint64_t va, vb;
+   uint32_t ra, rb;
+   memcpy(&va, &a->mvx, 8);
+   memcpy(&vb, &b->mvx, 8);
+   memcpy(&ra, &a->ref, 4);
+   memcpy(&rb, &b->ref, 4);
+   return va == vb && ra == rb;
+}
+
 /* Boundary strength between blocks P and Q per 8.7.2.1, over both prediction
  * lists. Reference pictures compare as unordered pairs; a list a block does
  * not use carries picture -1 with a zero vector, so one-list blocks fall out
@@ -4504,10 +4662,7 @@ static RH264_INLINE int rh264_inter_bs(int mbedge, int intra_p, int intra_q,
     * every reference comparison matches and every vector difference is
     * zero.  Static and skipped regions make this the common case, so
     * take it before the general list-pairing walk below. */
-   if (mp->mvx == mq->mvx && mp->mvy == mq->mvy
-         && mp->mvx1 == mq->mvx1 && mp->mvy1 == mq->mvy1
-         && mp->ref == mq->ref && mp->ref1 == mq->ref1
-         && mp->pic == mq->pic && mp->pic1 == mq->pic1)
+   if (rh264_mv_same_pic(mp, mq))
       return 0;
    p0 = mp->ref  < 0 ? -1 : mp->pic;
    p1 = mp->ref1 < 0 ? -1 : mp->pic1;
@@ -4538,40 +4693,44 @@ static RH264_INLINE int rh264_inter_bs(int mbedge, int intra_p, int intra_q,
  * criterion is the covering 8x8 block's coded status, while nzL keeps the
  * per-4x4 total_coeff values that CAVLC nC prediction needs, so the four
  * cells of the 8x8 are OR-ed together here. */
-static RH264_INLINE int rh264_bs_nz(const rh264_frame *f, int gw,
-      int gx, int gy)
+/* tC0 by bS for one indexA (Table 8-17, scaled to the bit depth):
+ * entry 0 for an edge left alone, 1..3 for bS 1..3, and bS 4 reading
+ * the bS 3 column as the per-segment lookups did - so the strengths of
+ * an edge's segments map to their tC0 with one load each */
+static RH264_INLINE void rh264_tc_row(const rh264_frame *f, int idxA, int *t)
 {
-   /* Luma coefficients only, in every chroma format: bS 2 asks about
-    * the luma transform block containing the sample (8.7.2.1), and the
-    * one strength then serves the chroma planes too, in 4:4:4 as in
-    * 4:2:x (ffmpeg agrees; a derivation that also counted Cb / Cr
-    * coefficients did not). */
-   if (f->mbt8 && f->mbt8[(gy >> 2) * f->mbw + (gx >> 2)])
-   {
-      int bx = gx & ~1, by = gy & ~1;
-      return (f->nzL[by*gw + bx] | f->nzL[by*gw + bx + 1]
-            | f->nzL[(by+1)*gw + bx] | f->nzL[(by+1)*gw + bx + 1]) != 0;
-   }
-   return f->nzL[gy*gw + gx] != 0;
+   t[0] = 0;
+   t[1] = RH264_BDS(f, rh264_tc0[0][idxA]);
+   t[2] = RH264_BDS(f, rh264_tc0[1][idxA]);
+   t[3] = RH264_BDS(f, rh264_tc0[2][idxA]);
+   t[4] = t[3];
 }
-
-/* All sixteen coded flags of one macroblock as a bitmask, bit
- * gy_local*4 + gx_local, with the same 8x8 fold rh264_bs_nz applies.
- * The bS derivation probes each internal cell several times per
- * macroblock (as P and Q of its surrounding edges); gathering them
- * once turns every probe into a bit test and takes the mbt8 branch
- * per macroblock instead of per probe.  Neighbour cells still go
- * through rh264_bs_nz, which honours the neighbour's own transform
- * size. */
 static unsigned rh264_mb_nzmask(const rh264_frame *f, int gw,
       int mbx, int mby)
 {
    const uint8_t *nz = f->nzL + (size_t)(mby*4)*gw + mbx*4;
    unsigned m = 0;
-   int x, y;
-   for (y = 0; y < 4; y++)
-      for (x = 0; x < 4; x++)
-         if (nz[y*gw + x]) m |= 1u << (y*4 + x);
+#ifdef RH264_SSE2
+   {
+      /* the four rows of four flags side by side, one compare, one
+       * movemask: bit y*4 + x set for a zero flag */
+      uint32_t r0, r1, r2, r3;
+      memcpy(&r0, nz,          4);
+      memcpy(&r1, nz + gw,     4);
+      memcpy(&r2, nz + 2*gw,   4);
+      memcpy(&r3, nz + 3*gw,   4);
+      m = 0xffffu & ~(unsigned)_mm_movemask_epi8(_mm_cmpeq_epi8(
+            _mm_set_epi32((int)r3, (int)r2, (int)r1, (int)r0),
+            _mm_setzero_si128()));
+   }
+#else
+   {
+      int x, y;
+      for (y = 0; y < 4; y++)
+         for (x = 0; x < 4; x++)
+            m |= (unsigned)(nz[y*gw + x] != 0) << (y*4 + x);
+   }
+#endif
    if (m && f->mbt8 && f->mbt8[mby*f->mbw + mbx])
    {
       unsigned q = 0;
@@ -4588,8 +4747,9 @@ static void rh264_deblock_pslice(rh264_frame *f, const signed char *sidc,
       const signed char *soA, const signed char *soB, const rh264_mv *mvg,
       int mby0, int mby1)
 {
-   int mbx, mby, edge, seg, mba;
+   int mbx, mby, edge, seg, mba, nedge;
    int gw = f->mbw * 4, cgw = f->mbw * 2;
+   int nx = 0, ny = mby0;   /* raster position, without pair scanning */
 
    /* address order, not raster: see rh264_deblock */
    for (mba = mby0 * f->mbw; mba < mby1 * f->mbw; mba++)
@@ -4597,7 +4757,14 @@ static void rh264_deblock_pslice(rh264_frame *f, const signed char *sidc,
       int mbi, sl, oA, oB, qp, mbt8;
       unsigned curm, lftm, topm;
       rh264_tb_save *tbs = f->scr_tbsave;
-      rh264_mb_pos(mba, f->mbw, f->mbaff, &mbx, &mby);
+      if (f->mbaff)
+         rh264_mb_pos(mba, f->mbw, f->mbaff, &mbx, &mby);
+      else
+      {
+         /* the address steps through the rows: no division needed */
+         mbx = nx; mby = ny;
+         if (++nx == f->mbw) { nx = 0; ny++; }
+      }
       mbi = mby*f->mbw+mbx;
       sl  = f->mbslice ? f->mbslice[mbi] : 0;
       oA = soA[sl]; oB = soB[sl];
@@ -4607,23 +4774,38 @@ static void rh264_deblock_pslice(rh264_frame *f, const signed char *sidc,
       rh264_tb_deblock_save(f, mbx, mby, tbs);
       curm = rh264_mb_nzmask(f, gw, mbx, mby);
       lftm = topm = 0;
+      /* the neighbours' flags next to this macroblock: the right column
+       * of the left one's mask, the bottom row of the top one's (an 8x8
+       * transform's flag already covering its four cells there) */
       if (mbx > 0)
       {
-         if (rh264_bs_nz(f, gw, mbx*4 - 1, mby*4    )) lftm |= 1u;
-         if (rh264_bs_nz(f, gw, mbx*4 - 1, mby*4 + 1)) lftm |= 2u;
-         if (rh264_bs_nz(f, gw, mbx*4 - 1, mby*4 + 2)) lftm |= 4u;
-         if (rh264_bs_nz(f, gw, mbx*4 - 1, mby*4 + 3)) lftm |= 8u;
+         unsigned l = rh264_mb_nzmask(f, gw, mbx - 1, mby);
+         lftm = ((l >> 3) & 1u) | ((l >> 6) & 2u)
+              | ((l >> 9) & 4u) | ((l >> 12) & 8u);
       }
       if (mby > 0)
+         topm = rh264_mb_nzmask(f, gw, mbx, mby - 1) >> 12;
+
+      /* An inter macroblock with no luma coefficients and one motion
+       * over all sixteen cells has bS 0 on every internal edge, in
+       * every plane: only its outer edges are left to filter */
+      nedge = 4;
+      if (!curm)
       {
-         if (rh264_bs_nz(f, gw, mbx*4,     mby*4 - 1)) topm |= 1u;
-         if (rh264_bs_nz(f, gw, mbx*4 + 1, mby*4 - 1)) topm |= 2u;
-         if (rh264_bs_nz(f, gw, mbx*4 + 2, mby*4 - 1)) topm |= 4u;
-         if (rh264_bs_nz(f, gw, mbx*4 + 3, mby*4 - 1)) topm |= 8u;
+         /* within one macroblock a reference index names one picture,
+          * so comparing the picture ids as well changes nothing and
+          * lets the cells compare as two words */
+         const rh264_mv *c0 = &mvg[(mby*4)*gw + mbx*4];
+         int r, k, same = !c0->intra;
+         for (r = 0; same && r < 4; r++)
+            for (k = 0; same && k < 4; k++)
+               same = rh264_mv_same_pic(c0, &c0[r*gw + k]);
+         if (same)
+            nedge = 1;
       }
 
       /* ---- vertical edges (filter columns), left to right ---- */
-      for (edge = 0; edge < 4; edge++)
+      for (edge = 0; edge < nedge; edge++)
       {
          int x = mbx*16 + edge*4;
          int mbedge = (edge == 0);
@@ -4641,11 +4823,12 @@ static void rh264_deblock_pslice(rh264_frame *f, const signed char *sidc,
           * bS == 4) run as one eight-lane pass; the chroma walk below
           * reuses the gathered strengths. */
          {
-            int st[4];
+            int st[4], tcr[5];
             int a, be, idxA, idxB;
             idxA = qpavg+oA; if(idxA<0)idxA=0; else if(idxA>51)idxA=51;
             idxB = qpavg+oB; if(idxB<0)idxB=0; else if(idxB>51)idxB=51;
             a = RH264_BDS(f, rh264_alpha[idxA]); be = RH264_BDS(f, rh264_beta[idxB]);
+            rh264_tc_row(f, idxA, tcr);
             for (seg = 0; seg < 4; seg++)
             {
                int gy = mby*4 + seg;
@@ -4659,8 +4842,7 @@ static void rh264_deblock_pslice(rh264_frame *f, const signed char *sidc,
                vbS[seg] = rh264_inter_bs(mbedge, mp->intra, mq->intra,
                      nzp, nzq, mp, mq, 0,
                      f->field ? 2 : 4);
-               st[seg] = vbS[seg]
-                     ? RH264_BDS(f, rh264_tc0[vbS[seg]==4?2:vbS[seg]-1][idxA]) : 0;
+               st[seg] = tcr[vbS[seg]];
             }
             for (seg = 0; seg < 4; )
             {
@@ -4722,14 +4904,14 @@ static void rh264_deblock_pslice(rh264_frame *f, const signed char *sidc,
                int cqpavg = mbedge ?
                   ((qc + rh264_chroma_qp(qpp, coff, f->qpbd) + 1)>>1) : qc;
                int cA=cqpavg+oA, cB=cqpavg+oB, ca, cbe, si;
-               int ctv[4];
+               int ctv[4], ctr[5];
                uint8_t *pl = cc?f->V:f->U;
                if(cA<0)cA=0; else if(cA>51)cA=51;
                if(cB<0)cB=0; else if(cB>51)cB=51;
                ca=RH264_BDS(f, rh264_alpha[cA]); cbe=RH264_BDS(f, rh264_beta[cB]);
+               rh264_tc_row(f, cA, ctr);
                for (si = 0; si < 4; si++)
-                  ctv[si] = vbS[si]
-                        ? RH264_BDS(f, rh264_tc0[vbS[si]==4?2:vbS[si]-1][cA]) : 0;
+                  ctv[si] = ctr[vbS[si]];
                rh264_filter_chroma_edge_seg(f, 
                      pl + RH264_OFF(f, (size_t)(mby*f->cmbh)*f->cstride + cx),
                      1, f->cstride, f->cmbh, vbS, ctv, ca, cbe);
@@ -4739,7 +4921,7 @@ static void rh264_deblock_pslice(rh264_frame *f, const signed char *sidc,
       }
 
       /* ---- horizontal edges (filter rows), top to bottom ---- */
-      for (edge = 0; edge < 4; edge++)
+      for (edge = 0; edge < nedge; edge++)
       {
          int y = mby*16 + edge*4;
          int mbedge = (edge == 0);
@@ -4756,11 +4938,12 @@ static void rh264_deblock_pslice(rh264_frame *f, const signed char *sidc,
          qpp = mbedge ? ((f->mbqp ? (int)f->mbqp[(mby-1)*f->mbw+mbx] - f->qpbd : qp)) : qp;
          qpavg = mbedge ? ((qp + qpp + 1) >> 1) : qp;
          {
-            int st[4];
+            int st[4], tcr[5];
             int a, be, idxA, idxB;
             idxA = qpavg+oA; if(idxA<0)idxA=0; else if(idxA>51)idxA=51;
             idxB = qpavg+oB; if(idxB<0)idxB=0; else if(idxB>51)idxB=51;
             a = RH264_BDS(f, rh264_alpha[idxA]); be = RH264_BDS(f, rh264_beta[idxB]);
+            rh264_tc_row(f, idxA, tcr);
             for (seg = 0; seg < 4; seg++)
             {
                int gx = mbx*4 + seg;
@@ -4774,8 +4957,7 @@ static void rh264_deblock_pslice(rh264_frame *f, const signed char *sidc,
                hbS[seg] = rh264_inter_bs(mbedge, mp->intra, mq->intra,
                      nzp, nzq, mp, mq, f->field,
                      f->field ? 2 : 4);
-               st[seg] = hbS[seg]
-                     ? RH264_BDS(f, rh264_tc0[hbS[seg]==4?2:hbS[seg]-1][idxA]) : 0;
+               st[seg] = tcr[hbS[seg]];
             }
             for (seg = 0; do_luma && seg < 4; )
             {
@@ -4835,14 +5017,14 @@ static void rh264_deblock_pslice(rh264_frame *f, const signed char *sidc,
                int cqpavg = mbedge ?
                   ((qc + rh264_chroma_qp(qpp, coff, f->qpbd) + 1)>>1) : qc;
                int cA=cqpavg+oA, cB=cqpavg+oB, ca, cbe, si;
-               int ctv[4];
+               int ctv[4], ctr[5];
                uint8_t *pl = cc?f->V:f->U;
                if(cA<0)cA=0; else if(cA>51)cA=51;
                if(cB<0)cB=0; else if(cB>51)cB=51;
                ca=RH264_BDS(f, rh264_alpha[cA]); cbe=RH264_BDS(f, rh264_beta[cB]);
+               rh264_tc_row(f, cA, ctr);
                for (si = 0; si < 4; si++)
-                  ctv[si] = hbS[si]
-                        ? RH264_BDS(f, rh264_tc0[hbS[si]==4?2:hbS[si]-1][cA]) : 0;
+                  ctv[si] = ctr[hbS[si]];
                rh264_filter_chroma_edge_seg(f, 
                      pl + RH264_OFF(f, (size_t)cy*f->cstride + mbx*8),
                      f->cstride, 1, 8, hbS, ctv, ca, cbe);
@@ -4913,9 +5095,15 @@ static int rh264_decode_islice(rh264_bits *b,const rh264_sps *sps,
 typedef struct {
    const uint8_t *buf, *end;
    uint32_t range;      /* codIRange */
-   uint32_t offset;     /* codIOffset */
-   uint32_t bitbuf;
+   /* codIOffset << RH264_CB_S, with the next bitcnt bits of the
+    * stream right below it and zeros under those: a renormalisation
+    * shifts the whole word up and takes bitcnt down, and bytes come in
+    * a few at a time when it runs low.  codIOffset sitting at a fixed
+    * bit leaves the per-bin comparison against range a constant shift
+    * away */
+   uint64_t val;
    int      bitcnt;
+   int      pad;        /* zero bytes fed in past end */
    uint8_t  state[1024];   /* pStateIdx * 2 | valMPS, fused */
    /* fused state transitions, built from rh264_transIdxMPS/LPS at init:
     * next[0] follows an MPS, next[1] an LPS (including the valMPS flip
@@ -5002,6 +5190,10 @@ typedef struct rh264_pic_ctx
                                    slices (v->cur->mvg is per-slice scratch) */
    rh264_frame f;
    rh264_mv  *mvg;              /* motion-vector grid for the frame being decoded */
+   /* the grid the slice now decoding writes: pic_mvg itself for a
+    * picture's first slice, mvg (other slices' cells "not decoded")
+    * for any later one, which is then folded in */
+   rh264_mv  *slice_mvg;
    struct
    {
       rh264_slice_hdr sh;
@@ -5029,7 +5221,36 @@ typedef struct rh264_pic_ctx
 } rh264_pic_ctx;
 
 #define RH264_MAX_CTX 8
-#define RH264_RBSP_POOL 32   /* unescape buffers kept between slices */
+#define RH264_RBSP_POOL 32   /* slice jobs kept between slices */
+
+/* A pool slot holds a pointer or nothing, and changes hands in one
+ * atomic swap: whoever swaps a pointer out owns it. Without pointer
+ * atomics a decoder runs on the one thread that calls it and keeps no
+ * pool shared between decoders, so its slots are plain. */
+#ifdef RETRO_ATOMIC_HAS_PTR
+typedef retro_atomic_ptr_t rh264_slot_t;
+#define rh264_slot_peek(s)    retro_atomic_load_relaxed_ptr(s)
+#define rh264_slot_take(s)    retro_atomic_exchange_ptr((s), NULL)
+#define rh264_slot_fill(s, p) retro_atomic_cas_ptr((s), NULL, (p))
+#else
+typedef void *rh264_slot_t;
+#define rh264_slot_peek(s)    (*(s))
+
+static void *rh264_slot_take(rh264_slot_t *s)
+{
+   void *p = *s;
+   *s      = NULL;
+   return p;
+}
+
+static int rh264_slot_fill(rh264_slot_t *s, void *p)
+{
+   if (*s)
+      return 0;
+   *s = p;
+   return 1;
+}
+#endif
 
 struct rh264_video
 {
@@ -5052,19 +5273,13 @@ struct rh264_video
     * one because the queue was full. */
    int            st_posted, st_inflight_sum, st_inflight_max;
    int            st_join_waits, st_pop_held, st_pop_waits;
-   /* Unescape buffers between uses: a slice is unescaped into the
-    * context's buffer and the queued job takes that very buffer, the
-    * context drawing its next from here; a finished job returns it.
-    * So a slice is unescaped once, into memory that is neither made
-    * nor copied per slice. Workers return, the submitter draws: under
-    * the blocks lock when there is a pool. */
-   uint8_t       *rbsp_free[RH264_RBSP_POOL];
-   size_t         rbsp_free_cap[RH264_RBSP_POOL];
-   int            rbsp_free_n;
-   /* and the slice jobs themselves, two kilobytes each with a B
-    * context inside: a finished one is kept for the next slice */
-   rh264_slice_job *job_free;
-   int              job_free_n;
+   /* Finished slice jobs between uses, each with the buffer its slice
+    * was unescaped into: a slice is unescaped into the context's
+    * buffer, the queued job takes that very buffer, and the context
+    * takes the one a pooled job came back with. So a slice is
+    * unescaped once, into memory that is neither made nor copied per
+    * slice. */
+   rh264_slot_t   job_pool[RH264_RBSP_POOL];
 
    /* unescaped-RBSP scratch for slice NALs, grown on demand and kept
     * for the decoder's lifetime */
@@ -5101,6 +5316,8 @@ struct rh264_video
     * reference picture in decode order for type 0; fn_offset accumulates
     * frame_num wraps for type 2. */
    int        prev_poc_msb, prev_poc_lsb, prev_frame_num, fn_offset;
+   /* the frame's two field order counts, beside the one derived */
+   int        poc_top, poc_bot;
    /* Display-order output. Decoded pictures queue here and leave lowest
     * (generation, POC) first, so B pictures come out in presentation order.
     * gen counts IDRs: POC restarts at an IDR, and every picture after it in
@@ -5141,6 +5358,13 @@ struct rh264_video
     * parity, which cannot collide with it. */
    signed char fieldview_id[68];
    int        max_lt_idx;       /* MaxLongTermFrameIdx; -1 none allowed   */
+   /* The hardware path's state, while the pictures decode on a
+    * backend (rh264_video_set_hw); NULL otherwise. */
+   struct rh264_hw *hw;
+   int hw_readback;
+   int deferred_readback;
+   int output_ready;
+   int output_exported;
    /* Slice-decode workspace for rh264_video_decode_inter.  As locals
     * these were a 7.5 KiB frame -- the slice header, the B-list
     * context with its implicit-weight table, and the reference-list
@@ -5167,18 +5391,15 @@ struct rh264_video
  * megabytes: on an allocator that hands such sizes to the kernel and
  * back (the C runtime MinGW builds against does) that is a page-zeroed
  * mapping per picture, twice, where the swap it replaced allocated
- * nothing. A released block goes on a short free list keyed by its
- * length, and the next of that length comes from there. The list is
- * one per process and serialised nowhere: the decoders run one
- * picture at a time today, and frame threading will give each
- * decoder its own. */
+ * nothing. A released block is parked in one of a few slots, and the
+ * next of that length comes from there. The slots are one set per
+ * process, shared by every decoder and thread in it. */
 typedef struct rh264_block_hdr
 {
    /* Holders let go from pool threads and the sequence's thread alike:
     * the count is atomic, and the last one out frees or recycles. */
    retro_atomic_int_t refs;
    size_t len;
-   struct rh264_block_hdr *next_free;
    /* How many macroblock rows of the picture in this block are final:
     * reconstructed, filtered, and no longer written by anything -
     * counted up from the top by the row hook as each row's filtering
@@ -5234,50 +5455,55 @@ static void rh264_block_publish_rows(void *data, int rows)
 #endif
 }
 
+/* Planes released by any decoder wait here for the next of the same
+ * size. Shared between decoders on any threads, so only where the
+ * slots are atomic; elsewhere a block is simply freed. */
+#ifdef RETRO_ATOMIC_HAS_PTR
 #define RH264_FREE_BLOCKS 16
-
-static rh264_block_hdr *rh264_free_blocks;
-static int              rh264_free_blocks_n;
-
-#ifdef HAVE_THREADS
-static slock_t *rh264_blocks_lock;   /* the free list, once there is a pool */
+#else
+#define RH264_FREE_BLOCKS 0
 #endif
 
-static void rh264_blocks_lock_take(void)
+#if RH264_FREE_BLOCKS
+static rh264_slot_t rh264_free_blocks[RH264_FREE_BLOCKS];
+#endif
+
+static int rh264_block_park(rh264_block_hdr *b)
 {
-#ifdef HAVE_THREADS
-   if (rh264_blocks_lock)
-      slock_lock(rh264_blocks_lock);
+#if RH264_FREE_BLOCKS
+   int i;
+   for (i = 0; i < RH264_FREE_BLOCKS; i++)
+      if (    !rh264_slot_peek(&rh264_free_blocks[i])
+            && rh264_slot_fill(&rh264_free_blocks[i], b))
+         return 1;
+#else
+   (void)b;
 #endif
-}
-
-static void rh264_blocks_lock_drop(void)
-{
-#ifdef HAVE_THREADS
-   if (rh264_blocks_lock)
-      slock_unlock(rh264_blocks_lock);
-#endif
+   return 0;
 }
 
 static uint8_t *rh264_block_new(size_t len)
 {
-   rh264_block_hdr **pp, *b;
-   rh264_blocks_lock_take();
-   pp = &rh264_free_blocks;
-   while ((b = *pp))
+   rh264_block_hdr *b;
+#if RH264_FREE_BLOCKS
+   int i;
+   for (i = 0; i < RH264_FREE_BLOCKS; i++)
    {
+      if (     !rh264_slot_peek(&rh264_free_blocks[i])
+            || !(b = (rh264_block_hdr*)rh264_slot_take(&rh264_free_blocks[i])))
+         continue;
       if (b->len == len)
       {
-         *pp = b->next_free;
-         rh264_free_blocks_n--;
-         rh264_blocks_lock_drop();
          retro_atomic_store_release_int(&b->refs, 1);
          retro_atomic_store_release_int(&b->rows_final, 0);
          return (uint8_t*)b + RH264_PLANES_HDR;
       }
-      pp = &b->next_free;
+      /* another size: its length is only readable once owned */
+      if (     !rh264_slot_fill(&rh264_free_blocks[i], b)
+            && !rh264_block_park(b))
+         free(b);
    }
-   rh264_blocks_lock_drop();
+#endif
    b = (rh264_block_hdr*)calloc(len + RH264_PLANES_HDR, 1);
    if (!b)
       return NULL;
@@ -5294,17 +5520,33 @@ static void rh264_block_release(void *data)
    b = (rh264_block_hdr*)((uint8_t*)data - RH264_PLANES_HDR);
    if (retro_atomic_fetch_sub_int(&b->refs, 1) != 1)
       return;
-   rh264_blocks_lock_take();
-   if (rh264_free_blocks_n < RH264_FREE_BLOCKS)
+   if (!rh264_block_park(b))
+      free(b);
+}
+
+static rh264_slice_job *rh264_job_take(rh264_video *v)
+{
+   int i;
+   for (i = 0; i < RH264_RBSP_POOL; i++)
    {
-      b->next_free = rh264_free_blocks;
-      rh264_free_blocks = b;
-      rh264_free_blocks_n++;
-      rh264_blocks_lock_drop();
-      return;
+      void *j;
+      if (     rh264_slot_peek(&v->job_pool[i])
+            && (j = rh264_slot_take(&v->job_pool[i])))
+         return (rh264_slice_job*)j;
    }
-   rh264_blocks_lock_drop();
-   free(b);
+   return NULL;
+}
+
+/* Back to the pool with its buffer, or freed when the pool is full. */
+static void rh264_job_park(rh264_video *v, rh264_slice_job *j)
+{
+   int i;
+   for (i = 0; i < RH264_RBSP_POOL; i++)
+      if (    !rh264_slot_peek(&v->job_pool[i])
+            && rh264_slot_fill(&v->job_pool[i], j))
+         return;
+   free(j->rbsp);
+   free(j);
 }
 
 static uint8_t *rh264_planes_new(size_t len)
@@ -5640,6 +5882,7 @@ static int rh264_ctx_prepare(rh264_video *v, rh264_pic_ctx *c)
             return -1;
          rh264_mvg_release(c->pic_mvg);
          c->pic_mvg = fresh;
+         c->slice_mvg = NULL;
       }
       return rh264_frame_own_planes(&c->f, c->f.plane_len);
    }
@@ -5652,6 +5895,7 @@ static int rh264_ctx_prepare(rh264_video *v, rh264_pic_ctx *c)
                  : (v->sps.frame_height + 15) / 16) * 4;
       c->mvg = (rh264_mv*)calloc((size_t)gwmax * ghmax, sizeof(rh264_mv));
       c->pic_mvg = rh264_mvg_new((size_t)gwmax * ghmax);
+      c->slice_mvg = NULL;
       if (!c->mvg || !c->pic_mvg) return -1;
    }
    c->pic_open = 0;
@@ -5745,9 +5989,12 @@ rh264_video *rh264_video_open(void)
    return v;
 }
 
+static void rh264_hw_free(rh264_video *v);
+
 void rh264_video_close(rh264_video *v)
 {
    if (!v) return;
+   rh264_hw_free(v);
    {
       int i;
       for (i = 0; i < RH264_MAX_CTX; i++)
@@ -5770,11 +6017,12 @@ void rh264_video_close(rh264_video *v)
       }
       for (i = 0; i < RH264_MAX_REFS; i++) rh264_frame_free(&v->dpb[i]);
       for (i = 0; i < RH264_OUT_SLOTS; i++) rh264_frame_free(&v->out[i]);
-      for (i = 0; i < v->rbsp_free_n; i++) free(v->rbsp_free[i]);
-      while (v->job_free)
+      for (;;)
       {
-         rh264_slice_job *j = v->job_free;
-         v->job_free = j->next;
+         rh264_slice_job *j = rh264_job_take(v);
+         if (!j)
+            break;
+         free(j->rbsp);
          free(j);
       }
    }
@@ -5841,24 +6089,44 @@ int rh264_video_set_extradata(rh264_video *v, const uint8_t *avcc, size_t len)
 /* rh264 CABAC core tables (H.264 clause 9.3.3.2). These are the universal
  * spec tables, identical across all decoders. */
 
-/* Table 9-33: rangeTabLPS[pStateIdx][qCodIRangeIdx] */
-static const uint8_t rh264_rangeTabLPS[64][4]={
- {128,176,208,240},{128,167,197,227},{128,158,187,216},{123,150,178,205},
- {116,142,169,195},{111,135,160,185},{105,128,152,175},{100,122,144,166},
- { 95,116,137,158},{ 90,110,130,150},{ 85,104,123,142},{ 81, 99,117,135},
- { 77, 94,111,128},{ 73, 89,105,122},{ 69, 85,100,116},{ 66, 80, 95,110},
- { 62, 76, 90,104},{ 59, 72, 86, 99},{ 56, 69, 81, 94},{ 53, 65, 77, 89},
- { 51, 62, 73, 85},{ 48, 59, 69, 80},{ 46, 56, 66, 76},{ 43, 53, 63, 72},
- { 41, 50, 59, 69},{ 39, 48, 56, 65},{ 37, 45, 54, 62},{ 35, 43, 51, 59},
- { 33, 41, 48, 56},{ 32, 39, 46, 53},{ 30, 37, 43, 50},{ 29, 35, 41, 48},
- { 27, 33, 39, 45},{ 26, 31, 37, 43},{ 24, 30, 35, 41},{ 23, 28, 33, 39},
- { 22, 27, 32, 37},{ 21, 26, 30, 35},{ 20, 24, 29, 33},{ 19, 23, 27, 31},
- { 18, 22, 26, 30},{ 17, 21, 25, 28},{ 16, 20, 23, 27},{ 15, 19, 22, 25},
- { 14, 18, 21, 24},{ 14, 17, 20, 23},{ 13, 16, 19, 22},{ 12, 15, 18, 21},
- { 12, 14, 17, 20},{ 11, 14, 16, 19},{ 11, 13, 15, 18},{ 10, 12, 15, 17},
- { 10, 12, 14, 16},{  9, 11, 13, 15},{  9, 11, 12, 14},{  8, 10, 12, 14},
- {  8,  9, 11, 13},{  7,  9, 11, 12},{  7,  9, 10, 12},{  7,  8, 10, 11},
- {  6,  8,  9, 11},{  6,  7,  9, 10},{  6,  7,  8,  9},{  2,  2,  2,  2}};
+/* Table 9-33, rangeTabLPS[pStateIdx][qCodIRangeIdx], laid out for the
+ * engine: entry qCodIRangeIdx * 128 + state, state being pStateIdx * 2 |
+ * valMPS as the contexts hold it.  That index is (range & 0xC0) * 2 +
+ * state, range being 256..510 at every bin: a mask and an add, no
+ * shifts on the per-bin dependency chain. */
+static const uint8_t rh264_cb_lps[512]={
+   128,128,128,128,128,128,123,123,116,116,111,111,105,105,100,100,
+    95, 95, 90, 90, 85, 85, 81, 81, 77, 77, 73, 73, 69, 69, 66, 66,
+    62, 62, 59, 59, 56, 56, 53, 53, 51, 51, 48, 48, 46, 46, 43, 43,
+    41, 41, 39, 39, 37, 37, 35, 35, 33, 33, 32, 32, 30, 30, 29, 29,
+    27, 27, 26, 26, 24, 24, 23, 23, 22, 22, 21, 21, 20, 20, 19, 19,
+    18, 18, 17, 17, 16, 16, 15, 15, 14, 14, 14, 14, 13, 13, 12, 12,
+    12, 12, 11, 11, 11, 11, 10, 10, 10, 10,  9,  9,  9,  9,  8,  8,
+     8,  8,  7,  7,  7,  7,  7,  7,  6,  6,  6,  6,  6,  6,  2,  2,
+   176,176,167,167,158,158,150,150,142,142,135,135,128,128,122,122,
+   116,116,110,110,104,104, 99, 99, 94, 94, 89, 89, 85, 85, 80, 80,
+    76, 76, 72, 72, 69, 69, 65, 65, 62, 62, 59, 59, 56, 56, 53, 53,
+    50, 50, 48, 48, 45, 45, 43, 43, 41, 41, 39, 39, 37, 37, 35, 35,
+    33, 33, 31, 31, 30, 30, 28, 28, 27, 27, 26, 26, 24, 24, 23, 23,
+    22, 22, 21, 21, 20, 20, 19, 19, 18, 18, 17, 17, 16, 16, 15, 15,
+    14, 14, 14, 14, 13, 13, 12, 12, 12, 12, 11, 11, 11, 11, 10, 10,
+     9,  9,  9,  9,  9,  9,  8,  8,  8,  8,  7,  7,  7,  7,  2,  2,
+   208,208,197,197,187,187,178,178,169,169,160,160,152,152,144,144,
+   137,137,130,130,123,123,117,117,111,111,105,105,100,100, 95, 95,
+    90, 90, 86, 86, 81, 81, 77, 77, 73, 73, 69, 69, 66, 66, 63, 63,
+    59, 59, 56, 56, 54, 54, 51, 51, 48, 48, 46, 46, 43, 43, 41, 41,
+    39, 39, 37, 37, 35, 35, 33, 33, 32, 32, 30, 30, 29, 29, 27, 27,
+    26, 26, 25, 25, 23, 23, 22, 22, 21, 21, 20, 20, 19, 19, 18, 18,
+    17, 17, 16, 16, 15, 15, 15, 15, 14, 14, 13, 13, 12, 12, 12, 12,
+    11, 11, 11, 11, 10, 10, 10, 10,  9,  9,  9,  9,  8,  8,  2,  2,
+   240,240,227,227,216,216,205,205,195,195,185,185,175,175,166,166,
+   158,158,150,150,142,142,135,135,128,128,122,122,116,116,110,110,
+   104,104, 99, 99, 94, 94, 89, 89, 85, 85, 80, 80, 76, 76, 72, 72,
+    69, 69, 65, 65, 62, 62, 59, 59, 56, 56, 53, 53, 50, 50, 48, 48,
+    45, 45, 43, 43, 41, 41, 39, 39, 37, 37, 35, 35, 33, 33, 31, 31,
+    30, 30, 28, 28, 27, 27, 25, 25, 24, 24, 23, 23, 22, 22, 21, 21,
+    20, 20, 19, 19, 18, 18, 17, 17, 16, 16, 15, 15, 14, 14, 14, 14,
+    13, 13, 12, 12, 12, 12, 11, 11, 11, 11, 10, 10,  9,  9,  2,  2};
 
 /* Table 9-34: transIdxLPS / transIdxMPS (pStateIdx transitions) */
 static const uint8_t rh264_transIdxLPS[64]={
@@ -5872,520 +6140,80 @@ static const uint8_t rh264_transIdxMPS[64]={
  33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,
  49,50,51,52,53,54,55,56,57,58,59,60,61,62,62,63};
 
-/* ---- rh264_cabac_init.h ---- */
-/* rh264 CABAC context init tables (m,n), spec Tables 9-12..9-33.
-   Contexts 0..459 were extracted from libopenh264 g_kiCabacGlobalContextIdx
-   (variants 0..3); 460..1023 - the 4:4:4 coded_block_flag / significance /
-   level contexts of ctxBlockCat 5..13 (7.4.2.1.1 ChromaArrayType 3) - were
-   extracted from libavcodec cabac_context_init_I / _PB, whose entries 0..459
-   agree with the libopenh264 ones in every position (checked, both slice
-   kinds and all three cabac_init_idc). */
-#define RH264_CABAC_NCTX 1024
-static const int8_t rh264_cabac_init_I[1024][2]={
-  {20,-15},{2,54},{3,74},{20,-15},{2,54},{3,74},{-28,127},{-23,104},{-6,53},
-  {-1,54},{7,51},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},
-  {0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},
-  {0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},
-  {0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},
-  {0,0},{0,0},{0,0},{0,41},{0,63},{0,63},{0,63},{-9,83},{4,86},{0,97},{-7,72},
-  {13,41},{3,62},{0,11},{1,55},{0,69},{-17,127},{-13,102},{0,82},{-7,74},
-  {-21,107},{-27,127},{-31,127},{-24,127},{-18,95},{-27,127},{-21,114},
-  {-30,127},{-17,123},{-12,115},{-16,122},{-11,115},{-12,63},{-2,68},{-15,84},
-  {-13,104},{-3,70},{-8,93},{-10,90},{-30,127},{-1,74},{-6,97},{-7,91},
-  {-20,127},{-4,56},{-5,82},{-7,76},{-22,125},{-7,93},{-11,87},{-3,77},
-  {-5,71},{-4,63},{-4,68},{-12,84},{-7,62},{-7,65},{8,61},{5,56},{-2,66},
-  {1,64},{0,61},{-2,78},{1,50},{7,52},{10,35},{0,44},{11,38},{1,45},{0,46},
-  {5,44},{31,17},{1,51},{7,50},{28,19},{16,33},{14,62},{-13,108},{-15,100},
-  {-13,101},{-13,91},{-12,94},{-10,88},{-16,84},{-10,86},{-7,83},{-13,87},
-  {-19,94},{1,70},{0,72},{-5,74},{18,59},{-8,102},{-15,100},{0,95},{-4,75},
-  {2,72},{-11,75},{-3,71},{15,46},{-13,69},{0,62},{0,65},{21,37},{-15,72},
-  {9,57},{16,54},{0,62},{12,72},{24,0},{15,9},{8,25},{13,18},{15,9},{13,19},
-  {10,37},{12,18},{6,29},{20,33},{15,30},{4,45},{1,58},{0,62},{7,61},{12,38},
-  {11,45},{15,39},{11,42},{13,44},{16,45},{12,41},{10,49},{30,34},{18,42},
-  {10,55},{17,51},{17,46},{0,89},{26,-19},{22,-17},{26,-17},{30,-25},{28,-20},
-  {33,-23},{37,-27},{33,-23},{40,-28},{38,-17},{33,-11},{40,-15},{41,-6},
-  {38,1},{41,17},{30,-6},{27,3},{26,22},{37,-16},{35,-4},{38,-8},{38,-3},
-  {37,3},{38,5},{42,0},{35,16},{39,22},{14,48},{27,37},{21,60},{12,68},{2,97},
-  {-3,71},{-6,42},{-5,50},{-3,54},{-2,62},{0,58},{1,63},{-2,72},{-1,74},
-  {-9,91},{-5,67},{-5,27},{-3,39},{-2,44},{0,46},{-16,64},{-8,68},{-10,78},
-  {-6,77},{-10,86},{-12,92},{-15,55},{-10,60},{-6,62},{-4,65},{-12,73},
-  {-8,76},{-7,80},{-9,88},{-17,110},{-11,97},{-20,84},{-11,79},{-6,73},
-  {-4,74},{-13,86},{-13,96},{-11,97},{-19,117},{-8,78},{-5,33},{-4,48},
-  {-2,53},{-3,62},{-13,71},{-10,79},{-12,86},{-13,90},{-14,97},{0,0},{-6,93},
-  {-6,84},{-8,79},{0,66},{-1,71},{0,62},{-2,60},{-2,59},{-5,75},{-3,62},
-  {-4,58},{-9,66},{-1,79},{0,71},{3,68},{10,44},{-7,62},{15,36},{14,40},
-  {16,27},{12,29},{1,44},{20,36},{18,32},{5,42},{1,48},{10,62},{17,46},{9,64},
-  {-12,104},{-11,97},{-16,96},{-7,88},{-8,85},{-7,85},{-9,85},{-13,88},{4,66},
-  {-3,77},{-3,76},{-6,76},{10,58},{-1,76},{-1,83},{-7,99},{-14,95},{2,95},
-  {0,76},{-5,74},{0,70},{-11,75},{1,68},{0,65},{-14,73},{3,62},{4,62},{-1,68},
-  {-13,75},{11,55},{5,64},{12,70},{15,6},{6,19},{7,16},{12,14},{18,13},
-  {13,11},{13,15},{15,16},{12,23},{13,23},{15,20},{14,26},{14,44},{17,40},
-  {17,47},{24,17},{21,21},{25,22},{31,27},{22,29},{19,35},{14,50},{10,57},
-  {7,63},{-2,77},{-4,82},{-3,94},{9,69},{-12,109},{36,-35},{36,-34},{32,-26},
-  {37,-30},{44,-32},{34,-18},{34,-15},{40,-15},{33,-7},{35,-5},{33,0},{38,2},
-  {33,13},{23,35},{13,58},{29,-3},{26,0},{22,30},{31,-7},{35,-15},{34,-3},
-  {34,3},{36,-1},{34,5},{32,11},{35,5},{34,12},{39,11},{30,29},{34,26},
-  {29,39},{19,66},{31,21},{31,31},{25,50},{-17,120},{-20,112},{-18,114},
-  {-11,85},{-15,92},{-14,89},{-26,71},{-15,81},{-14,80},{0,68},{-14,70},
-  {-24,56},{-23,68},{-24,50},{-11,74},{23,-13},{26,-13},{40,-15},{49,-14},
-  {44,3},{45,6},{44,34},{33,54},{19,82},{-3,75},{-1,23},{1,34},{1,43},{0,54},
-  {-2,55},{0,61},{1,64},{0,68},{-9,92},{-14,106},{-13,97},{-15,90},{-12,90},
-  {-18,88},{-10,73},{-9,79},{-14,86},{-10,73},{-10,70},{-10,69},{-5,66},
-  {-9,64},{-5,58},{2,59},{21,-10},{24,-11},{28,-8},{28,-1},{29,3},{29,9},
-  {35,20},{29,36},{14,67},{-17,123},{-12,115},{-16,122},{-11,115},{-12,63},
-  {-2,68},{-15,84},{-13,104},{-3,70},{-8,93},{-10,90},{-30,127},{-17,123},
-  {-12,115},{-16,122},{-11,115},{-12,63},{-2,68},{-15,84},{-13,104},{-3,70},
-  {-8,93},{-10,90},{-30,127},{-7,93},{-11,87},{-3,77},{-5,71},{-4,63},{-4,68},
-  {-12,84},{-7,62},{-7,65},{8,61},{5,56},{-2,66},{1,64},{0,61},{-2,78},{1,50},
-  {7,52},{10,35},{0,44},{11,38},{1,45},{0,46},{5,44},{31,17},{1,51},{7,50},
-  {28,19},{16,33},{14,62},{-13,108},{-15,100},{-13,101},{-13,91},{-12,94},
-  {-10,88},{-16,84},{-10,86},{-7,83},{-13,87},{-19,94},{1,70},{0,72},{-5,74},
-  {18,59},{-7,93},{-11,87},{-3,77},{-5,71},{-4,63},{-4,68},{-12,84},{-7,62},
-  {-7,65},{8,61},{5,56},{-2,66},{1,64},{0,61},{-2,78},{1,50},{7,52},{10,35},
-  {0,44},{11,38},{1,45},{0,46},{5,44},{31,17},{1,51},{7,50},{28,19},{16,33},
-  {14,62},{-13,108},{-15,100},{-13,101},{-13,91},{-12,94},{-10,88},{-16,84},
-  {-10,86},{-7,83},{-13,87},{-19,94},{1,70},{0,72},{-5,74},{18,59},{24,0},
-  {15,9},{8,25},{13,18},{15,9},{13,19},{10,37},{12,18},{6,29},{20,33},{15,30},
-  {4,45},{1,58},{0,62},{7,61},{12,38},{11,45},{15,39},{11,42},{13,44},{16,45},
-  {12,41},{10,49},{30,34},{18,42},{10,55},{17,51},{17,46},{0,89},{26,-19},
-  {22,-17},{26,-17},{30,-25},{28,-20},{33,-23},{37,-27},{33,-23},{40,-28},
-  {38,-17},{33,-11},{40,-15},{41,-6},{38,1},{41,17},{24,0},{15,9},{8,25},
-  {13,18},{15,9},{13,19},{10,37},{12,18},{6,29},{20,33},{15,30},{4,45},{1,58},
-  {0,62},{7,61},{12,38},{11,45},{15,39},{11,42},{13,44},{16,45},{12,41},
-  {10,49},{30,34},{18,42},{10,55},{17,51},{17,46},{0,89},{26,-19},{22,-17},
-  {26,-17},{30,-25},{28,-20},{33,-23},{37,-27},{33,-23},{40,-28},{38,-17},
-  {33,-11},{40,-15},{41,-6},{38,1},{41,17},{-17,120},{-20,112},{-18,114},
-  {-11,85},{-15,92},{-14,89},{-26,71},{-15,81},{-14,80},{0,68},{-14,70},
-  {-24,56},{-23,68},{-24,50},{-11,74},{-14,106},{-13,97},{-15,90},{-12,90},
-  {-18,88},{-10,73},{-9,79},{-14,86},{-10,73},{-10,70},{-10,69},{-5,66},
-  {-9,64},{-5,58},{2,59},{23,-13},{26,-13},{40,-15},{49,-14},{44,3},{45,6},
-  {44,34},{33,54},{19,82},{21,-10},{24,-11},{28,-8},{28,-1},{29,3},{29,9},
-  {35,20},{29,36},{14,67},{-3,75},{-1,23},{1,34},{1,43},{0,54},{-2,55},{0,61},
-  {1,64},{0,68},{-9,92},{-17,120},{-20,112},{-18,114},{-11,85},{-15,92},
-  {-14,89},{-26,71},{-15,81},{-14,80},{0,68},{-14,70},{-24,56},{-23,68},
-  {-24,50},{-11,74},{-14,106},{-13,97},{-15,90},{-12,90},{-18,88},{-10,73},
-  {-9,79},{-14,86},{-10,73},{-10,70},{-10,69},{-5,66},{-9,64},{-5,58},{2,59},
-  {23,-13},{26,-13},{40,-15},{49,-14},{44,3},{45,6},{44,34},{33,54},{19,82},
-  {21,-10},{24,-11},{28,-8},{28,-1},{29,3},{29,9},{35,20},{29,36},{14,67},
-  {-3,75},{-1,23},{1,34},{1,43},{0,54},{-2,55},{0,61},{1,64},{0,68},{-9,92},
-  {-6,93},{-6,84},{-8,79},{0,66},{-1,71},{0,62},{-2,60},{-2,59},{-5,75},
-  {-3,62},{-4,58},{-9,66},{-1,79},{0,71},{3,68},{10,44},{-7,62},{15,36},
-  {14,40},{16,27},{12,29},{1,44},{20,36},{18,32},{5,42},{1,48},{10,62},
-  {17,46},{9,64},{-12,104},{-11,97},{-16,96},{-7,88},{-8,85},{-7,85},{-9,85},
-  {-13,88},{4,66},{-3,77},{-3,76},{-6,76},{10,58},{-1,76},{-1,83},{-6,93},
-  {-6,84},{-8,79},{0,66},{-1,71},{0,62},{-2,60},{-2,59},{-5,75},{-3,62},
-  {-4,58},{-9,66},{-1,79},{0,71},{3,68},{10,44},{-7,62},{15,36},{14,40},
-  {16,27},{12,29},{1,44},{20,36},{18,32},{5,42},{1,48},{10,62},{17,46},{9,64},
-  {-12,104},{-11,97},{-16,96},{-7,88},{-8,85},{-7,85},{-9,85},{-13,88},{4,66},
-  {-3,77},{-3,76},{-6,76},{10,58},{-1,76},{-1,83},{15,6},{6,19},{7,16},
-  {12,14},{18,13},{13,11},{13,15},{15,16},{12,23},{13,23},{15,20},{14,26},
-  {14,44},{17,40},{17,47},{24,17},{21,21},{25,22},{31,27},{22,29},{19,35},
-  {14,50},{10,57},{7,63},{-2,77},{-4,82},{-3,94},{9,69},{-12,109},{36,-35},
-  {36,-34},{32,-26},{37,-30},{44,-32},{34,-18},{34,-15},{40,-15},{33,-7},
-  {35,-5},{33,0},{38,2},{33,13},{23,35},{13,58},{15,6},{6,19},{7,16},{12,14},
-  {18,13},{13,11},{13,15},{15,16},{12,23},{13,23},{15,20},{14,26},{14,44},
-  {17,40},{17,47},{24,17},{21,21},{25,22},{31,27},{22,29},{19,35},{14,50},
-  {10,57},{7,63},{-2,77},{-4,82},{-3,94},{9,69},{-12,109},{36,-35},{36,-34},
-  {32,-26},{37,-30},{44,-32},{34,-18},{34,-15},{40,-15},{33,-7},{35,-5},
-  {33,0},{38,2},{33,13},{23,35},{13,58},{-3,71},{-6,42},{-5,50},{-3,54},
-  {-2,62},{0,58},{1,63},{-2,72},{-1,74},{-9,91},{-5,67},{-5,27},{-3,39},
-  {-2,44},{0,46},{-16,64},{-8,68},{-10,78},{-6,77},{-10,86},{-12,92},{-15,55},
-  {-10,60},{-6,62},{-4,65},{-12,73},{-8,76},{-7,80},{-9,88},{-17,110},{-3,71},
-  {-6,42},{-5,50},{-3,54},{-2,62},{0,58},{1,63},{-2,72},{-1,74},{-9,91},
-  {-5,67},{-5,27},{-3,39},{-2,44},{0,46},{-16,64},{-8,68},{-10,78},{-6,77},
-  {-10,86},{-12,92},{-15,55},{-10,60},{-6,62},{-4,65},{-12,73},{-8,76},
-  {-7,80},{-9,88},{-17,110},{-3,70},{-8,93},{-10,90},{-30,127},{-3,70},
-  {-8,93},{-10,90},{-30,127},{-3,70},{-8,93},{-10,90},{-30,127}};
-static const int8_t rh264_cabac_init_PB[3][1024][2]={
-{
-  {20,-15},{2,54},{3,74},{20,-15},{2,54},{3,74},{-28,127},{-23,104},{-6,53},
-  {-1,54},{7,51},{23,33},{23,2},{21,0},{1,9},{0,49},{-37,118},{5,57},{-13,78},
-  {-11,65},{1,62},{12,49},{-4,73},{17,50},{18,64},{9,43},{29,0},{26,67},
-  {16,90},{9,104},{-46,127},{-20,104},{1,67},{-13,78},{-11,65},{1,62},{-6,86},
-  {-17,95},{-6,61},{9,45},{-3,69},{-6,81},{-11,96},{6,55},{7,67},{-5,86},
-  {2,88},{0,58},{-3,76},{-10,94},{5,54},{4,69},{-3,81},{0,88},{-7,67},{-5,74},
-  {-4,74},{-5,80},{-7,72},{1,58},{0,41},{0,63},{0,63},{0,63},{-9,83},{4,86},
-  {0,97},{-7,72},{13,41},{3,62},{0,45},{-4,78},{-3,96},{-27,126},{-28,98},
-  {-25,101},{-23,67},{-28,82},{-20,94},{-16,83},{-22,110},{-21,91},{-18,102},
-  {-13,93},{-29,127},{-7,92},{-5,89},{-7,96},{-13,108},{-3,46},{-1,65},
-  {-1,57},{-9,93},{-3,74},{-9,92},{-8,87},{-23,126},{5,54},{6,60},{6,59},
-  {6,69},{-1,48},{0,68},{-4,69},{-8,88},{-2,85},{-6,78},{-1,75},{-7,77},
-  {2,54},{5,50},{-3,68},{1,50},{6,42},{-4,81},{1,63},{-4,70},{0,67},{2,57},
-  {-2,76},{11,35},{4,64},{1,61},{11,35},{18,25},{12,24},{13,29},{13,36},
-  {-10,93},{-7,73},{-2,73},{13,46},{9,49},{-7,100},{9,53},{2,53},{5,53},
-  {-2,61},{0,56},{0,56},{-13,63},{-5,60},{-1,62},{4,57},{-6,69},{4,57},
-  {14,39},{4,51},{13,68},{3,64},{1,61},{9,63},{7,50},{16,39},{5,44},{4,52},
-  {11,48},{-5,60},{-1,59},{0,59},{22,33},{5,44},{14,43},{-1,78},{0,60},{9,69},
-  {11,28},{2,40},{3,44},{0,49},{0,46},{2,44},{2,51},{0,47},{4,39},{2,62},
-  {6,46},{0,54},{3,54},{2,58},{4,63},{6,51},{6,57},{7,53},{6,52},{6,55},
-  {11,45},{14,36},{8,53},{-1,82},{7,55},{-3,78},{15,46},{22,31},{-1,84},
-  {25,7},{30,-7},{28,3},{28,4},{32,0},{34,-1},{30,6},{30,6},{32,9},{31,19},
-  {26,27},{26,30},{37,20},{28,34},{17,70},{1,67},{5,59},{9,67},{16,30},
-  {18,32},{18,35},{22,29},{24,31},{23,38},{18,43},{20,41},{11,63},{9,59},
-  {9,64},{-1,94},{-2,89},{-9,108},{-6,76},{-2,44},{0,45},{0,52},{-3,64},
-  {-2,59},{-4,70},{-4,75},{-8,82},{-17,102},{-9,77},{3,24},{0,42},{0,48},
-  {0,55},{-6,59},{-7,71},{-12,83},{-11,87},{-30,119},{1,58},{-3,29},{-1,36},
-  {1,38},{2,43},{-6,55},{0,58},{0,64},{-3,74},{-10,90},{0,70},{-4,29},{5,31},
-  {7,42},{1,59},{-2,58},{-3,72},{-3,81},{-11,97},{0,58},{8,5},{10,14},{14,18},
-  {13,27},{2,40},{0,58},{-3,70},{-6,79},{-8,85},{0,0},{-13,106},{-16,106},
-  {-10,87},{-21,114},{-18,110},{-14,98},{-22,110},{-21,106},{-18,103},
-  {-21,107},{-23,108},{-26,112},{-10,96},{-12,95},{-5,91},{-9,93},{-22,94},
-  {-5,86},{9,67},{-4,80},{-10,85},{-1,70},{7,60},{9,58},{5,61},{12,50},
-  {15,50},{18,49},{17,54},{10,41},{7,46},{-1,51},{7,49},{8,52},{9,41},{6,47},
-  {2,55},{13,41},{10,44},{6,50},{5,53},{13,49},{4,63},{6,64},{-2,69},{-2,59},
-  {6,70},{10,44},{9,31},{12,43},{3,53},{14,34},{10,38},{-3,52},{13,40},
-  {17,32},{7,44},{7,38},{13,50},{10,57},{26,43},{14,11},{11,14},{9,11},
-  {18,11},{21,9},{23,-2},{32,-15},{32,-15},{34,-21},{39,-23},{42,-33},
-  {41,-31},{46,-28},{38,-12},{21,29},{45,-24},{53,-45},{48,-26},{65,-43},
-  {43,-19},{39,-10},{30,9},{18,26},{20,27},{0,57},{-14,82},{-5,75},{-19,97},
-  {-35,125},{27,0},{28,0},{31,-4},{27,6},{34,8},{30,10},{24,22},{33,19},
-  {22,32},{26,31},{21,41},{26,44},{23,47},{16,65},{14,71},{8,60},{6,63},
-  {17,65},{21,24},{23,20},{26,23},{27,32},{28,23},{28,24},{23,40},{24,32},
-  {28,29},{23,42},{19,57},{22,53},{22,61},{11,86},{12,40},{11,51},{14,59},
-  {-4,79},{-7,71},{-5,69},{-9,70},{-8,66},{-10,68},{-19,73},{-12,69},{-16,70},
-  {-15,67},{-20,62},{-19,70},{-16,66},{-22,65},{-20,63},{9,-2},{26,-9},
-  {33,-9},{39,-7},{41,-2},{45,3},{49,9},{45,27},{36,59},{-6,66},{-7,35},
-  {-7,42},{-8,45},{-5,48},{-12,56},{-6,60},{-5,62},{-8,66},{-8,76},{-5,85},
-  {-6,81},{-10,77},{-7,81},{-17,80},{-18,73},{-4,74},{-10,83},{-9,71},{-9,67},
-  {-1,61},{-8,66},{-14,66},{0,59},{2,59},{21,-13},{33,-14},{39,-7},{46,-2},
-  {51,2},{60,6},{61,17},{55,34},{42,62},{-7,92},{-5,89},{-7,96},{-13,108},
-  {-3,46},{-1,65},{-1,57},{-9,93},{-3,74},{-9,92},{-8,87},{-23,126},{-7,92},
-  {-5,89},{-7,96},{-13,108},{-3,46},{-1,65},{-1,57},{-9,93},{-3,74},{-9,92},
-  {-8,87},{-23,126},{-2,85},{-6,78},{-1,75},{-7,77},{2,54},{5,50},{-3,68},
-  {1,50},{6,42},{-4,81},{1,63},{-4,70},{0,67},{2,57},{-2,76},{11,35},{4,64},
-  {1,61},{11,35},{18,25},{12,24},{13,29},{13,36},{-10,93},{-7,73},{-2,73},
-  {13,46},{9,49},{-7,100},{9,53},{2,53},{5,53},{-2,61},{0,56},{0,56},{-13,63},
-  {-5,60},{-1,62},{4,57},{-6,69},{4,57},{14,39},{4,51},{13,68},{-2,85},
-  {-6,78},{-1,75},{-7,77},{2,54},{5,50},{-3,68},{1,50},{6,42},{-4,81},{1,63},
-  {-4,70},{0,67},{2,57},{-2,76},{11,35},{4,64},{1,61},{11,35},{18,25},{12,24},
-  {13,29},{13,36},{-10,93},{-7,73},{-2,73},{13,46},{9,49},{-7,100},{9,53},
-  {2,53},{5,53},{-2,61},{0,56},{0,56},{-13,63},{-5,60},{-1,62},{4,57},{-6,69},
-  {4,57},{14,39},{4,51},{13,68},{11,28},{2,40},{3,44},{0,49},{0,46},{2,44},
-  {2,51},{0,47},{4,39},{2,62},{6,46},{0,54},{3,54},{2,58},{4,63},{6,51},
-  {6,57},{7,53},{6,52},{6,55},{11,45},{14,36},{8,53},{-1,82},{7,55},{-3,78},
-  {15,46},{22,31},{-1,84},{25,7},{30,-7},{28,3},{28,4},{32,0},{34,-1},{30,6},
-  {30,6},{32,9},{31,19},{26,27},{26,30},{37,20},{28,34},{17,70},{11,28},
-  {2,40},{3,44},{0,49},{0,46},{2,44},{2,51},{0,47},{4,39},{2,62},{6,46},
-  {0,54},{3,54},{2,58},{4,63},{6,51},{6,57},{7,53},{6,52},{6,55},{11,45},
-  {14,36},{8,53},{-1,82},{7,55},{-3,78},{15,46},{22,31},{-1,84},{25,7},
-  {30,-7},{28,3},{28,4},{32,0},{34,-1},{30,6},{30,6},{32,9},{31,19},{26,27},
-  {26,30},{37,20},{28,34},{17,70},{-4,79},{-7,71},{-5,69},{-9,70},{-8,66},
-  {-10,68},{-19,73},{-12,69},{-16,70},{-15,67},{-20,62},{-19,70},{-16,66},
-  {-22,65},{-20,63},{-5,85},{-6,81},{-10,77},{-7,81},{-17,80},{-18,73},
-  {-4,74},{-10,83},{-9,71},{-9,67},{-1,61},{-8,66},{-14,66},{0,59},{2,59},
-  {9,-2},{26,-9},{33,-9},{39,-7},{41,-2},{45,3},{49,9},{45,27},{36,59},
-  {21,-13},{33,-14},{39,-7},{46,-2},{51,2},{60,6},{61,17},{55,34},{42,62},
-  {-6,66},{-7,35},{-7,42},{-8,45},{-5,48},{-12,56},{-6,60},{-5,62},{-8,66},
-  {-8,76},{-4,79},{-7,71},{-5,69},{-9,70},{-8,66},{-10,68},{-19,73},{-12,69},
-  {-16,70},{-15,67},{-20,62},{-19,70},{-16,66},{-22,65},{-20,63},{-5,85},
-  {-6,81},{-10,77},{-7,81},{-17,80},{-18,73},{-4,74},{-10,83},{-9,71},{-9,67},
-  {-1,61},{-8,66},{-14,66},{0,59},{2,59},{9,-2},{26,-9},{33,-9},{39,-7},
-  {41,-2},{45,3},{49,9},{45,27},{36,59},{21,-13},{33,-14},{39,-7},{46,-2},
-  {51,2},{60,6},{61,17},{55,34},{42,62},{-6,66},{-7,35},{-7,42},{-8,45},
-  {-5,48},{-12,56},{-6,60},{-5,62},{-8,66},{-8,76},{-13,106},{-16,106},
-  {-10,87},{-21,114},{-18,110},{-14,98},{-22,110},{-21,106},{-18,103},
-  {-21,107},{-23,108},{-26,112},{-10,96},{-12,95},{-5,91},{-9,93},{-22,94},
-  {-5,86},{9,67},{-4,80},{-10,85},{-1,70},{7,60},{9,58},{5,61},{12,50},
-  {15,50},{18,49},{17,54},{10,41},{7,46},{-1,51},{7,49},{8,52},{9,41},{6,47},
-  {2,55},{13,41},{10,44},{6,50},{5,53},{13,49},{4,63},{6,64},{-13,106},
-  {-16,106},{-10,87},{-21,114},{-18,110},{-14,98},{-22,110},{-21,106},
-  {-18,103},{-21,107},{-23,108},{-26,112},{-10,96},{-12,95},{-5,91},{-9,93},
-  {-22,94},{-5,86},{9,67},{-4,80},{-10,85},{-1,70},{7,60},{9,58},{5,61},
-  {12,50},{15,50},{18,49},{17,54},{10,41},{7,46},{-1,51},{7,49},{8,52},{9,41},
-  {6,47},{2,55},{13,41},{10,44},{6,50},{5,53},{13,49},{4,63},{6,64},{14,11},
-  {11,14},{9,11},{18,11},{21,9},{23,-2},{32,-15},{32,-15},{34,-21},{39,-23},
-  {42,-33},{41,-31},{46,-28},{38,-12},{21,29},{45,-24},{53,-45},{48,-26},
-  {65,-43},{43,-19},{39,-10},{30,9},{18,26},{20,27},{0,57},{-14,82},{-5,75},
-  {-19,97},{-35,125},{27,0},{28,0},{31,-4},{27,6},{34,8},{30,10},{24,22},
-  {33,19},{22,32},{26,31},{21,41},{26,44},{23,47},{16,65},{14,71},{14,11},
-  {11,14},{9,11},{18,11},{21,9},{23,-2},{32,-15},{32,-15},{34,-21},{39,-23},
-  {42,-33},{41,-31},{46,-28},{38,-12},{21,29},{45,-24},{53,-45},{48,-26},
-  {65,-43},{43,-19},{39,-10},{30,9},{18,26},{20,27},{0,57},{-14,82},{-5,75},
-  {-19,97},{-35,125},{27,0},{28,0},{31,-4},{27,6},{34,8},{30,10},{24,22},
-  {33,19},{22,32},{26,31},{21,41},{26,44},{23,47},{16,65},{14,71},{-6,76},
-  {-2,44},{0,45},{0,52},{-3,64},{-2,59},{-4,70},{-4,75},{-8,82},{-17,102},
-  {-9,77},{3,24},{0,42},{0,48},{0,55},{-6,59},{-7,71},{-12,83},{-11,87},
-  {-30,119},{1,58},{-3,29},{-1,36},{1,38},{2,43},{-6,55},{0,58},{0,64},
-  {-3,74},{-10,90},{-6,76},{-2,44},{0,45},{0,52},{-3,64},{-2,59},{-4,70},
-  {-4,75},{-8,82},{-17,102},{-9,77},{3,24},{0,42},{0,48},{0,55},{-6,59},
-  {-7,71},{-12,83},{-11,87},{-30,119},{1,58},{-3,29},{-1,36},{1,38},{2,43},
-  {-6,55},{0,58},{0,64},{-3,74},{-10,90},{-3,74},{-9,92},{-8,87},{-23,126},
-  {-3,74},{-9,92},{-8,87},{-23,126},{-3,74},{-9,92},{-8,87},{-23,126}},
-{
-  {20,-15},{2,54},{3,74},{20,-15},{2,54},{3,74},{-28,127},{-23,104},{-6,53},
-  {-1,54},{7,51},{22,25},{34,0},{16,0},{-2,9},{4,41},{-29,118},{2,65},{-6,71},
-  {-13,79},{5,52},{9,50},{-3,70},{10,54},{26,34},{19,22},{40,0},{57,2},
-  {41,36},{26,69},{-45,127},{-15,101},{-4,76},{-6,71},{-13,79},{5,52},{6,69},
-  {-13,90},{0,52},{8,43},{-2,69},{-5,82},{-10,96},{2,59},{2,75},{-3,87},
-  {-3,100},{1,56},{-3,74},{-6,85},{0,59},{-3,81},{-7,86},{-5,95},{-1,66},
-  {-1,77},{1,70},{-2,86},{-5,72},{0,61},{0,41},{0,63},{0,63},{0,63},{-9,83},
-  {4,86},{0,97},{-7,72},{13,41},{3,62},{13,15},{7,51},{2,80},{-39,127},
-  {-18,91},{-17,96},{-26,81},{-35,98},{-24,102},{-23,97},{-27,119},{-24,99},
-  {-21,110},{-18,102},{-36,127},{0,80},{-5,89},{-7,94},{-4,92},{0,39},{0,65},
-  {-15,84},{-35,127},{-2,73},{-12,104},{-9,91},{-31,127},{3,55},{7,56},{7,55},
-  {8,61},{-3,53},{0,68},{-7,74},{-9,88},{-13,103},{-13,91},{-9,89},{-14,92},
-  {-8,76},{-12,87},{-23,110},{-24,105},{-10,78},{-20,112},{-17,99},{-78,127},
-  {-70,127},{-50,127},{-46,127},{-4,66},{-5,78},{-4,71},{-8,72},{2,59},
-  {-1,55},{-7,70},{-6,75},{-8,89},{-34,119},{-3,75},{32,20},{30,22},{-44,127},
-  {0,54},{-5,61},{0,58},{-1,60},{-3,61},{-8,67},{-25,84},{-14,74},{-5,65},
-  {5,52},{2,57},{0,61},{-9,69},{-11,70},{18,55},{-4,71},{0,58},{7,61},{9,41},
-  {18,25},{9,32},{5,43},{9,47},{0,44},{0,51},{2,46},{19,38},{-4,66},{15,38},
-  {12,42},{9,34},{0,89},{4,45},{10,28},{10,31},{33,-11},{52,-43},{18,15},
-  {28,0},{35,-22},{38,-25},{34,0},{39,-18},{32,-12},{102,-94},{0,0},{56,-15},
-  {33,-4},{29,10},{37,-5},{51,-29},{39,-9},{52,-34},{69,-58},{67,-63},{44,-5},
-  {32,7},{55,-29},{32,1},{0,0},{27,36},{33,-25},{34,-30},{36,-28},{38,-28},
-  {38,-27},{34,-18},{35,-16},{34,-14},{32,-8},{37,-6},{35,0},{30,10},{28,18},
-  {26,25},{29,41},{0,75},{2,72},{8,77},{14,35},{18,31},{17,35},{21,30},
-  {17,45},{20,42},{18,45},{27,26},{16,54},{7,66},{16,56},{11,73},{10,67},
-  {-10,116},{-23,112},{-15,71},{-7,61},{0,53},{-5,66},{-11,77},{-9,80},
-  {-9,84},{-10,87},{-34,127},{-21,101},{-3,39},{-5,53},{-7,61},{-11,75},
-  {-15,77},{-17,91},{-25,107},{-25,111},{-28,122},{-11,76},{-10,44},{-10,52},
-  {-10,57},{-9,58},{-16,72},{-7,69},{-4,69},{-5,74},{-9,86},{2,66},{-9,34},
-  {1,32},{11,31},{5,52},{-2,55},{-2,67},{0,73},{-8,89},{3,52},{7,4},{10,8},
-  {17,8},{16,19},{3,37},{-1,61},{-5,73},{-1,70},{-4,78},{0,0},{-21,126},
-  {-23,124},{-20,110},{-26,126},{-25,124},{-17,105},{-27,121},{-27,117},
-  {-17,102},{-26,117},{-27,116},{-33,122},{-10,95},{-14,100},{-8,95},
-  {-17,111},{-28,114},{-6,89},{-2,80},{-4,82},{-9,85},{-8,81},{-1,72},{5,64},
-  {1,67},{9,56},{0,69},{1,69},{7,69},{-7,69},{-6,67},{-16,77},{-2,64},{2,61},
-  {-6,67},{-3,64},{2,57},{-3,65},{-3,66},{0,62},{9,51},{-1,66},{-2,71},
-  {-2,75},{-1,70},{-9,72},{14,60},{16,37},{0,47},{18,35},{11,37},{12,41},
-  {10,41},{2,48},{12,41},{13,41},{0,59},{3,50},{19,40},{3,66},{18,50},{19,-6},
-  {18,-6},{14,0},{26,-12},{31,-16},{33,-25},{33,-22},{37,-28},{39,-30},
-  {42,-30},{47,-42},{45,-36},{49,-34},{41,-17},{32,9},{69,-71},{63,-63},
-  {66,-64},{77,-74},{54,-39},{52,-35},{41,-10},{36,0},{40,-1},{30,14},{28,26},
-  {23,37},{12,55},{11,65},{37,-33},{39,-36},{40,-37},{38,-30},{46,-33},
-  {42,-30},{40,-24},{49,-29},{38,-12},{40,-10},{38,-3},{46,-5},{31,20},
-  {29,30},{25,44},{12,48},{11,49},{26,45},{22,22},{23,22},{27,21},{33,20},
-  {26,28},{30,24},{27,34},{18,42},{25,39},{18,50},{12,70},{21,54},{14,71},
-  {11,83},{25,32},{21,49},{21,54},{-5,85},{-6,81},{-10,77},{-7,81},{-17,80},
-  {-18,73},{-4,74},{-10,83},{-9,71},{-9,67},{-1,61},{-8,66},{-14,66},{0,59},
-  {2,59},{17,-10},{32,-13},{42,-9},{49,-5},{53,0},{64,3},{68,10},{66,27},
-  {47,57},{-5,71},{0,24},{-1,36},{-2,42},{-2,52},{-9,57},{-6,63},{-4,65},
-  {-4,67},{-7,82},{-3,81},{-3,76},{-7,72},{-6,78},{-12,72},{-14,68},{-3,70},
-  {-6,76},{-5,66},{-5,62},{0,57},{-4,61},{-9,60},{1,54},{2,58},{17,-10},
-  {32,-13},{42,-9},{49,-5},{53,0},{64,3},{68,10},{66,27},{47,57},{0,80},
-  {-5,89},{-7,94},{-4,92},{0,39},{0,65},{-15,84},{-35,127},{-2,73},{-12,104},
-  {-9,91},{-31,127},{0,80},{-5,89},{-7,94},{-4,92},{0,39},{0,65},{-15,84},
-  {-35,127},{-2,73},{-12,104},{-9,91},{-31,127},{-13,103},{-13,91},{-9,89},
-  {-14,92},{-8,76},{-12,87},{-23,110},{-24,105},{-10,78},{-20,112},{-17,99},
-  {-78,127},{-70,127},{-50,127},{-46,127},{-4,66},{-5,78},{-4,71},{-8,72},
-  {2,59},{-1,55},{-7,70},{-6,75},{-8,89},{-34,119},{-3,75},{32,20},{30,22},
-  {-44,127},{0,54},{-5,61},{0,58},{-1,60},{-3,61},{-8,67},{-25,84},{-14,74},
-  {-5,65},{5,52},{2,57},{0,61},{-9,69},{-11,70},{18,55},{-13,103},{-13,91},
-  {-9,89},{-14,92},{-8,76},{-12,87},{-23,110},{-24,105},{-10,78},{-20,112},
-  {-17,99},{-78,127},{-70,127},{-50,127},{-46,127},{-4,66},{-5,78},{-4,71},
-  {-8,72},{2,59},{-1,55},{-7,70},{-6,75},{-8,89},{-34,119},{-3,75},{32,20},
-  {30,22},{-44,127},{0,54},{-5,61},{0,58},{-1,60},{-3,61},{-8,67},{-25,84},
-  {-14,74},{-5,65},{5,52},{2,57},{0,61},{-9,69},{-11,70},{18,55},{4,45},
-  {10,28},{10,31},{33,-11},{52,-43},{18,15},{28,0},{35,-22},{38,-25},{34,0},
-  {39,-18},{32,-12},{102,-94},{0,0},{56,-15},{33,-4},{29,10},{37,-5},{51,-29},
-  {39,-9},{52,-34},{69,-58},{67,-63},{44,-5},{32,7},{55,-29},{32,1},{0,0},
-  {27,36},{33,-25},{34,-30},{36,-28},{38,-28},{38,-27},{34,-18},{35,-16},
-  {34,-14},{32,-8},{37,-6},{35,0},{30,10},{28,18},{26,25},{29,41},{4,45},
-  {10,28},{10,31},{33,-11},{52,-43},{18,15},{28,0},{35,-22},{38,-25},{34,0},
-  {39,-18},{32,-12},{102,-94},{0,0},{56,-15},{33,-4},{29,10},{37,-5},{51,-29},
-  {39,-9},{52,-34},{69,-58},{67,-63},{44,-5},{32,7},{55,-29},{32,1},{0,0},
-  {27,36},{33,-25},{34,-30},{36,-28},{38,-28},{38,-27},{34,-18},{35,-16},
-  {34,-14},{32,-8},{37,-6},{35,0},{30,10},{28,18},{26,25},{29,41},{-5,85},
-  {-6,81},{-10,77},{-7,81},{-17,80},{-18,73},{-4,74},{-10,83},{-9,71},{-9,67},
-  {-1,61},{-8,66},{-14,66},{0,59},{2,59},{-3,81},{-3,76},{-7,72},{-6,78},
-  {-12,72},{-14,68},{-3,70},{-6,76},{-5,66},{-5,62},{0,57},{-4,61},{-9,60},
-  {1,54},{2,58},{17,-10},{32,-13},{42,-9},{49,-5},{53,0},{64,3},{68,10},
-  {66,27},{47,57},{17,-10},{32,-13},{42,-9},{49,-5},{53,0},{64,3},{68,10},
-  {66,27},{47,57},{-5,71},{0,24},{-1,36},{-2,42},{-2,52},{-9,57},{-6,63},
-  {-4,65},{-4,67},{-7,82},{-5,85},{-6,81},{-10,77},{-7,81},{-17,80},{-18,73},
-  {-4,74},{-10,83},{-9,71},{-9,67},{-1,61},{-8,66},{-14,66},{0,59},{2,59},
-  {-3,81},{-3,76},{-7,72},{-6,78},{-12,72},{-14,68},{-3,70},{-6,76},{-5,66},
-  {-5,62},{0,57},{-4,61},{-9,60},{1,54},{2,58},{17,-10},{32,-13},{42,-9},
-  {49,-5},{53,0},{64,3},{68,10},{66,27},{47,57},{17,-10},{32,-13},{42,-9},
-  {49,-5},{53,0},{64,3},{68,10},{66,27},{47,57},{-5,71},{0,24},{-1,36},
-  {-2,42},{-2,52},{-9,57},{-6,63},{-4,65},{-4,67},{-7,82},{-21,126},{-23,124},
-  {-20,110},{-26,126},{-25,124},{-17,105},{-27,121},{-27,117},{-17,102},
-  {-26,117},{-27,116},{-33,122},{-10,95},{-14,100},{-8,95},{-17,111},
-  {-28,114},{-6,89},{-2,80},{-4,82},{-9,85},{-8,81},{-1,72},{5,64},{1,67},
-  {9,56},{0,69},{1,69},{7,69},{-7,69},{-6,67},{-16,77},{-2,64},{2,61},{-6,67},
-  {-3,64},{2,57},{-3,65},{-3,66},{0,62},{9,51},{-1,66},{-2,71},{-2,75},
-  {-21,126},{-23,124},{-20,110},{-26,126},{-25,124},{-17,105},{-27,121},
-  {-27,117},{-17,102},{-26,117},{-27,116},{-33,122},{-10,95},{-14,100},
-  {-8,95},{-17,111},{-28,114},{-6,89},{-2,80},{-4,82},{-9,85},{-8,81},{-1,72},
-  {5,64},{1,67},{9,56},{0,69},{1,69},{7,69},{-7,69},{-6,67},{-16,77},{-2,64},
-  {2,61},{-6,67},{-3,64},{2,57},{-3,65},{-3,66},{0,62},{9,51},{-1,66},{-2,71},
-  {-2,75},{19,-6},{18,-6},{14,0},{26,-12},{31,-16},{33,-25},{33,-22},{37,-28},
-  {39,-30},{42,-30},{47,-42},{45,-36},{49,-34},{41,-17},{32,9},{69,-71},
-  {63,-63},{66,-64},{77,-74},{54,-39},{52,-35},{41,-10},{36,0},{40,-1},
-  {30,14},{28,26},{23,37},{12,55},{11,65},{37,-33},{39,-36},{40,-37},{38,-30},
-  {46,-33},{42,-30},{40,-24},{49,-29},{38,-12},{40,-10},{38,-3},{46,-5},
-  {31,20},{29,30},{25,44},{19,-6},{18,-6},{14,0},{26,-12},{31,-16},{33,-25},
-  {33,-22},{37,-28},{39,-30},{42,-30},{47,-42},{45,-36},{49,-34},{41,-17},
-  {32,9},{69,-71},{63,-63},{66,-64},{77,-74},{54,-39},{52,-35},{41,-10},
-  {36,0},{40,-1},{30,14},{28,26},{23,37},{12,55},{11,65},{37,-33},{39,-36},
-  {40,-37},{38,-30},{46,-33},{42,-30},{40,-24},{49,-29},{38,-12},{40,-10},
-  {38,-3},{46,-5},{31,20},{29,30},{25,44},{-23,112},{-15,71},{-7,61},{0,53},
-  {-5,66},{-11,77},{-9,80},{-9,84},{-10,87},{-34,127},{-21,101},{-3,39},
-  {-5,53},{-7,61},{-11,75},{-15,77},{-17,91},{-25,107},{-25,111},{-28,122},
-  {-11,76},{-10,44},{-10,52},{-10,57},{-9,58},{-16,72},{-7,69},{-4,69},
-  {-5,74},{-9,86},{-23,112},{-15,71},{-7,61},{0,53},{-5,66},{-11,77},{-9,80},
-  {-9,84},{-10,87},{-34,127},{-21,101},{-3,39},{-5,53},{-7,61},{-11,75},
-  {-15,77},{-17,91},{-25,107},{-25,111},{-28,122},{-11,76},{-10,44},{-10,52},
-  {-10,57},{-9,58},{-16,72},{-7,69},{-4,69},{-5,74},{-9,86},{-2,73},{-12,104},
-  {-9,91},{-31,127},{-2,73},{-12,104},{-9,91},{-31,127},{-2,73},{-12,104},
-  {-9,91},{-31,127}},
-{
-  {20,-15},{2,54},{3,74},{20,-15},{2,54},{3,74},{-28,127},{-23,104},{-6,53},
-  {-1,54},{7,51},{29,16},{25,0},{14,0},{-10,51},{-3,62},{-27,99},{26,16},
-  {-4,85},{-24,102},{5,57},{6,57},{-17,73},{14,57},{20,40},{20,10},{29,0},
-  {54,0},{37,42},{12,97},{-32,127},{-22,117},{-2,74},{-4,85},{-24,102},{5,57},
-  {-6,93},{-14,88},{-6,44},{4,55},{-11,89},{-15,103},{-21,116},{19,57},
-  {20,58},{4,84},{6,96},{1,63},{-5,85},{-13,106},{5,63},{6,75},{-3,90},
-  {-1,101},{3,55},{-4,79},{-2,75},{-12,97},{-7,50},{1,60},{0,41},{0,63},
-  {0,63},{0,63},{-9,83},{4,86},{0,97},{-7,72},{13,41},{3,62},{7,34},{-9,88},
-  {-20,127},{-36,127},{-17,91},{-14,95},{-25,84},{-25,86},{-12,89},{-17,91},
-  {-31,127},{-14,76},{-18,103},{-13,90},{-37,127},{11,80},{5,76},{2,84},
-  {5,78},{-6,55},{4,61},{-14,83},{-37,127},{-5,79},{-11,104},{-11,91},
-  {-30,127},{0,65},{-2,79},{0,72},{-4,92},{-6,56},{3,68},{-8,71},{-13,98},
-  {-4,86},{-12,88},{-5,82},{-3,72},{-4,67},{-8,72},{-16,89},{-9,69},{-1,59},
-  {5,66},{4,57},{-4,71},{-2,71},{2,58},{-1,74},{-4,44},{-1,69},{0,62},{-7,51},
-  {-4,47},{-6,42},{-3,41},{-6,53},{8,76},{-9,78},{-11,83},{9,52},{0,67},
-  {-5,90},{1,67},{-15,72},{-5,75},{-8,80},{-21,83},{-21,64},{-13,31},{-25,64},
-  {-29,94},{9,75},{17,63},{-8,74},{-5,35},{-2,27},{13,91},{3,65},{-7,69},
-  {8,77},{-10,66},{3,62},{-3,68},{-20,81},{0,30},{1,7},{-3,23},{-21,74},
-  {16,66},{-23,124},{17,37},{44,-18},{50,-34},{-22,127},{4,39},{0,42},{7,34},
-  {11,29},{8,31},{6,37},{7,42},{3,40},{8,33},{13,43},{13,36},{4,47},{3,55},
-  {2,58},{6,60},{8,44},{11,44},{14,42},{7,48},{4,56},{4,52},{13,37},{9,49},
-  {19,58},{10,48},{12,45},{0,69},{20,33},{8,63},{35,-18},{33,-25},{28,-3},
-  {24,10},{27,0},{34,-14},{52,-44},{39,-24},{19,17},{31,25},{36,29},{24,33},
-  {34,15},{30,20},{22,73},{20,34},{19,31},{27,44},{19,16},{15,36},{15,36},
-  {21,28},{25,21},{30,20},{31,12},{27,16},{24,42},{0,93},{14,56},{15,57},
-  {26,38},{-24,127},{-24,115},{-22,82},{-9,62},{0,53},{0,59},{-14,85},
-  {-13,89},{-13,94},{-11,92},{-29,127},{-21,100},{-14,57},{-12,67},{-11,71},
-  {-10,77},{-21,85},{-16,88},{-23,104},{-15,98},{-37,127},{-10,82},{-8,48},
-  {-8,61},{-8,66},{-7,70},{-14,75},{-10,79},{-9,83},{-12,92},{-18,108},
-  {-4,79},{-22,69},{-16,75},{-2,58},{1,58},{-13,78},{-9,83},{-4,81},{-13,99},
-  {-13,81},{-6,38},{-13,62},{-6,58},{-2,59},{-16,73},{-10,76},{-13,86},
-  {-9,83},{-10,87},{0,0},{-22,127},{-25,127},{-25,120},{-27,127},{-19,114},
-  {-23,117},{-25,118},{-26,117},{-24,113},{-28,118},{-31,120},{-37,124},
-  {-10,94},{-15,102},{-10,99},{-13,106},{-50,127},{-5,92},{17,57},{-5,86},
-  {-13,94},{-12,91},{-2,77},{0,71},{-1,73},{4,64},{-7,81},{5,64},{15,57},
-  {1,67},{0,68},{-10,67},{1,68},{0,77},{2,64},{0,68},{-5,78},{7,55},{5,59},
-  {2,65},{14,54},{15,44},{5,60},{2,70},{-2,76},{-18,86},{12,70},{5,64},
-  {-12,70},{11,55},{5,56},{0,69},{2,65},{-6,74},{5,54},{7,54},{-6,76},
-  {-11,82},{-2,77},{-2,77},{25,42},{17,-13},{16,-9},{17,-12},{27,-21},
-  {37,-30},{41,-40},{42,-41},{48,-47},{39,-32},{46,-40},{52,-51},{46,-41},
-  {52,-39},{43,-19},{32,11},{61,-55},{56,-46},{62,-50},{81,-67},{45,-20},
-  {35,-2},{28,15},{34,1},{39,1},{30,17},{20,38},{18,45},{15,54},{0,79},
-  {36,-16},{37,-14},{37,-17},{32,1},{34,15},{29,15},{24,25},{34,22},{31,16},
-  {35,18},{31,28},{33,41},{36,28},{27,47},{21,62},{18,31},{19,26},{36,24},
-  {24,23},{27,16},{24,30},{31,29},{22,41},{22,42},{16,60},{15,52},{14,60},
-  {3,78},{-16,123},{21,53},{22,56},{25,61},{21,33},{19,50},{17,61},{-3,78},
-  {-8,74},{-9,72},{-10,72},{-18,75},{-12,71},{-11,63},{-5,70},{-17,75},
-  {-14,72},{-16,67},{-8,53},{-14,59},{-9,52},{-11,68},{9,-2},{30,-10},{31,-4},
-  {33,-1},{33,7},{31,12},{37,23},{31,38},{20,64},{-9,71},{-7,37},{-8,44},
-  {-11,49},{-10,56},{-12,59},{-8,63},{-9,67},{-6,68},{-10,79},{-3,78},{-8,74},
-  {-9,72},{-10,72},{-18,75},{-12,71},{-11,63},{-5,70},{-17,75},{-14,72},
-  {-16,67},{-8,53},{-14,59},{-9,52},{-11,68},{9,-2},{30,-10},{31,-4},{33,-1},
-  {33,7},{31,12},{37,23},{31,38},{20,64},{11,80},{5,76},{2,84},{5,78},{-6,55},
-  {4,61},{-14,83},{-37,127},{-5,79},{-11,104},{-11,91},{-30,127},{11,80},
-  {5,76},{2,84},{5,78},{-6,55},{4,61},{-14,83},{-37,127},{-5,79},{-11,104},
-  {-11,91},{-30,127},{-4,86},{-12,88},{-5,82},{-3,72},{-4,67},{-8,72},
-  {-16,89},{-9,69},{-1,59},{5,66},{4,57},{-4,71},{-2,71},{2,58},{-1,74},
-  {-4,44},{-1,69},{0,62},{-7,51},{-4,47},{-6,42},{-3,41},{-6,53},{8,76},
-  {-9,78},{-11,83},{9,52},{0,67},{-5,90},{1,67},{-15,72},{-5,75},{-8,80},
-  {-21,83},{-21,64},{-13,31},{-25,64},{-29,94},{9,75},{17,63},{-8,74},{-5,35},
-  {-2,27},{13,91},{-4,86},{-12,88},{-5,82},{-3,72},{-4,67},{-8,72},{-16,89},
-  {-9,69},{-1,59},{5,66},{4,57},{-4,71},{-2,71},{2,58},{-1,74},{-4,44},
-  {-1,69},{0,62},{-7,51},{-4,47},{-6,42},{-3,41},{-6,53},{8,76},{-9,78},
-  {-11,83},{9,52},{0,67},{-5,90},{1,67},{-15,72},{-5,75},{-8,80},{-21,83},
-  {-21,64},{-13,31},{-25,64},{-29,94},{9,75},{17,63},{-8,74},{-5,35},{-2,27},
-  {13,91},{4,39},{0,42},{7,34},{11,29},{8,31},{6,37},{7,42},{3,40},{8,33},
-  {13,43},{13,36},{4,47},{3,55},{2,58},{6,60},{8,44},{11,44},{14,42},{7,48},
-  {4,56},{4,52},{13,37},{9,49},{19,58},{10,48},{12,45},{0,69},{20,33},{8,63},
-  {35,-18},{33,-25},{28,-3},{24,10},{27,0},{34,-14},{52,-44},{39,-24},{19,17},
-  {31,25},{36,29},{24,33},{34,15},{30,20},{22,73},{4,39},{0,42},{7,34},
-  {11,29},{8,31},{6,37},{7,42},{3,40},{8,33},{13,43},{13,36},{4,47},{3,55},
-  {2,58},{6,60},{8,44},{11,44},{14,42},{7,48},{4,56},{4,52},{13,37},{9,49},
-  {19,58},{10,48},{12,45},{0,69},{20,33},{8,63},{35,-18},{33,-25},{28,-3},
-  {24,10},{27,0},{34,-14},{52,-44},{39,-24},{19,17},{31,25},{36,29},{24,33},
-  {34,15},{30,20},{22,73},{-3,78},{-8,74},{-9,72},{-10,72},{-18,75},{-12,71},
-  {-11,63},{-5,70},{-17,75},{-14,72},{-16,67},{-8,53},{-14,59},{-9,52},
-  {-11,68},{-3,78},{-8,74},{-9,72},{-10,72},{-18,75},{-12,71},{-11,63},
-  {-5,70},{-17,75},{-14,72},{-16,67},{-8,53},{-14,59},{-9,52},{-11,68},{9,-2},
-  {30,-10},{31,-4},{33,-1},{33,7},{31,12},{37,23},{31,38},{20,64},{9,-2},
-  {30,-10},{31,-4},{33,-1},{33,7},{31,12},{37,23},{31,38},{20,64},{-9,71},
-  {-7,37},{-8,44},{-11,49},{-10,56},{-12,59},{-8,63},{-9,67},{-6,68},{-10,79},
-  {-3,78},{-8,74},{-9,72},{-10,72},{-18,75},{-12,71},{-11,63},{-5,70},
-  {-17,75},{-14,72},{-16,67},{-8,53},{-14,59},{-9,52},{-11,68},{-3,78},
-  {-8,74},{-9,72},{-10,72},{-18,75},{-12,71},{-11,63},{-5,70},{-17,75},
-  {-14,72},{-16,67},{-8,53},{-14,59},{-9,52},{-11,68},{9,-2},{30,-10},{31,-4},
-  {33,-1},{33,7},{31,12},{37,23},{31,38},{20,64},{9,-2},{30,-10},{31,-4},
-  {33,-1},{33,7},{31,12},{37,23},{31,38},{20,64},{-9,71},{-7,37},{-8,44},
-  {-11,49},{-10,56},{-12,59},{-8,63},{-9,67},{-6,68},{-10,79},{-22,127},
-  {-25,127},{-25,120},{-27,127},{-19,114},{-23,117},{-25,118},{-26,117},
-  {-24,113},{-28,118},{-31,120},{-37,124},{-10,94},{-15,102},{-10,99},
-  {-13,106},{-50,127},{-5,92},{17,57},{-5,86},{-13,94},{-12,91},{-2,77},
-  {0,71},{-1,73},{4,64},{-7,81},{5,64},{15,57},{1,67},{0,68},{-10,67},{1,68},
-  {0,77},{2,64},{0,68},{-5,78},{7,55},{5,59},{2,65},{14,54},{15,44},{5,60},
-  {2,70},{-22,127},{-25,127},{-25,120},{-27,127},{-19,114},{-23,117},
-  {-25,118},{-26,117},{-24,113},{-28,118},{-31,120},{-37,124},{-10,94},
-  {-15,102},{-10,99},{-13,106},{-50,127},{-5,92},{17,57},{-5,86},{-13,94},
-  {-12,91},{-2,77},{0,71},{-1,73},{4,64},{-7,81},{5,64},{15,57},{1,67},{0,68},
-  {-10,67},{1,68},{0,77},{2,64},{0,68},{-5,78},{7,55},{5,59},{2,65},{14,54},
-  {15,44},{5,60},{2,70},{17,-13},{16,-9},{17,-12},{27,-21},{37,-30},{41,-40},
-  {42,-41},{48,-47},{39,-32},{46,-40},{52,-51},{46,-41},{52,-39},{43,-19},
-  {32,11},{61,-55},{56,-46},{62,-50},{81,-67},{45,-20},{35,-2},{28,15},{34,1},
-  {39,1},{30,17},{20,38},{18,45},{15,54},{0,79},{36,-16},{37,-14},{37,-17},
-  {32,1},{34,15},{29,15},{24,25},{34,22},{31,16},{35,18},{31,28},{33,41},
-  {36,28},{27,47},{21,62},{17,-13},{16,-9},{17,-12},{27,-21},{37,-30},
-  {41,-40},{42,-41},{48,-47},{39,-32},{46,-40},{52,-51},{46,-41},{52,-39},
-  {43,-19},{32,11},{61,-55},{56,-46},{62,-50},{81,-67},{45,-20},{35,-2},
-  {28,15},{34,1},{39,1},{30,17},{20,38},{18,45},{15,54},{0,79},{36,-16},
-  {37,-14},{37,-17},{32,1},{34,15},{29,15},{24,25},{34,22},{31,16},{35,18},
-  {31,28},{33,41},{36,28},{27,47},{21,62},{-24,115},{-22,82},{-9,62},{0,53},
-  {0,59},{-14,85},{-13,89},{-13,94},{-11,92},{-29,127},{-21,100},{-14,57},
-  {-12,67},{-11,71},{-10,77},{-21,85},{-16,88},{-23,104},{-15,98},{-37,127},
-  {-10,82},{-8,48},{-8,61},{-8,66},{-7,70},{-14,75},{-10,79},{-9,83},{-12,92},
-  {-18,108},{-24,115},{-22,82},{-9,62},{0,53},{0,59},{-14,85},{-13,89},
-  {-13,94},{-11,92},{-29,127},{-21,100},{-14,57},{-12,67},{-11,71},{-10,77},
-  {-21,85},{-16,88},{-23,104},{-15,98},{-37,127},{-10,82},{-8,48},{-8,61},
-  {-8,66},{-7,70},{-14,75},{-10,79},{-9,83},{-12,92},{-18,108},{-5,79},
-  {-11,104},{-11,91},{-30,127},{-5,79},{-11,104},{-11,91},{-30,127},{-5,79},
-  {-11,104},{-11,91},{-30,127}}};
+#include "rh264_cabac_tables.h"
 
 /* rh264 CABAC arithmetic decoding engine (H.264 clause 9.3). I-slice only. */
 
 /* rh264_cabac is defined further up, next to struct rh264_video,
  * which embeds one in its slice-decode workspace. */
 
-/* Pull n (1..7) bits for renormalisation.  When the buffer runs low it
- * is topped up past 16 bits so consecutive renormalisations share one
- * refill; bytes past the end read as zero (end-of-data semantics). */
-static RH264_INLINE uint32_t rh264_cb_bits(rh264_cabac *c, int n)
+/* codIOffset's bit position in val: nine bits above, so val stays
+ * below 2^63, and room for up to 47 bits of lookahead beneath */
+#define RH264_CB_S 54
+
+/* Renormalisation shift by range: the doublings that take a range of
+ * 2..510 back to 256 or more (8 minus its top bit's position), a load
+ * in place of a count-leading-zeros with its zero test */
+static const uint8_t rh264_cb_norm[512] = {
+   0,8,7,7,6,6,6,6,5,5,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+   3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+   2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+   2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+
+/* Bytes past the end read as zero (end-of-data semantics) and are
+ * counted in pad.  Called with bitcnt below 16 at most; tops the
+ * lookahead up past 40 bits, a byte at a time. */
+static void rh264_cb_refill_tail(rh264_cabac *c)
 {
-   if (c->bitcnt < n)
+   while (c->bitcnt <= 40)
    {
-      do
-      {
-         c->bitbuf = (c->bitbuf << 8)
-               | (uint32_t)((c->buf < c->end) ? *c->buf++ : 0);
-         c->bitcnt += 8;
-      } while (c->bitcnt <= 16);
+      if (c->buf < c->end)
+         c->val |= (uint64_t)*c->buf++ << (RH264_CB_S - 8 - c->bitcnt);
+      else
+         c->pad++;
+      c->bitcnt += 8;
    }
-   c->bitcnt -= n;
-   return (c->bitbuf >> c->bitcnt) & ((1u << n) - 1u);
 }
 
-static RH264_INLINE int rh264_cb_bit(rh264_cabac *c)
+/* Pull bits in for renormalisation.  Away from the end four bytes go in
+ * at once (bitcnt is below 16 on every call, so it stays under 48); one
+ * refill covers several renormalisations. */
+static RH264_INLINE void rh264_cb_refill(rh264_cabac *c)
 {
-   return (int)rh264_cb_bits(c, 1);
+   if (c->end - c->buf >= 4)
+   {
+      const uint8_t *b = c->buf;
+      c->val |= (((uint64_t)b[0] << 24) | ((uint64_t)b[1] << 16)
+             | ((uint64_t)b[2] << 8) | b[3]) << (RH264_CB_S - 32 - c->bitcnt);
+      c->buf     = b + 4;
+      c->bitcnt += 32;
+   }
+   else
+      rh264_cb_refill_tail(c);
 }
 
 static void rh264_cabac_init_engine(rh264_cabac *c,
       const uint8_t *buf, const uint8_t *end)
 {
-   int i;
-   c->buf = buf; c->end = end; c->bitbuf = 0; c->bitcnt = 0;
-   c->range = 510;
-   c->offset = 0;
-   for (i = 0; i < 9; i++) c->offset = (c->offset << 1) | (uint32_t)rh264_cb_bit(c);
+   c->buf = buf; c->end = end;
+   c->range  = 510;
+   c->val    = 0;
+   c->bitcnt = -9;   /* the first nine bits are codIOffset */
+   c->pad    = 0;
+   rh264_cb_refill(c);
 }
 
 /* 9.3.1.1 context variable initialisation for an I slice at SliceQPy. */
@@ -6416,52 +6244,72 @@ static void rh264_cabac_init_contexts(rh264_cabac *c, int sliceQP, int init_idc)
    }
 }
 
-static int rh264_cabac_decode(rh264_cabac *c, int ctxIdx)
+static RH264_INLINE int rh264_cabac_decode(rh264_cabac *c, int ctxIdx)
 {
    uint32_t s    = c->state[ctxIdx];
-   uint32_t rLPS = rh264_rangeTabLPS[s >> 1][(c->range >> 6) & 3];
+   uint32_t rLPS = rh264_cb_lps[((c->range & 0xC0) << 1) + s];
+   uint64_t sc;
    uint32_t m;
    int bin;
+   uint32_t lps;
    c->range -= rLPS;
+   sc  = (uint64_t)c->range << RH264_CB_S;
    /* the LPS/MPS decision is the decoded bin itself, so as a branch it
-    * mispredicts at exactly the bin entropy; taken as an all-ones mask
-    * instead, both outcomes cost the same straight-line code */
-   m   = (uint32_t)0 - (uint32_t)(c->offset >= c->range);
-   bin = (int)((s ^ m) & 1u);
-   c->offset -= c->range & m;
-   c->range  ^= (c->range ^ rLPS) & m;
-   c->state[ctxIdx] = c->next[m & 1u][s];
-   if (c->range < 256)
+    * mispredicts at exactly the bin entropy; taken as a select and a
+    * mask instead, both outcomes cost the same straight-line code.
+    * codIOffset is compared shifted down, a shift that can run while
+    * range waits on its table load */
+   lps = (uint32_t)(c->val >> RH264_CB_S) >= c->range;
+   m   = (uint32_t)0 - lps;
+   bin = (int)((s ^ lps) & 1u);
+   c->val   -= sc & (uint64_t)(int64_t)(int32_t)m;
+   c->range  = lps ? rLPS : c->range;
+   c->state[ctxIdx] = c->next[lps][s];
+   /* renormalise unconditionally: range is 2..510, so this is 0..7
+    * doublings, each moving a bit of lookahead into codIOffset.  As a
+    * branch on range < 256 it would follow the LPS outcome and
+    * mispredict as often as the bin itself would have */
    {
-      /* range is 2..255 here, so 1..7 doublings restore it; take them
-       * in one step instead of a bit at a time */
-      int n = (int)compat_clz_u32(c->range) - 23;
-      c->range <<= n;
-      c->offset  = (c->offset << n) | rh264_cb_bits(c, n);
+      int n = rh264_cb_norm[c->range];
+      c->range  <<= n;
+      c->val    <<= n;
+      c->bitcnt  -= n;
    }
+   if (c->bitcnt < 16)
+      rh264_cb_refill(c);
    return bin;
 }
 
-static int rh264_cabac_bypass(rh264_cabac *c)
+static RH264_INLINE int rh264_cabac_bypass(rh264_cabac *c)
 {
+   uint64_t sc;
    uint32_t m;
-   c->offset = (c->offset << 1) | (uint32_t)rh264_cb_bit(c);
-   /* bypass bins (signs, suffix bits) are near-uniform - the worst
-    * case for a branch, the indifferent case for a mask */
-   m = (uint32_t)0 - (uint32_t)(c->offset >= c->range);
-   c->offset -= c->range & m;
+   /* one more bit into codIOffset, then the comparison; bypass bins
+    * (signs, suffix bits) are near-uniform - the worst case for a
+    * branch, the indifferent case for a mask.  The refill comes first:
+    * the bit taken must already be there */
+   if (c->bitcnt < 16)
+      rh264_cb_refill(c);
+   c->val <<= 1;
+   c->bitcnt--;
+   sc = (uint64_t)c->range << RH264_CB_S;
+   m  = (uint32_t)0 - (uint32_t)(c->val >= sc);
+   c->val -= sc & (uint64_t)(int64_t)(int32_t)m;
    return (int)(m & 1u);
 }
 
 static int rh264_cabac_terminate(rh264_cabac *c)
 {
    c->range -= 2;
-   if (c->offset >= c->range) return 1;
+   if (c->val >= ((uint64_t)c->range << RH264_CB_S)) return 1;
    if (c->range < 256)
    {
       int n = (int)compat_clz_u32(c->range) - 23;
-      c->range <<= n;
-      c->offset  = (c->offset << n) | rh264_cb_bits(c, n);
+      c->range  <<= n;
+      c->val    <<= n;
+      c->bitcnt  -= n;
+      if (c->bitcnt < 16)
+         rh264_cb_refill(c);
    }
    return 0;
 }
@@ -6608,28 +6456,98 @@ static int rh264_cbf8_ctx(int b8, int cbp_luma, int cur_t8,
    return a + 2*b;
 }
 
-static int rh264_cabac_residual(rh264_cabac *c, int cat, int cbf_ctxinc,
-      int maxNumCoeff, int32_t *coef)
+/* The residual loop runs the engine on locals: range, offset and bit
+ * count held in registers across the bins of a block, where through
+ * the struct every context-state byte store (a char store, which may
+ * alias anything) forces them back out to memory and in again.  The
+ * same arithmetic as rh264_cabac_decode / rh264_cabac_bypass; the
+ * refill goes through the struct, once every few bytes. */
+#define RH264_CBL_REFILL() do { \
+   if (bc < 16) { \
+      c->val = val; c->bitcnt = bc; \
+      rh264_cb_refill(c); \
+      val = c->val; bc = c->bitcnt; \
+   } } while (0)
+#define RH264_CBL_DECODE(bin, ctxp) do { \
+   uint8_t *sp_  = (ctxp); \
+   uint32_t s_   = *sp_; \
+   uint32_t r_   = rh264_cb_lps[((rng & 0xC0) << 1) + s_]; \
+   uint32_t l_; \
+   uint64_t sc_; \
+   rng -= r_; \
+   sc_  = (uint64_t)rng << RH264_CB_S; \
+   l_   = (uint32_t)(val >> RH264_CB_S) >= rng; \
+   (bin) = (int)((s_ ^ l_) & 1u); \
+   val -= sc_ & ((uint64_t)0 - l_); \
+   rng  = l_ ? r_ : rng; \
+   *sp_ = nx[(l_ << 7) + s_]; \
+   { \
+      int n_ = rh264_cb_norm[rng]; \
+      rng <<= n_; \
+      val <<= n_; \
+      bc   -= n_; \
+   } \
+   RH264_CBL_REFILL(); \
+   } while (0)
+#define RH264_CBL_BYPASS(bin) do { \
+   uint64_t sc_; \
+   uint32_t m_; \
+   RH264_CBL_REFILL(); \
+   val <<= 1; \
+   bc--; \
+   sc_ = (uint64_t)rng << RH264_CB_S; \
+   m_  = (uint32_t)0 - (uint32_t)(val >= sc_); \
+   val -= sc_ & (uint64_t)(int64_t)(int32_t)m_; \
+   (bin) = (int)(m_ & 1u); \
+   } while (0)
+
+/* With rs, each level lands at coef[rs[scan position]] rather than at
+ * its scan position: the block comes out in raster order, ready for the
+ * transform.  With qm as well it lands dequantised, (level * qm[raster
+ * position] + 32) >> 6, qm folding the scale and the qP shift of 8.5.12.1
+ * (see rh264_qmul4) - the multiply spent on the few coefficients coded
+ * rather than on all sixteen. */
+static int rh264_cabac_residual_q(rh264_cabac *c, int cat, int cbf_ctxinc,
+      int maxNumCoeff, int32_t *coef, const uint8_t *rs, const int32_t *qm)
 {
-   int i, coded, nsig=0, sig[64];
+   int i, coded, nsig = 0, sig[64];
    int is8 = (cat == 5 || cat == 9 || cat == 13);
    const rh264_cat444 *cx = (cat >= 5) ? &rh264_cat444_ctx[cat] : NULL;
-   for (i = 0; i < maxNumCoeff; i++) coef[i] = 0;
+   uint8_t       *st = c->state;
+   const uint8_t *nx = &c->next[0][0];
+   uint64_t val;
+   uint32_t rng;
+   int      bc;
+   {
+      /* in raster order the block is all 16 or 64 positions, an AC
+       * block's DC slot included */
+      int nfill = !rs ? maxNumCoeff : (maxNumCoeff <= 16 ? 16 : 64);
+      for (i = 0; i < nfill; i++) coef[i] = 0;
+   }
+   val = c->val;
+   rng = c->range;
+   bc  = c->bitcnt;
    if (cat == 5 && !c->c444)
       coded = 1;   /* implied by the coded_block_pattern bit (4:2:x) */
-   else if (cx)
-      coded = rh264_cabac_decode(c, cx->cbf + cbf_ctxinc);
    else
-      coded = rh264_cabac_decode(c,
-            CTX_CBF + rh264_cbf_catoff[cat] + cbf_ctxinc);
-   if (!coded) return 0;
+   {
+      RH264_CBL_DECODE(coded, st + (cx ? cx->cbf
+            : CTX_CBF + rh264_cbf_catoff[cat]) + cbf_ctxinc);
+      if (!coded)
+      {
+         c->val    = val;
+         c->range  = rng;
+         c->bitcnt = bc;
+         return 0;
+      }
+   }
    /* significance map (forward scan).  The context bases and the
     * ctxIdxInc maps depend only on the category and the field/4:2:2
     * flags, all fixed for the block, so they are settled once here
     * instead of per coefficient. */
    {
       const uint8_t *sm, *lm;
-      int sbase, lbase;
+      int sbase, lbase, last = maxNumCoeff - 1;
       if (is8)
       {
          sm    = c->field ? rh264_sig8map_fld : rh264_sig8map;
@@ -6654,60 +6572,82 @@ static int rh264_cabac_residual(rh264_cabac *c, int cat, int cbf_ctxinc,
          lbase = (c->field ? RH264_CTX_LAST_F : CTX_LAST)
                + rh264_last_catoff[cat];
       }
-      for (i = 0; i < maxNumCoeff - 1; i++)
+      if (sm == rh264_sig_ident)
       {
-         if (rh264_cabac_decode(c, sbase + sm[i]))
+         /* the 4x4 shapes: position i is its own ctxIdxInc */
+         uint8_t *ss = st + sbase, *ls = st + lbase;
+         for (i = 0; i < last; i++)
          {
-            sig[nsig++] = i;
-            if (rh264_cabac_decode(c, lbase + lm[i]))
-               break;
+            int b;
+            RH264_CBL_DECODE(b, ss + i);
+            if (b)
+            {
+               sig[nsig++] = i;
+               RH264_CBL_DECODE(b, ls + i);
+               if (b)
+                  break;
+            }
          }
       }
+      else
+      {
+         uint8_t *ss = st + sbase, *ls = st + lbase;
+         for (i = 0; i < last; i++)
+         {
+            int b;
+            RH264_CBL_DECODE(b, ss + sm[i]);
+            if (b)
+            {
+               sig[nsig++] = i;
+               RH264_CBL_DECODE(b, ls + lm[i]);
+               if (b)
+                  break;
+            }
+         }
+      }
+      if (i == last) sig[nsig++] = last;
    }
-   if (i == maxNumCoeff - 1) sig[nsig++] = maxNumCoeff - 1;
-   /* levels (reverse scan) — coeff_abs_level_minus1 via the c1/c2 running
-    * context scheme (openh264 ParseSignificantCoeffCabac + DecodeUEGLevelCabac).
-    * oneCtx (227+catoff) indexed by c1: starts 1, +1 (cap 4) while all decoded
-    * levels==1, ->0 permanently after the first level>1. absCtx (232+catoff)
-    * indexed by c2: count of level>1 coeffs so far (cap g_kMaxC2). */
+   /* levels (reverse scan): coeff_abs_level_minus1, its first bin on
+    * ctxIdxInc c1 (1 rising to 4 while every level so far is 1, then 0
+    * for good after the first level above 1), its later bins on 5 + c2
+    * (levels above 1 so far, capped at 4, 3 for chroma DC), then an
+    * Exp-Golomb bypass suffix past 14 (9.3.3.1.3). */
    {
       int k;
       int c1 = 1, c2 = 0;
-      int oneoff = cx ? cx->abs : CTX_ABS + rh264_abs_catoff[cat];
-      int absoff = oneoff + 5;
-      int maxc2  = (cat==3) ? 3 : 4;                       /* g_kMaxC2      */
-      for (k = nsig-1; k >= 0; k--)
+      uint8_t *one = st + (cx ? cx->abs : CTX_ABS + rh264_abs_catoff[cat]);
+      uint8_t *gt1 = one + 5;
+      int maxc2  = (cat == 3) ? 3 : 4;
+      for (k = nsig - 1; k >= 0; k--)
       {
-         int lvl = 1, sign;
-         if (rh264_cabac_decode(c, oneoff + c1))
+         int lvl = 1, b, sign;
+         RH264_CBL_DECODE(b, one + c1);
+         if (b)
          {
-            /* level >= 2: DecodeUEGLevel(absCtx + c2) returns the extra amount */
-            int add = 0;
-            if (rh264_cabac_decode(c, absoff + c2))
+            uint8_t *actx = gt1 + c2;
+            int cnt = 1;
+            lvl = 2;
+            do {
+               RH264_CBL_DECODE(b, actx);
+               lvl += b;
+            } while (b && ++cnt != 14);
+            if (b)
             {
-               int cnt = 1, tmp = 1;
-               add = 0;
+               /* Exp-Golomb, k = 0: a unary prefix, then that many
+                * suffix bits */
+               int icount = 0, sfx = 0;
                do {
-                  tmp = rh264_cabac_decode(c, absoff + c2);
-                  add++;
-                  cnt++;
-               } while (tmp != 0 && cnt != 13);
-               if (tmp != 0)
+                  RH264_CBL_BYPASS(b);
+                  icount += b;
+               } while (b && icount != 16);
+               sfx = (1 << icount) - 1;
+               while (icount--)
                {
-                  /* DecodeExpBypass(iCount=0): unary-length exp-golomb bypass */
-                  int icount = 0, s1 = 0, s2 = 0, b;
-                  do {
-                     b = rh264_cabac_bypass(c);
-                     if (b) { s1 += (1 << icount); icount++; }
-                  } while (b != 0 && icount != 16);
-                  while (icount--) {
-                     b = rh264_cabac_bypass(c);
-                     if (b) s2 |= (1 << icount);
-                  }
-                  add += (s1 + s2) + 1;
+                  RH264_CBL_BYPASS(b);
+                  sfx += b << icount;
                }
+               lvl += sfx;
             }
-            lvl = 2 + add;
             c2++; if (c2 > maxc2) c2 = maxc2;
             c1 = 0;
          }
@@ -6715,11 +6655,38 @@ static int rh264_cabac_residual(rh264_cabac *c, int cat, int cbf_ctxinc,
          {
             c1++; if (c1 > 4) c1 = 4;
          }
-         sign = rh264_cabac_bypass(c);
-         coef[sig[k]] = sign ? -lvl : lvl;
+         RH264_CBL_BYPASS(sign);
+         if (!rs)
+            coef[sig[k]] = sign ? -lvl : lvl;
+         else
+         {
+            int pos = rs[sig[k]];
+            if (qm)
+            {
+               /* the signed level, rounded down as the separate pass
+                * did; a conforming stream keeps the product within 2^27
+                * (8.5.12.1 bounds the result), and anything else wraps
+                * rather than overflowing */
+               int32_t  v = sign ? -lvl : lvl;
+               uint32_t q = (uint32_t)v * (uint32_t)qm[pos] + 32u;
+               coef[pos] = (int32_t)q >> 6;
+            }
+            else
+               coef[pos] = sign ? -lvl : lvl;
+         }
       }
    }
+   c->val    = val;
+   c->range  = rng;
+   c->bitcnt = bc;
    return nsig;
+}
+
+static int rh264_cabac_residual(rh264_cabac *c, int cat, int cbf_ctxinc,
+      int maxNumCoeff, int32_t *coef)
+{
+   return rh264_cabac_residual_q(c, cat, cbf_ctxinc, maxNumCoeff, coef,
+         NULL, NULL);
 }
 
 /* ---- rh264_cabac_slice.h ---- */
@@ -7005,7 +6972,7 @@ static int rh264_cabac_decode_mb_ctx(rh264_cabac *cb, const rh264_sps *sps,
           * the arithmetic decoder's read position (the nine-bit window
           * covers the encoder's flush and stop bit, 9.3.4.5; then
           * pcm_alignment_zero_bits, 7.3.5).  This engine prefetches:
-          * buf is up to three bytes past that position and bitcnt bits
+          * buf is up to seven bytes past that position and bitcnt bits
           * of it are unconsumed, so give back the whole unconsumed
           * bytes - restarting at buf itself skipped up to two sample
           * bytes and desynchronised everything after the first I_PCM
@@ -7017,7 +6984,13 @@ static int rh264_cabac_decode_mb_ctx(rh264_cabac *cb, const rh264_sps *sps,
          /* (an earlier rule stepped one bit further before rounding,
           * which only differed when the prefetch held a whole number of
           * bytes - then it started the samples a byte late) */
-         cb->buf -= cb->bitcnt >> 3;
+         {
+            /* the prefetch holds bitcnt bits; the whole bytes among
+             * them that came from the stream go back */
+            int back = (cb->bitcnt >> 3) - cb->pad;
+            if (back > 0)
+               cb->buf -= back;
+         }
          cb->bitcnt = 0;
          /* 256 + 2 x (ch x cw) samples of bit_depth bits, then byte
           * alignment before the engine restarts (7.3.5, 9.3.1.2) */
@@ -7889,38 +7862,41 @@ static void rh264_cabac_p_residual(rh264_cabac *cb, rh264_frame *f,
       }
    }
    else
-   for (bi = 0; bi < 16; bi++)
    {
-      int bx = rh264_blk_x[bi], by = rh264_blk_y[bi], raster = by*4 + bx;
-      int32_t coef[16], r[16];
-      int nz = 0;
-      /* coef needs no clearing: it is only read under nz, and the scan
-       * scatter below writes all sixteen entries from an array
-       * rh264_cabac_residual has already zero-filled. */
-      if (cbp_luma & (1 << (bi >> 2)))
+      /* the residual decoder writes the blocks in raster order and, away
+       * from transform bypass, dequantised, with one scale per
+       * macroblock (8.5.12.1) */
+      int32_t qm4[16];
+      int tb = RH264_TB(f);
+      const uint8_t *rs = RH264_SCAN4(f);
+      if (cbp_luma && !tb)
+         rh264_qmul4(qm4, RH264_QPP(f), f->w4[3]);
+      for (bi = 0; bi < 16; bi++)
       {
-         int32_t scan[16];
-         int inc = rh264_cabac_pcbf_luma_ctx(raster, cur, L, U,
-               have_left, have_up);
-         nz = rh264_cabac_residual(cb, 2, inc, 16, scan);
-         if (nz)
+         int bx = rh264_blk_x[bi], by = rh264_blk_y[bi], raster = by*4 + bx;
+         int32_t coef[16], r[16];
+         int nz = 0;
+         if (cbp_luma & (1 << (bi >> 2)))
          {
-            { const uint8_t *sc = RH264_SCAN4(f);
-           for (k = 0; k < 16; k++) coef[sc[k]] = scan[k]; }
-            if (RH264_TB(f))
-               rh264_add_bypass(f, Y + RH264_OFF(f, (by*4)*f->ystride + bx*4),
-                     f->ystride, coef, 4, 4, 4);
-            else
+            int inc = rh264_cabac_pcbf_luma_ctx(raster, cur, L, U,
+                  have_left, have_up);
+            nz = rh264_cabac_residual_q(cb, 2, inc, 16, coef, rs,
+                  tb ? NULL : qm4);
+            if (nz)
             {
-            rh264_dequant4x4(coef, RH264_QPP(f), 0, f->w4[3]);
-            rh264_itransform4x4(coef, r);
-            rh264_add_residual(f, Y + RH264_OFF(f, (by*4)*f->ystride + bx*4),
-                  f->ystride, r, 4);
+               uint8_t *d = Y + RH264_OFF(f, (by*4)*f->ystride + bx*4);
+               if (tb)
+                  rh264_add_bypass(f, d, f->ystride, coef, 4, 4, 4);
+               else
+               {
+                  rh264_itransform4x4(coef, r);
+                  rh264_add_residual(f, d, f->ystride, r, 4);
+               }
             }
          }
+         cur->luma[raster] = nz ? 1 : 0;
+         f->nzL[(mby*4+by)*gw + mbx*4+bx] = (uint8_t)(nz ? 1 : 0);
       }
-      cur->luma[raster] = nz ? 1 : 0;
-      f->nzL[(mby*4+by)*gw + mbx*4+bx] = (uint8_t)(nz ? 1 : 0);
    }
 
    if (f->c444)
@@ -7967,37 +7943,57 @@ static void rh264_cabac_p_residual(rh264_cabac *cb, rh264_frame *f,
    for (comp = 0; comp < 2; comp++)
    {
       uint8_t *p = planes[comp];
-      int blk;
+      int blk, tb = RH264_TB(f);
+      int32_t qm4[16];
+      /* AC levels come out in raster order (the scan from its second
+       * entry) and, away from transform bypass, dequantised; the DC,
+       * already scaled, goes in after */
+      const uint8_t *rs = RH264_SCAN4(f) + 1;
+      if (cbp_chroma == 2 && !tb)
+         rh264_qmul4(qm4, rh264_chroma_qp_bd(f,
+               comp?f->chroma_qp_offset2:f->chroma_qp_offset),
+               f->w4[4+comp]);
       for (blk = 0; blk < nblk; blk++)
       {
          int bx = blk & 1, by = blk >> 1;
          int32_t ac[16], r[16];
          int nz = 0;
-         for (k = 0; k < 16; k++) ac[k] = 0;
+         uint8_t *d = p + RH264_OFF(f, by*4*f->cstride + bx*4);
          if (cbp_chroma == 2)
          {
-            int32_t scan[16];
             int inc = rh264_cabac_pcbf_cac_ctx(comp, blk, cur, L, U,
                   have_left, have_up, nblk);
-            nz = rh264_cabac_residual(cb, 4, inc, 15, scan);
-            { const uint8_t *sc = RH264_SCAN4(f);
-              for (k = 0; k < 15; k++) ac[sc[k+1]] = scan[k]; }
+            nz = rh264_cabac_residual_q(cb, 4, inc, 15, ac, rs,
+                  tb ? NULL : qm4);
          }
          cur->cAC[comp][blk] = nz ? 1 : 0;
          f->nzC[comp][(mby*(f->cmbh/4)+by)*cgw + mbx*2+bx] = (uint8_t)(nz ? 1 : 0);
-         ac[0] = cdc[comp][blk];
-         if (RH264_TB(f))
+         if (!nz)
          {
-            rh264_add_bypass(f, p + RH264_OFF(f, by*4*f->cstride + bx*4), f->cstride,
-                  ac, 4, 4, 4);
+            /* no AC: nothing at all to add, or (transform aside) the
+             * DC alone, which the transform spreads unchanged over all
+             * sixteen samples */
+            if (!cdc[comp][blk])
+               continue;
+            for (k = 0; k < 16; k++) ac[k] = 0;
+            ac[0] = cdc[comp][blk];
+            if (tb)
+               rh264_add_bypass(f, d, f->cstride, ac, 4, 4, 4);
+            else
+            {
+               for (k = 0; k < 16; k++) r[k] = ac[0];
+               rh264_add_residual(f, d, f->cstride, r, 4);
+            }
             continue;
          }
-         rh264_dequant4x4(ac, rh264_chroma_qp_bd(f,
-               comp?f->chroma_qp_offset2:f->chroma_qp_offset), 1,
-               f->w4[4+comp]);
+         ac[0] = cdc[comp][blk];
+         if (tb)
+         {
+            rh264_add_bypass(f, d, f->cstride, ac, 4, 4, 4);
+            continue;
+         }
          rh264_itransform4x4(ac, r);
-         rh264_add_residual(f, p + RH264_OFF(f, by*4*f->cstride + bx*4),
-               f->cstride, r, 4);
+         rh264_add_residual(f, d, f->cstride, r, 4);
       }
    }
 }
@@ -8015,7 +8011,6 @@ static int rh264_cabac_decode_pslice(rh264_bits *b, const rh264_sps *sps,
    int mbw = f->mbw, mbh = f->mbh, mbx, mby, prevQpNZ = 0;
    int gw = mbw*4, cgw = mbw*2;
    int gwmax = mbw*4, ghmax = mbh*4;
-   int gi;
    size_t bytepos;
 
    while (b->bitpos & 7) { if (!rh264_u1(b)) break; }
@@ -8032,9 +8027,6 @@ static int rh264_cabac_decode_pslice(rh264_bits *b, const rh264_sps *sps,
    f->tb = sps->tb;
    if (nrefs < 1) return -1;
 
-   for (gi = 0; gi < gwmax * ghmax; gi++)
-   { rh264_mv z; memset(&z, 0, sizeof(z));
-     z.ref = -2; z.ref1 = -1; z.pic = -1; z.pic1 = -1; mvg[gi] = z; }
    /* the coefficient/mode context describes the picture being decoded; a
     * continuation slice must keep what earlier slices of it produced */
    if (sh->first_mb_in_slice == 0)
@@ -8123,11 +8115,11 @@ static int rh264_cabac_decode_pslice(rh264_bits *b, const rh264_sps *sps,
             rh264_inter_pred_block(f, l0[0], mbx, mby, 0, 0, 16, 16, mvx, mvy);
             rh264_weight_pred(f, sh, 0, mbx, mby, 0, 0, 16, 16);
             rh264_inter_clear_i4mode(f, mbx, mby);
-            for (cy = 0; cy < 4; cy++) for (cx = 0; cx < 4; cx++)
+            for (cy = 0; cy < 4; cy++)
             {
-               int o = ((mby*4+cy)*gwmax + mbx*4+cx)*2;
-               f->nzL[(mby*4+cy)*gw + mbx*4+cx] = 0;
-               absmvd[o] = 0; absmvd[o+1] = 0;
+               memset(f->nzL + (size_t)(mby*4+cy)*gw + mbx*4, 0, 4);
+               memset(absmvd + ((size_t)(mby*4+cy)*gwmax + mbx*4)*2, 0,
+                     8 * sizeof(*absmvd));
             }
             rh264_nzc_clear(f, mbx, mby);
             tmp.avail = 1;
@@ -8476,7 +8468,6 @@ static int rh264_cabac_decode_bslice(rh264_bits *b, const rh264_sps *sps,
    int mbw = f->mbw, mbh = f->mbh, mbx, mby, prevQpNZ = 0;
    int gw = mbw*4, cgw = mbw*2;
    int gwmax = mbw*4, ghmax = mbh*4;
-   int gi;
    size_t bytepos;
 
    while (b->bitpos & 7) { if (!rh264_u1(b)) break; }
@@ -8493,9 +8484,6 @@ static int rh264_cabac_decode_bslice(rh264_bits *b, const rh264_sps *sps,
    f->tb = sps->tb;
    if (bc->n0 < 1 || bc->n1 < 1) return -1;
 
-   for (gi = 0; gi < gwmax * ghmax; gi++)
-   { rh264_mv z; memset(&z, 0, sizeof(z));
-     z.ref = -2; z.ref1 = -1; z.pic = -1; z.pic1 = -1; mvg[gi] = z; }
    /* the coefficient/mode context describes the picture being decoded; a
     * continuation slice must keep what earlier slices of it produced */
    if (sh->first_mb_in_slice == 0)
@@ -8587,8 +8575,8 @@ static int rh264_cabac_decode_bslice(rh264_bits *b, const rh264_sps *sps,
             if (rh264_b_direct_mb(f, bc, sh, mvg, gwmax, ghmax, mbx, mby)
                   != 0)
             { return -1; }
-            for (cy = 0; cy < 4; cy++) for (cx = 0; cx < 4; cx++)
-               f->nzL[(mby*4+cy)*gw + mbx*4+cx] = 0;
+            for (cy = 0; cy < 4; cy++)
+               memset(f->nzL + (size_t)(mby*4+cy)*gw + mbx*4, 0, 4);
             rh264_nzc_clear(f, mbx, mby);
             rh264_inter_clear_i4mode(f, mbx, mby);
             tmp.avail = 1;
@@ -9040,6 +9028,8 @@ static int rh264_derive_poc(rh264_video *v, const rh264_slice_hdr *sh,
       else
          msb = v->prev_poc_msb;
       poc = msb + sh->poc_lsb;
+      v->poc_top = poc;
+      v->poc_bot = poc + sh->poc_bottom_delta;
       if (nal_ref_idc)
       { v->prev_poc_msb = msb; v->prev_poc_lsb = sh->poc_lsb; }
    }
@@ -9050,6 +9040,7 @@ static int rh264_derive_poc(rh264_video *v, const rh264_slice_hdr *sh,
          v->fn_offset += max_fn;
       poc = 2 * (v->fn_offset + sh->frame_num);
       if (!nal_ref_idc && poc > 0) poc -= 1;
+      v->poc_top = v->poc_bot = poc;
       v->prev_frame_num = sh->frame_num;
    }
    else
@@ -9081,6 +9072,8 @@ static int rh264_derive_poc(rh264_video *v, const rh264_slice_hdr *sh,
       top = expected + sh->poc1_delta0;
       bottom = top + sps->poc1_offset_ttb + sh->poc1_delta1;
       poc = (top < bottom) ? top : bottom;
+      v->poc_top = top;
+      v->poc_bot = bottom;
       v->fn_offset = fno;
       v->prev_frame_num = sh->frame_num;
    }
@@ -9303,14 +9296,28 @@ static int rh264_video_note_slice(rh264_video *v, const rh264_slice_hdr *sh)
  * reference storage and temporal direct prediction see. */
 static void rh264_ctx_fold_mvg(rh264_pic_ctx *c, int first, int end)
 {
-   int gw = c->f.mbw * 4, mb;
+   int mbw = c->f.mbw, gw = mbw * 4, mb = first;
    if (!c->mvg || !c->pic_mvg) return;
-   for (mb = first; mb < end; mb++)
+   while (mb < end)
    {
-      int gx = (mb % c->f.mbw) * 4, gy = (mb / c->f.mbw) * 4, r;
+      int mx = mb % mbw, gy = (mb / mbw) * 4, r;
+      int n  = mbw - mx;                /* the rest of this row */
+      if (n > end - mb)
+         n = end - mb;
+      if (n == mbw)
+      {
+         /* whole rows: their four grid rows are one contiguous run */
+         int rows = (end - mb) / mbw;
+         memcpy(c->pic_mvg + gy * gw, c->mvg + gy * gw,
+               (size_t)rows * 4 * gw * sizeof(rh264_mv));
+         mb += rows * mbw;
+         continue;
+      }
       for (r = 0; r < 4; r++)
-         memcpy(c->pic_mvg + (gy + r) * gw + gx,
-                c->mvg     + (gy + r) * gw + gx, 4 * sizeof(rh264_mv));
+         memcpy(c->pic_mvg + (gy + r) * gw + mx * 4,
+                c->mvg     + (gy + r) * gw + mx * 4,
+                (size_t)n * 4 * sizeof(rh264_mv));
+      mb += n;
    }
 }
 
@@ -9450,9 +9457,8 @@ static int rh264_video_decode_idr(rh264_video *v, const uint8_t *nal, size_t len
 /* Remove list position j from the reference set. */
 static void rh264_dpb_unmark_at(rh264_video *v, int j)
 {
-   int m;
-   for (m = j; m < v->dpb_len - 1; m++)
-      v->dpb_slot[m] = v->dpb_slot[m + 1];
+   memmove(&v->dpb_slot[j], &v->dpb_slot[j + 1],
+         (size_t)(v->dpb_len - 1 - j) * sizeof(v->dpb_slot[0]));
    v->dpb_len--;
 }
 
@@ -10057,6 +10063,7 @@ static void rh264_video_row_done(void *user, int mby)
    /* The context, not the decoder: on a pool thread the decoder's
     * current picture is a later one. */
    rh264_pic_ctx *c = (rh264_pic_ctx*)user;
+   rh264_mv *g;
    /* pic_open is the sequence's flag and the sequence may have closed
     * this picture already - it closes it when the next one opens,
     * which on a pool thread is while this one still decodes. */
@@ -10064,27 +10071,34 @@ static void rh264_video_row_done(void *user, int mby)
       return;
    if (c->f.rows_deblocked != mby - 1)
       return;                         /* a gap: leave it to the finish */
+   g = c->slice_mvg ? c->slice_mvg : c->mvg;
    if (c->pic_kind <= 2)
       rh264_deblock(&c->f, c->pic_idc, c->pic_oA, c->pic_oB,
             mby - 1, mby);
    else
    {
       /* The boundary strengths read the motion vectors of the rows
-       * being filtered and the row above them. Those are in the
-       * working grid: pic_mvg is the picture's copy, folded from it
-       * once each slice is done, and mid-slice it still holds the
-       * last picture's. The finish reads pic_mvg because by then they
-       * are the same. */
-      if (!c->mvg)
+       * being filtered and the row above them, in the grid the slice
+       * writes; the finish reads pic_mvg, by then the same. */
+      if (!g)
          return;
       rh264_deblock_pslice(&c->f, c->pic_idc, c->pic_oA, c->pic_oB,
-            c->mvg, mby - 1, mby);
+            g, mby - 1, mby);
    }
    c->f.rows_deblocked = mby;
    /* The row's motion goes into the picture grid with it, so a later
     * picture's temporal direct finds the co-located cells final along
-    * with the samples. */
-   rh264_ctx_fold_mvg(c, (mby - 1) * c->f.mbw, mby * c->f.mbw);
+    * with the samples: an I picture's row all intra, as the finish
+    * leaves the whole grid, and a P or B row folded from the working
+    * grid unless the slice wrote the picture grid itself. */
+   if (c->pic_kind <= 2)
+   {
+      if (c->pic_mvg)
+         rh264_mvg_set_intra(c->pic_mvg + (size_t)(mby - 1) * 4 * c->f.mbw * 4,
+               c->f.mbw * 4, 4);
+   }
+   else if (g != c->pic_mvg)
+      rh264_ctx_fold_mvg(c, (mby - 1) * c->f.mbw, mby * c->f.mbw);
    /* Row mby-1 is filtered; filtering row mby will still touch its
     * last lines through their shared edge, so what is final is
     * everything above it. */
@@ -10144,22 +10158,21 @@ static void rh264_ctx_complete_picture(rh264_pic_ctx *c)
 static rh264_slice_job *rh264_ctx_queue_slice(rh264_video *v, rh264_pic_ctx *c,
       const rh264_bits *b, const rh264_slice_hdr *sh, int kind, int cabac)
 {
-   rh264_slice_job *j;
-   rh264_blocks_lock_take();
-   if ((j = v->job_free))
-   {
-      v->job_free = j->next;
-      v->job_free_n--;
-   }
-   rh264_blocks_lock_drop();
+   uint8_t *spare     = NULL;
+   size_t spare_cap   = 0;
+   rh264_slice_job *j = rh264_job_take(v);
    if (j)
+   {
+      spare     = j->rbsp;
+      spare_cap = j->rbsp_cap;
       memset(j, 0, sizeof(*j));
+   }
    else if (!(j = (rh264_slice_job*)calloc(1, sizeof(*j))))
       return NULL;
    /* The slice was unescaped into the buffer of whichever context was
     * current at the time - the one before the rotation, when this
     * slice opened a picture - and the job takes that very buffer;
-    * its owner draws another from the pool. */
+    * its owner takes the one the pooled job came back with. */
    {
       rh264_pic_ctx *o = NULL;
       int k;
@@ -10172,29 +10185,28 @@ static rh264_slice_job *rh264_ctx_queue_slice(rh264_video *v, rh264_pic_ctx *c,
       if (!o)
       {
          /* not a context's buffer: copy, as a stranger's must be */
-         j->rbsp = (uint8_t*)malloc(b->size ? b->size : 1);
-         if (!j->rbsp)
+         size_t need = b->size ? b->size : 1;
+         if (spare_cap < need)
+         {
+            free(spare);
+            spare     = (uint8_t*)malloc(need);
+            spare_cap = need;
+         }
+         if (!spare)
          {
             free(j);
             return NULL;
          }
-         memcpy(j->rbsp, b->buf, b->size);
-         j->rbsp_cap = b->size ? b->size : 1;
+         memcpy(spare, b->buf, b->size);
+         j->rbsp     = spare;
+         j->rbsp_cap = spare_cap;
       }
       else
       {
          j->rbsp     = o->rbsp_scratch;
          j->rbsp_cap = o->rbsp_scratch_cap;
-         o->rbsp_scratch     = NULL;
-         o->rbsp_scratch_cap = 0;
-         rh264_blocks_lock_take();
-         if (v->rbsp_free_n > 0)
-         {
-            v->rbsp_free_n--;
-            o->rbsp_scratch     = v->rbsp_free[v->rbsp_free_n];
-            o->rbsp_scratch_cap = v->rbsp_free_cap[v->rbsp_free_n];
-         }
-         rh264_blocks_lock_drop();
+         o->rbsp_scratch     = spare;
+         o->rbsp_scratch_cap = spare_cap;
       }
    }
    j->rbsp_len = b->size;
@@ -10233,6 +10245,19 @@ static void rh264_ctx_run_slices(rh264_video *v, rh264_pic_ctx *c, const struct 
          c->job_rc = -1;               /* a gap between slices */
       if (c->job_rc == 0)
       {
+         rh264_mv *g = c->mvg;
+         /* a picture's first slice has no other slice's cells to hide,
+          * so it decodes straight into the picture grid: nothing to
+          * fold afterwards */
+         if (j->kind != 0 && j->sh.first_mb_in_slice == 0 && c->pic_mvg)
+            g = c->pic_mvg;
+         c->slice_mvg = g;
+         /* every cell "not decoded" (ref -2) before the slice: the
+          * other slices' macroblocks then read as unavailable (6.4.8),
+          * the decoded ones fill in in raster order, and a list a
+          * partition does not use stays as the reset leaves it */
+         if (j->kind != 0)
+            rh264_mvg_reset(g, (size_t)(c->f.mbw * 4) * (c->f.mbh * 4));
          rh264_bits_init(&b, j->rbsp, j->rbsp_len);
          b.bitpos = j->bitpos;
          if (vlc) b.vlc = vlc;
@@ -10246,49 +10271,35 @@ static void rh264_ctx_run_slices(rh264_video *v, rh264_pic_ctx *c, const struct 
             case 1:
                rc = j->cabac
                   ? rh264_cabac_decode_pslice(&b, &c->sps, &c->pps, &j->sh, &c->f,
-                        j->l0, j->nref, j->picid, j->l0poc, c->mvg, &end, &c->sscr.cb)
+                        j->l0, j->nref, j->picid, j->l0poc, g, &end, &c->sscr.cb)
                   : rh264_decode_pslice(&b, &c->sps, &c->pps, &j->sh, &c->f,
-                        j->l0, j->nref, j->picid, j->l0poc, c->mvg, &end);
+                        j->l0, j->nref, j->picid, j->l0poc, g, &end);
                break;
             default:
                rc = j->cabac
                   ? rh264_cabac_decode_bslice(&b, &c->sps, &c->pps, &j->sh, &c->f,
-                        &j->bc, c->mvg, &end, &c->sscr.cb)
+                        &j->bc, g, &end, &c->sscr.cb)
                   : rh264_decode_bslice(&b, &c->sps, &c->pps, &j->sh, &c->f, &j->bc,
-                        c->mvg, &end);
+                        g, &end);
                break;
          }
          if (rc == 0)
          {
-            if (j->kind != 0)
-               rh264_ctx_fold_mvg(c, j->sh.first_mb_in_slice, end);
+            if (j->kind != 0 && g != c->pic_mvg)
+            {
+               /* the rows the row hook filtered went into the picture
+                * grid with their filtering; the rest of the slice goes
+                * in now */
+               int from = j->sh.first_mb_in_slice;
+               int done = c->f.rows_deblocked * c->f.mbw;
+               rh264_ctx_fold_mvg(c, from > done ? from : done, end);
+            }
             c->pic_end = end;
          }
          else
             c->job_rc = rc;
       }
-      /* the buffer and the job go back to their pools, or are freed
-       * when the pools are full; the buffer is settled before the job
-       * is offered, since a pooled job is another thread's to take */
-      rh264_blocks_lock_take();
-      if (v->rbsp_free_n < RH264_RBSP_POOL)
-      {
-         v->rbsp_free[v->rbsp_free_n]     = j->rbsp;
-         v->rbsp_free_cap[v->rbsp_free_n] = j->rbsp_cap;
-         v->rbsp_free_n++;
-      }
-      else
-         free(j->rbsp);
-      j->rbsp = NULL;
-      if (v->job_free_n < RH264_RBSP_POOL)
-      {
-         j->next     = v->job_free;
-         v->job_free = j;
-         v->job_free_n++;
-         j = NULL;
-      }
-      rh264_blocks_lock_drop();
-      free(j);
+      rh264_job_park(v, j);
    }
    /* Completion is the picture's own affair, not the sequence's: it
     * does not ask pic_open, which the sequence clears when the next
@@ -10440,10 +10451,759 @@ static void rh264_video_finish_picture(rh264_video *v, int *got_pic)
    v->cur->pic_open = 0;
 }
 
+/* ==================== hardware path ==================== */
+
+/* The pictures decode on a backend (a GPU video API); this side keeps
+ * what the stream says about them - which are held for reference,
+ * under which numbers, and the order they are shown in - in the same
+ * DPB lists and with the same marking the software path uses, so the
+ * two put out the same pictures in the same order. Frame pictures
+ * only: the backend is opened for progressive streams alone. A
+ * picture is complete at the end of the access unit that carries it. */
+
+#define RH264_HW_MAX_SLOTS 32
+/* A slice header ends long before this; the rest of the slice is the
+ * backend's to read. */
+#define RH264_HW_HDR_BYTES 4096
+
+typedef struct rh264_hw
+{
+   const rh264_hw_ops_t *ops;
+   void *dec;
+   rh264_hw_sps_t sps;
+   rh264_hw_pps_t pps;
+   unsigned params_gen;
+   unsigned nslots;
+   int broken;                 /* a decode or the stream failed     */
+   /* the picture being gathered */
+   uint8_t *bs;
+   size_t bs_len, bs_cap;
+   uint32_t offs[RH264_MAX_SLICES];
+   unsigned nslices;
+   int pic_open, skip, slot;
+   int frame_num, idr_pic_id, idr, ref, intra;
+   int poc[2];
+   /* the backend slot and field order counts of each DPB entry */
+   int dpb_hw[RH264_MAX_REFS];
+   int dpb_poc2[RH264_MAX_REFS][2];
+   /* pictures waiting to be shown */
+   int out_slot[RH264_OUT_SLOTS];
+   int out_poc[RH264_OUT_SLOTS];
+   int out_gen[RH264_OUT_SLOTS];
+   uint8_t out_used[RH264_OUT_SLOTS];
+   int out_len;
+   int pending_out;
+   const uint8_t *retry_data;
+   size_t retry_len, retry_pos;
+   int retrying, retry_got;
+   rh264_hw_ref_t refs[RH264_MAX_REFS];
+   video_hw_frame_t shown;
+   int have_shown;
+   uint8_t *cpu;
+   int cpu_w, cpu_h;
+   int have_cpu;
+   int can_defer, pending_cpu, pending_slot, pending_w, pending_h;
+   int fresh;                  /* shown during the present call     */
+} rh264_hw;
+
+/* The backend decoders try; one pointer, published whole. */
+#ifdef RETRO_ATOMIC_HAS_PTR
+static retro_atomic_ptr_t rh264_hw_backend;
+#define RH264_HW_BACKEND_GET() \
+   ((const rh264_hw_ops_t*)retro_atomic_load_acquire_ptr(&rh264_hw_backend))
+#else
+static const rh264_hw_ops_t *rh264_hw_backend;
+#define RH264_HW_BACKEND_GET() (rh264_hw_backend)
+#endif
+
+void rh264_set_hw_backend(const rh264_hw_ops_t *ops)
+{
+#ifdef RETRO_ATOMIC_HAS_PTR
+   retro_atomic_store_release_ptr(&rh264_hw_backend, (void*)ops);
+#else
+   rh264_hw_backend = ops;
+#endif
+}
+
+/* Coded order of the lists, from the raster order they are kept in. */
+static void rh264_hw_scaling_from(rh264_hw_scaling_t *o, int nlists,
+      const uint8_t *present, const uint8_t *usedef,
+      const uint8_t l4[6][16], const uint8_t l8[6][64])
+{
+   int i, j;
+   memset(o, 0, sizeof(*o));
+   for (i = 0; i < nlists && i < 12; i++)
+   {
+      if (present[i])
+         o->present_mask |= (uint16_t)(1u << i);
+      if (usedef[i])
+         o->default_mask |= (uint16_t)(1u << i);
+   }
+   for (i = 0; i < 6; i++)
+      for (j = 0; j < 16; j++)
+         o->list4x4[i][j] = l4[i][rh264_zigzag4[j]];
+   for (i = 0; i < 6; i++)
+      for (j = 0; j < 64; j++)
+         o->list8x8[i][j] = l8[i][rh264_zigzag8[j]];
+}
+
+static void rh264_hw_fill_sps(rh264_hw_sps_t *o, const rh264_sps *s)
+{
+   memset(o, 0, sizeof(*o));
+   o->sps_id                         = s->sps_id;
+   o->profile_idc                    = s->profile_idc;
+   o->constraint_flags               = s->constraint_flags;
+   o->level_idc                      = s->level_idc;
+   o->chroma_format_idc              = s->chroma_format_idc;
+   o->bit_depth                      = s->bit_depth_luma;
+   o->log2_max_frame_num             = s->log2_max_frame_num;
+   o->poc_type                       = s->pic_order_cnt_type;
+   o->log2_max_poc_lsb               = s->log2_max_poc_lsb;
+   o->delta_pic_order_always_zero    = s->poc_type1_always_zero;
+   o->offset_for_non_ref_pic         = s->poc1_offset_non_ref;
+   o->offset_for_top_to_bottom_field = s->poc1_offset_ttb;
+   o->num_ref_frames_in_poc_cycle    = s->poc1_ncycle;
+   o->offset_for_ref_frame           = s->poc1_offset_ref;
+   o->max_num_ref_frames             = s->max_num_ref_frames;
+   o->gaps_allowed                   = s->gaps_allowed;
+   o->width_in_mbs                   = s->pic_width_in_mbs;
+   o->height_in_mbs                  = s->frame_mbs;
+   o->direct_8x8_inference           = s->direct_8x8_inference_flag;
+   o->transform_bypass               = s->tb;
+   o->frame_cropping                 = s->frame_cropping;
+   o->crop_left                      = s->crop_l;
+   o->crop_right                     = s->crop_r;
+   o->crop_top                       = s->crop_t;
+   o->crop_bottom                    = s->crop_b;
+   o->width                          = s->frame_width;
+   o->height                         = s->frame_height;
+   o->crop_x                         = s->crop_x;
+   o->crop_y                         = s->crop_y;
+   o->scaling_present                = s->scaling_present;
+   rh264_hw_scaling_from(&o->scaling, s->chroma_format_idc == 3 ? 12 : 8,
+         s->sl_present, s->sl_usedef, s->sl4, s->sl8);
+}
+
+static void rh264_hw_fill_pps(rh264_hw_pps_t *o, const rh264_pps *p)
+{
+   memset(o, 0, sizeof(*o));
+   o->pps_id                        = p->pps_id;
+   o->sps_id                        = p->sps_id;
+   o->entropy_coding_mode           = p->entropy_coding_mode_flag;
+   o->bottom_field_pic_order_in_frame_present = p->pic_order_present_flag;
+   o->num_ref_idx_l0_default        = p->num_ref_idx_l0_default;
+   o->num_ref_idx_l1_default        = p->num_ref_idx_l1_default;
+   o->weighted_pred                 = p->weighted_pred_flag;
+   o->weighted_bipred_idc           = p->weighted_bipred_idc;
+   o->pic_init_qp                   = p->pic_init_qp;
+   o->pic_init_qs                   = p->pic_init_qs;
+   o->chroma_qp_index_offset        = p->chroma_qp_index_offset;
+   o->second_chroma_qp_index_offset = p->chroma_qp_index_offset2;
+   o->deblocking_filter_control_present = p->deblocking_filter_control_present;
+   o->constrained_intra_pred        = p->constrained_intra_pred_flag;
+   o->transform_8x8_mode            = p->transform_8x8_mode;
+   o->scaling_present               = p->scaling_present;
+   rh264_hw_scaling_from(&o->scaling, 12, p->sl_present, p->sl_usedef,
+         p->sl4, p->sl8);
+}
+
+/* Whether the backend could take a stream of these parameter sets:
+ * the profiles GPUs decode, as frames, 8-bit 4:2:0. */
+static int rh264_hw_stream_ok(const rh264_sps *s)
+{
+   if (     s->profile_idc != 66 && s->profile_idc != 77
+         && s->profile_idc != 100)
+      return 0;
+   return s->frame_mbs_only_flag && s->chroma_format_idc == 1
+       && s->bit_depth_luma == 8 && s->bit_depth_chroma == 8 && !s->tb;
+}
+
+/* A slot no picture holds: neither a reference nor waiting to be
+ * shown. -1 when every one is held. */
+static int rh264_hw_slot_take(const rh264_video *v)
+{
+   const rh264_hw *hw = v->hw;
+   unsigned s;
+   int j;
+   for (s = 0; s < hw->nslots; s++)
+   {
+      int held = hw->pending_cpu && hw->pending_slot == (int)s;
+      for (j = 0; j < v->dpb_len && !held; j++)
+         if (hw->dpb_hw[v->dpb_slot[j]] == (int)s)
+            held = 1;
+      for (j = 0; j < RH264_OUT_SLOTS && !held; j++)
+         if (hw->out_used[j] && hw->out_slot[j] == (int)s)
+            held = 1;
+      if (!held)
+         return (int)s;
+   }
+   return -1;
+}
+
+/* rh264_dpb_insert for a frame on the backend. */
+static void rh264_hw_dpb_insert(rh264_video *v, int picnum, int lt)
+{
+   rh264_hw *hw = v->hw;
+   int i, slot = 0;
+   if (v->dpb_size <= 0)
+      return;
+   if (v->dpb_len >= v->dpb_size)
+   {
+      for (i = v->dpb_len - 1; i >= 0; i--)
+         if (v->dpb_lt[v->dpb_slot[i]] < 0)
+         { rh264_dpb_unmark_at(v, i); break; }
+      if (i < 0)
+         rh264_dpb_unmark_at(v, v->dpb_len - 1);
+   }
+   for (i = 0; i < v->dpb_size; i++)
+   {
+      int j, used = 0;
+      for (j = 0; j < v->dpb_len; j++)
+         if (v->dpb_slot[j] == i) { used = 1; break; }
+      if (!used) { slot = i; break; }
+   }
+   hw->dpb_hw[slot]      = hw->slot;
+   hw->dpb_poc2[slot][0] = hw->poc[0];
+   hw->dpb_poc2[slot][1] = hw->poc[1];
+   v->dpb_fields[slot]   = 3;
+   v->dpb_pn[slot]       = picnum;
+   v->dpb_poc[slot]      = v->last_poc;
+   v->dpb_lt[slot]       = (signed char)lt;
+   for (i = v->dpb_len; i > 0; i--)
+      v->dpb_slot[i] = v->dpb_slot[i - 1];
+   v->dpb_slot[0] = slot;
+   v->dpb_len++;
+   v->have_ref = 1;
+}
+
+/* The next picture out, lowest (generation, POC) first; -1 none. */
+static int rh264_hw_out_pick(const rh264_hw *hw)
+{
+   int i, bi = -1;
+   for (i = 0; i < RH264_OUT_SLOTS; i++)
+   {
+      if (!hw->out_used[i])
+         continue;
+      if (     bi < 0 || hw->out_gen[i] < hw->out_gen[bi]
+            || (     hw->out_gen[i] == hw->out_gen[bi]
+                  && hw->out_poc[i] < hw->out_poc[bi]))
+         bi = i;
+   }
+   return bi;
+}
+
+/* Materialize the last output once. The slot stays held until the next
+ * decode/drain call, or until its CPU copy is complete. */
+static int rh264_hw_readback_pending(rh264_hw *hw)
+{
+   int w = hw->pending_w, h = hw->pending_h;
+   size_t y = (size_t)w * h, c = (size_t)((w + 1) / 2) * ((h + 1) / 2);
+   uint8_t *planes[3];
+   hw->have_cpu = 0;
+   if (hw->cpu_w != w || hw->cpu_h != h)
+   {
+      free(hw->cpu);
+      hw->cpu = (uint8_t*)malloc(y + 2 * c);
+      hw->cpu_w = w;
+      hw->cpu_h = h;
+   }
+   if (!hw->cpu)
+      return -1;
+   planes[0] = hw->cpu;
+   planes[1] = hw->cpu + y;
+   planes[2] = hw->cpu + y + c;
+   if (hw->ops->readback(hw->dec, (unsigned)hw->pending_slot, planes) != 0)
+   {
+      hw->broken = 1;
+      return -1;
+   }
+   hw->have_cpu = 1;
+   hw->pending_cpu = 0;
+   return 0;
+}
+
+/* Hands the picture at queue entry @i to the caller. */
+static int rh264_hw_show(rh264_video *v, int i)
+{
+   rh264_hw *hw     = v->hw;
+   video_hw_frame_t shown;
+   int r;
+   if (v->hw_readback)
+   {
+      hw->have_cpu    = 0;
+      hw->pending_cpu = 1;
+      hw->pending_slot = hw->out_slot[i];
+      hw->pending_w = hw->sps.width;
+      hw->pending_h = hw->sps.height;
+      if ((!v->deferred_readback || !hw->can_defer)
+            && rh264_hw_readback_pending(hw) != 0)
+         return -1;
+      hw->fresh = 1;
+      hw->out_used[i] = 0;
+      hw->out_len--;
+      return 0;
+   }
+   /* two pictures in one call: the first is passed over */
+   r = hw->ops->output(hw->dec, (unsigned)hw->out_slot[i], &shown);
+   if (r > 0)
+      return 2;
+   if (r < 0)
+   {
+      hw->broken = 1;
+      return -1;
+   }
+   if (hw->fresh)
+      video_hw_frame_abandon(&hw->shown);
+   hw->shown = shown;
+   hw->out_used[i] = 0;
+   hw->out_len--;
+   hw->have_shown = 1;
+   hw->fresh      = 1;
+   return 0;
+}
+
+/* rh264_out_push for a picture on the backend: 1 when one was shown. */
+static int rh264_hw_out_push(rh264_video *v, int poc, int is_idr)
+{
+   rh264_hw *hw = v->hw;
+   int i, r, slot = -1;
+   for (i = 0; i < RH264_OUT_SLOTS; i++)
+      if (!hw->out_used[i]) { slot = i; break; }
+   if (slot < 0)
+      return -1;
+   hw->out_slot[slot] = hw->slot;
+   hw->out_poc[slot]  = poc;
+   hw->out_gen[slot]  = v->idr_gen;
+   hw->out_used[slot] = 1;
+   hw->out_len++;
+   if (hw->out_len <= v->reorder_delay && !(is_idr && hw->out_len == 1))
+      return 0;
+   i = rh264_hw_out_pick(hw);
+   r = rh264_hw_show(v, i);
+   if (r == 2)
+      hw->pending_out = i + 1;
+   if (r != 0)
+      return r;
+   return 1;
+}
+
+/* The gathered picture to the backend, then into the DPB and the
+ * display queue as rh264_video_finish_picture puts a frame. */
+static int rh264_hw_finish(rh264_video *v, int *got_pic)
+{
+   rh264_hw *hw = v->hw;
+   rh264_hw_pic_t pic;
+   int j, r;
+   unsigned n = 0;
+
+   if (hw->pending_out)
+   {
+      r = rh264_hw_show(v, hw->pending_out - 1);
+      if (r != 0)
+         return r;
+      hw->pending_out = 0;
+      *got_pic = 1;
+      return 0;
+   }
+   if (!hw->pic_open)
+      return 0;
+   if (hw->skip)
+   {
+      hw->pic_open = 0;
+      return 0;
+   }
+
+   /* an IDR predicts from nothing: the DPB empties under it */
+   for (j = 0; j < v->dpb_len && !hw->idr; j++)
+   {
+      int s                = v->dpb_slot[j];
+      hw->refs[n].slot      = hw->dpb_hw[s];
+      hw->refs[n].long_term = v->dpb_lt[s] >= 0;
+      hw->refs[n].frame_num = v->dpb_lt[s] >= 0 ? v->dpb_lt[s] : v->dpb_pn[s];
+      hw->refs[n].poc[0]    = hw->dpb_poc2[s][0];
+      hw->refs[n].poc[1]    = hw->dpb_poc2[s][1];
+      n++;
+   }
+   pic.sps           = &hw->sps;
+   pic.pps           = &hw->pps;
+   pic.params_gen    = hw->params_gen;
+   pic.data          = hw->bs;
+   pic.size          = hw->bs_len;
+   pic.slice_offsets = hw->offs;
+   pic.num_slices    = hw->nslices;
+   pic.slot          = hw->slot;
+   pic.frame_num     = hw->frame_num;
+   pic.idr_pic_id    = hw->idr_pic_id;
+   pic.poc[0]        = hw->poc[0];
+   pic.poc[1]        = hw->poc[1];
+   pic.idr           = hw->idr;
+   pic.reference     = hw->ref;
+   pic.intra         = hw->intra;
+   pic.refs          = hw->refs;
+   pic.num_refs      = n;
+   pic.long_term     = 0;
+   pic.long_term_idx = 0;
+   if (hw->idr)
+      pic.long_term  = v->pend_idr_ltr ? 1 : 0;
+   else if (hw->ref)
+      for (j = 0; j < v->pend_n_mmco; j++)
+         if (v->pend_mmco_op[j] == 6)
+         {
+            pic.long_term     = 1;
+            pic.long_term_idx = v->pend_mmco_a[j];
+         }
+   r = hw->ops->decode(hw->dec, &pic);
+   if (r > 0)
+      return 2;
+   if (r < 0)
+   {
+      hw->broken = 1;
+      return -1;
+   }
+   hw->pic_open = 0;
+
+   if (hw->idr)
+   {
+      v->dpb_len    = 0;
+      v->max_lt_idx = v->pend_idr_ltr ? 0 : -1;
+      rh264_hw_dpb_insert(v, 0, v->pend_idr_ltr ? 0 : -1);
+      r = rh264_hw_out_push(v, v->last_poc, 1);
+   }
+   else
+   {
+      int epoch = 0;
+      if (hw->ref)
+      {
+         int cur_lt = rh264_dpb_marking(v, v->last_picnum, &epoch);
+         if (epoch)
+         {
+            /* memory_management_control_operation 5: the picture is
+             * frame 0 of a fresh epoch, its order counts made relative
+             * to the smaller (8.2.1) */
+            int m = hw->poc[0] < hw->poc[1] ? hw->poc[0] : hw->poc[1];
+            hw->poc[0]       -= m;
+            hw->poc[1]       -= m;
+            v->idr_gen++;
+            v->last_poc       = 0;
+            v->prev_poc_msb   = 0;
+            v->prev_poc_lsb   = 0;
+            v->prev_frame_num = 0;
+            v->fn_offset      = 0;
+            v->last_picnum    = 0;
+         }
+         rh264_hw_dpb_insert(v, epoch ? 0 : v->last_picnum, cur_lt);
+      }
+      r = rh264_hw_out_push(v, v->last_poc, epoch);
+   }
+   if (r < 0 || r == 2)
+      return r;
+   if (r > 0)
+      *got_pic = 1;
+   return 0;
+}
+
+/* One slice NAL of a stream on the backend: its header read for the
+ * sequencing, its bytes gathered for the backend. */
+static int rh264_hw_slice(rh264_video *v, const uint8_t *nal, size_t len,
+      int *got_pic)
+{
+   rh264_hw *hw = v->hw;
+   rh264_slice_hdr *sh = &v->cur->sscr.sh;
+   rh264_bits b;
+   uint8_t *rbsp;
+   size_t rl, need;
+   int nut, nri;
+
+   if (len < 2)
+      return -1;
+   nut  = nal[0] & 0x1f;
+   nri  = (nal[0] >> 5) & 3;
+   rbsp = rh264_unescape_scratch(v, nal + 1,
+         len - 1 > RH264_HW_HDR_BYTES ? RH264_HW_HDR_BYTES : len - 1, &rl);
+   if (!rbsp)
+      return -1;
+   rh264_bits_init(&b, rbsp, rl);
+   if (!rh264_parse_slice_header_adv(&b, nut, nri, &v->sps, &v->pps, sh))
+      return -1;
+   if (sh->field_pic_flag)
+      return -1;
+
+   if (sh->first_mb_in_slice == 0)
+   {
+      /* a picture the last access unit left open ends here */
+      {
+         int r = rh264_hw_finish(v, got_pic);
+         if (r != 0)
+            return r;
+      }
+      hw->skip = 0;
+      if (nri == 0 && retro_atomic_load_acquire_int(&v->skip_nonref))
+      {
+         /* as rh264_video_decode_inter passes such a picture over */
+         hw->skip     = 1;
+         hw->pic_open = 1;
+         v->dropped   = 1;
+         return 0;
+      }
+      if (!sh->is_idr && !v->have_ref && sh->slice_type != RH264_SLICE_I)
+         return -1;
+      if (sh->is_idr)
+         v->idr_gen++;
+      v->last_poc     = rh264_derive_poc(v, sh, nri);
+      hw->poc[0]      = v->poc_top;
+      hw->poc[1]      = v->poc_bot;
+      hw->idr         = sh->is_idr;
+      hw->ref         = nri != 0;
+      hw->intra       = sh->slice_type == RH264_SLICE_I;
+      hw->frame_num   = sh->frame_num;
+      hw->idr_pic_id  = sh->idr_pic_id;
+      if (sh->is_idr)
+         v->pend_idr_ltr = sh->idr_ltr;
+      else
+      {
+         v->last_picnum = sh->frame_num_val;
+         v->pend_n_mmco = sh->n_mmco;
+         memcpy(v->pend_mmco_op, sh->mmco_op, sizeof(v->pend_mmco_op));
+         memcpy(v->pend_mmco_a, sh->mmco_a, sizeof(v->pend_mmco_a));
+         memcpy(v->pend_mmco_b, sh->mmco_b, sizeof(v->pend_mmco_b));
+      }
+      if ((hw->slot = rh264_hw_slot_take(v)) < 0)
+         return -1;
+      hw->bs_len   = 0;
+      hw->nslices  = 0;
+      hw->pic_open = 1;
+   }
+   else if (!hw->pic_open)
+      return -1;
+   else if (hw->skip)
+      return 0;
+   else if (sh->slice_type != RH264_SLICE_I)
+      hw->intra = 0;
+
+   if (hw->nslices >= RH264_MAX_SLICES)
+      return -1;
+   need = hw->bs_len + 3 + len;
+   if (need > hw->bs_cap)
+   {
+      size_t cap = hw->bs_cap ? hw->bs_cap : 65536;
+      uint8_t *nb;
+      while (cap < need)
+         cap *= 2;
+      if (!(nb = (uint8_t*)realloc(hw->bs, cap)))
+         return -1;
+      hw->bs     = nb;
+      hw->bs_cap = cap;
+   }
+   hw->offs[hw->nslices++] = (uint32_t)hw->bs_len;
+   hw->bs[hw->bs_len++]    = 0;
+   hw->bs[hw->bs_len++]    = 0;
+   hw->bs[hw->bs_len++]    = 1;
+   memcpy(hw->bs + hw->bs_len, nal, len);
+   hw->bs_len += len;
+   return 0;
+}
+
+/* A parameter set on a stream on the backend: the same geometry or
+ * the stream is given up. */
+static int rh264_hw_take_ps(rh264_video *v, const uint8_t *nal, size_t len)
+{
+   rh264_hw *hw = v->hw;
+   rh264_hw_sps_t sps;
+   rh264_hw_pps_t pps;
+   rh264_video_take_ps(v, nal, len);
+   if (!v->have_sps || !v->have_pps)
+      return 0;
+   if (!rh264_hw_stream_ok(&v->sps))
+      return -1;
+   rh264_hw_fill_sps(&sps, &v->sps);
+   rh264_hw_fill_pps(&pps, &v->pps);
+   if (     sps.width_in_mbs       != hw->sps.width_in_mbs
+         || sps.height_in_mbs      != hw->sps.height_in_mbs
+         || sps.max_num_ref_frames != hw->sps.max_num_ref_frames
+         || sps.width  != hw->sps.width  || sps.height != hw->sps.height
+         || sps.crop_x != hw->sps.crop_x || sps.crop_y != hw->sps.crop_y)
+      return -1;
+   if (     memcmp(&sps, &hw->sps, sizeof(sps))
+         || memcmp(&pps, &hw->pps, sizeof(pps)))
+   {
+      hw->sps = sps;
+      hw->pps = pps;
+      hw->params_gen++;
+   }
+   return 0;
+}
+
+static void rh264_hw_free(rh264_video *v)
+{
+   rh264_hw *hw = v->hw;
+   if (!hw)
+      return;
+   if (hw->dec)
+      hw->ops->close(hw->dec);
+   free(hw->cpu);
+   free(hw->bs);
+   free(hw);
+   v->hw = NULL;
+}
+
+int rh264_video_set_hw(rh264_video *v, int enable)
+{
+   const rh264_hw_ops_t *ops;
+   rh264_hw *hw;
+   int d, n, slots;
+
+   if (!v)
+      return 0;
+   if (!enable)
+      return v->hw ? 1 : 0;
+   if (v->hw)
+      return 1;
+   ops = RH264_HW_BACKEND_GET();
+   /* before the first picture, of a stream the backend could take */
+   if (     !ops || (v->hw_readback && !ops->readback)
+         || !v->have_sps || !v->have_pps || v->alloc_w
+         || v->cur->pic_open || !rh264_hw_stream_ok(&v->sps))
+      return 0;
+   if (!(hw = (rh264_hw*)calloc(1, sizeof(*hw))))
+      return 0;
+   hw->ops = ops;
+   rh264_hw_fill_sps(&hw->sps, &v->sps);
+   rh264_hw_fill_pps(&hw->pps, &v->pps);
+
+   /* the sequencing rh264_frame_alloc_if_needed would set up */
+   n = v->sps.max_num_ref_frames;
+   if (n < 1) n = 1;
+   if (n > RH264_MAX_REFS) n = RH264_MAX_REFS;
+   if (v->sps.vui_num_reorder >= 0) d = v->sps.vui_num_reorder;
+   else if (v->sps.profile_idc == 66) d = 0;
+   else d = v->sps.max_num_ref_frames;
+   if (d > RH264_MAX_REFS) d = RH264_MAX_REFS;
+   if (d < 0) d = 0;
+   /* every reference, every picture waiting to be shown and the one
+    * decoding */
+   slots = n + d + 1;
+   if (slots > RH264_HW_MAX_SLOTS)
+   {
+      free(hw);
+      return 0;
+   }
+   /* Deferred CPU output may still hold a non-reference picture while
+    * another picture starts in the same access unit. Reserve one slot;
+    * if the backend limit is already reached, keep eager readback. */
+   hw->can_defer = v->hw_readback && v->deferred_readback
+      && slots < RH264_HW_MAX_SLOTS;
+   if (hw->can_defer)
+      slots++;
+   hw->nslots = (unsigned)slots;
+   hw->dec = ops->open(ops->user, &hw->sps, hw->nslots);
+   if (!hw->dec && hw->can_defer)
+   {
+      hw->can_defer = 0;
+      hw->nslots--;
+      hw->dec = ops->open(ops->user, &hw->sps, hw->nslots);
+   }
+   if (!hw->dec)
+   {
+      free(hw);
+      return 0;
+   }
+   v->dpb_size      = n;
+   v->dpb_len       = 0;
+   v->reorder_delay = d;
+   v->max_lt_idx    = -1;
+   v->have_ref      = 0;
+   v->out_len       = 0;
+   v->out_show      = -1;
+   /* the pictures are the backend's: nothing decodes on a pool */
+#ifdef HAVE_THREADS
+   v->pool          = NULL;
+#endif
+   v->threaded      = 0;
+   v->hw            = hw;
+   return 1;
+}
+
+void rh264_video_set_hw_readback(rh264_video *v, int enable)
+{
+   if (v && !v->hw && !v->alloc_w)
+      v->hw_readback = enable;
+}
+
+int rh264_video_is_hw(const rh264_video *v)
+{
+   return (v && v->hw) ? 1 : 0;
+}
+
+int rh264_video_restart_hw(rh264_video **video)
+{
+   rh264_video *old, *v;
+   rh264_hw *hw;
+   if (!video || !(old = *video) || !old->hw || old->hw->broken)
+      return 0;
+   if (!(v = rh264_video_open()))
+      return 0;
+   if (!(hw = (rh264_hw*)calloc(1, sizeof(*hw))))
+   {
+      rh264_video_close(v);
+      return 0;
+   }
+   v->sps = old->sps;
+   v->pps = old->pps;
+   v->have_sps = old->have_sps;
+   v->have_pps = old->have_pps;
+   v->nal_length_size = old->nal_length_size;
+   v->dpb_size = old->dpb_size;
+   v->reorder_delay = old->reorder_delay;
+   v->max_lt_idx = -1;
+   v->hw_readback = old->hw_readback;
+   v->deferred_readback = old->deferred_readback;
+   retro_atomic_store_relaxed_int(&v->skip_nonref,
+         retro_atomic_load_relaxed_int(&old->skip_nonref));
+   hw->ops = old->hw->ops;
+   hw->dec = old->hw->dec;
+   hw->sps = old->hw->sps;
+   hw->pps = old->hw->pps;
+   hw->params_gen = old->hw->params_gen;
+   hw->nslots = old->hw->nslots;
+   hw->can_defer = old->hw->can_defer;
+   hw->bs = old->hw->bs;
+   hw->bs_cap = old->hw->bs_cap;
+   hw->cpu = old->hw->cpu;
+   hw->cpu_w = old->hw->cpu_w;
+   hw->cpu_h = old->hw->cpu_h;
+   old->hw->dec = NULL;
+   old->hw->bs = NULL;
+   old->hw->cpu = NULL;
+   v->hw = hw;
+   rh264_video_close(old);
+   *video = v;
+   return 1;
+}
+
+int rh264_video_hw_frame(const rh264_video *v, video_hw_frame_t *out)
+{
+   if (!v || !v->hw || !v->hw->have_shown || !out)
+      return -1;
+   *out = v->hw->shown;
+   return 0;
+}
+
 static int rh264_video_handle_slice_nal(rh264_video *v, const uint8_t *nal,
       size_t nl, int *got_pic)
 {
    int type = nal[0] & 0x1f;
+   if (v->hw_readback && !v->hw)
+      rh264_video_set_hw(v, 1);
+   if (v->hw)
+   {
+      if (v->hw->broken)
+         return -1;
+      if (type == 7 || type == 8)
+         return rh264_hw_take_ps(v, nal, nl) != 0 ? -1 : 0;
+      if (type == 5 || type == 1)
+         return rh264_hw_slice(v, nal, nl, got_pic);
+      return 0;
+   }
    /* a switching slice was refused earlier: everything after it would
     * be predicted from a picture that was never reconstructed */
    if (v->cur->saw_switching) return -1;
@@ -10470,12 +11230,35 @@ static int rh264_video_handle_slice_nal(rh264_video *v, const uint8_t *nal,
    return 0;
 }
 
-int rh264_video_decode(rh264_video *v, const uint8_t *data, size_t len)
+static int rh264_hw_retry(rh264_video *v, const uint8_t *data,
+      size_t len, size_t pos, int got)
+{
+   v->hw->retry_data = data;
+   v->hw->retry_len  = len;
+   v->hw->retry_pos  = pos;
+   v->hw->retry_got  = got;
+   v->hw->retrying   = 1;
+   return 2;
+}
+
+static int rh264_video_decode_internal(rh264_video *v, const uint8_t *data, size_t len)
 {
    size_t p = 0;
    int got_pic = 0;
    if (!v || !data) return -1;
    v->dropped = 0;
+   if (v->hw)
+   {
+      if (v->hw->retrying)
+      {
+         if (data != v->hw->retry_data || len != v->hw->retry_len)
+            return -1;
+         p = v->hw->retry_pos;
+         got_pic = v->hw->retry_got;
+      }
+      else
+         v->hw->fresh = 0;
+   }
 
    if (v->nal_length_size > 0 && len >= (size_t)v->nal_length_size)
    {
@@ -10488,12 +11271,14 @@ int rh264_video_decode(rh264_video *v, const uint8_t *data, size_t len)
       int ls = v->nal_length_size, i;
       while (p + ls <= len)
       {
-         size_t nl = 0;
+         size_t nl = 0, at = p;
          for (i = 0; i < ls; i++) nl = (nl << 8) | data[p + i];
          p += ls;
          if (nl == 0 || p + nl > len) break;
          {
             int r = rh264_video_handle_slice_nal(v, data + p, nl, &got_pic);
+            if (r == 2)
+               return rh264_hw_retry(v, data, len, at, got_pic);
             if (r < 0) return -1;
             /* One coded picture per call: sequentially the picture
              * shown is this sample's, complete at its last slice, and
@@ -10522,6 +11307,8 @@ int rh264_video_decode(rh264_video *v, const uint8_t *data, size_t len)
          if (s < e)
          {
             int r = rh264_video_handle_slice_nal(v, data + s, e - s, &got_pic);
+            if (r == 2)
+               return rh264_hw_retry(v, data, len, p, got_pic);
             if (r < 0) return -1;
             /* One coded picture per call: sequentially the picture
              * shown is this sample's, complete at its last slice, and
@@ -10533,6 +11320,16 @@ int rh264_video_decode(rh264_video *v, const uint8_t *data, size_t len)
          }
          p = e;
       }
+   }
+   /* on the backend a picture is whole at the end of its access unit */
+   if (v->hw)
+   {
+      int r = rh264_hw_finish(v, &got_pic);
+      if (r == 2)
+         return rh264_hw_retry(v, data, len, len, got_pic);
+      v->hw->retrying = 0;
+      if (r < 0)
+         return -1;
    }
    return got_pic ? 1 : 0;
 }
@@ -10603,8 +11400,14 @@ void rh264_video_set_publish_delay(int max_us)
 void rh264_video_set_thread_pool(rh264_video *v, void *pool, int threads)
 {
 #ifdef HAVE_THREADS
-   if (!v)
+   /* a stream on the backend decodes nothing here */
+   if (!v || v->hw)
       return;
+#ifndef RETRO_ATOMIC_HAS_PTR
+   /* Pictures in flight on the pool hand their buffers over through
+    * the slots: no pool without pointer atomics */
+   pool = NULL;
+#endif
    if (!pool || threads < 2)
    {
       v->pool     = NULL;
@@ -10613,11 +11416,8 @@ void rh264_video_set_thread_pool(rh264_video *v, void *pool, int threads)
    }
    if (!rh264_rows_ec_ok)
    {
-      rh264_blocks_lock = slock_new();
-      if (!rh264_blocks_lock || !retro_eventcount_init(&rh264_rows_ec))
+      if (!retro_eventcount_init(&rh264_rows_ec))
       {
-         if (rh264_blocks_lock) slock_free(rh264_blocks_lock);
-         rh264_blocks_lock = NULL;
          retro_eventcount_free(&rh264_rows_ec);
          return;
       }
@@ -10634,6 +11434,20 @@ void rh264_video_set_thread_pool(rh264_video *v, void *pool, int threads)
 #endif
 }
 
+unsigned rh264_video_reorder_depth(const rh264_video *v)
+{
+   return v && v->reorder_delay > 0 ? (unsigned)v->reorder_delay : 0;
+}
+
+int rh264_video_get_color(const rh264_video *v, rh264_video_color_t *out)
+{
+   if (!out) return -1;
+   memset(out, 0, sizeof(*out));
+   if (!v || !v->have_sps) return -1;
+   *out = v->sps.color;
+   return 0;
+}
+
 int rh264_video_bit_depth(const rh264_video *v)
 {
    const rh264_frame *f;
@@ -10648,7 +11462,19 @@ const uint8_t *rh264_video_plane(const rh264_video *v, int plane,
    const uint8_t *p;
    const rh264_frame *f;
    int st, w, h;
-   if (!v) return NULL;
+   if (!v || plane < 0 || plane > 2) return NULL;
+   if (v->hw)
+   {
+      const rh264_hw *hw = v->hw;
+      size_t y = (size_t)hw->cpu_w * hw->cpu_h;
+      size_t c = (size_t)((hw->cpu_w + 1) / 2) * ((hw->cpu_h + 1) / 2);
+      if (!hw->have_cpu)
+         return NULL;
+      if (stride) *stride = plane ? (hw->cpu_w + 1) / 2 : hw->cpu_w;
+      if (width) *width = plane ? (hw->cpu_w + 1) / 2 : hw->cpu_w;
+      if (height) *height = plane ? (hw->cpu_h + 1) / 2 : hw->cpu_h;
+      return hw->cpu + (plane == 0 ? 0 : plane == 1 ? y : y + c);
+   }
    f = (v->out_show >= 0) ? &v->out[v->out_show] : &v->cur->f;
    /* Cropping is display-only (reference reads use the full coded
     * picture), so it is applied here and nowhere else: the returned
@@ -10669,10 +11495,28 @@ const uint8_t *rh264_video_plane(const rh264_video *v, int plane,
    return p;
 }
 
-int rh264_video_drain(rh264_video *v)
+static int rh264_video_drain_internal(rh264_video *v)
 {
    int i, bi = -1;
    if (!v) return -1;
+   if (v->hw)
+   {
+      int got = 0;
+      int r;
+      if (v->hw->retrying)
+         return 2;
+      v->hw->fresh = 0;
+      if (v->hw->broken)
+         return -1;
+      r = rh264_hw_finish(v, &got);
+      if (r != 0)
+         return r;
+      if (got)
+         return 0;
+      if ((i = rh264_hw_out_pick(v->hw)) < 0)
+         return -1;
+      return rh264_hw_show(v, i);
+   }
    if (v->threaded)
    {
       /* The last picture never saw a next one open: it goes to the
@@ -10702,4 +11546,94 @@ int rh264_video_drain(rh264_video *v)
    v->out_used[bi] = 0; v->out_len--;
    v->out_show = bi;
    return 0;
+}
+
+void rh264_video_set_deferred_readback(rh264_video *v, int enable)
+{
+   if (v)
+      v->deferred_readback = enable != 0;
+}
+
+int rh264_video_frame_size(const rh264_video *v, int *width, int *height)
+{
+   int w = 0, h = 0;
+   if (!v || !v->output_ready)
+      return -1;
+   if (v->hw)
+   {
+      const rh264_hw *hw = v->hw;
+      if (!v->hw_readback || hw->broken)
+         return -1;
+      w = hw->pending_cpu ? hw->pending_w : hw->cpu_w;
+      h = hw->pending_cpu ? hw->pending_h : hw->cpu_h;
+   }
+   else if (!rh264_video_plane(v, 0, NULL, &w, &h))
+      return -1;
+   if (width) *width = w;
+   if (height) *height = h;
+   return w > 0 && h > 0 ? 0 : -1;
+}
+
+int rh264_video_readback(rh264_video *v)
+{
+   if (!v || !v->output_ready)
+      return -1;
+   if (!v->hw)
+      return 0;
+   if (!v->hw_readback || v->hw->broken)
+      return -1;
+   if (v->hw->pending_cpu && rh264_hw_readback_pending(v->hw) != 0)
+   {
+      v->output_ready = 0;
+      return -1;
+   }
+   return v->hw->have_cpu ? 0 : -1;
+}
+
+int rh264_video_export_frame(rh264_video *v, video_hw_frame_t *out)
+{
+   rh264_hw *hw;
+   int result;
+   if (!v || !out || !v->output_ready || v->output_exported
+         || !(hw = v->hw) || hw->broken || !hw->pending_cpu || !hw->ops->output)
+      return -1;
+   memset(out, 0, sizeof(*out));
+   result = hw->ops->output(hw->dec, (unsigned)hw->pending_slot, out);
+   if (result != 0)
+      return result > 0 ? 2 : -1;
+   out->api = hw->ops->api;
+   v->output_exported = 1;
+   return 0;
+}
+
+static void rh264_video_expire_output(rh264_video *v)
+{
+   v->output_ready = 0;
+   if (!v->hw || !v->hw->retrying)
+      v->output_exported = 0;
+   /* A busy retry continues the same call and must keep its pending slot. */
+   if (v->hw && !v->hw->retrying)
+      v->hw->pending_cpu = 0;
+}
+
+int rh264_video_decode(rh264_video *v, const uint8_t *data, size_t len)
+{
+   int result;
+   if (!v) return -1;
+   rh264_video_expire_output(v);
+   result = rh264_video_decode_internal(v, data, len);
+   v->output_ready = result == 1;
+   return result;
+}
+
+int rh264_video_drain(rh264_video *v)
+{
+   int result;
+   if (!v) return -1;
+   rh264_video_expire_output(v);
+   result = rh264_video_drain_internal(v);
+   if (result < 0 && v->hw && v->hw->broken)
+      result = -2;
+   v->output_ready = result == 0;
+   return result;
 }

@@ -27,8 +27,11 @@
 #include <retro_miscellaneous.h>
 
 #include "slang_process.h"
+#include "slang_rect.h"
+#include "slang_blob.h"
 
 #include "../common/vulkan_common.h"
+#include "../common/spirv_shaders.h"
 #include "../../retroarch.h"
 #include "../../verbosity.h"
 #include "../../msg_hash.h"
@@ -75,7 +78,7 @@ typedef struct vulkan_filter_chain_create_info vulkan_filter_chain_create_info;
 
 
    static bool vulkan_initialize_render_pass(VkDevice device, VkFormat format,
-         VkRenderPass *render_pass)
+         bool clear, VkRenderPass *render_pass)
    {
       VkAttachmentReference color_ref;
       VkRenderPassCreateInfo rp_info;
@@ -95,12 +98,14 @@ typedef struct vulkan_filter_chain_create_info vulkan_filter_chain_create_info;
       color_ref.attachment         = 0;
       color_ref.layout             = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-      /* We will always write to the entire framebuffer,
-       * so we don't really need to clear. */
+      /* A pass writes the whole target unless its fragment stage can
+       * discard; what one that can leaves unwritten is transparent
+       * black, as glcore and D3D clear their targets to. */
       attachment.flags             = 0;
       attachment.format            = format;
       attachment.samples           = VK_SAMPLE_COUNT_1_BIT;
-      attachment.loadOp            = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+      attachment.loadOp            = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR
+                                           : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
       attachment.storeOp           = VK_ATTACHMENT_STORE_OP_STORE;
       attachment.stencilLoadOp     = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
       attachment.stencilStoreOp    = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -395,18 +400,7 @@ static void vulkan_flush_descriptor_writes(VkDevice device,
    }
 }
 
-static const uint32_t opaque_vert[] =
-#include "../drivers/vulkan_shaders/opaque.vert.inc"
-;
-
-static const uint32_t opaque_frag[] =
-#include "../drivers/vulkan_shaders/opaque.frag.inc"
-;
-
 #ifdef VULKAN_HDR_SWAPCHAIN
-static const uint32_t hdr_frag[] =
-#include "../drivers/vulkan_shaders/hdr.frag.inc"
-;
 #endif /* VULKAN_HDR_SWAPCHAIN */
 
 typedef struct
@@ -699,6 +693,10 @@ struct slang_framebuffer
    unsigned levels;
    VkFramebuffer framebuffer;
    VkRenderPass render_pass;
+   /* Cleared as it is drawn to: a pass that can discard */
+   bool clear;
+   /* Its contents are defined: drawn or cleared since it was built */
+   bool defined;
    struct
    {
       size_t size;
@@ -719,7 +717,7 @@ static void slang_framebuffer_free(struct slang_framebuffer *fb);
 static struct slang_framebuffer *slang_framebuffer_new(VkDevice device,
       const VkPhysicalDeviceMemoryProperties *mem_props,
       unsigned max_width, unsigned max_height,
-      VkFormat format, unsigned max_levels,
+      VkFormat format, unsigned max_levels, bool clear,
       FramebufferMemoryPool *mem_pool);
 /* Frees *fb if set and nulls it. */
 static void slang_framebuffer_delete(struct slang_framebuffer **fb);
@@ -741,6 +739,8 @@ static bool texture_array_resize(Texture **arr, size_t *count,
 
 struct CommonResources
 {
+   /* The first pass's SourceSize, from the preset; 0 when off. */
+   unsigned sim_source_dims;
 
    struct slang_buffer vbo;
    struct slang_buffer ubo;
@@ -790,12 +790,24 @@ struct CommonResources
    float core_aspect_rot;
    uint32_t total_subframes;      /* init: 1 */
    uint32_t current_subframe;     /* init: 1 */
+   /* How every pass samples the frame: as the first does. */
+   enum slang_rect_wrap frame_wrap;
+   /* What the final pass is cut to, when scissor_set. */
+   VkRect2D scissor;
+   bool scissor_set;
+   /* Frames may come inside a larger image: passes are built to read
+    * them there. */
+   bool frame_rect;
+   bool frame_linear;
 #ifdef VULKAN_ROLLING_SCANLINE_SIMULATION
    bool simulate_scanline;
 #endif /* VULKAN_ROLLING_SCANLINE_SIMULATION */
+   unsigned source_hdr;
+   unsigned passthrough;
 #ifdef VULKAN_HDR_SWAPCHAIN
    unsigned hdr_mode;
    float paper_white_nits;
+   float peak_nits;
    unsigned expand_gamut;
    float scanlines;
    unsigned subpixel_layout;
@@ -824,6 +836,11 @@ struct slang_pass
    unsigned num_sync_indices;
    unsigned sync_index;
    bool final_pass;
+   /* The stages were offered the rewrite to read the frame in place;
+    * frame_copy, they read it in a way only an image of its own
+    * serves. */
+   bool frame_tried;
+   bool frame_copy;
 
    VkPipeline pipeline;
    VkPipelineLayout pipeline_layout;
@@ -839,9 +856,12 @@ struct slang_pass
    VkViewport curr_vp;
    vulkan_filter_chain_pass_info pass_info;
 
-   uint32_t *vertex_shader;
+   struct slang_blob *vertex_blob;     /* the stages, one reference each;
+                                          the pointers below view them */
+   struct slang_blob *fragment_blob;
+   const uint32_t *vertex_shader;
    size_t num_vertex_shader;
-   uint32_t *fragment_shader;
+   const uint32_t *fragment_shader;
    size_t num_fragment_shader;
 
    struct slang_framebuffer *framebuffer;
@@ -899,7 +919,11 @@ static unsigned slang_pass_set_pass_info(struct slang_pass *pass,
       const vulkan_filter_chain_pass_info info);
 static void slang_pass_set_shader(struct slang_pass *pass,
       VkShaderStageFlags stage, const uint32_t *spirv, size_t spirv_words);
+static void slang_pass_set_blob(struct slang_pass *pass,
+      VkShaderStageFlags stage, struct slang_blob *blob);
 static bool slang_pass_build(struct slang_pass *pass);
+static bool slang_pass_build_layout(struct slang_pass *pass);
+static bool slang_pass_init_pipeline(struct slang_pass *pass);
 static bool slang_pass_init_feedback(struct slang_pass *pass);
 static void slang_pass_build_commands(struct slang_pass *pass,
       struct deferred_disposes *disposer,
@@ -907,7 +931,8 @@ static void slang_pass_build_commands(struct slang_pass *pass,
       const Texture *original,
       const Texture *source,
       const VkViewport *vp,
-      const float *mvp);
+      const float *mvp,
+      bool again);
 static bool slang_pass_add_parameter(struct slang_pass *pass,
       unsigned parameter_index, const char *id);
 static void slang_pass_end_frame(struct slang_pass *pass);
@@ -934,6 +959,7 @@ static INLINE const char *slang_pass_get_name(
 /* struct here since we're implementing the opaque typedef from C. */
 struct vulkan_filter_chain
 {
+   struct glslang_last_pass last_pass;
    VkDevice device;
    VkPhysicalDevice gpu;
    VkPhysicalDeviceMemoryProperties memory_properties;
@@ -956,32 +982,31 @@ struct vulkan_filter_chain
    vulkan_filter_chain_swapchain_info swapchain_info;
    unsigned current_sync_index;
 
+   /* The count the last frame's final pass was drawn with. */
+   uint64_t drawn_frame_count;
+   /* num_history slots; one more than the shaders read for a replaying
+    * chain, so the frame's input goes where the last frame did not. */
    struct slang_framebuffer **original_history;
    size_t num_history;
    unsigned history_ring_index;
    bool require_clear;
+   /* A frame's final pass was drawn since the passes were built. */
+   bool drawn;
+   /* See vulkan_filter_chain_create_info. */
+   bool replay;
    bool alias_initialized;
    bool emits_hdr_colorspace;
    bool emits_hdr16_output;
+   /* Every pass reads a frame where it lies. */
+   bool frame_in_place;
 
    /* See vulkan_filter_chain_create_info. */
    void *queue_lock_handle;
-   void (*lock_queue)(void *handle);
-   void (*unlock_queue)(void *handle);
    void (*wait_submissions)(void *handle);
+
+   /* What the LUTs upload through, once the passes say which they read */
+   struct vulkan_filter_chain_create_info lut_info;
 };
-
-static INLINE void slang_chain_lock_queue(struct vulkan_filter_chain *chain)
-{
-   if (chain->lock_queue)
-      chain->lock_queue(chain->queue_lock_handle);
-}
-
-static INLINE void slang_chain_unlock_queue(struct vulkan_filter_chain *chain)
-{
-   if (chain->unlock_queue)
-      chain->unlock_queue(chain->queue_lock_handle);
-}
 
 static struct vulkan_filter_chain *slang_chain_new(
       const vulkan_filter_chain_create_info *info);
@@ -1010,12 +1035,33 @@ static bool slang_chain_init(struct vulkan_filter_chain *chain);
 static bool slang_chain_init_single_pass(struct vulkan_filter_chain *chain,
       unsigned pass_idx);
 static bool slang_chain_init_alias_early(struct vulkan_filter_chain *chain);
+static bool slang_chain_check_last_pass(struct vulkan_filter_chain *chain,
+      const glslang_output *output, unsigned pass)
+{
+   if (!slang_last_pass_feedback(&chain->last_pass, output))
+      return false;
+   if (pass == chain->last_pass.index && chain->last_pass.inspect_feedback
+         && !chain->last_pass.needs_target
+         && chain->pass_count == pass + 2)
+   {
+      unsigned copy = pass + 1;
+      slang_pass_free(chain->passes[copy]);
+      chain->passes[copy] = NULL;
+      chain->pass_count--;
+      chain->passes[pass]->final_pass = true;
+   }
+   return true;
+}
+
 static bool slang_chain_compile_full_pass(struct vulkan_filter_chain *chain,
       unsigned pass_idx, enum glslang_filter_chain_filter default_filter);
 static bool slang_chain_finalize(struct vulkan_filter_chain *chain);
 static bool slang_chain_update_swapchain_info(
       struct vulkan_filter_chain *chain,
       const vulkan_filter_chain_swapchain_info info);
+
+static bool slang_pass_init_pipeline_layout(struct slang_pass *pass);
+static bool slang_chain_init_ubo(struct vulkan_filter_chain *chain);
 
 static void slang_chain_notify_sync_index(struct vulkan_filter_chain *chain,
       unsigned index);
@@ -1026,7 +1072,8 @@ static void slang_chain_build_offscreen_passes(
       VkCommandBuffer cmd, const VkViewport vp);
 static void slang_chain_build_viewport_pass(
       struct vulkan_filter_chain *chain,
-      VkCommandBuffer cmd, const VkViewport vp, const float *mvp);
+      VkCommandBuffer cmd, const VkViewport vp, const float *mvp,
+      bool again);
 static void slang_chain_end_frame(struct vulkan_filter_chain *chain,
       VkCommandBuffer cmd);
 
@@ -1091,12 +1138,12 @@ static bool slang_chain_emits_hdr16(const struct vulkan_filter_chain *chain);
 static void slang_chain_set_emits_hdr16(struct vulkan_filter_chain *chain);
 
 static void slang_chain_flush(struct vulkan_filter_chain *chain);
-static void slang_chain_set_num_passes(struct vulkan_filter_chain *chain,
+static bool slang_chain_set_num_passes(struct vulkan_filter_chain *chain,
       unsigned passes);
 static void slang_chain_execute_deferred(struct vulkan_filter_chain *chain);
-static void slang_chain_set_num_sync_indices(
+static bool slang_chain_set_num_sync_indices(
       struct vulkan_filter_chain *chain, unsigned num_indices);
-static void slang_chain_set_swapchain_info(struct vulkan_filter_chain *chain,
+static bool slang_chain_set_swapchain_info(struct vulkan_filter_chain *chain,
       const vulkan_filter_chain_swapchain_info info);
 static bool slang_chain_init_ubo(struct vulkan_filter_chain *chain);
 static bool slang_chain_init_history(struct vulkan_filter_chain *chain);
@@ -1212,9 +1259,7 @@ static bool vulkan_filter_chain_load_lut(
    VkImageView view                = VK_NULL_HANDLE;
    void *ptr                       = NULL;
 
-   image.width                     = 0;
-   image.height                    = 0;
-   image.pixels                    = NULL;
+   memset(&image, 0, sizeof(image));
    image.supports_rgba             = (video_driver_get_disp_flags() & VIDEO_FLAG_USE_RGBA);
 
    if (!image_texture_load(&image, shader->path))
@@ -1415,16 +1460,56 @@ error:
    return false;
 }
 
+/* The preset's LUTs, by name only: the semantic map is built from the
+ * names, and each image is loaded once a pass is known to read it. */
 static bool vulkan_filter_chain_load_luts(
       const struct vulkan_filter_chain_create_info *info,
       vulkan_filter_chain *chain,
       struct video_shader *shader)
 {
    size_t i;
+   chain->lut_info = *info;
+   for (i = 0; i < shader->luts; i++)
+   {
+      struct slang_static_texture entry;
+      memset(&entry, 0, sizeof(entry));
+      entry.device = info->device;
+      if (!(entry.id = strdup(shader->lut[i].id)))
+         return false;
+      if (!slang_chain_add_static_texture(chain, &entry))
+      {
+         free(entry.id);
+         return false;
+      }
+   }
+   return true;
+}
+
+/* Loads the LUTs some pass reads and that are not loaded yet; one no
+ * pass reads is never decoded or uploaded. */
+static bool slang_chain_load_luts(vulkan_filter_chain *chain)
+{
+   size_t i;
+   uint8_t read[GFX_MAX_TEXTURES];
+   bool any                                      = false;
+   const struct vulkan_filter_chain_create_info *info = &chain->lut_info;
+   struct video_shader *shader                   = chain->common.shader_preset;
    VkSubmitInfo submit_info;
    VkCommandBufferAllocateInfo cmd_info;
    VkCommandBufferBeginInfo begin_info;
    VkCommandBuffer cmd                           = VK_NULL_HANDLE;
+
+   if (!shader || !chain->common.num_luts)
+      return true;
+   memset(read, 0, sizeof(read));
+   for (i = 0; i < chain->pass_count; i++)
+      slang_reflection_luts_read(&chain->passes[i]->reflection, read,
+            (unsigned)chain->common.num_luts);
+   for (i = 0; i < chain->common.num_luts; i++)
+      if (read[i] && chain->common.luts[i].image == VK_NULL_HANDLE)
+         any = true;
+   if (!any)
+      return true;
 
    cmd_info.sType                                = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
    cmd_info.pNext                                = NULL;
@@ -1446,9 +1531,11 @@ static bool vulkan_filter_chain_load_luts(
       return false;
    }
 
-   for (i = 0; i < shader->luts; i++)
+   for (i = 0; i < chain->common.num_luts; i++)
    {
       struct slang_static_texture image;
+      if (!read[i] || chain->common.luts[i].image != VK_NULL_HANDLE)
+         continue;
       memset(&image, 0, sizeof(image));
       if (!vulkan_filter_chain_load_lut(&image, cmd, info, chain,
                &shader->lut[i]))
@@ -1459,13 +1546,8 @@ static bool vulkan_filter_chain_load_luts(
             vkFreeCommandBuffers(info->device, info->command_pool, 1, &cmd);
          return false;
       }
-      if (!slang_chain_add_static_texture(chain, &image))
-      {
-         slang_static_texture_free(&image);
-         vkEndCommandBuffer(cmd);
-         vkFreeCommandBuffers(info->device, info->command_pool, 1, &cmd);
-         return false;
-      }
+      slang_static_texture_free(&chain->common.luts[i]);
+      chain->common.luts[i] = image;
    }
 
    if (vkEndCommandBuffer(cmd) != VK_SUCCESS)
@@ -1526,8 +1608,12 @@ static bool vulkan_filter_chain_load_luts(
 static struct vulkan_filter_chain *slang_chain_new(
       const vulkan_filter_chain_create_info *info)
 {
-   struct vulkan_filter_chain *chain = (struct vulkan_filter_chain*)
-      calloc(1, sizeof(*chain));
+   struct vulkan_filter_chain *chain;
+   /* See slang_chain_flush(): there is no way to tear a chain down
+    * without it that does not drain the queue. */
+   if (!info->wait_submissions)
+      return NULL;
+   chain = (struct vulkan_filter_chain*)calloc(1, sizeof(*chain));
    if (!chain)
       return NULL;
    chain->device            = info->device;
@@ -1536,15 +1622,19 @@ static struct vulkan_filter_chain *slang_chain_new(
    chain->cache             = info->pipeline_cache;
    chain->original_format   = info->original_format;
    chain->queue_lock_handle = info->queue_lock_handle;
-   chain->lock_queue        = info->lock_queue;
    chain->wait_submissions  = info->wait_submissions;
-   chain->unlock_queue      = info->unlock_queue;
    common_resources_init(&chain->common, info->device,
          info->memory_properties);
    chain->max_input_size_dims   = info->max_input_dims;
    chain->deferred_source_dims  = chain->max_input_size_dims;
-   slang_chain_set_swapchain_info(chain, info->swapchain);
-   slang_chain_set_num_passes(chain, info->num_passes);
+   chain->common.frame_rect     = info->frame_rect;
+   chain->replay                = info->replay;
+   if (     !slang_chain_set_swapchain_info(chain, info->swapchain)
+         || !slang_chain_set_num_passes(chain, info->num_passes))
+   {
+      slang_chain_free(chain);
+      return NULL;
+   }
    return chain;
 }
 
@@ -1570,15 +1660,17 @@ static void slang_chain_free(struct vulkan_filter_chain *chain)
    free(chain);
 }
 
-static void slang_chain_set_swapchain_info(struct vulkan_filter_chain *chain,
+static bool slang_chain_set_swapchain_info(struct vulkan_filter_chain *chain,
       
       const vulkan_filter_chain_swapchain_info info)
 {
    chain->swapchain_info = info;
-   slang_chain_set_num_sync_indices(chain, info.num_indices);
+   return slang_chain_set_num_sync_indices(chain, info.num_indices);
 }
 
-static void slang_chain_set_num_sync_indices(struct vulkan_filter_chain *chain,
+/* A frame disposes into the queue of its sync index, so a chain without
+ * one for every index is not drawn with */
+static bool slang_chain_set_num_sync_indices(struct vulkan_filter_chain *chain,
       unsigned num_indices)
 {
    unsigned i;
@@ -1600,7 +1692,7 @@ static void slang_chain_set_num_sync_indices(struct vulkan_filter_chain *chain,
          /* Growth failed: keep the old, still-valid block and count.
           * (The vector this replaces terminated the process here.) */
          RARCH_ERR("[Vulkan] Failed to size deferred-disposal queues.\n");
-         return;
+         return false;
       }
       for (i = chain->num_deferred; i < num_indices; i++)
       {
@@ -1611,6 +1703,7 @@ static void slang_chain_set_num_sync_indices(struct vulkan_filter_chain *chain,
       chain->deferred_calls = new_calls;
    }
    chain->num_deferred = num_indices;
+   return true;
 }
 
 static void slang_chain_notify_sync_index(struct vulkan_filter_chain *chain,
@@ -1626,12 +1719,71 @@ static void slang_chain_notify_sync_index(struct vulkan_filter_chain *chain,
       slang_pass_notify_sync_index(chain->passes[i], index);
 }
 
+/* Compatible render passes retain pipelines, history and feedback. Sync
+ * resources grow as needed; viewport-dependent framebuffers resize on draw.
+ * RETROARCH_VULKAN_REBUILD_ALL=1 forces a full rebuild for comparison. */
 static bool slang_chain_update_swapchain_info(struct vulkan_filter_chain *chain,
-      
       const vulkan_filter_chain_swapchain_info info)
 {
+   unsigned i;
+   static int rebuild_all = -1;
+
+   if (rebuild_all < 0)
+   {
+      const char *env = getenv("RETROARCH_VULKAN_REBUILD_ALL");
+      rebuild_all     = (env && env[0] == '1') ? 1 : 0;
+   }
+
+   if (     !rebuild_all
+         && chain->pass_count
+         && chain->alias_initialized
+         && chain->swapchain_info.render_pass == info.render_pass
+         && chain->swapchain_info.format      == info.format)
+   {
+      for (i = 0; i < chain->pass_count; i++)
+         if (chain->passes[i]->pipeline == VK_NULL_HANDLE)
+            break;
+      if (i == chain->pass_count)
+      {
+         bool count_changed = chain->swapchain_info.num_indices
+            != info.num_indices;
+         if (info.num_indices > chain->num_deferred)
+         {
+            slang_chain_flush(chain);
+            if (!slang_chain_set_num_sync_indices(chain, info.num_indices))
+               goto rebuild;
+            for (i = 0; i < chain->pass_count; i++)
+            {
+               struct slang_pass *pass = chain->passes[i];
+               vkDestroyDescriptorPool(pass->device, pass->pool, NULL);
+               pass->pool = VK_NULL_HANDLE;
+               pass->num_sync_indices = info.num_indices;
+               if (!slang_pass_init_pipeline_layout(pass))
+                  goto rebuild;
+            }
+            if (!slang_chain_init_ubo(chain))
+               goto rebuild;
+         }
+         if (count_changed)
+         {
+            chain->current_sync_index = 0;
+            for (i = 0; i < chain->pass_count; i++)
+               chain->passes[i]->sync_index = 0;
+         }
+         chain->swapchain_info = info;
+         if (count_changed)
+            RARCH_DBG("[Vulkan] Shader chain kept: the swapchain image count changed.\n");
+         else
+            RARCH_DBG("[Vulkan] Shader chain kept: the swapchain changed in"
+                  " size only.\n");
+         return true;
+      }
+   }
+
+rebuild:
    slang_chain_flush(chain);
-   slang_chain_set_swapchain_info(chain, info);
+   if (!slang_chain_set_swapchain_info(chain, info))
+      return false;
    return slang_chain_init(chain);
 }
 
@@ -1655,20 +1807,13 @@ static void slang_chain_flush(struct vulkan_filter_chain *chain)
     * outlive is the frames that still reference the chain's images,
     * buffers and descriptor sets: the video driver's own submissions,
     * which it can wait on by fence without touching the queue. That
-    * is what wait_submissions does. Only a driver that gave none
-    * gets the device drained, and that is specified as vkQueueWaitIdle
-    * on every queue, so it takes the lock a submit does - and blocks
-    * vkQueuePresentKHR for the duration, and cannot complete while a
-    * hardware core waiting on that same lock still has work to submit
-    * that the queue is waiting for. */
-   if (chain->wait_submissions)
-      chain->wait_submissions(chain->queue_lock_handle);
-   else
-   {
-      slang_chain_lock_queue(chain);
-      vkDeviceWaitIdle(chain->device);
-      slang_chain_unlock_queue(chain);
-   }
+    * is what wait_submissions does, and a chain cannot be created
+    * without it. The alternative was draining the device, which is
+    * vkQueueWaitIdle on every queue: it takes the lock a submit does,
+    * blocks vkQueuePresentKHR for the duration, and cannot complete
+    * while a hardware core waiting on that same lock still has work
+    * to submit that the queue is waiting for. */
+   chain->wait_submissions(chain->queue_lock_handle);
    slang_chain_execute_deferred(chain);
 }
 
@@ -1677,7 +1822,7 @@ static void slang_chain_update_history_info(struct vulkan_filter_chain *chain)
    unsigned i;
    unsigned hist_size = (unsigned)chain->num_history;
 
-   for (i = 0; i < hist_size; i++)
+   for (i = 0; i < chain->common.num_original_history; i++)
    {
       /* Map logical index i (0 = most recent) to the ring buffer slot. */
       unsigned ring_slot = (chain->history_ring_index + i) % hist_size;
@@ -1764,7 +1909,7 @@ static void slang_chain_build_offscreen_passes(struct vulkan_filter_chain *chain
    {
       const struct slang_framebuffer *fb;
       slang_pass_build_commands(chain->passes[i], disposer, cmd,
-            &original, &source, &vp, NULL);
+            &original, &source, &vp, NULL, false);
 
       fb = chain->passes[i]->framebuffer;
 
@@ -1863,7 +2008,8 @@ static void slang_chain_end_frame(struct vulkan_filter_chain *chain,
 
 static void slang_chain_build_viewport_pass(struct vulkan_filter_chain *chain,
       
-      VkCommandBuffer cmd, const VkViewport vp, const float *mvp)
+      VkCommandBuffer cmd, const VkViewport vp, const float *mvp,
+      bool again)
 {
    unsigned i;
    Texture source;
@@ -1895,11 +2041,50 @@ static void slang_chain_build_viewport_pass(struct vulkan_filter_chain *chain,
    }
 
    slang_pass_build_commands(chain->passes[chain->pass_count - 1], disposer, cmd,
-         &original, &source, &vp, mvp);
+         &original, &source, &vp, mvp, again);
 
    /* For feedback FBOs, swap current and previous. */
-   for (i = 0; i < chain->pass_count; i++)
-      slang_pass_end_frame(chain->passes[i]);
+   if (!again)
+   {
+      for (i = 0; i < chain->pass_count; i++)
+         slang_pass_end_frame(chain->passes[i]);
+      chain->drawn_frame_count =
+         chain->passes[chain->pass_count - 1]->frame_count;
+      chain->drawn             = true;
+   }
+}
+
+/* The last frame's final pass in a later frame, at vp: what it read
+ * then - the passes' outputs and feedback, the history it saw - and its
+ * count. Nothing else runs; feedback does not swap, history stays. */
+static void slang_chain_replay_viewport_pass(
+      struct vulkan_filter_chain *chain, VkCommandBuffer cmd,
+      const VkViewport vp, const float *mvp)
+{
+   Texture source;
+   Texture original;
+   uint64_t count;
+   struct slang_pass *pass            = chain->passes[chain->pass_count - 1];
+   struct deferred_disposes *disposer = &chain->deferred_calls[chain->current_sync_index];
+
+   original.texture    = chain->input_texture;
+   original.filter     = chain->passes[0]->pass_info.source_filter;
+   original.mip_filter = chain->passes[0]->pass_info.mip_filter;
+   original.address    = chain->passes[0]->pass_info.address;
+   if (chain->pass_count == 1)
+   {
+      source            = original;
+      source.filter     = pass->pass_info.source_filter;
+      source.mip_filter = pass->pass_info.mip_filter;
+      source.address    = pass->pass_info.address;
+   }
+   else
+      source = chain->common.pass_outputs[chain->pass_count - 2];
+   count             = pass->frame_count;
+   pass->frame_count = chain->drawn_frame_count;
+   slang_pass_build_commands(pass, disposer, cmd, &original, &source,
+         &vp, mvp, false);
+   pass->frame_count = count;
 }
 
 static bool slang_chain_init_history(struct vulkan_filter_chain *chain)
@@ -1925,7 +2110,8 @@ static bool slang_chain_init_history(struct vulkan_filter_chain *chain)
     * swapchain. The num_history test is load-bearing, not redundant:
     * without it a fresh chain with required_images == 1 would take this
     * return and skip the common.original_history reset below. */
-   if (chain->num_history && chain->num_history + 1 == required_images)
+   if (     chain->num_history
+         && chain->num_history + (chain->replay ? 0 : 1) == required_images)
       return true;
 
    for (i = 0; i < chain->num_history; i++)
@@ -1948,11 +2134,14 @@ static bool slang_chain_init_history(struct vulkan_filter_chain *chain)
    /* We don't need to store array element #0,
     * since it's aliased with the actual original. */
    required_images--;
-   if (!(chain->original_history = (struct slang_framebuffer**)
-            calloc(required_images, sizeof(*chain->original_history))))
-      return false;
    if (!texture_array_resize(&chain->common.original_history,
             &chain->common.num_original_history, required_images))
+      return false;
+   /* And one more to replay: the last frame's history stays. */
+   if (chain->replay)
+      required_images++;
+   if (!(chain->original_history = (struct slang_framebuffer**)
+            calloc(required_images, sizeof(*chain->original_history))))
       return false;
 
    for (i = 0; i < required_images; i++)
@@ -1962,13 +2151,14 @@ static bool slang_chain_init_history(struct vulkan_filter_chain *chain)
                VIDEO_SCALE_W(chain->max_input_size_dims),
                VIDEO_SCALE_H(chain->max_input_size_dims),
                chain->original_format,
-               1, &chain->common.framebuffer_pool)))
+               1, false, &chain->common.framebuffer_pool)))
          return false;
       chain->num_history++;
    }
 
 #ifdef VULKAN_DEBUG
-   RARCH_LOG("[Vulkan] Using history of %u frames.\n", (unsigned)(required_images));
+   RARCH_LOG("[Vulkan] Using history of %u frames.\n",
+         (unsigned)chain->common.num_original_history);
 #endif
 
    /* On first frame, we need to clear the textures to
@@ -2100,6 +2290,40 @@ static void slang_chain_set_pass_info(struct vulkan_filter_chain *chain,
       const vulkan_filter_chain_pass_info info)
 {
    chain->pass_info[pass] = info;
+
+   /* Every pass samples the frame as the first does. */
+   if (pass == 0)
+   {
+      chain->common.frame_linear =
+         info.source_filter == GLSLANG_FILTER_CHAIN_LINEAR;
+      switch (info.address)
+      {
+         case GLSLANG_FILTER_CHAIN_ADDRESS_REPEAT:
+            chain->common.frame_wrap = SLANG_RECT_WRAP_REPEAT;
+            break;
+         case GLSLANG_FILTER_CHAIN_ADDRESS_MIRRORED_REPEAT:
+            chain->common.frame_wrap = SLANG_RECT_WRAP_MIRROR;
+            break;
+         case GLSLANG_FILTER_CHAIN_ADDRESS_CLAMP_TO_BORDER:
+            chain->common.frame_wrap = SLANG_RECT_WRAP_BORDER;
+            break;
+         case GLSLANG_FILTER_CHAIN_ADDRESS_CLAMP_TO_EDGE:
+         default:
+            chain->common.frame_wrap = SLANG_RECT_WRAP_EDGE;
+            break;
+      }
+   }
+}
+
+/* Whether frames can be read where they lie, once every pass is built
+ * and the history is known: history is copied from the frame. */
+static void slang_chain_init_frame_in_place(struct vulkan_filter_chain *chain)
+{
+   size_t i;
+   chain->frame_in_place = chain->common.frame_rect && !chain->num_history;
+   for (i = 0; i < chain->pass_count && chain->frame_in_place; i++)
+      if (chain->passes[i]->frame_copy)
+         chain->frame_in_place = false;
 }
 
 static VkFormat slang_chain_get_pass_rt_format(struct vulkan_filter_chain *chain,
@@ -2110,7 +2334,8 @@ static VkFormat slang_chain_get_pass_rt_format(struct vulkan_filter_chain *chain
 
 static bool slang_chain_emits_hdr10(const struct vulkan_filter_chain *chain)
 {
-   return chain->emits_hdr_colorspace;
+   int mode = video_shader_get_hdr_mode(chain->common.shader_preset);
+   return mode >= 0 ? mode == 1 : chain->emits_hdr_colorspace;
 }
 
 static void slang_chain_set_emits_hdr10(struct vulkan_filter_chain *chain)
@@ -2120,7 +2345,8 @@ static void slang_chain_set_emits_hdr10(struct vulkan_filter_chain *chain)
 
 static bool slang_chain_emits_hdr16(const struct vulkan_filter_chain *chain)
 {
-   return chain->emits_hdr16_output;
+   int mode = video_shader_get_hdr_mode(chain->common.shader_preset);
+   return mode >= 0 ? mode == 2 : chain->emits_hdr16_output;
 }
 
 static void slang_chain_set_emits_hdr16(struct vulkan_filter_chain *chain)
@@ -2128,7 +2354,7 @@ static void slang_chain_set_emits_hdr16(struct vulkan_filter_chain *chain)
    chain->emits_hdr16_output = true;
 }
 
-static void slang_chain_set_num_passes(struct vulkan_filter_chain *chain,
+static bool slang_chain_set_num_passes(struct vulkan_filter_chain *chain,
       unsigned num_passes)
 {
    unsigned i;
@@ -2138,7 +2364,7 @@ static void slang_chain_set_num_passes(struct vulkan_filter_chain *chain,
          (vulkan_filter_chain_pass_info*)realloc(chain->pass_info,
                num_passes * sizeof(*chain->pass_info));
       if (!new_info && num_passes)
-         return;
+         return false;
       chain->pass_info = new_info;
       if (num_passes > chain->pass_info_count)
          memset(&chain->pass_info[chain->pass_info_count], 0,
@@ -2148,19 +2374,23 @@ static void slang_chain_set_num_passes(struct vulkan_filter_chain *chain,
    for (i = 0; i < chain->pass_count; i++)
       slang_pass_free(chain->passes[i]);
    free(chain->passes);
+   chain->passes     = NULL;
    chain->pass_count = 0;
+   if (!num_passes)
+      return true;
    if (!(chain->passes = (struct slang_pass**)
             calloc(num_passes, sizeof(*chain->passes))))
-      return;
+      return false;
    for (i = 0; i < num_passes; i++)
    {
       if (!(chain->passes[i] = slang_pass_new(chain->device, &chain->memory_properties,
                chain->cache, chain->num_deferred, i + 1 == num_passes)))
-         return;
+         return false;
       chain->passes[i]->common      = &chain->common;
       chain->passes[i]->pass_number = i;
       chain->pass_count++;
    }
+   return true;
 }
 
 static void slang_chain_set_shader(struct vulkan_filter_chain *chain,
@@ -2245,6 +2475,8 @@ static bool slang_chain_init(struct vulkan_filter_chain *chain)
     * buffers with undefined contents for that first frame.
     * slang_chain_build_offscreen_passes() is the only place that clears
     * it, once the clear has actually been recorded. */
+   if (!slang_chain_load_luts(chain))
+      return false;
    if (!slang_chain_init_ubo(chain))
       return false;
    RARCH_DBG("[Vulkan] Chain UBO ready.\n");
@@ -2256,9 +2488,16 @@ static bool slang_chain_init(struct vulkan_filter_chain *chain)
    RARCH_DBG("[Vulkan] Chain feedback ready.\n");
    texture_array_resize(&chain->common.pass_outputs,
          &chain->common.num_pass_outputs, chain->pass_count);
+   /* A rebuild remakes what a replay reads. */
+   chain->drawn = false;
+   slang_chain_init_frame_in_place(chain);
    return true;
 }
 
+/* Pass @pass_idx readied for its pipeline - framebuffer, reflection,
+ * layout and descriptors - in the order the chain needs, the pipeline
+ * itself left to slang_pass_init_pipeline(), which reads nothing the
+ * later passes' preparation writes. */
 static bool slang_chain_init_single_pass(struct vulkan_filter_chain *chain,
       unsigned pass_idx)
 {
@@ -2278,10 +2517,7 @@ static bool slang_chain_init_single_pass(struct vulkan_filter_chain *chain,
          ? slang_pass_get_name(chain->passes[pass_idx])
          : msg_hash_to_str(MENU_ENUM_LABEL_VALUE_NOT_AVAILABLE));
 
-   if (!slang_pass_build(chain->passes[pass_idx]))
-      return false;
-
-   return true;
+   return slang_pass_build_layout(chain->passes[pass_idx]);
 }
 
 static bool slang_chain_compile_full_pass(struct vulkan_filter_chain *chain,
@@ -2296,7 +2532,13 @@ static bool slang_chain_compile_full_pass(struct vulkan_filter_chain *chain,
    bool explicit_format;
    struct video_shader *shader = chain->common.shader_preset;
 
-   if (!shader || pass_idx >= chain->pass_count)
+   if (!shader)
+      return false;
+   /* A pruned copy still occupies its originally scheduled compile step. */
+   if (pass_idx == shader->passes && chain->pass_count == shader->passes
+         && chain->last_pass.inspect_feedback)
+      return true;
+   if (pass_idx >= chain->pass_count)
       return false;
 
    /* Extra opaque pass (last_pass_is_fbo) — SPIRV already set */
@@ -2313,6 +2555,12 @@ static bool slang_chain_compile_full_pass(struct vulkan_filter_chain *chain,
    {
       RARCH_ERR("[Vulkan] Failed to compile shader: \"%s\".\n",
             pass->source.path);
+      return false;
+   }
+
+   if (!slang_chain_check_last_pass(chain, &output, pass_idx))
+   {
+      glslang_output_free(&output);
       return false;
    }
 
@@ -2379,11 +2627,11 @@ static bool slang_chain_compile_full_pass(struct vulkan_filter_chain *chain,
       }
    }
 
-   /* ---- Set SPIRV on the pass ---- */
-   slang_chain_set_shader(chain, pass_idx, VK_SHADER_STAGE_VERTEX_BIT,
-         output.vertex, output.vertex_len);
-   slang_chain_set_shader(chain, pass_idx, VK_SHADER_STAGE_FRAGMENT_BIT,
-         output.fragment, output.fragment_len);
+   /* ---- the stages, shared with the output ---- */
+   slang_pass_set_blob(chain->passes[pass_idx], VK_SHADER_STAGE_VERTEX_BIT,
+         slang_blob_ref(output.vertex_blob));
+   slang_pass_set_blob(chain->passes[pass_idx], VK_SHADER_STAGE_FRAGMENT_BIT,
+         slang_blob_ref(output.fragment_blob));
 
    slang_chain_set_frame_count_period(chain, pass_idx, pass->frame_count_mod);
 
@@ -2431,16 +2679,21 @@ static bool slang_chain_compile_full_pass(struct vulkan_filter_chain *chain,
       p_info.max_levels = ~0u;
 
    p_info.mip_filter =
-      (pass->filter != RARCH_FILTER_NEAREST && p_info.max_levels > 1)
+      (p_info.source_filter == GLSLANG_FILTER_CHAIN_LINEAR && pass->mipmap)
       ? GLSLANG_FILTER_CHAIN_LINEAR
       : GLSLANG_FILTER_CHAIN_NEAREST;
+   output.meta.rt_format = glslang_hdr_output_format(
+         shader, pass_idx, output.meta.rt_format);
 
    explicit_format = output.meta.rt_format != SLANG_FORMAT_UNKNOWN;
 
    if (output.meta.rt_format == SLANG_FORMAT_UNKNOWN)
       output.meta.rt_format = SLANG_FORMAT_R8G8B8A8_UNORM;
 
-   if (!(pass->fbo.flags & FBO_SCALE_FLAG_VALID))
+   /* A last pass with no target of its own renders to the swapchain,
+    * whatever scale the preset gave it. */
+   if (     !(pass->fbo.flags & FBO_SCALE_FLAG_VALID)
+         || pass_idx + 1 == chain->pass_count)
    {
       p_info.scale_type_x = GLSLANG_FILTER_CHAIN_SCALE_SOURCE;
       p_info.scale_type_y = GLSLANG_FILTER_CHAIN_SCALE_SOURCE;
@@ -2483,6 +2736,8 @@ static bool slang_chain_compile_full_pass(struct vulkan_filter_chain *chain,
          output.meta.rt_format = SLANG_FORMAT_R16G16B16A16_SFLOAT;
       else if (pass->fbo.flags & FBO_SCALE_FLAG_RGB10_FBO)
          output.meta.rt_format = SLANG_FORMAT_A2B10G10R10_UNORM_PACK32;
+      output.meta.rt_format = glslang_hdr_output_format(
+            shader, pass_idx, output.meta.rt_format);
 
       p_info.rt_format = glslang_format_to_vk(output.meta.rt_format);
 
@@ -2565,6 +2820,8 @@ static bool slang_chain_finalize(struct vulkan_filter_chain *chain)
     * buffers with undefined contents for that first frame.
     * slang_chain_build_offscreen_passes() is the only place that clears
     * it, once the clear has actually been recorded. */
+   if (!slang_chain_load_luts(chain))
+      return false;
    if (!slang_chain_init_ubo(chain))
       return false;
    if (!slang_chain_init_history(chain))
@@ -2573,6 +2830,9 @@ static bool slang_chain_finalize(struct vulkan_filter_chain *chain)
       return false;
    texture_array_resize(&chain->common.pass_outputs,
          &chain->common.num_pass_outputs, chain->pass_count);
+   /* A rebuild remakes what a replay reads. */
+   chain->drawn = false;
+   slang_chain_init_frame_in_place(chain);
    return true;
 }
 
@@ -2586,7 +2846,10 @@ static void slang_chain_clear_history_and_feedback(struct vulkan_filter_chain *c
    {
       struct slang_framebuffer *fb = chain->passes[i]->fb_feedback;
       if (fb)
+      {
          vulkan_framebuffer_clear(fb->image, cmd);
+         fb->defined = true;
+      }
    }
 }
 
@@ -2774,7 +3037,8 @@ static bool slang_buffer_init(struct slang_buffer *buf,
          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
          | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-   if (vkAllocateMemory(device, &alloc, NULL, &buf->memory) != VK_SUCCESS)
+   if (vulkan_allocate_cpu_write_memory(device, mem_props,
+            mem_reqs.memoryTypeBits, &alloc, &buf->memory) != VK_SUCCESS)
    {
       buf->memory = VK_NULL_HANDLE;
       return false;
@@ -2826,8 +3090,8 @@ static void slang_pass_free(struct slang_pass *pass)
       free(pass->parameters[i].id);
    free(pass->parameters);
    free(pass->filtered_parameters);
-   free(pass->vertex_shader);
-   free(pass->fragment_shader);
+   slang_blob_unref(pass->vertex_blob);
+   slang_blob_unref(pass->fragment_blob);
    free(pass->push.buffer);
    free(pass->sets);
    free(pass->pass_name);
@@ -2850,34 +3114,43 @@ static bool slang_pass_add_parameter(struct slang_pass *pass,
    return true;
 }
 
+/* The pass takes @blob's reference. */
+static void slang_pass_set_blob(struct slang_pass *pass,
+      VkShaderStageFlags stage, struct slang_blob *blob)
+{
+   pass->frame_tried = false;
+   switch (stage)
+   {
+      case VK_SHADER_STAGE_VERTEX_BIT:
+         slang_blob_unref(pass->vertex_blob);
+         pass->vertex_blob       = blob;
+         pass->vertex_shader     = blob ? blob->words : NULL;
+         pass->num_vertex_shader = blob ? blob->nwords : 0;
+         break;
+      case VK_SHADER_STAGE_FRAGMENT_BIT:
+         slang_blob_unref(pass->fragment_blob);
+         pass->fragment_blob       = blob;
+         pass->fragment_shader     = blob ? blob->words : NULL;
+         pass->num_fragment_shader = blob ? blob->nwords : 0;
+         break;
+      default:
+         slang_blob_unref(blob);
+         break;
+   }
+}
+
+/* Words from elsewhere (the built-in stock stages, a caller of the
+ * public API) become a blob of their own. */
 static void slang_pass_set_shader(struct slang_pass *pass,
       VkShaderStageFlags stage,
       const uint32_t *spirv,
       size_t spirv_words)
 {
-   switch (stage)
-   {
-      case VK_SHADER_STAGE_VERTEX_BIT:
-         free(pass->vertex_shader);
-         pass->num_vertex_shader = 0;
-         if (!(pass->vertex_shader = (uint32_t*)
-                  malloc(spirv_words * sizeof(uint32_t))))
-            break;
-         memcpy(pass->vertex_shader, spirv, spirv_words * sizeof(uint32_t));
-         pass->num_vertex_shader = spirv_words;
-         break;
-      case VK_SHADER_STAGE_FRAGMENT_BIT:
-         free(pass->fragment_shader);
-         pass->num_fragment_shader = 0;
-         if (!(pass->fragment_shader = (uint32_t*)
-                  malloc(spirv_words * sizeof(uint32_t))))
-            break;
-         memcpy(pass->fragment_shader, spirv, spirv_words * sizeof(uint32_t));
-         pass->num_fragment_shader = spirv_words;
-         break;
-      default:
-         break;
-   }
+   uint32_t *words = (uint32_t*)malloc(spirv_words * sizeof(uint32_t));
+   if (!words)
+      return;
+   memcpy(words, spirv, spirv_words * sizeof(uint32_t));
+   slang_pass_set_blob(pass, stage, slang_blob_adopt_words(words, spirv_words));
 }
 
 /* Returns the size this pass renders at, in VIDEO_SCALE_PACK's
@@ -3059,7 +3332,8 @@ static bool slang_pass_init_pipeline_layout(struct slang_pass *pass)
    set_layout_info.bindingCount           = (uint32_t)num_bindings;
    set_layout_info.pBindings              = bindings;
 
-   if (vkCreateDescriptorSetLayout(pass->device,
+   if (pass->set_layout == VK_NULL_HANDLE
+         && vkCreateDescriptorSetLayout(pass->device,
             &set_layout_info, NULL, &pass->set_layout) != VK_SUCCESS)
    {
       free(bindings);
@@ -3097,22 +3371,27 @@ static bool slang_pass_init_pipeline_layout(struct slang_pass *pass)
       {
          size_t new_size = (pass->reflection.push_constant_size
                + sizeof(uint32_t) - 1) / sizeof(uint32_t);
-         free(pass->push.buffer);
-         pass->push.buffer_size = 0;
-         if (!(pass->push.buffer = (uint32_t*)calloc(new_size, sizeof(uint32_t))))
+         if (pass->pipeline_layout == VK_NULL_HANDLE
+               || !pass->push.buffer || pass->push.buffer_size != new_size)
          {
-            free(bindings);
-            free(desc_counts);
-            return false;
+            free(pass->push.buffer);
+            pass->push.buffer_size = 0;
+            if (!(pass->push.buffer = (uint32_t*)calloc(new_size, sizeof(uint32_t))))
+            {
+               free(bindings);
+               free(desc_counts);
+               return false;
+            }
+            pass->push.buffer_size = new_size;
          }
-         pass->push.buffer_size = new_size;
       }
    }
 
    pass->push.stages     = push_range.stageFlags;
    push_range.size = (uint32_t)pass->reflection.push_constant_size;
 
-   if (vkCreatePipelineLayout(pass->device,
+   if (pass->pipeline_layout == VK_NULL_HANDLE
+         && vkCreatePipelineLayout(pass->device,
             &layout_info, NULL, &pass->pipeline_layout) != VK_SUCCESS)
    {
       free(bindings);
@@ -3178,9 +3457,6 @@ static bool slang_pass_init_pipeline(struct slang_pass *pass)
       { VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO },
       { VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO },
    };
-
-   if (!slang_pass_init_pipeline_layout(pass))
-      return false;
 
    /* Input assembly */
    input_assembly.sType                         = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -3448,10 +3724,6 @@ static void common_resources_init(CommonResources *common,
                   mode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
                   break;
 
-               case GLSLANG_FILTER_CHAIN_ADDRESS_MIRROR_CLAMP_TO_EDGE:
-                  mode = VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
-                  break;
-
                default:
                   break;
             }
@@ -3528,11 +3800,89 @@ static bool slang_pass_init_feedback(struct slang_pass *pass)
          VIDEO_SCALE_W(pass->current_framebuffer_size_dims),
          VIDEO_SCALE_H(pass->current_framebuffer_size_dims),
          pass->pass_info.rt_format, pass->pass_info.max_levels,
+         pass->framebuffer && pass->framebuffer->clear,
          pass->common ? &pass->common->framebuffer_pool : NULL);
    return pass->fb_feedback != NULL;
 }
 
+/* Has a pass's stages read the frame where it lies, as slang_rect.h
+ * describes, once for the stages it was given: a chain rebuilt for a
+ * new swapchain builds its passes again. Stages rslc compiled it
+ * compiles again from the pass's source; others are rewritten on the
+ * SPIR-V. A pass that cannot keeps its stages and needs the frame on
+ * its own. */
+static void slang_pass_read_frame_in_place(struct slang_pass *pass)
+{
+   enum slang_rect_result res;
+   uint32_t *nv = NULL, *nf = NULL;
+   size_t    nvl = 0, nfl = 0;
+#ifdef HAVE_RSLC
+   struct slang_blob         *vb     = NULL;
+   struct slang_blob         *fb     = NULL;
+   const struct video_shader *preset = pass->common->shader_preset;
+#endif
+
+   if (pass->frame_tried)
+      return;
+   pass->frame_tried = true;
+#ifdef HAVE_RSLC
+   if (     pass->vertex_blob   && pass->vertex_blob->refl
+         && pass->fragment_blob && pass->fragment_blob->refl
+         && preset && pass->pass_number < preset->passes
+         && slang_compile_remapped(preset->pass[pass->pass_number].source.path,
+               pass->vertex_shader, pass->num_vertex_shader,
+               pass->fragment_shader, pass->num_fragment_shader,
+               pass->pass_number == 0, pass->common->frame_linear,
+               pass->common->frame_wrap, NULL, &res, &vb, &fb, NULL, NULL))
+   {
+      pass->frame_copy = res == SLANG_RECT_UNSUPPORTED;
+      if (vb)
+         slang_pass_set_blob(pass, VK_SHADER_STAGE_VERTEX_BIT, vb);
+      if (fb)
+         slang_pass_set_blob(pass, VK_SHADER_STAGE_FRAGMENT_BIT, fb);
+      return;
+   }
+#endif
+   res = slang_rect_remap_pass(
+         pass->vertex_shader, pass->num_vertex_shader,
+         pass->fragment_shader, pass->num_fragment_shader,
+         pass->pass_number == 0, pass->common->frame_linear,
+         pass->common->frame_wrap, &nv, &nvl, &nf, &nfl);
+   pass->frame_copy = res == SLANG_RECT_UNSUPPORTED;
+   /* a rewritten stage is a module without tables; it crosses */
+   if (nv)
+      slang_pass_set_blob(pass, VK_SHADER_STAGE_VERTEX_BIT, slang_blob_adopt_words(nv, nvl));
+   if (nf)
+      slang_pass_set_blob(pass, VK_SHADER_STAGE_FRAGMENT_BIT, slang_blob_adopt_words(nf, nfl));
+}
+
 static bool slang_pass_build(struct slang_pass *pass)
+{
+   return slang_pass_build_layout(pass) && slang_pass_init_pipeline(pass);
+}
+
+/* A fragment stage that can leave a pixel unwritten: OpKill,
+ * OpTerminateInvocation or OpDemoteToHelperInvocation. */
+static bool spirv_can_discard(const uint32_t *words, size_t n)
+{
+   size_t at = 5;
+   if (!words)
+      return false;
+   while (at < n)
+   {
+      uint32_t op  = words[at] & 0xffffu;
+      uint32_t len = words[at] >> 16;
+      if (op == 252 || op == 4416 || op == 5380)
+         return true;
+      if (!len)
+         break;
+      at += len;
+   }
+   return false;
+}
+
+/* All of a pass but its pipeline */
+static bool slang_pass_build_layout(struct slang_pass *pass)
 {
    unsigned i;
    unsigned j = 0;
@@ -3545,6 +3895,9 @@ static bool slang_pass_build(struct slang_pass *pass)
    if (!pass->common)
       return false;
 
+   if (pass->common->frame_rect)
+      slang_pass_read_frame_in_place(pass);
+
    slang_framebuffer_delete(&pass->framebuffer);
 
    if (!pass->final_pass)
@@ -3553,6 +3906,7 @@ static bool slang_pass_build(struct slang_pass *pass)
                VIDEO_SCALE_W(pass->current_framebuffer_size_dims),
                VIDEO_SCALE_H(pass->current_framebuffer_size_dims),
                pass->pass_info.rt_format, pass->pass_info.max_levels,
+               spirv_can_discard(pass->fragment_shader, pass->num_fragment_shader),
                &pass->common->framebuffer_pool)))
          return false;
    }
@@ -3581,10 +3935,9 @@ static bool slang_pass_build(struct slang_pass *pass)
    pass->reflection.semantic_map                 = &semantic_map;
 
    {
-      bool refl_ok = slang_reflect_spirv(
-            pass->vertex_shader, pass->num_vertex_shader,
-            pass->fragment_shader, pass->num_fragment_shader,
-            &pass->reflection);
+      bool refl_ok = pass->vertex_blob && pass->fragment_blob
+         && slang_reflect_pass(pass->vertex_blob, pass->fragment_blob,
+               &pass->reflection);
       /* The parameter map is only needed during pass->reflection; the
        * pass->reflection keeps a dangling pointer otherwise. */
       slang_semantic_name_map_free(&semantic_map);
@@ -3636,7 +3989,7 @@ static bool slang_pass_build(struct slang_pass *pass)
       }
    }
 
-   return slang_pass_init_pipeline(pass);
+   return slang_pass_init_pipeline_layout(pass);
 }
 
 static void slang_pass_set_semantic_texture(struct slang_pass *pass,
@@ -3789,6 +4142,45 @@ static void slang_pass_build_semantic_float(struct slang_pass *pass,
       *((float*)(pass->push.buffer + (refl->push_constant_offset >> 2))) = value;
 }
 
+static void slang_pass_build_semantic_vec4_values(struct slang_pass *pass,
+      uint8_t *data, enum slang_semantic semantic, const float *values)
+{
+   const slang_semantic_meta *refl = &pass->reflection.semantics[semantic];
+
+   if (data && refl->uniform)
+      memcpy(data + refl->ubo_offset, values, 4 * sizeof(float));
+
+   if (refl->push_constant)
+      memcpy(pass->push.buffer + (refl->push_constant_offset >> 2), values,
+            4 * sizeof(float));
+}
+
+/* Where the frame lies in the image bound for it: the whole of it
+ * unless padded_dims says the image is larger. */
+static void slang_pass_build_semantic_frame_rect(struct slang_pass *pass,
+      uint8_t *buffer, const vulkan_filter_chain_texture *frame)
+{
+   const slang_semantic_meta *sem = pass->reflection.semantics;
+   float    v[12];
+   unsigned tex_dims = frame->padded_dims ? frame->padded_dims : frame->dims;
+
+   if (     !sem[SLANG_SEMANTIC_ORIGINAL_RECT].uniform
+         && !sem[SLANG_SEMANTIC_ORIGINAL_RECT].push_constant
+         && !sem[SLANG_SEMANTIC_ORIGINAL_CLAMP].uniform
+         && !sem[SLANG_SEMANTIC_ORIGINAL_CLAMP].push_constant
+         && !sem[SLANG_SEMANTIC_ORIGINAL_TEXELS].uniform
+         && !sem[SLANG_SEMANTIC_ORIGINAL_TEXELS].push_constant)
+      return;
+
+   slang_rect_values(v, frame->dims, frame->origin, tex_dims);
+   slang_pass_build_semantic_vec4_values(pass, buffer,
+         SLANG_SEMANTIC_ORIGINAL_RECT, v);
+   slang_pass_build_semantic_vec4_values(pass, buffer,
+         SLANG_SEMANTIC_ORIGINAL_CLAMP, v + 4);
+   slang_pass_build_semantic_vec4_values(pass, buffer,
+         SLANG_SEMANTIC_ORIGINAL_TEXELS, v + 8);
+}
+
 static void slang_pass_build_semantic_vec3(struct slang_pass *pass,
       uint8_t *data, enum slang_semantic semantic,
                               const float *values)
@@ -3809,8 +4201,12 @@ static void slang_pass_build_semantic_texture(struct slang_pass *pass,
       VkDescriptorImageInfo *image_infos, VkWriteDescriptorSet *writes,
       unsigned *write_count)
 {
-   slang_pass_build_semantic_texture_vec4(pass, buffer, semantic,
-         texture->texture.dims);
+   unsigned dims = texture->texture.dims;
+   if (     semantic == SLANG_TEXTURE_SEMANTIC_SOURCE
+         && pass->pass_number == 0
+         && pass->common->sim_source_dims)
+      dims = pass->common->sim_source_dims;
+   slang_pass_build_semantic_texture_vec4(pass, buffer, semantic, dims);
    slang_pass_set_semantic_texture(pass, set, semantic, texture,
          image_infos, writes, write_count);
 }
@@ -3899,12 +4295,24 @@ static void slang_pass_build_semantics(struct slang_pass *pass,
    slang_pass_build_semantic_float(pass, buffer, SLANG_SEMANTIC_CORE_ASPECT_ROT,
                       pass->common->core_aspect_rot);
 
+   slang_pass_build_semantic_float(pass, buffer, SLANG_SEMANTIC_MIN_NITS, 0.0f);
+   slang_pass_build_semantic_uint(pass, buffer, SLANG_SEMANTIC_TONEMAP_OPERATOR, 0);
+   slang_pass_build_semantic_uint(pass, buffer, SLANG_SEMANTIC_SOURCE_HDR, pass->common->source_hdr);
+   slang_pass_build_semantic_uint(pass, buffer, SLANG_SEMANTIC_PASSTHROUGH, pass->common->passthrough);
 #ifdef VULKAN_HDR_SWAPCHAIN
    slang_pass_build_semantic_uint(pass, buffer, SLANG_SEMANTIC_HDR,
                       pass->common->hdr_mode);
+   slang_pass_build_semantic_float(pass, buffer, SLANG_SEMANTIC_ENABLE_HDR,
+                      pass->common->hdr_mode ? 1.0f : 0.0f);
 
    slang_pass_build_semantic_float(pass, buffer, SLANG_SEMANTIC_PAPER_WHITE_NITS,
                       pass->common->paper_white_nits);
+   slang_pass_build_semantic_float(pass, buffer, SLANG_SEMANTIC_PAPER_WHITE_ALIAS,
+                      pass->common->paper_white_nits);
+   slang_pass_build_semantic_float(pass, buffer, SLANG_SEMANTIC_PEAK_NITS,
+                      pass->common->peak_nits);
+   slang_pass_build_semantic_float(pass, buffer, SLANG_SEMANTIC_MAX_NITS_ALIAS,
+                      pass->common->peak_nits);
 
    slang_pass_build_semantic_float(pass, buffer, SLANG_SEMANTIC_SCANLINES,
                       pass->common->scanlines);
@@ -3920,6 +4328,9 @@ static void slang_pass_build_semantics(struct slang_pass *pass,
 
    slang_pass_build_semantic_float(pass, buffer, SLANG_SEMANTIC_HDR10,
                       pass->common->hdr10);
+#else
+   slang_pass_build_semantic_float(pass, buffer, SLANG_SEMANTIC_ENABLE_HDR,
+                      0.0f);
 #endif /* VULKAN_HDR_SWAPCHAIN */
 
    /* Sensor uniforms — one coherent seqlock'd snapshot of the values
@@ -3936,6 +4347,7 @@ static void slang_pass_build_semantics(struct slang_pass *pass,
    }
 
    /* Standard inputs */
+   slang_pass_build_semantic_frame_rect(pass, buffer, &original->texture);
    slang_pass_build_semantic_texture(pass, set, buffer, SLANG_TEXTURE_SEMANTIC_ORIGINAL, original,
          batch_image_infos, batch_writes, &batch_count);
    slang_pass_build_semantic_texture(pass, set, buffer, SLANG_TEXTURE_SEMANTIC_SOURCE, source,
@@ -3950,8 +4362,8 @@ static void slang_pass_build_semantics(struct slang_pass *pass,
    for (i = 0; i < pass->num_filtered; i++)
       slang_pass_build_semantic_parameter(pass, buffer,
             pass->parameters[pass->filtered_parameters[i]].semantic_index,
-            pass->common->shader_preset->parameters[
-            pass->parameters[pass->filtered_parameters[i]].index].current);
+            video_shader_param_get(&pass->common->shader_preset->parameters[
+            pass->parameters[pass->filtered_parameters[i]].index]));
 
    /* Previous inputs. */
    for (i = 0; i < pass->common->num_original_history; i++)
@@ -3992,7 +4404,8 @@ static void slang_pass_build_commands(struct slang_pass *pass,
       const Texture *original,
       const Texture *source,
       const VkViewport *vp,
-      const float *mvp)
+      const float *mvp,
+      bool again)
 {
    uint8_t *u       = NULL;
    VkRect2D sci;
@@ -4016,20 +4429,26 @@ static void slang_pass_build_commands(struct slang_pass *pass,
 
    pass->current_framebuffer_size_dims = size_dims;
 
-   if (pass->reflection.ubo_stage_mask && pass->common->ubo_mapped)
-      u = pass->common->ubo_mapped + pass->ubo_offset +
-         pass->sync_index * pass->common->ubo_sync_index_stride;
-
-   slang_pass_build_semantics(pass, pass->sets[pass->sync_index], u, mvp, original, source);
-
-   if (pass->reflection.ubo_stage_mask)
+   /* Drawn again this frame, the pass keeps its first draw's set and
+    * uniforms: updating a set the command buffer has bound invalidates
+    * the command buffer. */
+   if (!again)
    {
-      VULKAN_SET_UNIFORM_BUFFER(pass->device,
-            pass->sets[pass->sync_index],
-            pass->reflection.ubo_binding,
-            pass->common->ubo.buffer,
-            pass->ubo_offset + pass->sync_index * pass->common->ubo_sync_index_stride,
-            pass->reflection.ubo_size);
+      if (pass->reflection.ubo_stage_mask && pass->common->ubo_mapped)
+         u = pass->common->ubo_mapped + pass->ubo_offset +
+            pass->sync_index * pass->common->ubo_sync_index_stride;
+
+      slang_pass_build_semantics(pass, pass->sets[pass->sync_index], u, mvp, original, source);
+
+      if (pass->reflection.ubo_stage_mask)
+      {
+         VULKAN_SET_UNIFORM_BUFFER(pass->device,
+               pass->sets[pass->sync_index],
+               pass->reflection.ubo_binding,
+               pass->common->ubo.buffer,
+               pass->ubo_offset + pass->sync_index * pass->common->ubo_sync_index_stride,
+               pass->reflection.ubo_size);
+      }
    }
 
    /* The final pass is always executed inside
@@ -4039,7 +4458,42 @@ static void slang_pass_build_commands(struct slang_pass *pass,
    if (!pass->final_pass)
    {
       VkRenderPassBeginInfo rp_info;
+      VkRect2D area;
+      area.offset.x      = 0;
+      area.offset.y      = 0;
+      area.extent.width  = VIDEO_SCALE_W(size_dims);
+      area.extent.height = VIDEO_SCALE_H(size_dims);
 
+#ifdef VULKAN_ROLLING_SCANLINE_SIMULATION
+      /* A subframe draws one band and keeps the rest of the target as
+       * the earlier subframes left it: the render area is the band, and
+       * the image keeps its contents, cleared once when new. */
+      if (pass->common->simulate_scanline)
+      {
+         area.offset.y      = (int32_t)(((float)(VIDEO_SCALE_H(size_dims))
+                  / (float)(pass->common->total_subframes))
+               * (float)(pass->common->current_subframe - 1));
+         area.extent.height = (uint32_t)((float)(VIDEO_SCALE_H(size_dims))
+               / (float)(pass->common->total_subframes));
+         if (!pass->framebuffer->defined)
+         {
+            vulkan_framebuffer_clear(pass->framebuffer->image, cmd);
+            pass->framebuffer->defined = true;
+         }
+         VULKAN_IMAGE_LAYOUT_TRANSITION_LEVELS(cmd,
+               pass->framebuffer->image, 1,
+               VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+               VK_ACCESS_SHADER_READ_BIT,
+               VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+               VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+               VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+               VK_QUEUE_FAMILY_IGNORED,
+               VK_QUEUE_FAMILY_IGNORED);
+      }
+      else
+#endif /* VULKAN_ROLLING_SCANLINE_SIMULATION */
       /* Render.  The image transitions from UNDEFINED (contents
        * discarded), so no prior work needs to complete — use
        * TOP_OF_PIPE_BIT as the source stage. */
@@ -4059,12 +4513,15 @@ static void slang_pass_build_commands(struct slang_pass *pass,
       rp_info.pNext                    = NULL;
       rp_info.renderPass               = pass->framebuffer->render_pass;
       rp_info.framebuffer              = pass->framebuffer->framebuffer;
-      rp_info.renderArea.offset.x      = 0;
-      rp_info.renderArea.offset.y      = 0;
-      rp_info.renderArea.extent.width  = VIDEO_SCALE_W(size_dims);
-      rp_info.renderArea.extent.height = VIDEO_SCALE_H(size_dims);
+      rp_info.renderArea               = area;
       rp_info.clearValueCount          = 0;
       rp_info.pClearValues             = NULL;
+      if (pass->framebuffer->clear)
+      {
+         static const VkClearValue black = { { { 0.0f, 0.0f, 0.0f, 0.0f } } };
+         rp_info.clearValueCount       = 1;
+         rp_info.pClearValues          = &black;
+      }
 
       vkCmdBeginRenderPass(cmd, &rp_info, VK_SUBPASS_CONTENTS_INLINE);
    }
@@ -4108,6 +4565,20 @@ static void slang_pass_build_commands(struct slang_pass *pass,
          sci.offset.y      = (int32_t)(pass->curr_vp.y);
          sci.extent.width  = (uint32_t)(pass->curr_vp.width);
          sci.extent.height = (uint32_t)(pass->curr_vp.height);
+      }
+      if (pass->common->scissor_set)
+      {
+         const VkRect2D *cut = &pass->common->scissor;
+         int32_t x0          = MAX(sci.offset.x, cut->offset.x);
+         int32_t y0          = MAX(sci.offset.y, cut->offset.y);
+         int32_t x1          = MIN(sci.offset.x + (int32_t)sci.extent.width,
+               cut->offset.x + (int32_t)cut->extent.width);
+         int32_t y1          = MIN(sci.offset.y + (int32_t)sci.extent.height,
+               cut->offset.y + (int32_t)cut->extent.height);
+         sci.offset.x        = x0;
+         sci.offset.y        = y0;
+         sci.extent.width    = (x1 > x0) ? (uint32_t)(x1 - x0) : 0;
+         sci.extent.height   = (y1 > y0) ? (uint32_t)(y1 - y0) : 0;
       }
       vkCmdSetScissor(cmd, 0, 1, &sci);
    }
@@ -4174,13 +4645,14 @@ static void slang_pass_build_commands(struct slang_pass *pass,
                VK_QUEUE_FAMILY_IGNORED,
                VK_QUEUE_FAMILY_IGNORED);
       }
+      pass->framebuffer->defined = true;
    }
 }
 
 static struct slang_framebuffer *slang_framebuffer_new(VkDevice device,
       const VkPhysicalDeviceMemoryProperties *mem_props,
       unsigned max_width, unsigned max_height,
-      VkFormat format, unsigned max_levels,
+      VkFormat format, unsigned max_levels, bool clear,
       FramebufferMemoryPool *mem_pool)
 {
    struct slang_framebuffer *fb = (struct slang_framebuffer*)
@@ -4193,10 +4665,11 @@ static struct slang_framebuffer *slang_framebuffer_new(VkDevice device,
    fb->memory_properties = mem_props;
    fb->device            = device;
    fb->mem_pool          = mem_pool;
+   fb->clear             = clear;
 
    RARCH_LOG("[Vulkan] Creating framebuffer %ux%u (max %u level(s)).\n",
          max_width, max_height, max_levels);
-   if (!vulkan_initialize_render_pass(device, format, &fb->render_pass))
+   if (!vulkan_initialize_render_pass(device, format, clear, &fb->render_pass))
    {
       RARCH_ERR("[Vulkan] Failed to create render pass for "
             "framebuffer %ux%u.\n", max_width, max_height);
@@ -4360,6 +4833,7 @@ static bool slang_framebuffer_build(struct slang_framebuffer *fb)
    fb->memory.type   = new_memory_type;
    fb->memory.size   = new_memory_size;
    fb->memory.memory = new_memory;
+   fb->defined       = false;
    return true;
 
 error:
@@ -4401,7 +4875,8 @@ static bool slang_framebuffer_set_size(struct slang_framebuffer *fb,
 
    if (format_changed)
    {
-      if (!vulkan_initialize_render_pass(fb->device, fb->format, &fb->render_pass))
+      if (!vulkan_initialize_render_pass(fb->device, fb->format, fb->clear,
+               &fb->render_pass))
       {
          fb->size_dims   = old_size_dims;
          fb->format = old_format;
@@ -4505,22 +4980,22 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_default(
    slang_chain_set_pass_info(chain, 0, pass_info);
 
    slang_chain_set_shader(chain, 0, VK_SHADER_STAGE_VERTEX_BIT,
-         opaque_vert,
-         sizeof(opaque_vert) / sizeof(uint32_t));
+         spirv_opaque_vert,
+         spirv_opaque_vert_size / sizeof(uint32_t));
 
 #ifdef VULKAN_HDR_SWAPCHAIN
    if (info->hdr_enabled)
    {
       slang_chain_set_shader(chain, 0, VK_SHADER_STAGE_FRAGMENT_BIT,
-            hdr_frag,
-            sizeof(hdr_frag) / sizeof(uint32_t));
+            spirv_hdr_frag,
+            spirv_hdr_frag_size / sizeof(uint32_t));
    }
    else
 #endif /* VULKAN_HDR_SWAPCHAIN */ 
    {
       slang_chain_set_shader(chain, 0, VK_SHADER_STAGE_FRAGMENT_BIT,
-            opaque_frag,
-            sizeof(opaque_frag) / sizeof(uint32_t));
+            spirv_opaque_frag,
+            spirv_opaque_frag_size / sizeof(uint32_t));
    }
 
    if (!slang_chain_init(chain))
@@ -4533,12 +5008,67 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_default(
    return chain;
 }
 
+vulkan_filter_chain_t *vulkan_filter_chain_create_shrink(
+      const struct vulkan_filter_chain_create_info *info)
+{
+   unsigned i;
+   struct vulkan_filter_chain_pass_info pass_info;
+   struct vulkan_filter_chain_create_info tmpinfo = *info;
+   vulkan_filter_chain *chain;
+
+   tmpinfo.num_passes      = 2;
+
+   chain = slang_chain_new(&tmpinfo);
+   if (!chain)
+      return NULL;
+
+   /* A copy at the source's size; max_levels gives its framebuffer
+    * every mip level, which the chain builds after the pass. */
+   pass_info.scale_type_x  = GLSLANG_FILTER_CHAIN_SCALE_ORIGINAL;
+   pass_info.scale_type_y  = GLSLANG_FILTER_CHAIN_SCALE_ORIGINAL;
+   pass_info.scale_x       = 1.0f;
+   pass_info.scale_y       = 1.0f;
+   pass_info.rt_format     = VK_FORMAT_R8G8B8A8_UNORM;
+   pass_info.source_filter = GLSLANG_FILTER_CHAIN_NEAREST;
+   pass_info.mip_filter    = GLSLANG_FILTER_CHAIN_NEAREST;
+   pass_info.address       = GLSLANG_FILTER_CHAIN_ADDRESS_CLAMP_TO_EDGE;
+   pass_info.max_levels    = ~0u;
+   slang_chain_set_pass_info(chain, 0, pass_info);
+
+   /* Trilinear from those mips into the viewport. */
+   pass_info.scale_type_x  = GLSLANG_FILTER_CHAIN_SCALE_VIEWPORT;
+   pass_info.scale_type_y  = GLSLANG_FILTER_CHAIN_SCALE_VIEWPORT;
+   pass_info.rt_format     = tmpinfo.swapchain.format;
+   pass_info.source_filter = GLSLANG_FILTER_CHAIN_LINEAR;
+   pass_info.mip_filter    = GLSLANG_FILTER_CHAIN_LINEAR;
+   pass_info.max_levels    = 0;
+   slang_chain_set_pass_info(chain, 1, pass_info);
+
+   for (i = 0; i < 2; i++)
+   {
+      slang_chain_set_shader(chain, i, VK_SHADER_STAGE_VERTEX_BIT,
+            spirv_opaque_vert,
+            spirv_opaque_vert_size / sizeof(uint32_t));
+      slang_chain_set_shader(chain, i, VK_SHADER_STAGE_FRAGMENT_BIT,
+            spirv_opaque_frag,
+            spirv_opaque_frag_size / sizeof(uint32_t));
+   }
+
+   if (!slang_chain_init(chain))
+   {
+      slang_chain_free(chain);
+      return NULL;
+   }
+   return chain;
+}
+
 vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
       const struct vulkan_filter_chain_create_info *info,
       const char *path, glslang_filter_chain_filter filter)
 {
    unsigned i;
    bool last_pass_is_fbo;
+   struct glslang_last_pass last_pass;
    glslang_output output;
    struct vulkan_filter_chain_create_info tmpinfo;
    void *include_cache = NULL;
@@ -4554,27 +5084,30 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
     if (!video_shader_load_preset_into_shader(path, shader))
         goto error;
 
-   last_pass_is_fbo   = shader->pass[shader->passes - 1].fbo.flags &
-      FBO_SCALE_FLAG_VALID;
+   /* One include cache for every pass of this preset.  The passes share
+    * helper .inc files, so without this each pass re-reads them: a
+    * 24-pass preset over 8 shared helpers issues 216 reads for 32
+    * distinct files.  It is freed on every exit from here, including
+    * the error paths below. */
+   include_cache      = glslang_include_cache_new();
+
+   glslang_last_pass_init(shader, include_cache, &last_pass);
+   last_pass_is_fbo = last_pass.needs_target || last_pass.inspect_feedback;
    tmpinfo            = *info;
    tmpinfo.num_passes = shader->passes + (last_pass_is_fbo ? 1 : 0);
 
    chain = slang_chain_new(&tmpinfo);
    if (!chain)
       goto error;
+   chain->last_pass              = last_pass;
+   chain->common.sim_source_dims = shader->sim_source_dims;
 
    if (shader->luts && !vulkan_filter_chain_load_luts(info, chain, shader))
       goto error;
 
    shader->num_parameters = 0;
 
-   /* One include cache for every pass of this preset.  The passes share
-    * helper .inc files, so without this each pass re-reads them: a
-    * 24-pass preset over 8 shared helpers issues 216 reads for 32
-    * distinct files.  The guard frees it on every exit from here,
-    * including the error paths below. */
    {
-   include_cache = glslang_include_cache_new();
 
    for (i = 0; i < shader->passes; i++)
    {
@@ -4601,6 +5134,10 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
                pass->source.path);
          goto error;
       }
+
+      if (!slang_chain_check_last_pass(chain, &output, i))
+         goto error;
+      last_pass_is_fbo = chain->pass_count > shader->passes;
 
       {
       size_t j;
@@ -4663,15 +5200,10 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
       }
       }
 
-      slang_chain_set_shader(chain, i,
-            VK_SHADER_STAGE_VERTEX_BIT,
-            output.vertex,
-            output.vertex_len);
-
-      slang_chain_set_shader(chain, i,
-            VK_SHADER_STAGE_FRAGMENT_BIT,
-            output.fragment,
-            output.fragment_len);
+      slang_pass_set_blob(chain->passes[i], VK_SHADER_STAGE_VERTEX_BIT,
+            slang_blob_ref(output.vertex_blob));
+      slang_pass_set_blob(chain->passes[i], VK_SHADER_STAGE_FRAGMENT_BIT,
+            slang_blob_ref(output.fragment_blob));
 
       slang_chain_set_frame_count_period(chain, i, pass->frame_count_mod);
 
@@ -4702,9 +5234,11 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
          pass_info.max_levels = ~0u;
 
       pass_info.mip_filter =
-         (pass->filter != RARCH_FILTER_NEAREST && pass_info.max_levels > 1)
+         (pass_info.source_filter == GLSLANG_FILTER_CHAIN_LINEAR && pass->mipmap)
          ? GLSLANG_FILTER_CHAIN_LINEAR
          : GLSLANG_FILTER_CHAIN_NEAREST;
+      output.meta.rt_format = glslang_hdr_output_format(
+            shader, i, output.meta.rt_format);
 
       explicit_format              = output.meta.rt_format != SLANG_FORMAT_UNKNOWN;
 
@@ -4712,7 +5246,10 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
       if (output.meta.rt_format == SLANG_FORMAT_UNKNOWN)
          output.meta.rt_format     = SLANG_FORMAT_R8G8B8A8_UNORM;
 
-      if (!(pass->fbo.flags & FBO_SCALE_FLAG_VALID))
+      /* A last pass with no target of its own renders to the
+       * swapchain, whatever scale the preset gave it. */
+      if (     !(pass->fbo.flags & FBO_SCALE_FLAG_VALID)
+            || (i + 1 == shader->passes && !last_pass_is_fbo))
       {
          pass_info.scale_type_x    = GLSLANG_FILTER_CHAIN_SCALE_SOURCE;
          pass_info.scale_type_y    = GLSLANG_FILTER_CHAIN_SCALE_SOURCE;
@@ -4769,6 +5306,8 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
             output.meta.rt_format = SLANG_FORMAT_R16G16B16A16_SFLOAT;
          else if (pass->fbo.flags & FBO_SCALE_FLAG_RGB10_FBO)
             output.meta.rt_format = SLANG_FORMAT_A2B10G10R10_UNORM_PACK32;
+         output.meta.rt_format = glslang_hdr_output_format(
+               shader, i, output.meta.rt_format);
 
          pass_info.rt_format      = glslang_format_to_vk(output.meta.rt_format);
 
@@ -4855,15 +5394,15 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
 
       slang_chain_set_shader(chain, shader->passes,
             VK_SHADER_STAGE_VERTEX_BIT,
-            opaque_vert,
-            sizeof(opaque_vert) / sizeof(uint32_t));
+            spirv_opaque_vert,
+            spirv_opaque_vert_size / sizeof(uint32_t));
 
       /* The hidden copy/scale pass is always a plain blit.
        * HDR conversion is handled by the HDR pipeline, not here. */
       slang_chain_set_shader(chain, shader->passes,
             VK_SHADER_STAGE_FRAGMENT_BIT,
-            opaque_frag,
-            sizeof(opaque_frag) / sizeof(uint32_t));
+            spirv_opaque_frag,
+            spirv_opaque_frag_size / sizeof(uint32_t));
    }
 
    slang_chain_set_shader_preset(chain, shader);
@@ -4893,6 +5432,7 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_deferred(
 {
    unsigned i;
    bool last_pass_is_fbo;
+   struct glslang_last_pass last_pass;
    struct vulkan_filter_chain_create_info tmpinfo;
    vulkan_filter_chain *chain = NULL;
    struct video_shader *shader = (struct video_shader*)
@@ -4907,8 +5447,8 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_deferred(
       return NULL;
    }
 
-   last_pass_is_fbo   = shader->pass[shader->passes - 1].fbo.flags &
-      FBO_SCALE_FLAG_VALID;
+   glslang_last_pass_init(shader, NULL, &last_pass);
+   last_pass_is_fbo = last_pass.needs_target || last_pass.inspect_feedback;
    tmpinfo            = *info;
    tmpinfo.num_passes = shader->passes + (last_pass_is_fbo ? 1 : 0);
 
@@ -4918,6 +5458,7 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_deferred(
       free(shader);
       return NULL;
    }
+   chain->common.sim_source_dims = shader->sim_source_dims;
 
    if (shader->luts && !vulkan_filter_chain_load_luts(info, chain, shader))
    {
@@ -4925,6 +5466,8 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_deferred(
       free(shader);
       return NULL;
    }
+
+   chain->last_pass = last_pass;
 
    shader->num_parameters = 0;
 
@@ -4934,6 +5477,9 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_deferred(
       if (*shader->pass[i].alias)
          slang_chain_set_pass_name(chain, i, shader->pass[i].alias);
    }
+
+   if (last_pass.name[0])
+      slang_chain_set_pass_name(chain, shader->passes - 1, last_pass.name);
 
    if (last_pass_is_fbo)
    {
@@ -4953,13 +5499,13 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_deferred(
 
       slang_chain_set_shader(chain, shader->passes,
             VK_SHADER_STAGE_VERTEX_BIT,
-            opaque_vert,
-            sizeof(opaque_vert) / sizeof(uint32_t));
+            spirv_opaque_vert,
+            spirv_opaque_vert_size / sizeof(uint32_t));
 
       slang_chain_set_shader(chain, shader->passes,
             VK_SHADER_STAGE_FRAGMENT_BIT,
-            opaque_frag,
-            sizeof(opaque_frag) / sizeof(uint32_t));
+            spirv_opaque_frag,
+            spirv_opaque_frag_size / sizeof(uint32_t));
    }
 
    slang_chain_set_shader_preset(chain, shader);
@@ -4978,12 +5524,23 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_deferred(
    return chain;
 }
 
-bool vulkan_filter_chain_compile_pass(
+bool vulkan_filter_chain_prepare_pass(
       vulkan_filter_chain_t *chain,
       unsigned pass_index,
       glslang_filter_chain_filter filter)
 {
    return slang_chain_compile_full_pass(chain, pass_index, filter);
+}
+
+bool vulkan_filter_chain_build_pipeline(
+      vulkan_filter_chain_t *chain,
+      unsigned pass_index)
+{
+   /* The slot alone: a later pass's preparation may prune the copy
+    * pass and count it out meanwhile, and a pruned copy builds
+    * nothing.  @pass_index is one the deferred chain scheduled. */
+   struct slang_pass *pass = chain->passes[pass_index];
+   return !pass || slang_pass_init_pipeline(pass);
 }
 
 bool vulkan_filter_chain_finalize(vulkan_filter_chain_t *chain)
@@ -5048,6 +5605,23 @@ bool vulkan_filter_chain_init(vulkan_filter_chain_t *chain)
    return slang_chain_init(chain);
 }
 
+bool vulkan_filter_chain_reads_in_place(vulkan_filter_chain_t *chain)
+{
+   return chain->frame_in_place;
+}
+
+void vulkan_filter_chain_set_passthrough(
+      vulkan_filter_chain_t *chain, unsigned passthrough)
+{
+   chain->common.passthrough = passthrough ? 1 : 0;
+}
+
+void vulkan_filter_chain_set_source_hdr(
+      vulkan_filter_chain_t *chain, unsigned source_hdr)
+{
+   chain->common.source_hdr = source_hdr ? 1 : 0;
+}
+
 void vulkan_filter_chain_set_input_texture(
       vulkan_filter_chain_t *chain,
       const struct vulkan_filter_chain_texture *texture)
@@ -5107,6 +5681,15 @@ void vulkan_filter_chain_set_frame_direction(
    slang_chain_set_frame_direction(chain, direction);
 }
 
+void vulkan_filter_chain_set_scissor(
+      vulkan_filter_chain_t *chain,
+      const VkRect2D *scissor)
+{
+   chain->common.scissor_set = scissor != NULL;
+   if (scissor)
+      chain->common.scissor  = *scissor;
+}
+
 void vulkan_filter_chain_set_frame_time_delta(
       vulkan_filter_chain_t *chain,
       uint32_t time_delta)
@@ -5148,6 +5731,12 @@ void vulkan_filter_chain_set_hdr_mode(
       unsigned hdr_mode)
 {
    slang_chain_set_hdr_mode(chain, hdr_mode);
+}
+
+void vulkan_filter_chain_set_peak_nits(vulkan_filter_chain_t *chain,
+      float peak_nits)
+{
+   chain->common.peak_nits = peak_nits;
 }
 
 void vulkan_filter_chain_set_paper_white_nits(
@@ -5213,7 +5802,26 @@ void vulkan_filter_chain_build_viewport_pass(
       vulkan_filter_chain_t *chain,
       VkCommandBuffer cmd, const VkViewport *vp, const float *mvp)
 {
-   slang_chain_build_viewport_pass(chain, cmd, *vp, mvp);
+   slang_chain_build_viewport_pass(chain, cmd, *vp, mvp, false);
+}
+
+void vulkan_filter_chain_build_viewport_pass_again(
+      vulkan_filter_chain_t *chain,
+      VkCommandBuffer cmd, const VkViewport *vp, const float *mvp)
+{
+   slang_chain_build_viewport_pass(chain, cmd, *vp, mvp, true);
+}
+
+bool vulkan_filter_chain_replay_ready(const vulkan_filter_chain_t *chain)
+{
+   return chain->drawn;
+}
+
+void vulkan_filter_chain_build_viewport_pass_replay(
+      vulkan_filter_chain_t *chain,
+      VkCommandBuffer cmd, const VkViewport *vp, const float *mvp)
+{
+   slang_chain_replay_viewport_pass(chain, cmd, *vp, mvp);
 }
 
 void vulkan_filter_chain_end_frame(

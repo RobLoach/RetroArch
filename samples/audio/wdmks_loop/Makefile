@@ -25,6 +25,8 @@ SOURCES := \
 	$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
 	$(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c \
 	$(LIBRETRO_COMM_DIR)/queues/retro_spsc.c \
+	$(LIBRETRO_COMM_DIR)/queues/fifo_queue.c \
+	$(LIBRETRO_COMM_DIR)/audio/conversion/float_to_s32.c \
 	$(LIBRETRO_COMM_DIR)/features/features_cpu.c \
 	$(LIBRETRO_COMM_DIR)/time/rtime.c \
 	$(LIBRETRO_COMM_DIR)/lists/string_list.c \
@@ -36,7 +38,7 @@ SOURCES := \
 # -Wno-unused-function: the whole driver is included and the test
 # calls only its loop bookkeeping.
 CFLAGS  += -std=gnu99 -Wall -Wno-unused-function -Wno-unused-const-variable \
-           -g -O1 -DHAVE_THREADS -DRARCH_INTERNAL \
+           -g1 -O1 -DHAVE_THREADS -DRARCH_INTERNAL \
            -I$(RARCH_DIR) -I$(LIBRETRO_COMM_DIR)/include -I$(RARCH_DIR)/deps
 LIBS    += -lole32 -lwinmm -lsetupapi -lm
 

@@ -21,7 +21,9 @@
 #include <file/file_path.h>
 #include <retro_math.h>
 
+#include "../command.h"
 #include "../configuration.h"
+#include "../content.h"
 #include "../list_special.h"
 #include "../gfx/video_driver.h"
 #include "../audio/audio_driver.h"
@@ -38,6 +40,9 @@
 #include "../audio/audio_upmix.h"
 #include "drivers/record_ffmpeg.h"
 #include "drivers/record_wav.h"
+#include "drivers/record_nvenc.h"
+#include "drivers/record_metal.h"
+#include "drivers/record_mediacodec.h"
 #include "drivers/record_avfoundation.h"
 
 static recording_state_t recording_state = {0};
@@ -55,13 +60,87 @@ const record_driver_t *record_drivers[] = {
 #ifdef HAVE_AVF
    &record_avfoundation,
 #endif
+#ifdef HAVE_RECORD_METAL
+   &record_metal,
+#endif
+#ifdef HAVE_RECORD_MEDIACODEC
+   &record_mediacodec,
+#endif
 #ifdef HAVE_FFMPEG
    &record_ffmpeg,
 #endif
    &record_wav,
+#ifdef HAVE_RECORD_NVENC
+   &record_nvenc,
+#endif
    &record_null,
    NULL,
 };
+
+void recording_gpu_frame_info(struct video_frame_info *info,bool capture)
+{
+#if defined(HAVE_RECORD_MEDIACODEC)
+   record_mediacodec_frame_info(info, capture);
+#elif defined(HAVE_RECORD_METAL)
+   record_metal_frame_info(info,capture);
+#else
+   record_nvenc_frame_info(info,capture);
+#endif
+}
+void recording_gpu_poll(void)
+{
+   if (recording_state.start_pending)
+   {
+      runloop_state_t *loop = runloop_state_get_ptr();
+      if (loop->quit_pending || loop->content_closing)
+         command_event(CMD_EVENT_RECORD_DEINIT, NULL);
+   }
+   record_nvenc_poll();
+   record_metal_poll();
+   record_mediacodec_poll();
+   recording_gpu_reinit_poll();
+}
+void recording_start_frame(void)
+{
+   if (!recording_state.start_pending || runloop_is_content_switching()
+         || content_load_state_in_progress(NULL)
+         || runloop_state_get_ptr()->auto_state_load_pending)
+      return;
+   recording_state.start_pending = false;
+   if (!recording_init())
+      command_event(CMD_EVENT_RECORD_DEINIT, NULL);
+}
+void recording_gpu_stop(void)
+{
+   record_nvenc_stop();
+   record_metal_stop();
+   record_mediacodec_stop();
+}
+bool recording_gpu_pending(void)
+{
+   return record_nvenc_pending() || record_metal_pending()
+      || record_mediacodec_pending();
+}
+bool recording_gpu_reset_pending(void)
+{
+   return record_nvenc_pending() || record_metal_pending()
+      || record_mediacodec_reset_pending();
+}
+
+bool recording_gpu_cancel_start(void)
+{
+   bool nvenc=record_nvenc_cancel_start();
+   bool metal=record_metal_cancel_start();
+   bool mediacodec = record_mediacodec_cancel_start();
+   return nvenc || metal || mediacodec;
+}
+bool recording_gpu_defer_start(const record_driver_t *driver)
+{
+   if (driver==&record_nvenc) return record_nvenc_defer_start();
+   if (driver==&record_metal) return record_metal_defer_start();
+   if (driver == &record_mediacodec) return record_mediacodec_defer_start();
+   return false;
+}
 
 recording_state_t *recording_state_get_ptr(void)
 {
@@ -137,22 +216,33 @@ static bool record_driver_init(
 bool recording_deinit(void)
 {
    recording_state_t *recording_st = &recording_state;
+   bool success                   = true;
 #ifdef HAVE_FFMPEG
+   bool native                    = recording_is_native_gpu(recording_st->driver);
    bool history_list_enable        = config_get_ptr()->bools.history_list_enable;
 #endif
 
-#ifdef HAVE_THREADS
-   /* The GPU recorder reads from the frames the video thread presents;
-    * let any in-flight one finish before its readback target goes. */
-   video_thread_wait_idle();
-#endif
+   if (recording_st->start_pending)
+   {
+      recording_st->start_pending = false;
+      recording_st->path[0] = '\0';
+      return true;
+   }
+
+   if (recording_gpu_cancel_start())
+   {
+      recording_st->driver = NULL;
+      recording_st->data = NULL;
+      recording_st->path[0] = '\0';
+      return true;
+   }
 
    if (     !recording_st->data
 		   || !recording_st->driver)
       return false;
 
    if (recording_st->driver->finalize)
-      recording_st->driver->finalize(recording_st->data);
+      success = recording_st->driver->finalize(recording_st->data);
 
    if (recording_st->driver->free)
       recording_st->driver->free(recording_st->data);
@@ -160,11 +250,17 @@ bool recording_deinit(void)
    recording_st->data              = NULL;
    recording_st->driver            = NULL;
 
+   /* Under the wrapper the readback buffers are retired, freed once no
+    * frame in flight names them: nothing to wait for */
    video_driver_gpu_record_deinit();
+
+   if (!success)
+      RARCH_ERR("[Recording] Failed to finalize recording.\n");
 
    /* Push recording to video history playlist */
 #ifdef HAVE_FFMPEG
-   if (     history_list_enable
+   if (     success && history_list_enable
+         && !native
          && *recording_st->path)
    {
       struct playlist_entry entry = {0};
@@ -181,7 +277,7 @@ bool recording_deinit(void)
    /* Forget cached path to create a new one next */
    recording_st->path[0] = '\0';
 
-   return true;
+   return success;
 }
 
 void streaming_set_state(bool state)
@@ -207,26 +303,64 @@ bool recording_init(void)
       video_driver_pix_fmt              = video_st->pix_fmt;
    recording_state_t *recording_st      = &recording_state;
    bool recording_enable                = recording_st->enable;
-
-#ifdef HAVE_THREADS
-   /* No frame may be mid-present while the recorder binds to the
-    * driver's readback path. No-op without the wrapper. */
-   video_thread_wait_idle();
+   bool nvenc_native = string_is_equal(settings->arrays.record_driver,"nvenc");
+   bool metal_native = string_is_equal(settings->arrays.record_driver,"metal");
+   bool mc_native = string_is_equal(settings->arrays.record_driver,"mediacodec");
+   bool gpu_native = nvenc_native || metal_native || mc_native;
+   bool menu_source = false;
+#ifdef HAVE_RECORD_MEDIACODEC
+   menu_source = mc_native && current_core_type == CORE_TYPE_DUMMY;
 #endif
 
    if (!recording_enable)
       return false;
 
+   if (content_load_state_in_progress(NULL)
+         || runloop_st->auto_state_load_pending)
+   {
+      recording_st->start_pending = true;
+      return true;
+   }
+   recording_st->start_pending = false;
+
+#ifndef HAVE_RECORD_NVENC
+   if (nvenc_native)
+   {
+      RARCH_ERR("[Recording] Native NVENC recording is unavailable in this build.\n");
+      return false;
+   }
+#endif
+#ifndef HAVE_RECORD_METAL
+   if (metal_native)
+   {
+      RARCH_ERR("[Recording] Native Metal recording is unavailable in this build.\n");
+      return false;
+   }
+#endif
+#ifndef HAVE_RECORD_MEDIACODEC
+   if (mc_native)
+   {
+      RARCH_ERR("[Recording] Native MediaCodec recording is unavailable in this build.\n");
+      return false;
+   }
+#endif
+   if (gpu_native) video_gpu_record = true;
+   if (video_driver_pix_fmt == RETRO_PIXEL_FORMAT_SCRGB_RGBA16F)
+   {
+      RARCH_ERR("[Recording] Native FP16 core recording is not supported.\n");
+      return false;
+   }
    output[0] = '\0';
 
-   if (current_core_type == CORE_TYPE_DUMMY)
+   if (current_core_type == CORE_TYPE_DUMMY && !menu_source)
    {
       RARCH_WARN("[Recording] %s\n",
             msg_hash_to_str(MSG_USING_LIBRETRO_DUMMY_CORE_RECORDING_SKIPPED));
       return false;
    }
 
-   if (!video_gpu_record && video_driver_is_hw_context())
+   if (!video_gpu_record && (video_driver_is_hw_context()
+            || video_driver_cached_frame_is_hw_render()))
    {
       RARCH_WARN("[Recording] %s\n",
             msg_hash_to_str(MSG_HW_RENDERED_MUST_USE_POSTSHADED_RECORDING));
@@ -268,6 +402,8 @@ bool recording_init(void)
 
          {
             const char *ext = "mkv";
+            if (gpu_native) ext = "mp4";
+            else
 #ifdef HAVE_AVF
             if (string_is_equal(settings->arrays.record_driver,
                      "avfoundation"))
@@ -300,6 +436,9 @@ bool recording_init(void)
    params.video_stream_scale_factor = settings->uints.video_stream_scale_factor;
    params.video_record_threads      = settings->uints.video_record_threads;
    params.streaming_mode            = settings->uints.streaming_mode;
+   params.allow_frame_drop          = settings->bools.video_record_allow_frame_drop;
+   params.video_fifo_frames         = settings->uints.video_record_fifo_frames;
+   params.hw_encoder                = settings->bools.video_record_hw_encoder;
 
    params.out_dims                  = VIDEO_SCALE_PACK(
          av_info->geometry.base_width, av_info->geometry.base_height);
@@ -309,12 +448,14 @@ bool recording_init(void)
     * multi-channel batch entry is recorded in it, where the container
     * has a default layout for the count - quad, 5.1 with the pair at
     * the back, 7.1 - which are the layouts in the order the recorder
-    * takes them. Anything else, stereo. */
+    * takes them. Anything else, stereo. Native GPU recording keeps the
+    * exact declared mask for its encoder to admit or refuse. */
    params.channels                  = 2;
    recording_st->layout              = AUDIO_LAYOUT_STEREO;
    {
       uint32_t core_layout = audio_state_get_ptr()->core_layout;
-      if (     core_layout == AUDIO_LAYOUT_QUAD
+      if (     (gpu_native && core_layout)
+            || core_layout == AUDIO_LAYOUT_QUAD
             || core_layout == AUDIO_LAYOUT_5POINT1
             || core_layout == AUDIO_LAYOUT_7POINT1)
       {
@@ -326,6 +467,17 @@ bool recording_init(void)
    params.filename                  = output;
    params.fps                       = av_info->timing.fps;
    params.samplerate                = av_info->timing.sample_rate;
+   params.menu_source               = menu_source;
+   if (menu_source)
+   {
+      /* Menu capture follows output timing, not dummy-core AV info. */
+      params.fps = settings->floats.video_refresh_rate;
+      if (!(params.fps > 0.0))
+         params.fps = video_driver_get_window_refresh_rate();
+      params.samplerate = audio_state_get_ptr()->out_rate;
+      params.channels = recording_st->channels = 2;
+      recording_st->layout = AUDIO_LAYOUT_STEREO;
+   }
    /* XRGB2101010 source frames are down-converted to XRGB8888 before the
     * recording path sees them (see video_driver_frame), so they record as
     * ARGB8888 just like a native XRGB8888 core. */
@@ -354,10 +506,28 @@ bool recording_init(void)
       }
    }
 
-   if (  video_gpu_record
-      && video_st->current_video->read_viewport)
+   if (gpu_native)
    {
-      unsigned gpu_size;
+      struct video_viewport vp;
+      memset(&vp, 0, sizeof(vp));
+      if (!video_driver_get_viewport_info(&vp)) return false;
+      if (!VIDEO_SCALE_W(menu_source ? vp.full_dims : vp.dims)
+            || !VIDEO_SCALE_H(menu_source ? vp.full_dims : vp.dims))
+      {
+         recording_st->driver = mc_native ? &record_mediacodec
+               : metal_native ? &record_metal : &record_nvenc;
+         return recording_gpu_defer_start(recording_st->driver);
+      }
+      params.out_dims = params.fb_dims = menu_source ? vp.full_dims : vp.dims;
+      params.pix_fmt = FFEMU_PIX_ARGB8888;
+      params.aspect_ratio = (float)VIDEO_SCALE_W(params.out_dims)
+            / VIDEO_SCALE_H(params.out_dims);
+      recording_st->gpu_dims = params.out_dims;
+      recording_st->gpu_bgrx = false;
+   }
+   else if (video_gpu_record && video_st->current_video->read_viewport)
+   {
+      size_t gpu_size;
       struct video_viewport vp;
 
       vp.pos                      = VIDEO_POS_PACK(0, 0);
@@ -374,9 +544,9 @@ bool recording_init(void)
       }
 
       params.out_dims                     = vp.dims;
-      params.fb_dims                      = VIDEO_SCALE_PACK(
-            next_pow2(VIDEO_SCALE_W(vp.dims)),
-            next_pow2(VIDEO_SCALE_H(vp.dims)));
+      /* Every frame is exactly the viewport (a resize ends the
+       * recording), so size the encoder's queue to it. */
+      params.fb_dims                      = vp.dims;
 
       if (video_force_aspect &&
             (VIDEO_DRIVER_ASPECT_RATIO(video_st) > 0.0f))
@@ -384,27 +554,65 @@ bool recording_init(void)
       else
          params.aspect_ratio              = (float)VIDEO_SCALE_W(vp.dims) / VIDEO_SCALE_H(vp.dims);
 
-      params.pix_fmt                      = FFEMU_PIX_BGR24;
+      /* The driver's 32-bit readback skips a per-frame BGR24
+       * conversion; FFEMU_PIX_ARGB8888 is a native-endian word, so B,G,R,X
+       * bytes only on little-endian hosts. The threaded wrapper reads back
+       * on its own thread, in either format when the driver gives it a
+       * reader. */
+#ifdef MSB_FIRST
+      recording_st->gpu_bgrx              = false;
+#else
+      if (video_driver_thread_wrapper_active())
+      {
+#ifdef HAVE_THREADS
+         recording_st->gpu_bgrx           =
+               video_thread_record_has_reader(video_st->data);
+#else
+         recording_st->gpu_bgrx           = false;
+#endif
+      }
+      else
+         recording_st->gpu_bgrx           =
+               video_st->current_video->read_viewport_bgrx != NULL;
+#endif
+      params.pix_fmt                      = recording_st->gpu_bgrx
+         ? FFEMU_PIX_ARGB8888 : FFEMU_PIX_BGR24;
+
+      /* Said once, as the recording starts: this driver reads back the
+       * screen as shown, with the menu and messages in it. */
+      if (     settings->bools.video_record_game_only
+            && !video_driver_test_all_flags(GFX_CTX_FLAGS_RECORD_GAME_ONLY))
+      {
+         const char *_msg = msg_hash_to_str(
+               MSG_RECORDING_GAME_ONLY_UNSUPPORTED);
+         RARCH_WARN("[Recording] %s\n", _msg);
+         runloop_msg_queue_push(_msg, strlen(_msg), 1, 240, false, NULL,
+               MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_WARNING);
+      }
       recording_st->gpu_dims              = vp.dims;
 
-      RARCH_LOG("[Recording] %s %ux%u.\n", msg_hash_to_str(MSG_DETECTED_VIEWPORT_OF),
-            VIDEO_SCALE_W(vp.dims), VIDEO_SCALE_H(vp.dims));
+      RARCH_LOG("[Recording] %s %ux%u (%s readback).\n",
+            msg_hash_to_str(MSG_DETECTED_VIEWPORT_OF),
+            VIDEO_SCALE_W(vp.dims), VIDEO_SCALE_H(vp.dims),
+            recording_st->gpu_bgrx ? "BGRX" : "BGR24");
 
-      gpu_size = VIDEO_SCALE_AREA(vp.dims) * 3;
+      gpu_size = VIDEO_SCALE_AREA(vp.dims) * (recording_st->gpu_bgrx ? 4 : 3);
       if (!(video_st->record_gpu_buffer = (uint8_t*)malloc(gpu_size)))
          return false;
    }
    else
    {
+      recording_st->gpu_bgrx = false;
       if (recording_state.out_dims)
          params.out_dims   = recording_state.out_dims;
 
-      if (video_force_aspect &&
-            (VIDEO_DRIVER_ASPECT_RATIO(video_st) > 0.0f))
-         params.aspect_ratio = VIDEO_DRIVER_ASPECT_RATIO(video_st);
-      else
-         params.aspect_ratio = (float)VIDEO_SCALE_W(params.out_dims)
-               / VIDEO_SCALE_H(params.out_dims);
+      /* Raw core frames are unrotated; the GPU path reads back the
+       * already-rotated screen. Rotate them like the display does. */
+      params.rotation = retroarch_get_rotation() % 4;
+      record_raw_geometry(&params.out_dims, &params.aspect_ratio,
+            params.rotation,
+            video_force_aspect ? VIDEO_DRIVER_ASPECT_RATIO(video_st) : 0.0f,
+            recording_state.out_dims != 0);
 
 #ifdef HAVE_VIDEO_FILTER
       if (settings->bools.video_post_filter_record

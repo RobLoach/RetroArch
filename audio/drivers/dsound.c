@@ -189,9 +189,11 @@ static bool dsound_imm_start_thread(dsound_t *ds)
    if (!ds->imm_thread)
    {
 #ifdef HAVE_THREADS
-      ds->imm_thread = sthread_create(mmdevice_thread, ds);
+      ds->imm_thread = sthread_create(mmdevice_thread,
+            (void*)&audio_state_get_ptr()->reinit_request);
 #else
-      ds->imm_thread = CreateThread(NULL, 0, mmdevice_thread, ds, 0, NULL);
+      ds->imm_thread = CreateThread(NULL, 0, mmdevice_thread,
+            (void*)&audio_state_get_ptr()->reinit_request, 0, NULL);
 #endif
       if (!ds->imm_thread)
          return false;
@@ -761,7 +763,7 @@ static void *dsound_init(const char *dev, unsigned rate, unsigned latency,
     * nAvgBytesPerSec, already CHUNK_SIZE-aligned), sized after the
     * float->int16 fallback so both agree on the final format.  Keep
     * the old 4 KiB as the floor for very low latency settings. */
-   if (!retro_spsc_init(&ds->ring, ds->fifo_bufsize))
+   if (!retro_spsc_init_mirrored(&ds->ring, ds->fifo_bufsize))
       goto error;
    /* retro_spsc_init rounds capacity up to a power of 2.  Report the
     * true capacity as the driver buffer size, so rate control computes
@@ -992,6 +994,39 @@ static size_t dsound_underruns(void *data)
    return ds ? retro_atomic_load_acquire_size(&ds->underruns) : 0;
 }
 
+/* The lend pair: the ring the pump thread moves into the secondary
+ * buffer, handed out to its wrap in whole frames. */
+static size_t dsound_write_begin(void *data, size_t len, void **region)
+{
+   dsound_t *ds = (dsound_t*)data;
+   void     *ptr = NULL;
+   size_t    span;
+   *region = NULL;
+   if (!ds || !ds->frame_size || !retro_atomic_load_acquire_int(&ds->thread_alive))
+      return 0;
+   span = retro_spsc_write_begin(&ds->ring, &ptr);
+   if (span > len)
+      span = len;
+   span -= span % ds->frame_size;
+   if (!span || !ptr)
+   {
+      retro_spsc_write_end(&ds->ring, 0);
+      return 0;
+   }
+   *region = ptr;
+   return span;
+}
+
+static ssize_t dsound_write_end(void *data, size_t len)
+{
+   dsound_t *ds = (dsound_t*)data;
+   len         -= len % ds->frame_size;
+   retro_spsc_write_end(&ds->ring, len);
+   if (len)
+      retro_eventcount_notify(&ds->feed);
+   return (ssize_t)len;
+}
+
 audio_driver_t audio_dsound = {
    dsound_init,
    dsound_write,
@@ -1010,5 +1045,10 @@ audio_driver_t audio_dsound = {
    dsound_wait_writable,
    dsound_frames_consumed,
    dsound_underruns,
-   dsound_layout
+   dsound_layout,
+   NULL, /* frames_consumed_fallback */
+   NULL, /* device_clock_ppm */
+   NULL, /* thread_grant */
+   dsound_write_begin,
+   dsound_write_end
 };

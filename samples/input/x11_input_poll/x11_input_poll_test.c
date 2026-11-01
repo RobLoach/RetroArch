@@ -51,8 +51,8 @@
 static int stub_signal_state;
 const struct rarch_key_map rarch_key_map_x11[] = { { 0, RETROK_UNKNOWN } };
 enum retro_key rarch_keysym_lut[RETROK_LAST];
-retro_keybind_set input_config_binds[MAX_USERS];
-retro_keybind_set input_autoconf_binds[MAX_USERS];
+struct retro_keybind *input_config_binds[MAX_USERS];
+struct retro_keybind *input_autoconf_binds[MAX_USERS];
 void RARCH_LOG(const char *fmt, ...) { (void)fmt; }
 void RARCH_DBG(const char *fmt, ...) { (void)fmt; }
 void RARCH_WARN(const char *fmt, ...) { (void)fmt; }
@@ -79,11 +79,11 @@ bool input_driver_pointer_is_offscreen(int16_t x, int16_t y)
 bool video_driver_get_viewport_info(struct video_viewport *viewport)
 { (void)viewport; return false; }
 bool video_driver_translate_coord_viewport(struct video_viewport *vp,
-      int mouse_x, int mouse_y, int16_t *res_x, int16_t *res_y,
-      int16_t *res_screen_x, int16_t *res_screen_y, bool report_oob)
+      int mouse_x, int mouse_y, uint32_t *res_pos, uint32_t *res_screen_pos,
+      bool report_oob)
 {
-   (void)vp; (void)mouse_x; (void)mouse_y; (void)res_x; (void)res_y;
-   (void)res_screen_x; (void)res_screen_y; (void)report_oob;
+   (void)vp; (void)mouse_x; (void)mouse_y; (void)res_pos;
+   (void)res_screen_pos; (void)report_oob;
    return false;
 }
 linux_illuminance_sensor_t *linux_open_illuminance_sensor(unsigned rate)
@@ -95,9 +95,23 @@ float linux_get_illuminance_reading(const linux_illuminance_sensor_t *sensor)
 void linux_set_illuminance_sensor_rate(linux_illuminance_sensor_t *sensor,
       unsigned rate)
 { (void)sensor; (void)rate; }
+/* What the driver publishes at each poll, as the frontend is handed it. */
+static input_pointer_frame_t published[MAX_USERS];
+static unsigned published_count;
+static unsigned publishes;
+void input_driver_publish_pointers(const input_pointer_frame_t *frames,
+      unsigned count, unsigned flags)
+{
+   (void)flags;
+   memcpy(published, frames, count * sizeof(*frames));
+   published_count = count;
+   publishes++;
+}
 /* Every mouse port reads the first master pointer. */
 static settings_t stub_settings;
 settings_t *config_get_ptr(void) { return &stub_settings; }
+/* the settings a driver asks for by name, read from the ones above */
+#include "../input_config_stubs.h"
 bool video_driver_has_focus(void) { return x11_has_focus(NULL); }
 enum rarch_display_type video_driver_display_type_get(void)
 { return RARCH_DISPLAY_X11; }
@@ -217,7 +231,7 @@ static bool right_free(x11_input_t *x11) { return !x11->mouse_r[0]; }
 static bool b8_held(x11_input_t *x11) { return x11->mouse_4[0]; }
 static bool b8_free(x11_input_t *x11) { return !x11->mouse_4[0]; }
 static bool wheel_up(x11_input_t *x11)
-{ (void)x11; return x_mouse_state_wheel(RETRO_DEVICE_ID_MOUSE_WHEELUP) != 0; }
+{ return (x11->wheel & INPUT_POINTER_WHEEL_UP) != 0; }
 
 static bool until(x11_input_t *x11, bool (*cond)(x11_input_t*))
 {
@@ -454,8 +468,14 @@ int main(void)
    button(4, true);
    button(4, false);
    CHECK(until(x11, wheel_up), "a wheel notch is latched");
+   CHECK(wheel_up(x11) && wheel_up(x11),
+         "and is there for every reader of the frame");
+   CHECK(published_count >= 1
+         && (published[0].buttons & INPUT_POINTER_WHEEL_UP),
+         "the frontend is handed it with the mouse's frame");
    frame(x11);
-   CHECK(!wheel_up(x11), "once");
+   CHECK(!wheel_up(x11)
+         && !(published[0].buttons & INPUT_POINTER_WHEEL_UP), "for one frame");
 
    /* Out of the window a button reads released, dragged or not. */
    button(1, true);

@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := image_avail_test
 
 REPO_ROOT         := ../../..
@@ -36,14 +38,14 @@ SOURCES := image_avail_test.c \
            $(LIBRETRO_COMM_DIR)/features/features_cpu.c \
            $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 
-CFLAGS  += -Wall -std=gnu99 -g -O1 -D_GNU_SOURCE \
+CFLAGS  += -Wall -std=gnu99 -g1 -O1 -D_GNU_SOURCE \
            -DHAVE_RPNG -DHAVE_RJPEG -DHAVE_RTGA -DHAVE_RBMP \
            -I$(LIBRETRO_COMM_DIR)/include
 LDFLAGS += -lz -lm
 
 CFLAGS += $(EXTRA_CFLAGS)
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
 ifneq ($(SANITIZER),)
    CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer $(CFLAGS)
@@ -53,6 +55,10 @@ endif
 all: $(TARGET)
 
 %.o: %.c
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(TARGET): $(OBJS)
@@ -65,6 +71,7 @@ sweep:
 	@echo "sweep clean"
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJS)
 
 .PHONY: all sweep clean

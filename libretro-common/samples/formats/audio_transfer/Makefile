@@ -1,11 +1,14 @@
+include ../../sample_objdir.mk
+
 TARGET := audio_transfer_window_test
+EMPTY_TARGET := audio_transfer_empty_test
 
 LIBRETRO_COMM_DIR := ../../..
 
 # The window test's whole point is that pages outside the window are
 # not merely absent but unreadable, so strictness is on by default
 # here; the test says so itself if it is ever built without it.
-DEFINES := -DDT_STRICT -DHAVE_RWEBM -DHAVE_RVORBIS -DHAVE_ROPUS
+DEFINES := -DDT_STRICT -DHAVE_RWEBM -DHAVE_RVORBIS -DHAVE_ROPUS -DHAVE_RAAC
 
 COMMON_SOURCES := \
 	$(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
@@ -17,6 +20,7 @@ COMMON_SOURCES := \
 	$(LIBRETRO_COMM_DIR)/file/file_path_io.c \
 	$(LIBRETRO_COMM_DIR)/formats/audio_transfer.c \
 	$(LIBRETRO_COMM_DIR)/formats/data_transfer.c \
+	$(LIBRETRO_COMM_DIR)/formats/aac/raac.c \
 	$(LIBRETRO_COMM_DIR)/formats/opus/ropus.c \
 	$(LIBRETRO_COMM_DIR)/formats/vorbis/rvorbis.c \
 	$(LIBRETRO_COMM_DIR)/formats/webm/rwebm.c \
@@ -27,10 +31,11 @@ COMMON_SOURCES := \
 	$(LIBRETRO_COMM_DIR)/time/rtime.c \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 
-COMMON_OBJS := $(COMMON_SOURCES:.c=.o)
+COMMON_OBJS := $(call sample_objs,$(COMMON_SOURCES:.c=.o))
 OBJS        := audio_transfer_window_test.o $(COMMON_OBJS)
+EMPTY_OBJ   := $(call sample_objs,audio_transfer_empty_test.o)
 
-CFLAGS  += -Wall -pedantic -std=gnu99 -g -O0 -I$(LIBRETRO_COMM_DIR)/include \
+CFLAGS  += -Wall -pedantic -std=gnu99 -g1 -O0 -I$(LIBRETRO_COMM_DIR)/include \
 	$(DEFINES)
 LDFLAGS += -lm
 
@@ -39,15 +44,26 @@ ifneq ($(SANITIZER),)
    LDFLAGS := -fsanitize=$(SANITIZER) $(LDFLAGS)
 endif
 
-all: $(TARGET)
+all: $(TARGET) $(EMPTY_TARGET)
 
 %.o: %.c
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-clean:
-	rm -f $(TARGET) $(OBJS)
+$(EMPTY_TARGET): $(EMPTY_OBJ) $(COMMON_OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
-.PHONY: clean
+check-empty: $(EMPTY_TARGET)
+	./$(EMPTY_TARGET)
+
+clean:
+	rm -rf $(SAMPLE_OBJDIR)
+	rm -f $(TARGET) $(EMPTY_TARGET) $(EMPTY_OBJ) $(OBJS)
+
+.PHONY: all clean check-empty

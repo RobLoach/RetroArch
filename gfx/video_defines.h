@@ -119,6 +119,15 @@ enum video_fse_negotiation
    VIDEO_FSE_LAST
 };
 
+/* Whether video RetroArch plays itself (previews) is decoded on the
+ * GPU where the driver has a hardware decoder for it. */
+enum video_hw_decode
+{
+   VIDEO_HW_DECODE_OFF = 0,
+   VIDEO_HW_DECODE_AUTO,
+   VIDEO_HW_DECODE_LAST
+};
+
 enum autoswitch_refresh_rate
 {
    AUTOSWITCH_REFRESH_RATE_EXCLUSIVE_FULLSCREEN = 0,
@@ -219,6 +228,22 @@ enum text_alignment
  * without having to remember the cast. */
 #define VIDEO_SCALE_AREA(d) ((size_t)VIDEO_SCALE_W(d) * VIDEO_SCALE_H(d))
 
+/* Each axis of two pairs at its least or greatest, staying packed: a
+ * half compares with the other one masked off. */
+#define VIDEO_SCALE_HI_MASK (VIDEO_SCALE_DIM_MAX << 16)
+#define VIDEO_SCALE_HALF_MIN(a, b, m) \
+   (((unsigned)(a) & (m)) < ((unsigned)(b) & (m)) \
+    ? ((unsigned)(a) & (m)) : ((unsigned)(b) & (m)))
+#define VIDEO_SCALE_HALF_MAX(a, b, m) \
+   (((unsigned)(a) & (m)) > ((unsigned)(b) & (m)) \
+    ? ((unsigned)(a) & (m)) : ((unsigned)(b) & (m)))
+#define VIDEO_SCALE_MIN(a, b) \
+   (  VIDEO_SCALE_HALF_MIN(a, b, VIDEO_SCALE_HI_MASK) \
+    | VIDEO_SCALE_HALF_MIN(a, b, VIDEO_SCALE_DIM_MAX))
+#define VIDEO_SCALE_MAX(a, b) \
+   (  VIDEO_SCALE_HALF_MAX(a, b, VIDEO_SCALE_HI_MASK) \
+    | VIDEO_SCALE_HALF_MAX(a, b, VIDEO_SCALE_DIM_MAX))
+
 /* An alpha modulation as an 8-bit channel, saturated. An overlay's
  * alpha is its opacity times a per-desc alpha_mod, which packs set
  * above 1 to brighten a pressed button; packed straight into a byte
@@ -249,6 +274,17 @@ enum text_alignment
     | ((unsigned)VIDEO_POS_CLAMP(y) & 0xffffu))
 #define VIDEO_POS_X(p) ((int)(int16_t)(((unsigned)(p) >> 16) & 0xffffu))
 #define VIDEO_POS_Y(p) ((int)(int16_t)( (unsigned)(p)        & 0xffffu))
+/* One axis of a packed position set, or both moved by a delta, the
+ * other half kept. */
+#define VIDEO_POS_PUT_X(p, x) ((p) = VIDEO_POS_PACK((x), VIDEO_POS_Y(p)))
+#define VIDEO_POS_PUT_Y(p, y) ((p) = VIDEO_POS_PACK(VIDEO_POS_X(p), (y)))
+#define VIDEO_POS_ADD(p, dx, dy) \
+   ((p) = VIDEO_POS_PACK(VIDEO_POS_X(p) + (dx), VIDEO_POS_Y(p) + (dy)))
+/* The top-down y of an element with origin p and size d on a surface h
+ * tall, whose origin is bottom-up. Signed: an element reaching past the
+ * top comes out negative. */
+#define VIDEO_POS_FLIP_Y(h, p, d) \
+   ((int)(h) - VIDEO_POS_Y(p) - (int)VIDEO_SCALE_H(d))
 
 /* One axis of an origin, leaving the other half as it stands. */
 #define VIDEO_POS_PUT_X(p, x) \
@@ -337,7 +373,9 @@ enum display_metric_types
    DISPLAY_METRIC_MM_HEIGHT,
    DISPLAY_METRIC_DPI,
    DISPLAY_METRIC_PIXEL_WIDTH,
-   DISPLAY_METRIC_PIXEL_HEIGHT
+   DISPLAY_METRIC_PIXEL_HEIGHT,
+   /* Lines per refresh, blanking included */
+   DISPLAY_METRIC_TOTAL_LINES
 };
 
 enum display_flags
@@ -371,7 +409,44 @@ enum display_flags
    /* Set by a context driver whose default framebuffer is 10-bit
     * Rec.2020 PQ (HDR10, e.g. a KMS scanout with HDR metadata): the
     * video driver encodes its frame to PQ instead of scRGB. */
-   GFX_CTX_FLAGS_HDR10_FRAMEBUFFER
+   GFX_CTX_FLAGS_HDR10_FRAMEBUFFER,
+   /* The window can go between windowed and borderless fullscreen where
+    * it stands, through set_video_mode, with the driver seeing only a
+    * resize: a fullscreen toggle need not restart the drivers. */
+   GFX_CTX_FLAGS_FULLSCREEN_IN_PLACE,
+   /* Set by a video driver that presents a core's view map
+    * (RETRO_ENVIRONMENT_SET_VIDEO_VIEWS) itself. */
+   GFX_CTX_FLAGS_VIDEO_VIEWS,
+   /* Set while such a driver draws a frame that has a map whole. */
+   GFX_CTX_FLAGS_VIDEO_VIEWS_FALLBACK,
+   /* Set by a video driver whose GPU recording reads the core's image
+    * before the menu, overlays and messages are drawn over it, when
+    * Record Game Only is on - in its present output mode. */
+   GFX_CTX_FLAGS_RECORD_GAME_ONLY,
+   /* Exclusive mode can change without restarting the drivers. */
+   GFX_CTX_FLAGS_FULLSCREEN_EXCLUSIVE_IN_PLACE,
+   /* set_video_mode can resize an existing window without restarting video. */
+   GFX_CTX_FLAGS_WINDOW_RESIZE_IN_PLACE,
+   /* Set by a headset's own context driver (the Quest's): the headset is
+    * all it shows, the headset's frames are begun and ended in the video
+    * frame, and the platform's flat context follows it in the list. */
+   GFX_CTX_FLAGS_HEADSET_INLINE,
+   /* Set by a video driver that shows each eye on a display of its own,
+    * as the 3DS's top screen does, and places the views on its displays
+    * itself: the views are laid out flat, whatever the stereo mode. */
+   GFX_CTX_FLAGS_VIDEO_VIEWS_OWN_EYES,
+   /* Set while such a driver shows both eyes. */
+   GFX_CTX_FLAGS_VIDEO_VIEWS_STEREO,
+   /* This context cannot give a hardware core a context of its own
+    * that shares objects with the driver's: the platform has one GL
+    * context per process (the Switch's nvservices), or the share
+    * context could not be created. The threaded wrapper's ring then
+    * hands the driver's one context between the two threads instead
+    * of giving the core a shared one. */
+   GFX_CTX_FLAGS_NO_SHARED_CONTEXT,
+   /* Set by a video driver that presents secondary screens in windows
+    * of their own through its context's gfx_ctx_window_driver_t. */
+   GFX_CTX_FLAGS_VIDEO_WINDOWS
 };
 
 enum shader_uniform_type
@@ -404,12 +479,10 @@ enum shader_program_type
 
 struct font_glyph
 {
-   unsigned width;
-   unsigned height;
-
-   /* Texel coordinate offset for top-left pixel of this glyph. */
-   unsigned atlas_offset_x;
-   unsigned atlas_offset_y;
+   /* Width and height, and the texel offset of the glyph's top-left
+    * pixel in the atlas, each a pair in VIDEO_SCALE_PACK's layout. */
+   unsigned dims;
+   unsigned atlas_pos;
 
    /* When drawing this glyph, apply an offset to
     * current X/Y draw coordinate. */
@@ -432,20 +505,35 @@ enum font_atlas_format
    FONT_ATLAS_FORMAT_A16
 };
 
+#define FONT_ATLAS_DIRTY_MAX 16
+
 struct font_atlas
 {
    uint8_t *buffer; /* Coverage samples; layout per 'format'. */
    unsigned width;
    unsigned height;
    /* Dirty region in pixels, covering every glyph cell updated since
-    * the consumer last cleared the dirty flag; x1/y1 are exclusive
-    * and the values are only meaningful while dirty is set.
-    * Consumers may upload just this region (or any superset of it,
-    * such as the full-width row band) instead of the whole atlas. */
-   unsigned dirty_x0;
-   unsigned dirty_y0;
-   unsigned dirty_x1;
-   unsigned dirty_y1;
+    * the consumer last cleared the dirty flag: its top-left corner and
+    * its exclusive bottom-right one, each x and y in VIDEO_SCALE_PACK's
+    * layout (read with VIDEO_SCALE_W/H), only meaningful while dirty is
+    * set. Consumers may upload just this region (or any superset of
+    * it, such as the full-width row band) instead of the whole atlas. */
+   unsigned dirty_xy0;
+   unsigned dirty_xy1;
+   /* The same region as up to FONT_ATLAS_DIRTY_MAX rectangles, each its
+    * two corners as above, so cells far apart are not sent with all
+    * between them; read through font_atlas_dirty_rect(). 0 when only
+    * the corners above describe it. */
+   unsigned dirty_rect[FONT_ATLAS_DIRTY_MAX][2];
+   unsigned dirty_rects;
+   /* Set by the consumer to the largest texture it can make, packed
+    * with VIDEO_SCALE_PACK. When a frame needs more glyphs than the
+    * atlas has cells for, the next get_atlas() call in a later frame
+    * grows the atlas - width and height, never past these - and the
+    * consumer remakes its texture at the new size. Zero, the default,
+    * keeps the atlas at its first size. Cells only ever get added: a
+    * glyph's offsets never change. */
+   unsigned max_dims;
    enum font_atlas_format format;
    bool dirty;
 };

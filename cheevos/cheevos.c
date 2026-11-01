@@ -51,8 +51,11 @@
 #include "streams/chd_stream.h"
 #endif
 
-#ifdef HAVE_CHEEVOS_RVZ
-#include "cheevos_rvz.h"
+/* RVZ images are read with formats/rvz, which needs Zstandard for
+ * nearly every file */
+#if defined(HAVE_CHEEVOS_RVZ) && defined(HAVE_RZSTD)
+#define CHEEVOS_RVZ_READER
+#include <formats/rvz.h>
 #endif
 
 #include "cheevos.h"
@@ -70,6 +73,7 @@
 #include "../performance_counters.h"
 #include "../msg_hash.h"
 #include "../retroarch.h"
+#include "../runloop.h"
 #include "../runtime_file.h"
 #include "../core.h"
 #include "../core_option_manager.h"
@@ -398,12 +402,15 @@ static void rcheevos_retry_achievement_popup(retro_task_t* task)
 {
    struct rcheevos_retry_achievement_info_t* info = (struct rcheevos_retry_achievement_info_t*)task->user_data;
 
-   if (task->progress <= 4 && !path_is_valid(info->badge_fullpath))
+   int retry = task_get_progress(task);
+
+   if (retry <= 4 && !path_is_valid(info->badge_fullpath))
    {
       /* second retry in 200ms, third is 400ms, fourth in 800ms. if not available after 1500ms
        * (100+200+400+800), then the callback shows the placeholder. */
-      task->progress <<= 1;
-      task->when = cpu_features_get_time_usec() + 100000 * task->progress; /* first retry in 100ms */
+      retry <<= 1;
+      task_set_progress(task, (int8_t)retry);
+      task->when = cpu_features_get_time_usec() + 100000 * retry; /* first retry in 100ms */
       return;
    }
 
@@ -842,6 +849,11 @@ bool rcheevos_hardcore_active(void)
    return rcheevos_locals.hardcore_being_enabled;
 }
 
+bool rcheevos_hardcore_in_game(void)
+{
+   return rcheevos_hardcore_active() && rcheevos_is_game_loaded();
+}
+
 void rcheevos_pause_hardcore(void)
 {
    rcheevos_locals.hardcore_allowed = false;
@@ -853,6 +865,8 @@ void rcheevos_pause_hardcore(void)
 bool rcheevos_unload(void)
 {
    const bool was_loaded = rcheevos_is_game_loaded();
+
+   runloop_frame_work_set(RUNLOOP_WORK_CHEEVOS, false);
 
 #ifdef HAVE_THREADS
    /* Bump the load generation FIRST, before any other state
@@ -925,10 +939,13 @@ void rcheevos_leaderboard_trackers_visibility_changed(void)
 #endif
 }
 
-/* Disable slowdown */
+/* Disable slowdown, and what a command left playing */
 static void rcheevos_enforce_hardcore_settings(void)
 {
    runloop_state_get_ptr()->flags &= ~RUNLOOP_FLAG_SLOWMOTION;
+#ifdef HAVE_COMMAND
+   command_hardcore_entered();
+#endif
 }
 
 static void rcheevos_toggle_hardcore_active(rcheevos_locals_t* locals)
@@ -1220,12 +1237,12 @@ bool rcheevos_get_serialized_data(void* buffer)
    return (rc_client_serialize_progress(rcheevos_locals.client, (uint8_t*)buffer) == RC_OK);
 }
 
-bool rcheevos_set_serialized_data(void* buffer)
+bool rcheevos_set_serialized_data(const void* buffer, size_t size)
 {
    if (rcheevos_is_game_loaded() && buffer)
    {
-      const int result = rc_client_deserialize_progress(
-         rcheevos_locals.client, (const uint8_t*)buffer);
+      const int result = rc_client_deserialize_progress_sized(
+         rcheevos_locals.client, (const uint8_t*)buffer, size);
 
       return (result == RC_OK);
    }
@@ -1335,13 +1352,15 @@ static size_t rc_hash_handle_chd_read_sector(
 {
    cdfs_file_t* file = (cdfs_file_t*)track_handle;
    uint32_t track_sectors = cdfs_get_num_sectors(file);
+   int64_t got;
 
    sector -= cdfs_get_first_sector(file);
    if (sector >= track_sectors)
       return 0;
 
    cdfs_seek_sector(file, sector);
-   return cdfs_read_file(file, buffer, requested_bytes);
+   got = cdfs_read_file(file, buffer, requested_bytes);
+   return got > 0 ? (size_t)got : 0;
 }
 
 static uint32_t rc_hash_handle_chd_first_track_sector(
@@ -1398,6 +1417,132 @@ static void* rc_hash_handle_cd_open_track(
       return cdreader.open_track_iterator(path, track, iterator);
    }
 }
+
+#ifdef CHEEVOS_RVZ_READER
+/* rc_hash reads an RVZ file through these as the disc image it stands
+ * for. formats/rvz does no file I/O: what it asks for of the file is
+ * read here, through the VFS, straight to where it asks. */
+typedef struct
+{
+   rvz_t  *rvz;
+   RFILE  *file;
+   int64_t pos;
+} rcheevos_rvz_t;
+
+/* Runs an operation's step until it is done, reading what it asks */
+static int rcheevos_rvz_pump(rcheevos_rvz_t* handle, bool opening)
+{
+   for (;;)
+   {
+      rvz_request_t req;
+      int64_t       got = 0;
+      int           err = opening
+            ? rvz_open_step(handle->rvz, &req)
+            : rvz_read_step(handle->rvz, &req);
+
+      if (err != RVZ_PENDING)
+         return err;
+      if (filestream_seek(handle->file, (int64_t)req.offset,
+               RETRO_VFS_SEEK_POSITION_START) == 0)
+         got = filestream_read(handle->file, req.dst, (int64_t)req.length);
+      rvz_feed(handle->rvz, got > 0 ? (size_t)got : 0);
+   }
+}
+
+static void RC_CCONV rcheevos_rvz_close(void* file_handle)
+{
+   rcheevos_rvz_t* handle = (rcheevos_rvz_t*)file_handle;
+
+   if (handle)
+   {
+      rvz_free(handle->rvz);
+      if (handle->file)
+         filestream_close(handle->file);
+      free(handle);
+   }
+}
+
+static void* RC_CCONV rcheevos_rvz_open(const char* path)
+{
+   rcheevos_rvz_t* handle = (rcheevos_rvz_t*)calloc(1, sizeof(*handle));
+
+   if (!handle)
+      return NULL;
+   if (     !(handle->file = filestream_open(path, RETRO_VFS_FILE_ACCESS_READ,
+               RETRO_VFS_FILE_ACCESS_HINT_NONE))
+         || !(handle->rvz  = rvz_new())
+         || rcheevos_rvz_pump(handle, true) != RVZ_OK)
+   {
+      rcheevos_rvz_close(handle);
+      return NULL;
+   }
+   return handle;
+}
+
+static void RC_CCONV rcheevos_rvz_seek(void* file_handle, int64_t offset, int origin)
+{
+   rcheevos_rvz_t* handle = (rcheevos_rvz_t*)file_handle;
+
+   switch (origin)
+   {
+      case SEEK_SET:
+         handle->pos = offset;
+         break;
+      case SEEK_CUR:
+         handle->pos += offset;
+         break;
+      case SEEK_END:
+         handle->pos = (int64_t)rvz_disc_size(handle->rvz) + offset;
+         break;
+   }
+   if (handle->pos < 0)
+      handle->pos = 0;
+}
+
+static int64_t RC_CCONV rcheevos_rvz_tell(void* file_handle)
+{
+   return ((rcheevos_rvz_t*)file_handle)->pos;
+}
+
+static size_t RC_CCONV rcheevos_rvz_read(void* file_handle, void* buffer, size_t requested_bytes)
+{
+   rcheevos_rvz_t* handle = (rcheevos_rvz_t*)file_handle;
+   size_t          got;
+
+   if (rvz_read_begin(handle->rvz, (uint64_t)handle->pos,
+            buffer, requested_bytes) != RVZ_OK)
+      return 0;
+   rcheevos_rvz_pump(handle, false);
+   /* what came before a failure is still read */
+   got          = rvz_read_progress(handle->rvz);
+   handle->pos += (int64_t)got;
+   return got;
+}
+
+/* A Wii or GameCube disc as its header's magic words say, or
+ * RC_CONSOLE_UNKNOWN for a file the reader does not take */
+static uint32_t rcheevos_rvz_get_console_id(const char* path)
+{
+   uint8_t         magic[8];
+   uint32_t        console_id = RC_CONSOLE_UNKNOWN;
+   rcheevos_rvz_t* handle     = (rcheevos_rvz_t*)rcheevos_rvz_open(path);
+
+   if (!handle)
+      return console_id;
+   rcheevos_rvz_seek(handle, 0x18, SEEK_SET);
+   if (rcheevos_rvz_read(handle, magic, sizeof(magic)) == sizeof(magic))
+   {
+      if (     magic[0] == 0x5D && magic[1] == 0x1C
+            && magic[2] == 0x9E && magic[3] == 0xA3)
+         console_id = RC_CONSOLE_WII;
+      else if (magic[4] == 0xC2 && magic[5] == 0x33
+            && magic[6] == 0x9F && magic[7] == 0x3D)
+         console_id = RC_CONSOLE_GAMECUBE;
+   }
+   rcheevos_rvz_close(handle);
+   return console_id;
+}
+#endif
 
 static void rc_hash_reset_cdreader_hooks(void)
 {
@@ -1622,7 +1767,8 @@ void rcheevos_download_next_badge(retro_task_t* task)
     *           1 = locked images for achievements player hasn't earned
     *           2 = unlocked images for achievements player has earned
     */
-   const int bucket = (task->progress == 2) ? RC_CLIENT_ACHIEVEMENT_BUCKET_UNLOCKED : RC_CLIENT_ACHIEVEMENT_BUCKET_LOCKED;
+   const int pass   = task_get_progress(task);
+   const int bucket = (pass == 2) ? RC_CLIENT_ACHIEVEMENT_BUCKET_UNLOCKED : RC_CLIENT_ACHIEVEMENT_BUCKET_LOCKED;
    const rc_client_achievement_t* first_locked_achievement =
       rc_client_get_next_achievement_info(rcheevos_locals.client,
       (const rc_client_achievement_t*)task->user_data, bucket);
@@ -1631,7 +1777,7 @@ void rcheevos_download_next_badge(retro_task_t* task)
    {
       bool result;
 
-      if (task->progress == 1)
+      if (pass == 1)
       {
          char locked_name[24];
          snprintf(locked_name, sizeof(locked_name), "%s_lock", first_locked_achievement->badge_name);
@@ -1651,7 +1797,7 @@ void rcheevos_download_next_badge(retro_task_t* task)
 
    if (!first_locked_achievement)
    {
-      if (task->progress == 2 || !rcheevos_is_game_loaded())
+      if (pass == 2 || !rcheevos_is_game_loaded())
       {
          /* mark task as complete so it will get cleaned up */
          task_set_flags(task, RETRO_TASK_FLG_FINISHED, true);
@@ -1659,7 +1805,7 @@ void rcheevos_download_next_badge(retro_task_t* task)
       }
 
       task->user_data = NULL; /* restart list */
-      task->progress++;
+      task_set_progress(task, (int8_t)(pass + 1));
    }
 
    /* wait 10 seconds, then download the next badge */
@@ -1928,6 +2074,10 @@ bool rcheevos_load(const void *data)
       rcheevos_locals.user_agent_core,
       sizeof(rcheevos_locals.user_agent_core));
 
+   /* From here the client is live for this content: the iterate
+    * ticks rcheevos_test() until rcheevos_unload() drops the bit. */
+   runloop_frame_work_set(RUNLOOP_WORK_CHEEVOS, true);
+
    if (rcheevos_locals.client)
       rc_client_unload_game(rcheevos_locals.client);
    else
@@ -1995,24 +2145,26 @@ bool rcheevos_load(const void *data)
    {
       uint32_t console_id = RC_CONSOLE_UNKNOWN;
 
-#ifdef HAVE_CHEEVOS_RVZ
-      if (string_is_equal_noncase(path_get_extension(info->path), "rvz"))
+#ifdef CHEEVOS_RVZ_READER
+      /* The file reader is kept from one load to the next, so it is
+       * set for every load: the RVZ one for a file it reads, the
+       * default for anything else. */
+      const char* ext = path_get_extension(info->path);
+      if (     (string_is_equal_noncase(ext, "rvz") || string_is_equal_noncase(ext, "wia"))
+            && (console_id = rcheevos_rvz_get_console_id(info->path))
+               != RC_CONSOLE_UNKNOWN)
       {
-         console_id = rcheevos_rvz_get_console_id(info->path);
+         struct rc_hash_filereader filereader;
 
-         /* Only register custom file reader for valid RVZ files */
-         if (console_id != RC_CONSOLE_UNKNOWN)
-         {
-            struct rc_hash_filereader filereader;
-
-            filereader.open  = rcheevos_rvz_open;
-            filereader.seek  = rcheevos_rvz_seek;
-            filereader.tell  = rcheevos_rvz_tell;
-            filereader.read  = rcheevos_rvz_read;
-            filereader.close = rcheevos_rvz_close;
-            rc_hash_init_custom_filereader(&filereader);
-         }
+         filereader.open  = rcheevos_rvz_open;
+         filereader.seek  = rcheevos_rvz_seek;
+         filereader.tell  = rcheevos_rvz_tell;
+         filereader.read  = rcheevos_rvz_read;
+         filereader.close = rcheevos_rvz_close;
+         rc_hash_init_custom_filereader(&filereader);
       }
+      else
+         rc_hash_init_custom_filereader(NULL);
 #endif
 
       {

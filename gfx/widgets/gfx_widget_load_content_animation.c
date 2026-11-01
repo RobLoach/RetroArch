@@ -16,6 +16,8 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
+
 #include <string/stdstring.h>
 #include <file/file_path.h>
 
@@ -29,6 +31,7 @@
 #ifdef HAVE_MENU
 #include "../../menu/menu_driver.h"
 #include <compat/strl.h>
+#include <queues/mpsc_stack.h>
 #endif
 
 #define LOAD_CONTENT_ANIMATION_FADE_IN_DURATION   466.0f
@@ -52,7 +55,7 @@ struct gfx_widget_load_content_animation_state
 {
    /* Hot fields - accessed every frame in _frame() */
    gfx_display_t *p_disp;
-   uintptr_t icon_texture;
+   gfx_surface_t *icon_texture;
    unsigned bg_shadow_height;
    unsigned margin_shadow_width;
    unsigned icon_size;
@@ -123,7 +126,7 @@ typedef struct gfx_widget_load_content_animation_state gfx_widget_load_content_a
 
 static gfx_widget_load_content_animation_state_t p_w_load_content_animation_st = {
    NULL,                               /* p_disp */
-   0,                                  /* icon_texture */
+   NULL,                               /* icon_texture */
    0,                                  /* bg_shadow_height */
    0,                                  /* margin_shadow_width */
    0,                                  /* icon_size */
@@ -209,12 +212,8 @@ static void gfx_widget_load_content_animation_reset(void)
    state->content_name_len   = 0;
    state->system_name_len    = 0;
 
-   /* Unload any icon texture */
-   if (state->icon_texture)
-   {
-      video_driver_texture_unload(&state->icon_texture);
-      state->icon_texture = 0;
-   }
+   gfx_surface_free(state->icon_texture);
+   state->icon_texture = NULL;
 }
 
 static void gfx_widget_load_content_animation_load_icon(void)
@@ -222,18 +221,20 @@ static void gfx_widget_load_content_animation_load_icon(void)
    gfx_widget_load_content_animation_state_t *state = &p_w_load_content_animation_st;
 
    /* In all cases, unload any existing icon texture */
-   if (state->icon_texture)
-   {
-      video_driver_texture_unload(&state->icon_texture);
-      state->icon_texture = 0;
-   }
+   gfx_surface_free(state->icon_texture);
+   state->icon_texture = NULL;
 
    /* If widget has a valid icon set, load it */
    if (state->has_icon)
-      gfx_display_reset_textures_list(
-            state->icon_file, state->icon_directory,
-            &state->icon_texture,
-            gfx_display_texture_filter(), NULL);
+   {
+      char path[PATH_MAX_LENGTH];
+      fill_pathname_join_special(path, state->icon_directory,
+            state->icon_file, sizeof(path));
+      state->icon_texture = gfx_surface_new_still(
+            gfx_display_texture_filter());
+      gfx_surface_submit_file(state->icon_texture, path,
+            gfx_surface_wants_rgba());
+   }
 }
 
 /* Callbacks */
@@ -312,16 +313,41 @@ static void gfx_widget_set_load_content_progress_state(int8_t progress)
          (progress > 100) ? 100 : progress;
 }
 
+/* A start or a progress update from any thread, applied by the
+ * widgets' owner in iterate(). A start carries what was resolved for
+ * it on the producer's thread, under the names the widget keeps. */
+struct load_content_cmd
+{
+   mpsc_stack_node_t link;  /* first: the stack's, from push to drain */
+   size_t content_name_len;
+   size_t system_name_len;
+   bool   start;
+   bool   resolved;         /* a start with something to show */
+   bool   has_icon;
+   int8_t progress;         /* not a start */
+   char   content_name[512];
+   char   system_name[512];
+   char   icon_directory[DIR_MAX_LENGTH];
+   char   icon_file[NAME_MAX_LENGTH];
+   char   icon_path[PATH_MAX_LENGTH];
+};
+
+static mpsc_stack_t load_content_pending;
+
 void gfx_widget_set_load_content_progress(int8_t progress)
 {
-   gfx_widgets_state_lock();
-   gfx_widget_set_load_content_progress_state(progress);
-   gfx_widgets_state_unlock();
+   struct load_content_cmd *cmd = (struct load_content_cmd*)
+      malloc(sizeof(*cmd));
+   if (!cmd)
+      return;
+   cmd->start    = false;
+   cmd->progress = progress;
+   mpsc_stack_push(&load_content_pending, &cmd->link);
 }
 
-static bool gfx_widget_start_load_content_animation_state(void)
+static bool gfx_widget_start_load_content_animation_resolve(
+      struct load_content_cmd *state)
 {
-   gfx_widget_load_content_animation_state_t *state = &p_w_load_content_animation_st;
 
    const char *content_path                         = path_get(RARCH_PATH_CONTENT);
    const char *core_path                            = path_get(RARCH_PATH_CORE);
@@ -333,9 +359,16 @@ static bool gfx_widget_start_load_content_animation_state(void)
    bool has_system                                  = false;
    bool has_db_name                                 = false;
 
-   /* To ensure we leave the widget in a well defined
-    * state, perform a reset before parsing variables */
-   gfx_widget_load_content_animation_reset();
+   state->content_name[0]   = '\0';
+   state->system_name[0]    = '\0';
+   /* The directory the widgets set at init, before any start */
+   strlcpy(state->icon_directory, dispwidget_get_ptr()->monochrome_png_path,
+         sizeof(state->icon_directory));
+   state->icon_file[0]      = '\0';
+   state->icon_path[0]      = '\0';
+   state->content_name_len  = 0;
+   state->system_name_len   = 0;
+   state->has_icon          = false;
 
    /* Sanity check - we require a valid core path,
     * and must reject the dummy/builtin core.
@@ -568,20 +601,62 @@ icon_done:
       state->system_name_len  = 54;
    }
 
-   /* All parameters are initialised
-    * > Signal that animation should begin */
-   state->status = GFX_WIDGET_LOAD_CONTENT_BEGIN;
-
    return true;
 }
 
 bool gfx_widget_start_load_content_animation(void)
 {
-   bool ret;
-   gfx_widgets_state_lock();
-   ret = gfx_widget_start_load_content_animation_state();
-   gfx_widgets_state_unlock();
-   return ret;
+   bool resolved;
+   struct load_content_cmd *cmd = (struct load_content_cmd*)
+      malloc(sizeof(*cmd));
+   if (!cmd)
+      return false;
+   resolved      = gfx_widget_start_load_content_animation_resolve(cmd);
+   cmd->start    = true;
+   cmd->resolved = resolved;
+   /* The owner may free it from here on */
+   mpsc_stack_push(&load_content_pending, &cmd->link);
+   return resolved;
+}
+
+/* The owner's side: a start resets the widget and takes what was
+ * resolved for it; a progress update only takes the value. */
+static void gfx_widget_load_content_animation_apply_pending(void)
+{
+   gfx_widget_load_content_animation_state_t *state =
+         &p_w_load_content_animation_st;
+   mpsc_stack_node_t *link =
+         mpsc_stack_reverse(mpsc_stack_drain(&load_content_pending));
+
+   while (link)
+   {
+      struct load_content_cmd *cmd = (struct load_content_cmd*)link;
+      link                         = link->next;
+      if (!cmd->start)
+         gfx_widget_set_load_content_progress_state(cmd->progress);
+      else
+      {
+         gfx_widget_load_content_animation_reset();
+         if (cmd->resolved)
+         {
+            strlcpy(state->content_name, cmd->content_name,
+                  sizeof(state->content_name));
+            strlcpy(state->system_name, cmd->system_name,
+                  sizeof(state->system_name));
+            strlcpy(state->icon_directory, cmd->icon_directory,
+                  sizeof(state->icon_directory));
+            strlcpy(state->icon_file, cmd->icon_file,
+                  sizeof(state->icon_file));
+            strlcpy(state->icon_path, cmd->icon_path,
+                  sizeof(state->icon_path));
+            state->content_name_len = cmd->content_name_len;
+            state->system_name_len  = cmd->system_name_len;
+            state->has_icon         = cmd->has_icon;
+            state->status           = GFX_WIDGET_LOAD_CONTENT_BEGIN;
+         }
+      }
+      free(cmd);
+   }
 }
 
 /* Widget layout() */
@@ -692,6 +767,8 @@ static void gfx_widget_load_content_animation_iterate(void *user_data,
       bool is_threaded)
 {
    gfx_widget_load_content_animation_state_t *state = &p_w_load_content_animation_st;
+
+   gfx_widget_load_content_animation_apply_pending();
 
    if (state->status == GFX_WIDGET_LOAD_CONTENT_BEGIN)
    {
@@ -917,7 +994,7 @@ static void gfx_widget_load_content_animation_frame(void *data, void *user_data)
       {
          gfx_display_set_alpha(icon_color, icon_alpha);
 
-         if (state->icon_texture)
+         if (GFX_SURFACE_HANDLE(state->icon_texture))
          {
             gfx_display_blend_begin(dispctx, userdata);
 
@@ -926,7 +1003,7 @@ static void gfx_widget_load_content_animation_frame(void *data, void *user_data)
                   p_disp,
                   VIDEO_SCALE_PACK(video_width, video_height),
                   VIDEO_SCALE_PACK(state->icon_size, state->icon_size),
-                  state->icon_texture,
+                  GFX_SURFACE_HANDLE(state->icon_texture),
                   icon_x,
                   state->icon_y,
                   0.0f, /* rad */
@@ -1113,18 +1190,21 @@ static void gfx_widget_load_content_animation_context_destroy(void)
 {
    gfx_widget_load_content_animation_state_t *state = &p_w_load_content_animation_st;
 
-   /* Unload any icon texture */
-   if (state->icon_texture)
-   {
-      video_driver_texture_unload(&state->icon_texture);
-      state->icon_texture = 0;
-   }
+   gfx_surface_free(state->icon_texture);
+   state->icon_texture = NULL;
 }
 
 /* Widget free() */
 
 static void gfx_widget_load_content_animation_free(void)
 {
+   mpsc_stack_node_t *link = mpsc_stack_drain(&load_content_pending);
+   while (link)
+   {
+      mpsc_stack_node_t *next = link->next;
+      free(link);
+      link                    = next;
+   }
    gfx_widget_load_content_animation_reset();
 }
 

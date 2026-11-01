@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := rjpeg_test
 
 LIBRETRO_COMM_DIR := ../../..
@@ -5,11 +7,12 @@ LIBRETRO_COMM_DIR := ../../..
 SOURCES := \
 	rjpeg_test.c \
 	$(LIBRETRO_COMM_DIR)/formats/jpeg/rjpeg.c \
+	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
 	$(LIBRETRO_COMM_DIR)/features/features_cpu.c
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
-CFLAGS  += -Wall -pedantic -std=gnu99 -g -I$(LIBRETRO_COMM_DIR)/include
+CFLAGS  += -Wall -pedantic -std=gnu99 -g1 -I$(LIBRETRO_COMM_DIR)/include
 
 # The samples workflow passes SANITIZER=address,undefined to every
 # sample dir.  Without this block the variable was accepted and
@@ -25,10 +28,15 @@ all: $(TARGET)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJS)
 
 .PHONY: clean

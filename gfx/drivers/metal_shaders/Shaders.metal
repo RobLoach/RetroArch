@@ -809,6 +809,43 @@ inline float4 hdr_sample_sdr_linear(texture2d<float> src,
    return float4(sdr_linear, sdr.a);
 }
 
+
+/* An RGBA16Float texture is linear scRGB: 1.0 is 80 nits, the 709
+ * primaries. Drawn into the HDR UI overlay, which the menu composite
+ * pass shows as To2020(v^2.4) at PaperWhiteNits (the menu nits), scRGB
+ * and HDR10 alike: this writes the exact inverse of that, so the
+ * composite shows the texture at the luminance it was graded at; above
+ * menu white v is above 1.0, which the RGBA16Float overlay keeps. The
+ * composite's To2020 clamps at zero, so a colour outside the chosen
+ * gamut is clamped to it. params.x is the menu nits, params.y the
+ * composite's ExpandGamut. The inverse matrices are those of To2020,
+ * stored as columns as hdr:: stores its own. */
+fragment float4 stock_fragment_linear(FontFragmentIn  in     [[ stage_in ]],
+                                      texture2d<float> tex   [[ texture(TextureIndexColor) ]],
+                                      sampler samp           [[ sampler(SamplerIndexDraw) ]],
+                                      constant float4 &params [[ buffer(0) ]])
+{
+   const float3x3 kExpanded2020to709 = float3x3(
+      float3( 1.635346f,  -0.0794803f,  0.0034352f),
+      float3(-0.5705700f,  1.0898049f, -0.0202070f),
+      float3(-0.0647755f, -0.0103244f,  1.0167713f));
+   const float3x3 k2020toP3 = float3x3(
+      float3( 1.3435784f, -0.0652977f,  0.0028213f),
+      float3(-0.2821792f,  1.0757882f, -0.0195987f),
+      float3(-0.0613991f, -0.0104905f,  1.0167763f));
+   float4 smp   = tex.sample(samp, in.texCoord.xy);
+   float3 lin   = in.color.rgb * smp.rgb;
+   float  a     = in.color.a * smp.a;
+   float3 c2020 = hdr::k709to2020
+      * (lin * (hdr::kscRGBWhiteNits / max(params.x, 1.0f)));
+   uint   g     = (uint)params.y;
+   float3 x     = (g == 0u) ? hdr::k2020to709 * c2020
+                : (g == 1u) ? kExpanded2020to709 * c2020
+                : (g == 2u) ? k2020toP3 * c2020
+                : c2020;
+   return float4(pow(max(x, float3(0.0f)), float3(1.0f / 2.4f)), a);
+}
+
 /* Forward HDR composite.
  *
  * Covers the FULL drawable with a quad.  Inside the core-video viewport
@@ -846,6 +883,54 @@ inline float4 hdr_sample_sdr_linear(texture2d<float> src,
  *   2 — swapchain is scRGB; source is SDR (inverse_tonemap+hdr10 off) or HDR16
  *   1 — swapchain is HDR10 PQ; source is SDR (inverse_tonemap+hdr10 on) or PQ
  */
+/* Movie sources are linear scRGB independently of core/shader HDR flags.
+ * Existing HDRUniforms layout and core composite semantics remain unchanged. */
+fragment float4 hdr_movie_fragment(
+      HDRVertexOut in [[ stage_in ]],
+      constant HDRUniforms &u [[ buffer(0) ]],
+      texture2d<float> src [[ texture(0) ]],
+      sampler samp [[ sampler(0) ]])
+{
+   float2 frag_px    = in.position.xy;
+   float2 vp_origin  = u.CoreViewport.xy;
+   float2 vp_size    = u.CoreViewport.zw;
+   float2 core_uv    = (frag_px - vp_origin) / vp_size;
+   bool   in_rect    =    all(core_uv >= float2(0.0f))
+                       && all(core_uv <= float2(1.0f));
+
+   if (!in_rect)
+      return float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+   /* Rotate sampling coordinates for rotated content (TATE / vertical
+    * games).  Nonzero only on the core pass; the menu pass is never
+    * rotated.  The rect test above stays in screen space (the viewport
+    * already has the rotated aspect); only the sampling rotates.
+    * Mapping is corner-exact with what the SDR blit's rotated MVP
+    * (matrix_rotate_z * matrix_proj_ortho, y-negating ortho) displays:
+    *   rot 1: uv' = (1-v, u)   rot 2: uv' = (1-u, 1-v)
+    *   rot 3: uv' = (v, 1-u) */
+   switch (u.Rotation)
+   {
+      default:
+         break;
+      case 1u:
+         core_uv = float2(1.0f - core_uv.y, core_uv.x);
+         break;
+      case 2u:
+         core_uv = float2(1.0f - core_uv.x, 1.0f - core_uv.y);
+         break;
+      case 3u:
+         core_uv = float2(core_uv.y, 1.0f - core_uv.x);
+         break;
+   }
+
+   float4 value = src.sample(samp, core_uv);
+   if (u.HDRMode == 2u)
+      return value;
+   float3 linear2020 = hdr::k709to2020 * value.rgb * (80.0f / 10000.0f);
+   return float4(hdr::LinearToST2084(clamp(linear2020, float3(0.0f), float3(1.0f))), value.a);
+}
+
 fragment float4 hdr_composite_fragment(
       HDRVertexOut            in       [[ stage_in ]],
       constant HDRUniforms    &u       [[ buffer(0) ]],

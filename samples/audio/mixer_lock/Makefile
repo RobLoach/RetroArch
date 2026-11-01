@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 compiler     := gcc
 TARGET       := mixer_lock_test
 
@@ -49,22 +51,26 @@ SOURCES_C := \
 
 CFLAGS += -Wall $(INCDIRS)
 CFLAGS += -DRARCH_INTERNAL -DHAVE_THREADS -DHAVE_AUDIOMIXER -DHAVE_MENU \
-	-DHAVE_CONFIGFILE -D_GNU_SOURCE
+	-DHAVE_CONFIGFILE -DHAVE_DSP_FILTER -D_GNU_SOURCE
 LDFLAGS += -lm -lpthread
 
 ifneq ($(SAN),)
    SANITIZER := $(SAN)
 endif
 ifneq ($(SANITIZER),)
-   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g $(CFLAGS)
+   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g1 $(CFLAGS)
    LDFLAGS := -fsanitize=$(SANITIZER) $(LDFLAGS)
 endif
 
-OBJS := $(SOURCES_C:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES_C:.c=.o))
 
 all: $(TARGET)
 
 %.o: %.c
+	$(CC) $(INCDIRS) $(CFLAGS) $(flags) -c -o$@ $<
+
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
 	$(CC) $(INCDIRS) $(CFLAGS) $(flags) -c -o$@ $<
 
 $(TARGET): $(OBJS)
@@ -74,6 +80,7 @@ check: $(TARGET)
 	./$(TARGET)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(OBJS)
 	rm -f $(TARGET)
 

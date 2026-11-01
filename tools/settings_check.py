@@ -49,7 +49,7 @@ COMMON = [
 
 PROFILES = {
     'desktop': ['HAVE_VULKAN', 'HAVE_QT', 'HAVE_DISCORD'],
-    'android': ['ANDROID', 'RARCH_MOBILE', 'HAVE_VULKAN'],
+    'android': ['ANDROID', 'RARCH_MOBILE', 'HAVE_VULKAN', 'HAVE_VIDEO_WINDOWS'],
     'console': ['RARCH_CONSOLE'],
 }
 
@@ -129,9 +129,52 @@ def extract(text):
         defs = {}
         for m in ROW.finditer(body):
             defs[m.group(1)] = (m.group(3), ' '.join(m.group(4).split()))
-        for ident in BARE.findall(body):
-            enable, value = defs.get(ident, ('0', '-'))
-            rows.append((kind, ident, enable, value))
+        call = body.find('config_%s_rows_add(' % kind)
+        parts = [body] if call < 0 else [body[:call], None, body[call:]]
+        for part in parts:
+            if part is None:
+                rows += table_rows(text, kind)
+                continue
+            for ident in BARE.findall(part):
+                enable, value = defs.get(ident, ('0', '-'))
+                rows.append((kind, ident, enable, value))
+    return rows
+
+
+TABLE_ROW = re.compile(
+    r'\{\s*"([^"]*)"\s*,\s*\(uint32_t\)[^,]*\([^)]*\)\s*,\s*(.*?)\s*\},\s*(?=\{)',
+    re.S)
+
+
+TABLE_LABEL_ROW = re.compile(
+    r'\{\s*\(uint32_t\)[^,]*\([^)]*\)\s*,\s*'
+    r'\(uint16_t\)[^,]*\(\s*struct msg_hash_us_lbl_blob_s\s*,\s*'
+    r'm_(\w+)\s*\)\s*,\s*(.*?)\s*\},\s*(?=\{)', re.S)
+
+LABEL_MEMBER = re.compile(
+    r'char\s+m_(\w+)\s*\[\s*sizeof\s*\(\s*"([^"]*)"\s*\)\s*\]\s*;')
+
+
+def table_rows(text, kind):
+    """Resolve literal and packed-label keys where rows_add() adds them."""
+    start = text.find('config_%s_rows[] = {' % kind)
+    if start < 0:
+        return []
+    end = text.find('{ 0 }', start)
+    body = text[start:end] + '{'
+    rows = []
+    labels = dict(LABEL_MEMBER.findall(text))
+    matches = list(TABLE_ROW.finditer(body)) + list(TABLE_LABEL_ROW.finditer(body))
+    for m in sorted(matches, key=lambda item: item.start()):
+        ident = m.group(1)
+        if m.re is TABLE_LABEL_ROW:
+            if ident not in labels:
+                raise ValueError('settings row has no packed label: ' + ident)
+            ident = labels[ident]
+        value = ' '.join(m.group(2).split())
+        if value.startswith('(') and value.endswith(')'):
+            value = value[1:-1]  # CFG_ROW brackets the default
+        rows.append((kind, ident, '1', value))
     return rows
 
 

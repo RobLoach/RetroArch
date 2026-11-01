@@ -14,12 +14,16 @@
 #include "../../../gfx/video_thread_wrapper.h"
 #endif
 
+#include <formats/data_transfer.h>
+#include "../../../tasks/tasks_internal.h"
+
 #include "stubs_retroarch.h"
 
 struct stub_texture stub_tex[STUB_MAX_TEXTURES];
 unsigned stub_tex_loads;
 unsigned stub_tex_live;
 bool     stub_tex_load_fails;
+bool     stub_samples_bc1;
 
 uint32_t stub_checksum(const struct texture_image *img)
 {
@@ -27,6 +31,16 @@ uint32_t stub_checksum(const struct texture_image *img)
    uint32_t sum = 2166136261u;
    for (i = 0; i < n; i++)
       sum = (sum ^ img->pixels[i]) * 16777619u;
+   return sum;
+}
+
+uint32_t stub_checksum_bytes(const void *data, size_t len)
+{
+   size_t i;
+   const uint8_t *p = (const uint8_t*)data;
+   uint32_t sum     = 2166136261u;
+   for (i = 0; i < len; i++)
+      sum = (sum ^ p[i]) * 16777619u;
    return sum;
 }
 
@@ -38,6 +52,7 @@ void stub_reset(void)
    stub_tex_loads      = 0;
    stub_tex_live       = 0;
    stub_tex_load_fails = false;
+   stub_samples_bc1    = false;
 }
 
 const struct stub_texture *stub_texture_get(uintptr_t id)
@@ -51,16 +66,28 @@ bool video_driver_texture_load(void *data,
       enum texture_filter_type filter, uintptr_t *id)
 {
    unsigned i;
-   const struct texture_image *img = (const struct texture_image*)data;
+   struct texture_image *img = (struct texture_image*)data;
+   bool bcn;
    (void)filter;
-   if (stub_tex_load_fails || !img || !img->pixels)
+   if (stub_tex_load_fails || !img)
+      return false;
+   /* As the frontend's: the payload as it is where the driver samples
+    * it, else decoded into the image first */
+   bcn = img->compressed
+      && video_driver_supports_texture_format(img->compressed->format);
+   if (     !bcn && !img->pixels
+         && (!img->compressed || !image_texture_realize_rgba(img)))
       return false;
    for (i = 0; i < STUB_MAX_TEXTURES; i++)
    {
       if (stub_tex[i].live)
          continue;
       stub_tex[i].live     = true;
-      stub_tex[i].checksum = stub_checksum(img);
+      stub_tex[i].bcn      = bcn;
+      stub_tex[i].checksum = bcn
+         ? stub_checksum_bytes(img->compressed->mips[0].data,
+               img->compressed->mips[0].size)
+         : stub_checksum(img);
       stub_tex[i].width    = img->width;
       stub_tex[i].height   = img->height;
       stub_tex_loads++;
@@ -84,13 +111,21 @@ bool video_driver_texture_unload(uintptr_t *id)
 
 bool video_driver_texture_can_update(void) { return true; }
 
-bool video_driver_texture_update(uintptr_t id, void *data)
+unsigned stub_drop_updates;
+
+enum video_texture_update video_driver_texture_update(uintptr_t id,
+      void *data)
 {
    const struct texture_image *img = (const struct texture_image*)data;
    if (!id || id > STUB_MAX_TEXTURES || !stub_tex[id - 1].live)
-      return false;
+      return VIDEO_TEXTURE_UPDATE_REFUSED;
+   if (stub_drop_updates)
+   {
+      stub_drop_updates--;
+      return VIDEO_TEXTURE_UPDATE_DROPPED;
+   }
    stub_tex[id - 1].checksum = stub_checksum(img);
-   return true;
+   return VIDEO_TEXTURE_UPDATE_DONE;
 }
 
 uint32_t video_driver_get_disp_flags(void) { return 0; }
@@ -103,8 +138,16 @@ bool video_driver_test_all_flags(enum display_flags testflag)
 
 bool video_driver_supports_texture_format(enum texture_gpu_format fmt)
 {
-   (void)fmt;
-   return false;
+   return stub_samples_bc1 && fmt == TEXTURE_GPU_FORMAT_BC1;
+}
+
+/* As the frontend fits an image, from this stub's own answers */
+bool video_driver_texture_fit(struct texture_image *ti)
+{
+   if (ti->pix10 && !video_driver_supports_texture_format(TEXTURE_GPU_FORMAT_RGB10A2))
+      image_texture_narrow_10bit(ti);
+   return !ti->fp16
+      || video_driver_supports_texture_format(TEXTURE_GPU_FORMAT_RGBA16F);
 }
 
 enum texture_filter_type gfx_display_texture_filter(void)
@@ -126,6 +169,8 @@ bool stub_thread_wins_race;
 
 static video_thread_async_load_t *stub_in_head,  *stub_in_tail;
 static video_thread_async_load_t *stub_out_head, *stub_out_tail;
+/* The node's list link, which the wrapper keeps first in the node. */
+#define STUB_NEXT(n) (*(video_thread_async_load_t**)&(n)->link.next)
 
 bool video_driver_thread_wrapper_active(void) { return stub_thread_active; }
 
@@ -136,19 +181,31 @@ unsigned stub_video_thread_run(void)
    stub_in_head = stub_in_tail  = NULL;
    while (n)
    {
-      video_thread_async_load_t *next = n->next;
+      video_thread_async_load_t *next = STUB_NEXT(n);
       /* This is where the video thread reads the poster's pixels. */
       if (n->kind == VIDEO_THREAD_ASYNC_LOAD)
       {
          uintptr_t id = 0;
-         video_driver_texture_load(n->img, n->filter, &id);
+         const struct texture_image *ti = (const struct texture_image*)n->img;
+         /* As the wrapper's: a payload the driver does not sample
+          * makes no texture, and is not decoded on this thread */
+         if (     !ti->compressed || ti->pixels
+               || video_driver_supports_texture_format(
+                     ti->compressed->format))
+            video_driver_texture_load(n->img, n->filter, &id);
          n->handle    = id;
       }
-      else if (!video_driver_texture_update(n->handle, n->img))
-         n->handle    = 0;
-      n->next = NULL;
+      else
+      {
+         enum video_texture_update r = video_driver_texture_update(
+               n->handle, n->img);
+         n->dropped   = (r == VIDEO_TEXTURE_UPDATE_DROPPED);
+         if (r == VIDEO_TEXTURE_UPDATE_REFUSED)
+            n->handle = 0;
+      }
+      STUB_NEXT(n) = NULL;
       if (stub_out_tail)
-         stub_out_tail->next = n;
+         STUB_NEXT(stub_out_tail) = n;
       else
          stub_out_head       = n;
       stub_out_tail          = n;
@@ -158,14 +215,15 @@ unsigned stub_video_thread_run(void)
    return ran;
 }
 
+bool task_is_on_main_thread(void) { return true; }
+
 bool video_thread_async_post(video_thread_async_load_t *n)
 {
    if (!stub_thread_active || !n)
       return false;
-   n->next         = NULL;
-   n->caller_owned = 1;
+   STUB_NEXT(n)    = NULL;
    if (stub_in_tail)
-      stub_in_tail->next = n;
+      STUB_NEXT(stub_in_tail) = n;
    else
       stub_in_head       = n;
    stub_in_tail          = n;
@@ -180,10 +238,77 @@ void video_thread_async_poll(void)
    stub_out_head = stub_out_tail = NULL;
    while (n)
    {
-      video_thread_async_load_t *next = n->next;
+      video_thread_async_load_t *next = STUB_NEXT(n);
       if (n->done)
          n->done(n->user, n->handle);
       n = next;
    }
 }
 #endif
+
+/* The pack's images come decoded or from a buffer; nothing here
+ * opens a file. */
+data_transfer_t *data_transfer_open_prefix(const char *path,
+      size_t commit_cap)
+{
+   (void)path; (void)commit_cap;
+   return NULL;
+}
+size_t data_transfer_iterate(data_transfer_t *dt, size_t max_bytes)
+{
+   (void)dt; (void)max_bytes;
+   return 0;
+}
+const uint8_t *data_transfer_ptr(data_transfer_t *dt, size_t *len)
+{
+   (void)dt;
+   if (len)
+      *len = 0;
+   return NULL;
+}
+bool data_transfer_complete(data_transfer_t *dt) { (void)dt; return true; }
+void data_transfer_free(data_transfer_t *dt) { (void)dt; }
+void data_transfer_pool_flush(void) { }
+
+bool task_push_image_load(const char *fullpath, bool supports_rgba,
+      unsigned upscale_threshold, unsigned downscale_cap,
+      retro_task_callback_t cb, void *userdata)
+{
+   (void)fullpath; (void)supports_rgba; (void)upscale_threshold;
+   (void)downscale_cap; (void)cb; (void)userdata;
+   return false;
+}
+
+/* No driver lends upload memory here: every slot stays the surface's. */
+void *video_driver_texture_lend(uintptr_t id, unsigned slot, size_t pitch, size_t *out_pitch)
+{
+   if (out_pitch)
+      *out_pitch = pitch;
+   (void)id; (void)slot; (void)pitch;
+   return NULL;
+}
+
+/* No device to import into */
+enum video_texture_update video_driver_texture_import(uintptr_t *id,
+      const video_frame_import_t *frame, enum texture_filter_type filter)
+{
+   (void)id; (void)frame; (void)filter;
+   return VIDEO_TEXTURE_UPDATE_REFUSED;
+}
+
+bool video_driver_texture_lend_ready(uintptr_t id, unsigned slot)
+{
+   (void)id; (void)slot;
+   return true;
+}
+
+bool video_driver_texture_lend_needs_refresh(void) { return false; }
+bool video_thread_lend_get(int idx, void **mem, size_t *pitch)
+{
+   (void)idx;
+   (void)mem;
+   (void)pitch;
+   return false;
+}
+
+bool video_thread_lend_ready(int idx) { (void)idx; return true; }

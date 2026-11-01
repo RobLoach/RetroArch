@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := overlay_apng_test
 
 REPO_ROOT         := ../../..
@@ -9,6 +11,10 @@ SOURCES := \
 	overlay_apng_test.c \
 	stubs_retroarch.c \
 	$(REPO_ROOT)/gfx/gfx_surface.c \
+	$(REPO_ROOT)/gfx/gfx_surface_player.c \
+	$(LIBRETRO_COMM_DIR)/formats/video_player.c \
+	$(LIBRETRO_COMM_DIR)/formats/image_transfer.c \
+	$(REPO_ROOT)/libretro-common/formats/image/image_yuv_blit.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
 	$(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
 	$(LIBRETRO_COMM_DIR)/encodings/encoding_crc32.c \
@@ -17,6 +23,8 @@ SOURCES := \
 	$(LIBRETRO_COMM_DIR)/features/features_cpu.c \
 	$(LIBRETRO_COMM_DIR)/file/file_path.c \
 	$(LIBRETRO_COMM_DIR)/file/file_path_io.c \
+	$(LIBRETRO_COMM_DIR)/formats/image_texture.c \
+	$(LIBRETRO_COMM_DIR)/formats/image_texture_set.c \
 	$(LIBRETRO_COMM_DIR)/formats/png/rpng.c \
 	$(LIBRETRO_COMM_DIR)/formats/png/rpng_apng.c \
 	$(LIBRETRO_COMM_DIR)/lists/string_list.c \
@@ -30,11 +38,19 @@ SOURCES := \
 	$(LIBRETRO_COMM_DIR)/time/rtime.c \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
-CFLAGS  += -Wall -std=gnu99 -g -O1 -DHAVE_RPNG \
+# image_texture.c is here for the narrowing gfx_surface.c calls; its
+# loaders are dropped at the link rather than chased through the
+# transfer code.
+CFLAGS  += -Wall -std=gnu99 -g1 -O1 -DHAVE_RPNG -ffunction-sections \
            -I$(REPO_ROOT) -I$(LIBRETRO_COMM_DIR)/include
-LDFLAGS += -lm
+LDFLAGS += -Wl,--gc-sections -lm
+
+ifeq ($(OS),Windows_NT)
+CFLAGS += -flto
+LDFLAGS += -flto
+endif
 
 ifneq ($(SANITIZER),)
    CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer $(CFLAGS)
@@ -54,6 +70,11 @@ check: all
 	./$(TARGET) fixtures/anim.png
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(OBJS) $(TARGET)
 
 .PHONY: all check clean
+
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(COMPILE.c) $(OUTPUT_OPTION) $<

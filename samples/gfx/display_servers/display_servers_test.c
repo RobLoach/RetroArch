@@ -132,6 +132,11 @@ typedef struct
    int fail_screen_info;
    int fail_output_info;
    int fail_crtc_info;
+   int two_outputs;
+   int window_available;
+   int fail_translate;
+   int window_x;
+   int window_y;
 
    /* Making output_ncrtc larger than screen_ncrtc is what
     * distinguishes indexing info->crtcs from screen->crtcs: the
@@ -344,9 +349,17 @@ int XRRGetOutputProperty(Display *dpy, RROutput output, Atom property,
    return Success;
 }
 
-/* The modeline path traps X errors around each RandR call; the
- * stub never raises one, so the handler is stored and returned. */
 static XErrorHandler s_error_handler;
+static unsigned s_add_error, s_forwarded_errors;
+static Display s_foreign_display;
+
+static int previous_error_handler(Display *dpy, XErrorEvent *error)
+{
+   (void)dpy;
+   (void)error;
+   s_forwarded_errors++;
+   return 0;
+}
 XErrorHandler XSetErrorHandler(XErrorHandler handler)
 {
    XErrorHandler old = s_error_handler;
@@ -354,25 +367,45 @@ XErrorHandler XSetErrorHandler(XErrorHandler handler)
    return old;
 }
 
+Bool XQueryExtension(Display *dpy, const char *name, int *opcode,
+      int *event, int *error)
+{
+   (void)dpy;
+   *opcode = 140;
+   *event = *error = 0;
+   return strcmp(name, "RANDR") == 0;
+}
+
+Bool (*XESetWireToError(Display *dpy, int error,
+      Bool (*handler)(Display *, XErrorEvent *, xError *)))(Display *, XErrorEvent *, xError *)
+{
+   (void)dpy;
+   (void)error;
+   (void)handler;
+   return NULL;
+}
+
 int XClearWindow(Display *dpy, Window w) { (void)dpy; (void)w; return 0; }
 
-/* The modeline path locates the head under the RetroArch window;
- * g_x11_win is 0 here, so neither is reached, but the driver links
- * them. */
+/* Window-center queries also exercise output selection after a move. */
 Status XGetWindowAttributes(Display *dpy, Window w, XWindowAttributes *attr)
 {
    (void)dpy; (void)w;
    memset(attr, 0, sizeof(*attr));
-   return 0;
+   attr->root = 1;
+   attr->width = 640;
+   attr->height = 480;
+   return s_cfg.window_available;
 }
 
 Bool XTranslateCoordinates(Display *dpy, Window src, Window dst,
       int sx, int sy, int *dx, int *dy, Window *child)
 {
    (void)dpy; (void)src; (void)dst; (void)sx; (void)sy;
-   *dx = *dy = 0;
+   *dx = s_cfg.window_x;
+   *dy = s_cfg.window_y;
    *child = 0;
-   return False;
+   return s_cfg.fail_translate ? False : True;
 }
 
 Status XGetGeometry(Display *dpy, Drawable d, Window *root, int *x, int *y,
@@ -421,10 +454,12 @@ XRRScreenResources *XRRGetScreenResources(Display *dpy, Window w)
    if (!(r = (XRRScreenResources*)stub_alloc(sizeof(*r))))
       return NULL;
 
-   r->noutput = 1;
-   if (!(r->outputs = (RROutput*)stub_alloc(sizeof(RROutput))))
+   r->noutput = s_cfg.two_outputs ? 2 : 1;
+   if (!(r->outputs = (RROutput*)stub_alloc(sizeof(RROutput) * r->noutput)))
       return r;
    r->outputs[0] = 1;
+   if (s_cfg.two_outputs)
+      r->outputs[1] = 2;
 
    r->ncrtc = s_cfg.screen_ncrtc;
    if (r->ncrtc > 0)
@@ -535,7 +570,7 @@ XRROutputInfo *XRRGetOutputInfo(Display *dpy, XRRScreenResources *res,
    XRROutputInfo *o;
    int i;
 
-   (void)dpy; (void)res; (void)out;
+   (void)dpy; (void)res;
    s_tag = "output_info";
 
    if (s_cfg.fail_output_info)
@@ -544,9 +579,11 @@ XRROutputInfo *XRRGetOutputInfo(Display *dpy, XRRScreenResources *res,
       return NULL;
 
    o->connection = (unsigned short)s_cfg.output_connection;
-   o->name       = (char*)"STUB-1";
+   o->name       = (char*)(out == 2 ? "STUB-2" : "STUB-1");
    o->nameLen    = 6;
    o->crtc       = s_cfg.output_crtc_in_screen ? SCREEN_CRTC_BASE : OUTPUT_CRTC_BASE;
+   if (s_cfg.two_outputs && out == 2)
+      o->crtc++;
    o->ncrtc      = s_cfg.output_ncrtc;
 
    if (o->ncrtc > 0)
@@ -584,6 +621,12 @@ XRRCrtcInfo *XRRGetCrtcInfo(Display *dpy, XRRScreenResources *res, RRCrtc crtc)
 
    c->width    = 1280;
    c->height   = 720;
+   if (s_cfg.two_outputs && crtc == OUTPUT_CRTC_BASE + 1)
+   {
+      c->x = 1280;
+      c->width = 1920;
+      c->height = 1080;
+   }
    c->rotation = RR_Rotate_0;
    c->mode     = 1;
    c->noutput  = 0;
@@ -642,6 +685,13 @@ void XRRAddOutputMode(Display *dpy, RROutput out, RRMode mode)
 {
    (void)dpy; (void)out; (void)mode;
    s_log.add_output_mode_calls++;
+   if (s_add_error && s_error_handler)
+   {
+      XErrorEvent error;
+      memset(&error, 0, sizeof(error));
+      error.error_code = BadMatch;
+      s_error_handler(s_add_error == 1 ? dpy : &s_foreign_display, &error);
+   }
 }
 
 void XRRDeleteOutputMode(Display *dpy, RROutput out, RRMode mode)
@@ -769,6 +819,58 @@ static int test_refresh_rate_query_failures(void)
    }
 
    printf("[pass] get_refresh_rate survives every failing query\n");
+   return 0;
+}
+
+/* get_metrics: the screen's size when the display opens, and false
+ * for every metric when XOpenDisplay fails (DISPLAY set with no
+ * server behind it), which the frontend asks at startup. */
+static int test_metrics_open_display_failure(void)
+{
+   static const enum display_metric_types types[5] = {
+      DISPLAY_METRIC_PIXEL_WIDTH, DISPLAY_METRIC_PIXEL_HEIGHT,
+      DISPLAY_METRIC_MM_WIDTH,    DISPLAY_METRIC_MM_HEIGHT,
+      DISPLAY_METRIC_DPI };
+   static const float expect[4] = { 1280.0f, 720.0f, 340.0f, 190.0f };
+   stub_cfg_t cfg;
+   float v;
+   int i;
+
+   if (!dispserv_x11.get_metrics)
+   {
+      fprintf(stderr, "FAIL: dispserv_x11 has no get_metrics\n");
+      return 1;
+   }
+
+   cfg_default(&cfg);
+   stub_reset(&cfg);
+   for (i = 0; i < 4; i++)
+   {
+      v = 0.0f;
+      if (!dispserv_x11.get_metrics(NULL, types[i], &v) || v != expect[i])
+      {
+         fprintf(stderr, "FAIL: metric %d gave %f, expected %f\n",
+               (int)types[i], v, expect[i]);
+         return 1;
+      }
+   }
+
+   cfg.fail_open_display = 1;
+   stub_reset(&cfg);
+   for (i = 0; i < 5; i++)
+   {
+      v = 123.0f;
+      if (dispserv_x11.get_metrics(NULL, types[i], &v) || v != 0.0f)
+      {
+         fprintf(stderr, "FAIL: metric %d without a display gave %f\n",
+               (int)types[i], v);
+         return 1;
+      }
+   }
+   if (stub_leaks("get_metrics"))
+      return 1;
+
+   printf("[pass] get_metrics survives a failed XOpenDisplay\n");
    return 0;
 }
 
@@ -1104,6 +1206,50 @@ static int test_modeline_lifecycle(void)
    return 0;
 }
 
+static int test_modeline_error_routing(void)
+{
+   stub_cfg_t cfg;
+   video_modeline_disp_t ds;
+   video_modeline_t mode;
+   unsigned kind;
+   for (kind = 1; kind <= 2; kind++)
+   {
+      void *data;
+      bool added;
+      cfg_default(&cfg);
+      cfg.output_crtc_in_screen = 1;
+      stub_reset(&cfg);
+      memset(&ds, 0, sizeof(ds));
+      memset(&mode, 0, sizeof(mode));
+      strcpy(ds.screen, "auto");
+      mode.hactive = 320;
+      mode.vactive = 240;
+      mode.vfreq = 60.0;
+      data = dispserv_x11.init();
+      if (!data || !dispserv_x11.modeline_open(data, &ds)) return 1;
+      s_add_error = kind;
+      s_forwarded_errors = 0;
+      s_error_handler = previous_error_handler;
+      added = dispserv_x11.modeline_add(data, &mode);
+      s_add_error = 0;
+      if (added != (kind == 2)
+            || s_forwarded_errors != (kind == 2 ? 1U : 0U)
+            || s_error_handler != previous_error_handler
+            || (kind == 1 && mode.platform_data))
+      {
+         fprintf(stderr, "FAIL: modeline error routing, kind %u\n", kind);
+         return 1;
+      }
+      if (added) dispserv_x11.modeline_delete(data, &mode);
+      dispserv_x11.modeline_close(data);
+      dispserv_x11.destroy(data);
+      s_error_handler = NULL;
+      if (stub_leaks("modeline error routing")) return 1;
+   }
+   puts("[pass] modeline traps its errors and forwards other connections");
+   return 0;
+}
+
 static int test_modeline_query_failures(void)
 {
    int i;
@@ -1231,8 +1377,71 @@ static int test_get_edid(void)
    return 0;
 }
 
+static int test_output_snapshot(void)
+{
+   int i;
+   for (i = 0; i < 11; i++)
+   {
+      stub_cfg_t cfg;
+      void *data;
+      unsigned dims = 1;
+      unsigned expected = VIDEO_SCALE_PACK(1920, 1080);
+      char name[16] = "stale";
+      const char *want = "STUB-2";
+      size_t len = sizeof(name);
+
+      cfg_default(&cfg);
+      cfg.two_outputs = 1;
+      cfg.window_available = 1;
+      cfg.window_x = 1400;
+      cfg.window_y = 100;
+      g_x11_win = 1;
+      switch (i)
+      {
+         case 1:
+            cfg.window_x = 100;
+            expected = VIDEO_SCALE_PACK(1280, 720);
+            want = "STUB-1";
+            break;
+         case 2: cfg.fail_output_info = 1; break;
+         case 3: cfg.fail_crtc_info = 1; break;
+         case 4: cfg.fail_screen_resources = 1; break;
+         case 5: cfg.window_available = 0; break;
+         case 6: cfg.fail_translate = 1; break;
+         case 7: cfg.window_x = 3200; break;
+         case 8: cfg.fail_open_display = 1; break;
+         case 9: len = 4; want = "STU"; break;
+         case 10:
+            g_x11_win = 0;
+            expected = VIDEO_SCALE_PACK(1280, 720);
+            want = "STUB-1";
+            break;
+      }
+      if (i >= 2 && i <= 8)
+      {
+         expected = 0;
+         want = "";
+      }
+      stub_reset(&cfg);
+      data = dispserv_x11.init();
+      dispserv_x11.get_video_output_size(data, &dims, name, len);
+      dispserv_x11.destroy(data);
+      g_x11_win = 0;
+      if (dims != expected || strcmp(name, want) || s_log.bad_free
+            || stub_leaks("output snapshot"))
+      {
+         fprintf(stderr, "FAIL: output snapshot %d: %u %s\n", i, dims, name);
+         return 1;
+      }
+   }
+   puts("[pass] output identity/geometry follows window and clears failed queries");
+   return 0;
+}
+
 int main(void)
 {
+   if (test_output_snapshot())
+      return 1;
    if (test_get_edid())
       return 1;
    if (test_orientation_query_failures())
@@ -1240,6 +1449,8 @@ int main(void)
    if (test_refresh_rate_query_failures())
       return 1;
    if (test_resolution_query_failures())
+      return 1;
+   if (test_metrics_open_display_failure())
       return 1;
    if (test_orientation_output_disconnected())
       return 1;
@@ -1252,6 +1463,8 @@ int main(void)
    if (test_modeline_lifecycle())
       return 1;
    if (test_modeline_query_failures())
+      return 1;
+   if (test_modeline_error_routing())
       return 1;
 
    puts("ALL OK");

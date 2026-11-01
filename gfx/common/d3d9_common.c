@@ -29,6 +29,8 @@
 #ifdef HAVE_DYNAMIC_D3D
 #include <dynamic/dylib.h>
 #endif
+#include <stdlib.h>
+
 #include <string/stdstring.h>
 #include <retro_timers.h>
 
@@ -38,6 +40,8 @@
 
 #ifdef _XBOX
 #include <xgraphics.h>
+
+#include "../../configuration.h"
 #endif
 
 #include "win32_common.h"
@@ -52,6 +56,14 @@ static bool d3d9_dylib_initialized = false;
 
 typedef IDirect3D9 *(__stdcall *D3D9Create_t)(UINT);
 static D3D9Create_t D3D9Create;
+#ifdef HAVE_DYNAMIC_D3D
+/* Direct3D9Ex, from Vista on: resolved where there is one, and the
+ * devices made without it otherwise */
+typedef HRESULT (__stdcall *D3D9CreateEx_t)(UINT, IDirect3D9**);
+static D3D9CreateEx_t D3D9CreateEx;
+#endif
+/* Whether the object d3d9_create last made is Direct3D9Ex's */
+static bool d3d9_object_ex;
 
 void *d3d9_create(void)
 {
@@ -60,6 +72,21 @@ void *d3d9_create(void)
 #else
    UINT ver = 31;
 #endif
+#ifdef HAVE_DYNAMIC_D3D
+   /* RETROARCH_D3D9EX=0 keeps the devices of a system without it, so
+    * that path stays tested where Ex is there */
+   const char *want = getenv("RETROARCH_D3D9EX");
+   if (D3D9CreateEx && !(want && want[0] == '0'))
+   {
+      IDirect3D9 *obj = NULL;
+      if (SUCCEEDED(D3D9CreateEx(32, &obj)) && obj)
+      {
+         d3d9_object_ex = true;
+         return obj;
+      }
+   }
+#endif
+   d3d9_object_ex = false;
    return D3D9Create(ver);
 }
 
@@ -85,6 +112,7 @@ bool d3d9_initialize_symbols(enum gfx_ctx_api api)
    if (!(D3D9Create = (D3D9Create_t)dylib_proc(g_d3d9_dll, "Direct3DCreate9")))
       RARCH_ERR("[D3D9] d3d9.dll does not export Direct3DCreate9: %s\n",
             dylib_error() ? dylib_error() : "(no error reported)");
+   D3D9CreateEx = (D3D9CreateEx_t)dylib_proc(g_d3d9_dll, "Direct3DCreate9Ex");
 #else
    D3D9Create                 = Direct3DCreate9;
 #endif
@@ -108,6 +136,7 @@ void d3d9_deinitialize_symbols(void)
    if (g_d3d9_dll)
       dylib_close(g_d3d9_dll);
    g_d3d9_dll         = NULL;
+   D3D9CreateEx       = NULL;
 
    d3d9_dylib_initialized = false;
 #endif
@@ -123,6 +152,41 @@ static bool d3d9_create_device_internal(
 {
    LPDIRECT3D9       d3d = (LPDIRECT3D9)_d3d;
    LPDIRECT3DDEVICE9 dev = (LPDIRECT3DDEVICE9)data;
+#ifdef HAVE_DYNAMIC_D3D
+   if (dev && d3d9_object_ex)
+   {
+      /* A full screen of its own is given its mode; a window none */
+      d3d9_display_mode_ex_t mode;
+      mode.Size             = sizeof(mode);
+      mode.Width            = d3dpp->BackBufferWidth;
+      mode.Height           = d3dpp->BackBufferHeight;
+      mode.RefreshRate      = d3dpp->FullScreen_RefreshRateInHz;
+      mode.Format           = d3dpp->BackBufferFormat;
+      mode.ScanLineOrdering = 1; /* D3DSCANLINEORDERING_PROGRESSIVE */
+      if (SUCCEEDED(((d3d9_ex_vtbl_t*)d3d->lpVtbl)->CreateDeviceEx(d3d,
+                  cur_mon_id, D3DDEVTYPE_HAL, focus_window,
+                  behavior_flags | (d3dpp->SwapEffect == D3D9_SWAPEFFECT_FLIPEX
+                     ? D3D9_CREATE_ENABLE_PRESENTSTATS : 0), d3dpp,
+                  d3dpp->Windowed ? NULL : &mode,
+                  (IDirect3DDevice9**)dev)))
+         return true;
+      /* The flip model is not a reason to go without a device: the
+       * swap effect of before, then */
+      if (d3dpp->SwapEffect == D3D9_SWAPEFFECT_FLIPEX)
+      {
+         RARCH_WARN("[D3D9] No device presenting in the flip model, "
+               "presenting with the discard swap effect.\n");
+         d3dpp->SwapEffect = D3DSWAPEFFECT_DISCARD;
+         if (SUCCEEDED(((d3d9_ex_vtbl_t*)d3d->lpVtbl)->CreateDeviceEx(d3d,
+                     cur_mon_id, D3DDEVTYPE_HAL, focus_window,
+                     behavior_flags, d3dpp,
+                     d3dpp->Windowed ? NULL : &mode,
+                     (IDirect3DDevice9**)dev)))
+            return true;
+      }
+      /* and the device of a system without Ex if that will not do */
+   }
+#endif
    return (dev &&
          SUCCEEDED(IDirect3D9_CreateDevice(d3d,
                cur_mon_id,
@@ -166,6 +230,9 @@ success:
    if (retries > 0)
       RARCH_LOG("[D3D9] Device created successfully after %d retries.\n",
             retries);
+   RARCH_LOG("[D3D9] %s device.\n",
+         d3d9_dev_is_ex(*(LPDIRECT3DDEVICE9*)dev)
+         ? "Direct3D9Ex" : "Direct3D 9");
    return true;
 }
 
@@ -227,13 +294,9 @@ static void d3d9_get_video_size(d3d9_video_t *d3d,
          video_mode.dwDisplayHeight);
 
    if (video_mode.fIsHiDef)
-   {
       *dims = VIDEO_SCALE_PACK(1280, 720);
-   }
    else
-   {
       *dims = VIDEO_SCALE_PACK(640, 480);
-   }
 
    d3d->widescreen_mode         = video_mode.fIsWideScreen;
 }
@@ -271,10 +334,8 @@ void d3d9_make_d3dpp(d3d9_video_t *d3d,
 {
    D3DPRESENT_PARAMETERS *d3dpp   = (D3DPRESENT_PARAMETERS*)_d3dpp;
 #ifdef _XBOX
-   /* TODO/FIXME - get rid of global state dependencies. */
-   global_t *global               = global_get_ptr();
-   int gamma_enable               = global ?
-      global->console.screen.gamma_correction : 0;
+   settings_t *settings           = config_get_ptr();
+   int gamma_enable               = settings->uints.video_gamma;
 #endif
    bool windowed_enable           = d3d9_is_windowed_enable(info->fullscreen);
 
@@ -311,6 +372,17 @@ void d3d9_make_d3dpp(d3d9_video_t *d3d,
 
    d3dpp->SwapEffect              = D3DSWAPEFFECT_DISCARD;
    d3dpp->BackBufferCount         = 2;
+#ifndef _XBOX
+   /* A window of a Direct3D9Ex device presents through the flip model
+    * when asked to: the compositor takes its buffers as they are,
+    * instead of a copy of each. Only a window, and only Ex, has it. */
+   if (windowed_enable && d3d9_object_ex)
+   {
+      settings_t *settings        = config_get_ptr();
+      if (settings && settings->bools.video_d3d9ex_present)
+         d3dpp->SwapEffect        = D3D9_SWAPEFFECT_FLIPEX;
+   }
+#endif
 
 #ifdef _XBOX
    d3dpp->BackBufferFormat        = d3d9_get_color_format_backbuffer(
@@ -358,6 +430,129 @@ void d3d9_make_d3dpp(d3d9_video_t *d3d,
       d3dpp->Flags |= D3DPRESENTFLAG_NO_LETTERBOX;
    d3dpp->MultiSampleQuality      = 0;
 #endif
+}
+
+void d3d9_present_init(d3d9_video_t *d3d, bool vsync)
+{
+#ifndef _XBOX
+   D3DPRESENT_PARAMETERS pp;
+   const d3d9_dev_ex_vtbl_t *vt = NULL;
+   IDirect3DSwapChain9 *chain   = NULL;
+   settings_t *settings         = config_get_ptr();
+   void *ex                     = NULL;
+   bool flip                    = false;
+   int opt_latency              = 0;
+   UINT max_latency             = 1;
+   UINT cur_latency             = 0;
+
+   d3d->dev_ex                  = NULL;
+   d3d->chain_ex                = NULL;
+   d3d->present_wait            = 0;
+   d3d->wait_for_vblank         = 0;
+   d3d->present_shown           = false;
+
+   if (     !settings
+         || !settings->bools.video_d3d9ex_present
+         || !d3d->dev
+         || FAILED(IDirect3DDevice9_QueryInterface(d3d->dev,
+               &d3d9_iid_device_ex, &ex))
+         || !ex)
+      return;
+   /* The device holds its own interface for as long as it lives */
+   ((IUnknown*)ex)->lpVtbl->Release((IUnknown*)ex);
+   d3d->dev_ex = (LPDIRECT3DDEVICE9)ex;
+   vt          = (const d3d9_dev_ex_vtbl_t*)d3d->dev_ex->lpVtbl;
+
+   if (SUCCEEDED(IDirect3DDevice9_GetSwapChain(d3d->dev, 0, &chain))
+         && chain)
+   {
+      void *chain_ex = NULL;
+      if (SUCCEEDED(IDirect3DSwapChain9_GetPresentParameters(chain, &pp)))
+         flip = (pp.SwapEffect == D3D9_SWAPEFFECT_FLIPEX);
+      /* Its present statistics, for d3d9_last_present_time; the
+       * device holds its swap chain as it holds itself */
+      if (SUCCEEDED(IDirect3DSwapChain9_QueryInterface(chain,
+                  &d3d9_iid_swap_chain_ex, &chain_ex)) && chain_ex)
+      {
+         ((IUnknown*)chain_ex)->lpVtbl->Release((IUnknown*)chain_ex);
+         d3d->chain_ex = (LPDIRECT3DSWAPCHAIN9)chain_ex;
+      }
+      IDirect3DSwapChain9_Release(chain);
+   }
+   RARCH_LOG("[D3D9] Presenting %s.\n", flip
+         ? "through the flip model" : "with the discard swap effect");
+
+   /* The frame latency, as Direct3D 11 takes it */
+   if (!vsync || !settings->bools.video_waitable_swapchains)
+      return;
+   opt_latency = settings->ints.video_max_frame_latency;
+   if (opt_latency < 1)
+      d3d->wait_for_vblank = (!opt_latency) ? 1 : -1;
+   else
+      max_latency          = (UINT)opt_latency;
+   /* Waiting before Present wants a Present that does not wait
+    * itself, which only the flip model makes */
+   if (d3d->wait_for_vblank < 0 && !flip)
+      d3d->wait_for_vblank = 1;
+
+   vt->SetMaximumFrameLatency(d3d->dev_ex, max_latency);
+   vt->GetMaximumFrameLatency(d3d->dev_ex, &cur_latency);
+   if (d3d->wait_for_vblank && FAILED(vt->WaitForVBlank(d3d->dev_ex, 0)))
+   {
+      RARCH_WARN("[D3D9] The device cannot wait for the display; "
+            "frames do not wait beside Present.\n");
+      d3d->wait_for_vblank = 0;
+   }
+   RARCH_LOG("[D3D9] Requesting %u maximum frame latency, using %u%s.\n",
+         max_latency, cur_latency,
+         (d3d->wait_for_vblank < 0) ? " with WaitForVBlank before Present"
+         : (d3d->wait_for_vblank > 0) ? " with WaitForVBlank after Present"
+         : "");
+#else
+   (void)vsync;
+   d3d->dev_ex          = NULL;
+   d3d->chain_ex        = NULL;
+   d3d->present_wait    = 0;
+   d3d->wait_for_vblank = 0;
+   d3d->present_shown   = false;
+#endif
+}
+
+retro_time_t d3d9_last_present_time(d3d9_video_t *d3d)
+{
+#ifndef _XBOX
+   static LARGE_INTEGER freq;
+   d3d9_present_stats_t stats;
+   UINT last = 0;
+   if (d3d)
+   {
+      /* Only while the statistics describe that present: one made at
+       * once, on no vblank, leaves them at the last that was */
+      if (d3d->chain_ex)
+      {
+         const d3d9_chain_ex_vtbl_t *vt =
+            (const d3d9_chain_ex_vtbl_t*)d3d->chain_ex->lpVtbl;
+         stats.PresentCount         = 0;
+         stats.PresentRefreshCount  = 0;
+         stats.SyncRefreshCount     = 0;
+         stats.SyncQPCTime.QuadPart = 0;
+         stats.SyncGPUTime.QuadPart = 0;
+         if (     SUCCEEDED(vt->GetPresentStats(d3d->chain_ex, &stats))
+               && SUCCEEDED(vt->GetLastPresentCount(d3d->chain_ex, &last))
+               && stats.PresentCount == last
+               && stats.SyncQPCTime.QuadPart
+               && (freq.QuadPart || QueryPerformanceFrequency(&freq)))
+            return (retro_time_t)(
+                  stats.SyncQPCTime.QuadPart / freq.QuadPart * 1000000
+                  + stats.SyncQPCTime.QuadPart % freq.QuadPart * 1000000
+                  / freq.QuadPart);
+      }
+#ifndef __WINRT__
+      return win32_dwm_last_vblank_time();
+#endif
+   }
+#endif
+   return 0;
 }
 
 /* --- GPU-native BCn compressed-texture upload (shared by d3d9cg/d3d9hlsl) --- */
@@ -410,17 +605,16 @@ uintptr_t d3d9_load_texture_compressed(void *data,
       return 0;
    block_bytes = (tc->format == TEXTURE_GPU_FORMAT_BC1) ? 8 : 16;
 
-   if (FAILED(IDirect3DDevice9_CreateTexture(d3d->dev,
+   if (FAILED(d3d9_tex_create(d3d->dev,
                tc->mips[0].width, tc->mips[0].height, tc->num_mips,
-               0, f, D3DPOOL_MANAGED,
-               (struct IDirect3DTexture9**)&_tbuf, NULL)))
+               0, f, (LPDIRECT3DTEXTURE9*)&_tbuf)))
       return 0;
    tex = (LPDIRECT3DTEXTURE9)_tbuf;
 
    for (i = 0; i < tc->num_mips; i++)
    {
       D3DLOCKED_RECT lr;
-      if (SUCCEEDED(IDirect3DTexture9_LockRect(tex, i, &lr, NULL, 0)))
+      if (SUCCEEDED(d3d9_tex_lock(tex, i, &lr, NULL, 0)))
       {
          unsigned       blocks_w  = (tc->mips[i].width  + 3) >> 2;
          unsigned       blocks_h  = (tc->mips[i].height + 3) >> 2;
@@ -432,7 +626,7 @@ uintptr_t d3d9_load_texture_compressed(void *data,
           * padded, so copy row by row rather than in one shot. */
          for (r = 0; r < blocks_h; r++)
             memcpy(dst + r * lr.Pitch, src + r * row_bytes, row_bytes);
-         IDirect3DTexture9_UnlockRect(tex, i);
+         d3d9_tex_unlock(tex, i, true);
       }
    }
 

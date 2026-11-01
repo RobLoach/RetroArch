@@ -1,4 +1,6 @@
-TARGETS := path_resolve_realpath_test fill_pathname_test
+include ../../sample_objdir.mk
+
+TARGETS := path_resolve_realpath_test fill_pathname_test path_mkdir_test
 
 LIBRETRO_COMM_DIR := ../../..
 
@@ -16,9 +18,9 @@ COMMON_SOURCES := \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
 	$(LIBRETRO_COMM_DIR)/time/rtime.c
 
-COMMON_OBJS := $(COMMON_SOURCES:.c=.o)
+COMMON_OBJS := $(call sample_objs,$(COMMON_SOURCES:.c=.o))
 
-CFLAGS += -Wall -pedantic -std=gnu99 -g -DRARCH_INTERNAL -I$(LIBRETRO_COMM_DIR)/include
+CFLAGS += -Wall -pedantic -std=gnu99 -g1 -DRARCH_INTERNAL -I$(LIBRETRO_COMM_DIR)/include
 
 # The samples workflow passes SANITIZER=address,undefined to every
 # sample dir.  Without this block the variable was accepted and
@@ -35,10 +37,15 @@ all: $(TARGETS)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 $(TARGETS): %: %.o $(COMMON_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGETS) $(addsuffix .o,$(TARGETS)) $(COMMON_OBJS)
 
 .PHONY: all clean

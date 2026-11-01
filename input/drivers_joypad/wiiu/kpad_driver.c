@@ -115,7 +115,8 @@ static int16_t kpad_axis(unsigned port, uint32_t axis)
 
 static int16_t kpad_state(
       rarch_joypad_info_t *joypad_info,
-      const struct retro_keybind *binds,
+      const uint16_t *joykeys,
+      const uint32_t *joyaxes,
       unsigned port)
 {
    int i;
@@ -124,11 +125,8 @@ static int16_t kpad_state(
 
    for (i = 0; i < RARCH_FIRST_CUSTOM_BIND; i++)
    {
-      /* Auto-binds are per joypad, not per user. */
-      const uint64_t joykey  = (binds[i].joykey != NO_BTN)
-         ? binds[i].joykey  : joypad_info->auto_binds[i].joykey;
-      const uint32_t joyaxis = (binds[i].joyaxis != AXIS_NONE)
-         ? binds[i].joyaxis : joypad_info->auto_binds[i].joyaxis;
+      const uint64_t joykey  = joykeys[i];
+      const uint32_t joyaxis = joyaxes[i];
       if (
                (uint16_t)joykey != NO_BTN
             && kpad_button(port_idx, (uint16_t)joykey))
@@ -205,6 +203,12 @@ static void kpad_poll_one_channel(unsigned channel, KPADData *kpad)
          pad_functions.set_axis_value(joypad_state.kpad.wiimotes[channel].analog_state,
                0, 0, 0, 0, 0, 0);
          break;
+      default:
+         /* A device this driver does not read holds nothing. */
+         joypad_state.kpad.wiimotes[channel].button_state = 0;
+         pad_functions.set_axis_value(joypad_state.kpad.wiimotes[channel].analog_state,
+               0, 0, 0, 0, 0, 0);
+         break;
    }
 }
 
@@ -217,6 +221,7 @@ static void kpad_deregister(unsigned channel)
       input_autoconfigure_disconnect(slot, kpad_driver.name(slot));
       joypad_state.kpad.wiimotes[channel].type = WIIMOTE_TYPE_NONE;
       joypad_state.pads[slot].connected = false;
+      pad_connection_release_slot(&joypad_state.pads[slot]);
 
       joypad_state.kpad.channel_slot_map[channel] = -1;
    }

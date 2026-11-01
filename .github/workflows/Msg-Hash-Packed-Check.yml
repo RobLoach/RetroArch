@@ -55,6 +55,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Link with lld
+        run: sh .github/workflows/scripts/use-lld.sh
+
       - name: Checker self-test
         shell: bash
         run: |
@@ -68,7 +71,7 @@ jobs:
           # from intl/, so this reports the same thing whether or not
           # the shipped headers currently pass - it is measuring the
           # checker, not the tree.
-          python3 tools/msg_hash_packed_check.py --selftest
+          tools/check.sh tools/msg_hash_packed_check.c --selftest
 
       - name: Tree check
         shell: bash
@@ -80,7 +83,7 @@ jobs:
           # the chunk, for a non-final chunk of a split row), no row may
           # hold an embedded NUL, and the sizeof() check must still add
           # up to the members it guards.
-          python3 tools/msg_hash_packed_check.py
+          tools/check.sh tools/msg_hash_packed_check.c
 
       - name: Format parity self-test
         shell: bash
@@ -94,7 +97,7 @@ jobs:
           # argument taken from the table directly and through a local,
           # and must not see a string that is copied, passed as a value,
           # or split on a placeholder rather than formatted.
-          python3 tools/msg_hash_format_check.py --selftest
+          tools/check.sh tools/msg_hash_format_check.c --selftest
 
       - name: Format parity tree check
         shell: bash
@@ -107,4 +110,30 @@ jobs:
           # That last set is measured from the call sites rather than
           # assumed from the namespace: ninety rows reach a printf-family
           # format argument today and twenty-nine of them are not MSG_*.
-          python3 tools/msg_hash_format_check.py
+          tools/check.sh tools/msg_hash_format_check.c
+
+      - name: Internal headers survive translation conversion
+        run: python3 tools/intl_conversion_check.py
+
+      - name: Label macros current
+        shell: bash
+        run: |
+          set -eu
+          # msg_hash_lbl_str.h names each label's member of the packed
+          # label blob and is generated from the same rows the blob is
+          # built from; a row added, renamed or guarded without rerunning
+          # the generator would leave a macro pointing at a stale or
+          # missing member, or fall back to a literal that duplicates
+          # the blob's bytes. Regenerating must be a no-op.
+          python3 tools/gen_lbl_str.py
+          git diff --exit-code -- msg_hash_lbl_str.h
+
+      - name: Sublabel map sorted
+        shell: bash
+        run: |
+          set -eu
+          # The sublabel binder looks rows up by binary search; a row
+          # out of order is never found and its entry loses its
+          # sublabel without any build failing.
+          python3 tools/sublabel_map_check.py --selftest
+          python3 tools/sublabel_map_check.py

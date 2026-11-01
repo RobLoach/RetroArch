@@ -35,8 +35,32 @@
 #include <string.h>
 #include <windows.h>
 
+#include <rthreads/retro_eventcount.h>
+static bool test_wait_timeout(retro_eventcount_t *ec, int key, int64_t usec);
+#define retro_eventcount_commit_wait_timeout test_wait_timeout
+
+/* The modelled cases drive the hardware through fake_pos, and the
+ * driver reads the time between two samples of it to tell a lap lost
+ * to a stall: a host that holds this process for longer than a small
+ * loop between two pumps would read as one. Those cases run on a clock
+ * that moves only as the model waits; the refill thread runs on the
+ * real one. */
+#include <features/features_cpu.h>
+retro_time_t test_time_usec(void);
+#define cpu_features_get_time_usec test_time_usec
+
 /* The driver whole, as wdmks_abi_check.c includes it. */
 #include "audio/drivers/wdmks.c"
+#undef retro_eventcount_commit_wait_timeout
+#undef cpu_features_get_time_usec
+
+static bool         real_clock;
+static retro_time_t model_usec = 1000000;
+
+retro_time_t test_time_usec(void)
+{
+   return real_clock ? cpu_features_get_time_usec() : model_usec;
+}
 
 /* What the driver reaches for in RetroArch. */
 void RARCH_LOG(const char *f, ...)  { (void)f; }
@@ -45,6 +69,11 @@ void RARCH_ERR(const char *f, ...)  { (void)f; }
 void RARCH_DBG(const char *f, ...)  { (void)f; }
 uint32_t audio_driver_requested_layout(void) { return AUDIO_LAYOUT_STEREO; }
 void audio_driver_set_device_latency(size_t frames) { (void)frames; }
+settings_t *config_get_ptr(void)
+{
+   static settings_t settings;
+   return &settings;
+}
 
 static unsigned failures = 0;
 
@@ -88,6 +117,7 @@ static void loop_setup(wdmks_t *w)
    w->clk_ppm       = AUDIO_CLOCK_PPM_NONE;
    w->rt_buf        = (unsigned char*)malloc(LOOP_BYTES);
    w->rt_size       = LOOP_BYTES;
+   w->rt_ahead      = LOOP_BYTES;    /* held ahead: the whole loop, as before */
    w->rt_pos        = &fake_pos;
    fake_pos         = 0;
    /* As wdmks_rt_get_buffer leaves it. */
@@ -100,7 +130,7 @@ static void loop_setup(wdmks_t *w)
    w->rt_origin        = true;
    w->rt_fed           = false;
    retro_atomic_size_init(&w->rt_underruns, 0);
-   w->rt_ring_size     = w->rt_size;
+   w->rt_ring_size     = w->rt_ahead * 2;
    retro_spsc_init(&w->rt_ring, w->rt_ring_size);
    retro_eventcount_init(&w->rt_park);
    retro_atomic_int_init(&w->rt_run, 0);
@@ -113,6 +143,63 @@ static void loop_teardown(wdmks_t *w)
    retro_eventcount_free(&w->rt_park);
    retro_spsc_free(&w->rt_ring);
    free(w->rt_buf);
+}
+
+static wdmks_t *wait_model;
+static int64_t wait_elapsed;
+
+static bool test_wait_timeout(retro_eventcount_t *ec, int key, int64_t usec)
+{
+   model_usec += usec;
+   if (wait_model)
+   {
+      unsigned char drained[RATE / 200 * FRAME];
+      retro_eventcount_cancel_wait(ec);
+      wait_elapsed += usec;
+      /* A healthy 64 ms pin cannot free room before its notification. */
+      if (wait_elapsed >= 64000)
+      {
+         retro_spsc_read(&wait_model->rt_ring, drained, sizeof(drained));
+         return true;
+      }
+      return false;
+   }
+   return retro_eventcount_commit_wait_timeout(ec, key, usec);
+}
+
+static void run_fragment_wait(void)
+{
+   wdmks_t w;
+   unsigned char tone[RATE / 200 * FRAME];
+   unsigned mode;
+   printf("-- 5 ms write waiting on a 64 ms fragment --\n");
+   memset(tone, 0, sizeof(tone));
+   for (mode = 0; mode < 2; mode++)
+   {
+      loop_setup(&w);
+      w.rt_ahead = RATE * 64 / 1000 * FRAME;
+      w.rt_thread = (sthread_t*)(uintptr_t)1;
+      w.nonblock = false;
+      while (wdmks_rt_ring_room(&w))
+      {
+         size_t n = wdmks_rt_ring_room(&w);
+         if (n > sizeof(tone))
+            n = sizeof(tone);
+         retro_spsc_write(&w.rt_ring, tone, n);
+      }
+      retro_atomic_store_release_int(&w.rt_run, 1);
+      wait_model = &w;
+      wait_elapsed = 0;
+      if (mode == 0)
+         check(wdmks_wait_writable(&w, sizeof(tone)) >= sizeof(tone),
+               "writable wait survives a normal fragment");
+      else
+         check(wdmks_write(&w, tone, sizeof(tone)) == sizeof(tone),
+               "blocking write survives a normal fragment");
+      wait_model = NULL;
+      w.rt_thread = NULL;
+      loop_teardown(&w);
+   }
 }
 
 /* A byte pattern no silence matches: every byte non-zero. */
@@ -316,8 +403,600 @@ static void run_contract(const char *name, put_fn put, bool pump)
    loop_teardown(&w);
 }
 
+/* The ranges a pin reports each bind their own bounds: a pin offering
+ * 44100-48000 stereo and 44100-192000 8-channel PCM, and 48000 stereo
+ * float, has not offered 192000 stereo PCM, nor float at 44100. */
+static void run_ranges(void)
+{
+   wdmks_pin_t    pin;
+   wdmks_format_t f;
+   ra_ksmultiple_item_t   *item;
+   ra_ksdatarange_audio_t *r;
+   unsigned i;
+
+   printf("pin ranges, kept apart\n");
+   memset(&pin, 0, sizeof(pin));
+   pin.range_count = 3;
+   pin.ranges[0].max_channels = 2;  pin.ranges[0].min_bits = 16;
+   pin.ranges[0].max_bits = 16;     pin.ranges[0].min_rate = 44100;
+   pin.ranges[0].max_rate = 48000;
+   pin.ranges[1].max_channels = 8;  pin.ranges[1].min_bits = 16;
+   pin.ranges[1].max_bits = 24;     pin.ranges[1].min_rate = 44100;
+   pin.ranges[1].max_rate = 192000;
+   pin.ranges[2].max_channels = 2;  pin.ranges[2].min_bits = 32;
+   pin.ranges[2].max_bits = 32;     pin.ranges[2].min_rate = 48000;
+   pin.ranges[2].max_rate = 48000;  pin.ranges[2].is_float = true;
+
+   memset(&f, 0, sizeof(f));
+   f.rate = 48000; f.channels = 2; f.bits = 16;
+   check(wdmks_format_in_pin(&pin, &f), "48000 stereo 16-bit: the first range");
+   f.rate = 192000; f.channels = 8; f.bits = 24;
+   check(wdmks_format_in_pin(&pin, &f), "192000 8-channel 24-bit: the second");
+   f.rate = 192000; f.channels = 2; f.bits = 16;
+   check(wdmks_format_in_pin(&pin, &f), "192000 stereo 16-bit: also the second");
+   f.rate = 96000; f.channels = 2; f.bits = 32;
+   check(!wdmks_format_in_pin(&pin, &f), "96000 stereo 32-bit integer: no range holds it");
+   f.rate = 48000; f.channels = 2; f.bits = 32; f.is_float = true;
+   check(wdmks_format_in_pin(&pin, &f), "48000 stereo float: the third");
+   f.rate = 44100;
+   check(!wdmks_format_in_pin(&pin, &f), "44100 float: not offered, though 44100 and float each are");
+   f.rate = 48000; f.channels = 8; f.bits = 32;
+   check(!wdmks_format_in_pin(&pin, &f), "8-channel float: not offered");
+
+   /* Past the cap, the rest fold into the last kept range of their
+    * own type, never the other's. */
+   item = (ra_ksmultiple_item_t*)calloc(1, sizeof(*item)
+         + (WDMKS_MAX_RANGES + 2) * sizeof(*r));
+   item->Count = WDMKS_MAX_RANGES + 2;
+   item->Size  = (ULONG)(sizeof(*item) + item->Count * sizeof(*r));
+   r = (ra_ksdatarange_audio_t*)(item + 1);
+   for (i = 0; i < item->Count; i++)
+   {
+      r[i].DataRange.f.FormatSize  = sizeof(*r);
+      r[i].DataRange.f.MajorFormat = ra_ks_dataformat_type_audio;
+      r[i].DataRange.f.SubFormat   = (i == 1)
+         ? ra_ks_dataformat_subtype_float : ra_ks_dataformat_subtype_pcm;
+      r[i].MaximumChannels         = 2;
+      r[i].MinimumBitsPerSample    = (i == 1) ? 32 : 16;
+      r[i].MaximumBitsPerSample    = (i == 1) ? 32 : 16;
+      r[i].MinimumSampleFrequency  = 8000 + i * 1000;
+      r[i].MaximumSampleFrequency  = 8000 + i * 1000;
+   }
+   /* The last two are the ones past the cap: one PCM at 176400, and
+    * one float at 22050. */
+   r[WDMKS_MAX_RANGES].MinimumSampleFrequency     = 176400;
+   r[WDMKS_MAX_RANGES].MaximumSampleFrequency     = 176400;
+   r[WDMKS_MAX_RANGES + 1].DataRange.f.SubFormat  = ra_ks_dataformat_subtype_float;
+   r[WDMKS_MAX_RANGES + 1].MinimumBitsPerSample   = 32;
+   r[WDMKS_MAX_RANGES + 1].MaximumBitsPerSample   = 32;
+   r[WDMKS_MAX_RANGES + 1].MinimumSampleFrequency = 22050;
+   r[WDMKS_MAX_RANGES + 1].MaximumSampleFrequency = 22050;
+
+   memset(&pin, 0, sizeof(pin));
+   wdmks_pin_fold_ranges(item, &pin);
+   free(item);
+   check(pin.range_count == WDMKS_MAX_RANGES, "the cap holds");
+   memset(&f, 0, sizeof(f));
+   f.channels = 2; f.bits = 16; f.rate = 176400;
+   check(wdmks_format_in_pin(&pin, &f), "a PCM range past the cap widened the last PCM range");
+   f.rate = 8000; f.bits = 32; f.is_float = true;
+   check(!wdmks_format_in_pin(&pin, &f), "and not the float one");
+   f.rate = 22050;
+   check(wdmks_format_in_pin(&pin, &f), "a float range past the cap widened the float range");
+   f.rate = 176400;
+   check(!wdmks_format_in_pin(&pin, &f), "and not with the PCM one's rate");
+}
+
+/* A 64-bit position register: a byte count past 2^32, on a loop that
+ * is not a power of two, lands where the count says and not where its
+ * low word alone would. */
+static void run_wide_register(void)
+{
+   wdmks_t  w;
+   ULONG    reg[2];
+   uint64_t count;
+
+   printf("64-bit position register\n");
+   memset(&w, 0, sizeof(w));
+   w.rt_size     = LOOP_BYTES;
+   w.frame_bytes = FRAME;
+   w.rate        = RATE;
+   w.rt_pos      = reg;
+   w.rt_pos_wide = true;
+
+   count  = ((uint64_t)1 << 32) + 4 * LOOP_BYTES + 1000;
+   reg[0] = (ULONG)count;
+   reg[1] = (ULONG)(count >> 32);
+   check(wdmks_rt_register_read(&w) == (ULONG)(count % LOOP_BYTES),
+         "the position is the whole count modulo the loop");
+   check(wdmks_rt_register_read(&w) != (ULONG)(reg[0] % LOOP_BYTES),
+         "which is not where the low word alone would put it");
+   w.rt_pos_wide = false;
+   reg[0]        = 1000;
+   check(wdmks_rt_register_read(&w) == 1000, "a 32-bit register is read as it is");
+}
+
+/* The capture side's fold into the fifo: a stereo pin averaged to mono
+ * in either width, a mono pin copied through, and never more than the
+ * fifo takes. */
+static void run_capture_fold(void)
+{
+   wdmks_mic_t m;
+   int16_t     s16[8] = { 100, 300, -400, -200, 32767, 32767, -32768, 0 };
+   float       f32[4] = { 0.5f, 0.25f, -1.0f, 1.0f };
+   int16_t     out16[4];
+   float       outf[2];
+   size_t      took;
+
+   printf("capture fold\n");
+   memset(&m, 0, sizeof(m));
+   m.fifo        = fifo_new(1024);
+   m.frame_bytes = 4;
+   m.out_bytes   = 2;
+   took = wdmks_mic_fold(&m, (const unsigned char*)s16, sizeof(s16));
+   check(took == sizeof(s16), "stereo s16: every frame taken");
+   check(FIFO_READ_AVAIL(m.fifo) == 4 * sizeof(int16_t), "four mono samples out");
+   fifo_read(m.fifo, out16, sizeof(out16));
+   check(out16[0] == 200 && out16[1] == -300 && out16[2] == 32767
+         && out16[3] == -16384, "each the average of its pair, without wrapping");
+
+   m.frame_bytes = 8;
+   m.out_bytes   = 4;
+   m.is_float    = true;
+   took = wdmks_mic_fold(&m, (const unsigned char*)f32, sizeof(f32));
+   check(took == sizeof(f32), "stereo float: every frame taken");
+   fifo_read(m.fifo, outf, sizeof(outf));
+   check(outf[0] == 0.375f && outf[1] == 0.0f, "averaged as float");
+
+   m.frame_bytes = 4;
+   m.is_float    = true;
+   took = wdmks_mic_fold(&m, (const unsigned char*)f32, sizeof(f32));
+   check(took == sizeof(f32) && FIFO_READ_AVAIL(m.fifo) == sizeof(f32),
+         "mono float: copied through");
+   fifo_read(m.fifo, f32, sizeof(f32));
+
+   /* A fifo with room for two samples takes two frames of the three. */
+   fifo_free(m.fifo);
+   m.fifo        = fifo_new(2 * 4);   /* two floats */
+   took = wdmks_mic_fold(&m, (const unsigned char*)f32, 12);
+   check(took == 8, "only what the fifo takes, in whole samples");
+   fifo_free(m.fifo);
+}
+
+/* The WaveRT read model: what the hardware writes is read from behind
+ * its position, wrapping with the loop; a lap unseen means what it held
+ * is gone and the read cursor moves up to the hardware. */
+static void run_capture_loop(void)
+{
+   wdmks_mic_t   m;
+   unsigned char loop[LOOP_BYTES];
+   unsigned char out[LOOP_BYTES];
+   size_t        i;
+
+   printf("capture loop\n");
+   memset(&m, 0, sizeof(m));
+   m.stream.looped = true;
+   m.stream.handle = INVALID_HANDLE_VALUE;
+   m.fifo        = fifo_new(2 * LOOP_BYTES);
+   m.frame_bytes = FRAME;
+   m.out_bytes   = FRAME;     /* a stereo-wide mono pin, no fold */
+   m.rate        = RATE;
+   m.rt_buf      = loop;
+   m.rt_size     = LOOP_BYTES;
+   m.rt_pos      = &fake_pos;
+   for (i = 0; i < LOOP_BYTES; i++)
+      loop[i] = (unsigned char)(i * 7);
+
+   fake_pos = 0;
+   check(wdmks_mic_rt_drain(&m) && FIFO_READ_AVAIL(m.fifo) == 0,
+         "the first sample places the cursor and delivers nothing");
+
+   hw_play(1000);
+   check(wdmks_mic_rt_drain(&m) && FIFO_READ_AVAIL(m.fifo) == 1000,
+         "what the hardware wrote is delivered");
+   fifo_read(m.fifo, out, 1000);
+   check(!memcmp(out, loop, 1000), "from the start of the loop");
+
+   /* Round the wrap. */
+   hw_play(LOOP_BYTES - 1000 + 500);
+   check(wdmks_mic_rt_drain(&m) && FIFO_READ_AVAIL(m.fifo) == LOOP_BYTES - 500,
+         "a delivery that wraps is whole");
+   fifo_read(m.fifo, out, LOOP_BYTES - 500);
+   check(!memcmp(out, loop + 1000, LOOP_BYTES - 1000)
+         && !memcmp(out + LOOP_BYTES - 1000, loop, 500),
+         "and in order across the wrap");
+
+   /* A lap went by unobserved: the read cursor comes up to the
+    * hardware and nothing stale is delivered. */
+   m.rt_last_usec -= (retro_time_t)LOOP_FRAMES * 1000000 / RATE * 2;
+   hw_play(LOOP_BYTES / 3);
+   check(wdmks_mic_rt_drain(&m) && FIFO_READ_AVAIL(m.fifo) == 0
+         && m.rt_read == fake_pos, "laps lost: the cursor moves up to the hardware");
+
+   /* The hardware overruns: more written than the loop holds. */
+   hw_play(LOOP_BYTES / 2);
+   wdmks_mic_rt_drain(&m);
+   fifo_read(m.fifo, out, FIFO_READ_AVAIL(m.fifo));
+   fake_pos = (ULONG)((fake_pos + LOOP_BYTES / 2) % LOOP_BYTES);
+   wdmks_mic_rt_sample(&m);   /* observed, but not drained */
+   hw_play(LOOP_BYTES / 2 + FRAME);
+   check(wdmks_mic_rt_drain(&m) && FIFO_READ_AVAIL(m.fifo) == 0
+         && m.rt_read == fake_pos, "an overrun drops what was overwritten");
+
+   fifo_free(m.fifo);
+}
+
+/* A pin whose only range is 32-bit PCM stereo, 44100-384000 - a
+ * USB Audio Class 2 DAC as its class driver reports it: the integer
+ * shapes are in the ranges, float is the last-resort proposal, and the
+ * conversion into the pin's width is full scale. */
+static void run_wide_pcm_pin(void)
+{
+   wdmks_pin_t    pin;
+   wdmks_format_t f;
+   float          in[6]  = { 0.0f, 0.5f, -0.5f, 1.0f, -1.0f, 2.0f };
+   int32_t        out[6];
+   wdmks_mic_t    m;
+   int32_t        s32[2] = { 0x40000000, (int32_t)-0x40000000 };
+   float          fo;
+
+   printf("32-bit PCM pin\n");
+   memset(&pin, 0, sizeof(pin));
+   pin.range_count = 1;
+   pin.ranges[0].max_channels = 2;
+   pin.ranges[0].min_bits     = 32;
+   pin.ranges[0].max_bits     = 32;
+   pin.ranges[0].min_rate     = 44100;
+   pin.ranges[0].max_rate     = 384000;
+
+   memset(&f, 0, sizeof(f));
+   f.rate = 48000; f.channels = 2;
+   f.bits = 32; f.container_bits = 32; f.is_float = true;
+   check(!wdmks_format_in_pin(&pin, &f), "float is not in the ranges");
+   check(wdmks_pin_has_wide(&pin, 48000, 2), "but the pin is 32 bits wide, so it is proposed last");
+   check(!wdmks_pin_has_wide(&pin, 32000, 2), "not at a rate outside the range");
+   f.is_float = false;
+   check(wdmks_format_in_pin(&pin, &f), "32-bit integer is in the ranges");
+   f.bits = 24;
+   check(!wdmks_format_in_pin(&pin, &f), "24 valid bits is not, on a 32/32 range");
+   f.bits = 16; f.container_bits = 16;
+   check(!wdmks_format_in_pin(&pin, &f), "nor 16");
+   check(wdmks_shape_order[0].is_float && wdmks_shape_order[1].bits == 32
+         && !wdmks_shape_order[1].is_float && wdmks_shape_order[2].bits == 24
+         && wdmks_shape_order[3].container_bits == 16,
+         "shapes: float, 32, 24-in-32, 16");
+
+   convert_float_to_s32(out, in, 6, 32);
+   check(out[0] == 0 && out[1] == 0x40000000 && out[2] == (int32_t)-0x40000000,
+         "float to 32-bit: full scale");
+   check(out[3] == 0x7FFFFFFF && out[4] == (int32_t)-0x7FFFFFFF - 1
+         && out[5] == 0x7FFFFFFF, "and clamped at the ends");
+   in[1] = 0.5f + 1.0f / 4096.0f;
+   convert_float_to_s32(out, in, 6, 24);
+   check(out[1] == 0x40080000 && (out[1] & 0xFF) == 0,
+         "24 in 32: the low byte is clear");
+
+   memset(&m, 0, sizeof(m));
+   m.fifo        = fifo_new(64);
+   m.frame_bytes = 8;
+   m.out_bytes   = 4;
+   m.pin_s32     = true;
+   m.is_float    = true;
+   check(wdmks_mic_fold(&m, (const unsigned char*)s32, sizeof(s32)) == 8, "capture: a stereo 32-bit frame taken");
+   fifo_read(m.fifo, &fo, sizeof(fo));
+   check(fo == 0.0f, "averaged as float");
+   m.frame_bytes = 4;
+   wdmks_mic_fold(&m, (const unsigned char*)s32, 4);
+   fifo_read(m.fifo, &fo, sizeof(fo));
+   check(fo == 0.5f, "mono 32-bit: full scale float out");
+   fifo_free(m.fifo);
+}
+
+/* ------------------------------------------------------------------ */
+/* The refill thread itself, on the fake register with no event: it   */
+/* samples at a quarter of the loop, runs time-critical where the      */
+/* setting asks for it, and keeps its own account of how it woke.      */
+/* ------------------------------------------------------------------ */
+
+static void run_refill_thread(bool priority, bool mmcss)
+{
+   wdmks_t      w;
+   sthread_t   *t;
+   retro_time_t loop_usec = (retro_time_t)LOOP_FRAMES * 1000000 / RATE;
+   retro_time_t slice     = loop_usec / 4 < 500 ? 500 : loop_usec / 4;
+   /* Eight slices: enough passes for a gap between two of them even
+    * on a host that holds the process for a slice or two. */
+   retro_time_t run_usec  = slice * 8;
+   unsigned     expect    = 8;
+   unsigned     waited;
+
+   printf("-- refill thread, priority %s, Pro Audio class %s --\n",
+         priority ? "on" : "off", mmcss ? "on" : "off");
+   real_clock = true;
+   loop_setup(&w);
+   w.thread_priority = priority;
+   w.mmcss           = mmcss;
+   retro_atomic_store_release_int(&w.rt_run, 1);
+   t = sthread_create(wdmks_rt_refill_thread, &w);
+   check(t != NULL, "the refill thread starts");
+   /* The window opens once the thread has set itself up: raising
+    * itself, or loading the class library, takes as long as the host
+    * lets it, which on a busy one is longer than the window. */
+   for (waited = 0; waited < 10000; waited++)
+   {
+      int grant = retro_atomic_load_acquire_int(&w.rt_grant);
+      if (     grant != AUDIO_THREAD_GRANT_NONE
+            && (!priority || grant != AUDIO_THREAD_GRANT_NORMAL))
+         break;
+      retro_sleep_us(1000);
+   }
+   retro_sleep_us((unsigned)run_usec);
+   retro_atomic_store_release_int(&w.rt_run, 0);
+   sthread_join(t);
+
+   check(w.rt_sched && (strcmp(w.rt_sched, "normal priority") != 0) == priority,
+         priority ? "it raised itself" : "it left its priority alone");
+   if (priority)
+      printf("  (ran under %s)\n", w.rt_sched);
+   check(w.rt_passes >= expect / 4,
+         "it passed at least a quarter as often as a quarter-loop cadence");
+   check(w.rt_passes <= expect * 3,
+         "and not more often than the slice floor allows");
+   check(w.rt_gap_max_usec > 0 && w.rt_gap_max_usec < 1000000,
+         "the worst gap between passes is recorded");
+   loop_teardown(&w);
+   real_clock = false;
+}
+
+/* ------------------------------------------------------------------ */
+/* Audio held ahead of the hardware is the latency setting; the loop  */
+/* it sits in is larger.  A short setting on a large loop: the write  */
+/* fills the margin and the setting's worth and no more, a pass late  */
+/* by several settings' worth is an overrun on the held audio and not */
+/* a lost lap - the loop is still there to follow the cursor round -  */
+/* and the margin is the FIFO's, not a quarter of a tiny loop.        */
+/* ------------------------------------------------------------------ */
+
+static void run_held_ahead(void)
+{
+   wdmks_t       w;
+   unsigned char tone[LOOP_BYTES];
+   size_t        ahead = RATE / 125 * FRAME;    /* 8 ms on a 200 ms loop */
+   size_t        margin, placed;
+
+   printf("-- 8 ms held ahead on a 200 ms loop --\n");
+   fifo_frames = 48;
+   loop_setup(&w);
+   w.rt_ahead = ahead;
+   margin     = wdmks_rt_margin(&w);
+   check(margin == (48 + RATE / 2000) * FRAME,
+         "the margin is the FIFO's, not cut to a quarter of the audio held");
+   /* The notification fires twice a loop - every two settings' worth
+    * here - so it cannot pace the refill and must not be taken. */
+   w.rt_event = (HANDLE)(uintptr_t)1;
+   wdmks_rt_register_event(&w);
+   check(w.rt_event == NULL,
+         "the notification event is not taken: it fires too seldom to pace");
+
+   hw_play(RATE / 125 * FRAME);
+   fill_tone(tone, sizeof(tone), 0x20);
+   placed = put_direct(&w, tone, sizeof(tone));
+   check(placed == ahead,
+         "a write fills the setting's worth beyond the margin and no more");
+   check(wdmks_rt_room(&w) == 0, "and the loop then has no room");
+   check(wdmks_buffer_size(&w) == ahead,
+         "what the frontend is told it holds is what is held");
+
+   /* Half of it plays: that much room again, and nothing lost */
+   hw_play(ahead / 2);
+   check(wdmks_rt_free(&w) == ahead / 2, "half played: half the room");
+   check(wdmks_underruns(&w) == 0, "no underrun");
+
+   /* The refill is late by three settings' worth: the hardware ran
+    * past the held audio, which is an overrun - counted, resynced -
+    * but the loop is far from a lap, so the position was followed
+    * and the loop was not cleared whole. */
+   fill_tone(w.rt_buf, LOOP_BYTES, 0x30);   /* whatever is in the loop */
+   hw_play(ahead * 3);
+   check(wdmks_rt_free(&w) > 0, "three settings late: room again");
+   check(wdmks_underruns(&w) == 1, "counted as one underrun");
+   check(w.rt_have_last, "and the position was followed, not lost");
+   check(!region_is_silent(&w, (fake_pos + LOOP_BYTES / 2) % LOOP_BYTES, FRAME * 16),
+         "the loop was not cleared whole");
+
+   loop_teardown(&w);
+   fifo_frames = 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* The production geometry, run.  For a latency setting, the loop and */
+/* the ring are what wdmks_init makes, the position moves a fragment  */
+/* per notification (the coarsest a driver reports it), the refill    */
+/* runs once per notification as the thread does, and the consumer    */
+/* writes chunks of half the buffer it is told, whenever the ring has */
+/* room, as the pipeline does.  A pass is made late by a fragment and */
+/* a half, once; the loop must heal from it and then never run dry.   */
+/*                                                                    */
+/* Three things this has caught, each a build that crackled:          */
+/*   a loop four times the setting, notified twice a loop - a refill  */
+/*   two settings apart;                                              */
+/*   a ring of one fragment - supply exactly consumption, a deficit   */
+/*   nothing repays, every fourth pass short for good;                */
+/*   a margin cut to a quarter of a loop the size of the FIFO.        */
+/* ------------------------------------------------------------------ */
+
+static void run_geometry(unsigned latency_ms, unsigned fifo)
+{
+   wdmks_t       w;
+   size_t        ahead, loop, chunk, fragment, margin;
+   unsigned char tone[65536];
+   unsigned      step, late_at = 200, first_under = 0;
+   size_t        under_before = 0, under_late = 0, under_after = 0;
+   char          what[96];
+
+   wdmks_rt_geometry(latency_ms, RATE, FRAME, &ahead, &loop);
+   snprintf(what, sizeof(what), "-- geometry: %u ms setting, %u-frame FIFO:"
+         " loop %u bytes, %u held --", latency_ms, fifo,
+         (unsigned)loop, (unsigned)ahead);
+   printf("%s\n", what);
+
+   fifo_frames = fifo;
+   loop_setup(&w);
+   free(w.rt_buf);
+   w.rt_buf   = (unsigned char*)calloc(1, loop);
+   w.rt_size  = loop;
+   w.rt_ahead = ahead;
+   retro_spsc_free(&w.rt_ring);
+   w.rt_ring_size = wdmks_rt_ring_bytes(ahead);
+   retro_spsc_init(&w.rt_ring, w.rt_ring_size);
+   fake_pos = 0;
+
+   margin   = wdmks_rt_margin(&w);
+   fragment = ahead;
+   chunk    = wdmks_buffer_size(&w) / 2;
+   check(margin >= (size_t)fifo * FRAME,
+         "the resync margin covers the FIFO the pin reported");
+   check(wdmks_buffer_size(&w) == ahead,
+         "the frontend is told the held amount");
+   check(w.rt_ring_size > fragment,
+         "the ring holds more than one fragment, so a deficit can be repaid");
+
+   fill_tone(tone, sizeof(tone), 0x50);
+   for (step = 0; step < 2000; step++)
+   {
+      size_t before = wdmks_underruns(&w);
+      /* A notification: the hardware has gone half a loop - late,
+       * once, by a fragment and a half. */
+      fake_pos = (ULONG)((fake_pos + loop / 2) % loop);
+      if (step == late_at)
+         fake_pos = (ULONG)((fake_pos + fragment * 3 / 2) % loop);
+      wdmks_rt_pump_once(&w);
+      /* The consumer, woken by the pass: chunks while the ring has room */
+      while (wdmks_rt_ring_room(&w) >= chunk)
+         retro_spsc_write(&w.rt_ring, tone, chunk);
+      if (wdmks_underruns(&w) != before)
+      {
+         if (step < late_at)        under_before++;
+         else if (step <= late_at + 2) under_late++;
+         else                       under_after++;
+         if (!first_under)
+            first_under = step + 1;
+      }
+   }
+   check(under_before == 0, "the loop never runs dry while the passes are on time");
+   check(under_late <= 2, "a pass a fragment and a half late costs at most one short pull");
+   check(under_after == 0, "and the loop heals: no short pull after it, ever");
+   if (under_before || under_after)
+      printf("  (first short pull at pass %u; %u before the late pass, %u after)\n",
+            first_under, (unsigned)under_before, (unsigned)under_after);
+
+   loop_teardown(&w);
+   fifo_frames = 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* The lend pair on a threaded looped pin: the span is the ring's own, */
+/* what is published reaches the loop exactly as write() would put it, */
+/* an integer pin's float is converted in place, and every path that   */
+/* write() must handle itself refuses the lend.                        */
+/* ------------------------------------------------------------------ */
+
+static void run_lend(void)
+{
+   static unsigned char tone[4096];
+   static float         flt[1024];
+   static int32_t       want[1024];
+   wdmks_t w;
+   void   *region = NULL;
+   size_t  got, before;
+
+   printf("-- lend pair --\n");
+   loop_setup(&w);
+   w.rt_thread = (sthread_t*)(uintptr_t)1; /* present, never run */
+
+   fill_tone(tone, sizeof(tone), 7);
+   got = wdmks_write_begin(&w, sizeof(tone), &region);
+   check(region && got == sizeof(tone) && got % FRAME == 0,
+         "the ring lends a frame-aligned span of what was asked");
+   memcpy(region, tone, got);
+   check(wdmks_write_end(&w, got) == (ssize_t)got, "and publishes it");
+   check(retro_spsc_read_avail(&w.rt_ring) == got, "into the ring");
+   wdmks_rt_pump_once(&w);
+   check(find_in_loop(&w, tone, got) < w.rt_size,
+         "the pump moves it into the loop unchanged");
+
+   before = retro_spsc_read_avail(&w.rt_ring);
+   got    = wdmks_write_begin(&w, 64, &region);
+   check(got == 64 && region, "a second lend");
+   check(wdmks_write_end(&w, 0) == 0
+         && retro_spsc_read_avail(&w.rt_ring) == before,
+         "abandoned, it publishes nothing");
+
+   /* An integer pin: float in the lent span, s32 in the ring. */
+   {
+      size_t i;
+      for (i = 0; i < 1024; i++)
+         flt[i] = (float)((int)(i % 200) - 100) / 128.0f;
+      convert_float_to_s32(want, flt, 1024, 24);
+      w.cvt            = (unsigned char*)malloc(16);
+      w.stream.fmt.bits = 24;
+      got = wdmks_write_begin(&w, sizeof(flt), &region);
+      check(got == sizeof(flt), "an integer pin lends too");
+      memcpy(region, flt, got);
+      wdmks_write_end(&w, got);
+      wdmks_rt_pump_once(&w);
+      check(find_in_loop(&w, (const unsigned char*)want, sizeof(want))
+            < w.rt_size, "converted in place to the pin's integers");
+      free(w.cvt);
+      w.cvt = NULL;
+   }
+
+   w.ac3 = (rac3_encoder_t*)(uintptr_t)1;
+   check(!wdmks_write_begin(&w, 64, &region) && !region,
+         "the bit-stream path refuses");
+   w.ac3 = NULL;
+   w.stream.looped = false;
+   check(!wdmks_write_begin(&w, 64, &region), "a packet pin refuses");
+   w.stream.looped = true;
+   w.rt_thread = NULL;
+   check(!wdmks_write_begin(&w, 64, &region),
+         "a loop without its refill thread refuses");
+   w.rt_thread = (sthread_t*)(uintptr_t)1;
+   retro_atomic_int_init(&w.dead, 1);
+   check(!wdmks_write_begin(&w, 64, &region), "a dead pin refuses");
+   retro_atomic_int_init(&w.dead, 0);
+
+   /* Full: nothing to lend, and nothing left reserved. */
+   while (wdmks_rt_ring_room(&w))
+   {
+      size_t n = wdmks_rt_ring_room(&w);
+      if (n > sizeof(tone))
+         n = sizeof(tone);
+      retro_spsc_write(&w.rt_ring, tone, n);
+   }
+   check(!wdmks_write_begin(&w, 64, &region) && !region,
+         "a full ring refuses");
+   w.rt_thread = NULL;
+   loop_teardown(&w);
+}
+
 int main(void)
 {
+   run_fragment_wait();
+   run_lend();
+   run_ranges();
+   run_wide_pcm_pin();
+   run_wide_register();
+   run_capture_fold();
+   run_capture_loop();
+   run_held_ahead();
+   run_geometry(2, 46);
+   run_geometry(2, 0);
+   run_geometry(8, 46);
+   run_geometry(16, 480);
+   run_refill_thread(true, false);
+   run_refill_thread(true, true);
+   run_refill_thread(false, false);
    fifo_frames = 0;
    run_contract("caller-driven loop, no FIFO report", put_direct, false);
    run_contract("refill thread pump, no FIFO report", put_pump, true);

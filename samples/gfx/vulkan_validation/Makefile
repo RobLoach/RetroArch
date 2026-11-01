@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := vulkan_validation_test
 
 # Path back to the repo root from this sample dir.  Like the
@@ -17,6 +19,7 @@ SOURCES := vulkan_validation_test.c \
            $(REPO_ROOT)/gfx/common/vulkan_common.c \
            $(LIBRETRO_COMM_DIR)/vulkan/vulkan_symbol_wrapper.c \
            $(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
+           $(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c \
            $(LIBRETRO_COMM_DIR)/features/features_cpu.c \
            $(LIBRETRO_COMM_DIR)/lists/string_list.c \
            $(LIBRETRO_COMM_DIR)/dynamic/dylib.c \
@@ -24,15 +27,16 @@ SOURCES := vulkan_validation_test.c \
            $(LIBRETRO_COMM_DIR)/string/stdstring.c \
            $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c
 
-CFLAGS  += -Wall -std=gnu99 -g -O0 \
+CFLAGS  += -Wall -std=gnu99 -g1 -O0 \
            -DHAVE_VULKAN -DVULKAN_DEBUG -DHAVE_THREADS -DHAVE_DYLIB \
            -DHAVE_XLIB \
            -I$(REPO_ROOT) \
+           -I$(REPO_ROOT)/gfx/include \
            -I$(LIBRETRO_COMM_DIR)/include
 
 LDFLAGS += -lvulkan -lpthread -ldl -lX11
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
 ifneq ($(SANITIZER),)
    CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer $(CFLAGS)
@@ -42,6 +46,10 @@ endif
 all: $(TARGET)
 
 %.o: %.c
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(TARGET): $(OBJS)
@@ -59,6 +67,7 @@ run: $(TARGET)
 	VK_DRIVER_FILES=$(VK_DRIVER_FILES) ./$(TARGET)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJS)
 
 .PHONY: all run clean

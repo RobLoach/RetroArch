@@ -13,6 +13,10 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef __MACH__
+#include <TargetConditionals.h>
+#endif
+
 #if TARGET_OS_IPHONE
 #include <Availability.h>
 #else
@@ -76,6 +80,12 @@
 
 #ifdef HAVE_METAL
 #import "../gfx/drivers/metal.m"
+#ifdef HAVE_RECORD_METAL
+#include "../record/record_gpu_capture_metal.m"
+#include "../record/record_mux_avfoundation.m"
+#include "../record/record_gpu_session_metal.m"
+#include "../record/record_gpu_dispatch_metal.m"
+#endif
 #endif
 
 #if defined(HAVE_NETWORKING) && defined(HAVE_NETPLAYDISCOVERY) && defined(HAVE_NETPLAYDISCOVERY_NSNET)
@@ -88,7 +98,4 @@
 
 #if defined(HAVE_CLOUDSYNC) && defined(HAVE_ICLOUD_DRIVE)
 #include "../network/cloud_sync/icloud_drive.m"
-#ifdef __MACH__
-#include <TargetConditionals.h>
-#endif
 #endif

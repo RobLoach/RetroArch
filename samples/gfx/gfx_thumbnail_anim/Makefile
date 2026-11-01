@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := gfx_thumbnail_anim_test
 
 # Path back to the repo root from this sample dir.  Links the real
@@ -19,6 +21,14 @@ UUT_OBJ := gfx_thumbnail_uut.o
 # video-thread edge (the post) is stubbed and parked like the loads.
 SURFACE_SRC := $(REPO_ROOT)/gfx/gfx_surface.c
 SURFACE_OBJ := gfx_surface_uut.o
+# The playback the animation goes through, and its surface side.
+PLAYER_SRC := $(REPO_ROOT)/gfx/gfx_surface_player.c
+PLAYER_OBJ := gfx_surface_player_uut.o
+MEDIA_PLAYER_OBJ := gfx_media_player_uut.o
+MEDIA_CPU_OBJ := gfx_media_cpu_uut.o
+# Direct-video outcomes of the surface, slot by slot; it includes
+# gfx_surface.h, so it takes the unit's flags.
+OUTCOME_OBJ := surface_outcome_test.o
 
 SOURCES := gfx_thumbnail_anim_test.c \
            stubs_retroarch.c \
@@ -33,7 +43,10 @@ SOURCES := gfx_thumbnail_anim_test.c \
            $(LIBRETRO_COMM_DIR)/file/file_path_io.c \
            $(LIBRETRO_COMM_DIR)/formats/data_transfer.c \
            $(LIBRETRO_COMM_DIR)/formats/image_texture.c \
+           $(LIBRETRO_COMM_DIR)/formats/image/image_yuv_blit.c \
+           $(LIBRETRO_COMM_DIR)/formats/image_texture_set.c \
            $(LIBRETRO_COMM_DIR)/formats/image_transfer.c \
+           $(LIBRETRO_COMM_DIR)/formats/video_player.c \
            $(LIBRETRO_COMM_DIR)/formats/vp8/rvp8.c \
            $(LIBRETRO_COMM_DIR)/formats/webp/rwebp.c \
            $(LIBRETRO_COMM_DIR)/lists/file_list.c \
@@ -43,6 +56,7 @@ SOURCES := gfx_thumbnail_anim_test.c \
            $(LIBRETRO_COMM_DIR)/queues/task_queue.c \
            $(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
            $(LIBRETRO_COMM_DIR)/rthreads/tpool.c \
+           $(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c \
            $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
            $(LIBRETRO_COMM_DIR)/string/rstrtod.c \
            $(LIBRETRO_COMM_DIR)/string/stdstring.c \
@@ -52,23 +66,28 @@ SOURCES := gfx_thumbnail_anim_test.c \
 # The counters are what lane 4 reads; a tree built without
 # HAVE_GFX_INSTRUMENT has none of them, which is the point of the
 # define, so the sample names it for itself.
-CFLAGS  += -Wall -std=gnu99 -g -O1 \
-           -DHAVE_RWEBP -DHAVE_THREADS -DHAVE_MMAP -D_GNU_SOURCE \
+CFLAGS  += -Wall -std=gnu99 -g1 -O1 \
+           -DHAVE_RWEBP -DHAVE_THREADS -D_GNU_SOURCE \
            -DHAVE_GFX_INSTRUMENT \
            -I$(REPO_ROOT) \
            -I$(LIBRETRO_COMM_DIR)/include
 
+ifeq ($(findstring mingw,$(CC)),)
+   CFLAGS  += -DHAVE_MMAP
+   LDFLAGS += -lpthread
+endif
+
 UUT_CFLAGS := $(CFLAGS) -O0 -fno-inline -DHAVE_MENU -DRARCH_INTERNAL \
               -I$(REPO_ROOT)/deps -I$(REPO_ROOT)/deps/stb
 
-LDFLAGS += -lpthread -lm
+LDFLAGS += -lm
 
 # Extra flags for the caller; CFLAGS= on the command line would replace
 # everything set above instead of adding to it.
 CFLAGS     += $(EXTRA_CFLAGS)
 UUT_CFLAGS += $(EXTRA_CFLAGS)
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
 ifneq ($(SANITIZER),)
    CFLAGS     := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer $(CFLAGS)
@@ -86,6 +105,10 @@ $(UUT_OBJ): $(UUT_SRC)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 # The preview session gfx_thumbnail now drives its window feeder and
 # audio through; built with the UUT's flags (same stubs surface).
 ANIM_PREVIEW_OBJ := gfx_anim_preview_uut.o
@@ -95,7 +118,20 @@ $(ANIM_PREVIEW_OBJ): $(ANIM_PREVIEW_SRC)
 $(SURFACE_OBJ): $(SURFACE_SRC)
 	$(CC) -c -o $@ $< $(UUT_CFLAGS)
 
-$(TARGET): $(OBJS) $(UUT_OBJ) $(ANIM_PREVIEW_OBJ) $(SURFACE_OBJ)
+$(PLAYER_OBJ): $(PLAYER_SRC)
+	$(CC) -c -o $@ $< $(UUT_CFLAGS)
+
+$(MEDIA_PLAYER_OBJ): $(REPO_ROOT)/gfx/gfx_media_player.c
+	$(CC) -c -o $@ $< $(UUT_CFLAGS)
+
+$(MEDIA_CPU_OBJ): $(REPO_ROOT)/gfx/gfx_media_cpu.c
+	$(CC) -c -o $@ $< $(UUT_CFLAGS)
+
+$(OUTCOME_OBJ): surface_outcome_test.c
+	$(CC) -c -o $@ $< $(UUT_CFLAGS)
+
+$(TARGET): $(OBJS) $(UUT_OBJ) $(ANIM_PREVIEW_OBJ) $(SURFACE_OBJ) \
+      $(PLAYER_OBJ) $(MEDIA_PLAYER_OBJ) $(MEDIA_CPU_OBJ) $(OUTCOME_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 # ASan and TSan are mutually exclusive, hence separate passes.
@@ -109,6 +145,8 @@ sweep:
 	@echo "sweep clean"
 
 clean:
-	rm -f $(TARGET) $(OBJS) $(UUT_OBJ) $(ANIM_PREVIEW_OBJ) $(SURFACE_OBJ)
+	rm -rf $(SAMPLE_OBJDIR)
+	rm -f $(TARGET) $(OBJS) $(UUT_OBJ) $(ANIM_PREVIEW_OBJ) $(SURFACE_OBJ) \
+	   $(PLAYER_OBJ) $(MEDIA_PLAYER_OBJ) $(MEDIA_CPU_OBJ) $(OUTCOME_OBJ)
 
 .PHONY: all sweep clean

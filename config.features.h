@@ -290,10 +290,22 @@
 #define SUPPORTS_7ZIP false
 #endif
 
+#ifdef HAVE_RRAR
+#define SUPPORTS_RAR true
+#else
+#define SUPPORTS_RAR false
+#endif
+
 #ifdef HAVE_RZSTD
 #define SUPPORTS_ZSTD true
 #else
 #define SUPPORTS_ZSTD false
+#endif
+
+#ifdef HAVE_RBZIP2
+#define SUPPORTS_BZIP2 true
+#else
+#define SUPPORTS_BZIP2 false
 #endif
 
 #ifdef HAVE_DYLIB
@@ -440,6 +452,12 @@
 #define SUPPORTS_CHECK true
 #else
 #define SUPPORTS_CHECK false
+#endif
+
+#ifdef HAVE_OPENXR
+#define SUPPORTS_OPENXR true
+#else
+#define SUPPORTS_OPENXR false
 #endif
 
 #if !defined(_WIN32) && !defined(GLOBAL_CONFIG_DIR)

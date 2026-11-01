@@ -39,6 +39,7 @@
 #include <math.h>
 
 #include <boolean.h>
+#include <retro_inline.h>
 #include <retro_atomic.h>
 
 #if TARGET_OS_IPHONE
@@ -463,7 +464,7 @@ static void coreaudio_wait_free(coreaudio_t *dev)
 
 /* Lock-free ring buffer operations */
 
-static inline size_t rb_write_avail(coreaudio_t *dev)
+static INLINE size_t rb_write_avail(coreaudio_t *dev)
 {
    size_t filled = retro_atomic_load_acquire_size(&dev->filled);
    return (filled < dev->usable) ? dev->usable - filled : 0;
@@ -1375,7 +1376,6 @@ static void *coreaudio_init(const char *device,
     * the callback checks for that. */
    {
       mach_timebase_info_data_t tb;
-      memset(&tb, 0, sizeof(tb));
       if (mach_timebase_info(&tb) == KERN_SUCCESS && tb.denom)
          dev->ct_ns_per_tick = (double)tb.numer / (double)tb.denom;
       else
@@ -1422,9 +1422,6 @@ static void *coreaudio_init(const char *device,
                kAudioUnitScope_Global, 0, &device_id, &device_size) == noErr
             && device_id != 0)
       {
-         /* Kept for the clock, which is asked of the device rather
-          * than of this driver's own counting. */
-         dev->device_id = device_id;
          static const AudioObjectPropertySelector dev_sel[3] = {
             kAudioDevicePropertyBufferFrameSize,
             kAudioDevicePropertyLatency,
@@ -1433,6 +1430,9 @@ static void *coreaudio_init(const char *device,
          ca_addr_t prop;
          AudioStreamID stream_id = 0;
          UInt32 total = 0, size, i;
+         /* Kept for the clock, which is asked of the device rather
+          * than of this driver's own counting. */
+         dev->device_id = device_id;
          prop.mScope   = kAudioDevicePropertyScopeOutput;
          prop.mElement = CA_ELEMENT_MAIN;
          for (i = 0; i < 3; i++)
@@ -1870,6 +1870,42 @@ static size_t coreaudio_frames_consumed_fallback(void *data)
    return retro_atomic_load_acquire_size(&dev->consumed) / dev->channels;
 }
 
+/* The lend pair: the ring the render callback drains, handed out to
+ * its wrap, in whole frames. A paused unit refuses; write() is what
+ * a stopped unit sees. */
+static size_t coreaudio_write_begin(void *data, size_t len, void **region)
+{
+   coreaudio_t *dev = (coreaudio_t*)data;
+   size_t span;
+   *region = NULL;
+   if (!dev || dev->is_paused || !dev->channels)
+      return 0;
+   span = dev->capacity - dev->write_ptr;
+   if (span > rb_write_avail(dev))
+      span = rb_write_avail(dev);
+   if (span > len / sizeof(float))
+      span = len / sizeof(float);
+   span -= span % dev->channels;
+   if (!span)
+      return 0;
+   *region = dev->buffer + dev->write_ptr;
+   return span * sizeof(float);
+}
+
+static ssize_t coreaudio_write_end(void *data, size_t len)
+{
+   coreaudio_t *dev = (coreaudio_t*)data;
+   size_t samples   = len / sizeof(float);
+   samples         -= samples % dev->channels;
+   if (samples)
+   {
+      dev->write_ptr = (dev->write_ptr + samples) & (dev->capacity - 1);
+      retro_atomic_fetch_add_size(&dev->filled, samples);
+      coreaudio_run(dev, false);
+   }
+   return (ssize_t)(samples * sizeof(float));
+}
+
 audio_driver_t audio_coreaudio = {
    coreaudio_init,
    coreaudio_write,
@@ -1890,7 +1926,10 @@ audio_driver_t audio_coreaudio = {
    coreaudio_underruns,
    coreaudio_layout,
    coreaudio_frames_consumed_fallback,
-   coreaudio_device_clock_ppm
+   coreaudio_device_clock_ppm,
+   NULL, /* thread_grant */
+   coreaudio_write_begin,
+   coreaudio_write_end
 };
 
 
@@ -2041,17 +2080,17 @@ static void coreaudio_mic_set_format(coreaudio_mic_t *mic, bool use_float)
 {
    AudioStreamBasicDescription *f = &mic->format;
    mic->use_float      = use_float;
-   memset(f, 0, sizeof(*f));
-   f->mSampleRate      = mic->sample_rate;
-   f->mFormatID        = kAudioFormatLinearPCM;
-   f->mFormatFlags     = use_float
+   f->mSampleRate       = mic->sample_rate;
+   f->mFormatID         = kAudioFormatLinearPCM;
+   f->mFormatFlags      = use_float
       ? (kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked)
       : (kLinearPCMFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked);
-   f->mFramesPerPacket = 1;
+   f->mFramesPerPacket  = 1;
    f->mChannelsPerFrame = 1; /* mono */
-   f->mBitsPerChannel  = use_float ? 32 : 16;
-   f->mBytesPerFrame   = f->mChannelsPerFrame * f->mBitsPerChannel / 8;
-   f->mBytesPerPacket  = f->mBytesPerFrame * f->mFramesPerPacket;
+   f->mBitsPerChannel   = use_float ? 32 : 16;
+   f->mBytesPerFrame    = f->mChannelsPerFrame * f->mBitsPerChannel / 8;
+   f->mBytesPerPacket   = f->mBytesPerFrame * f->mFramesPerPacket;
+   f->mReserved         = 0;
 }
 
 /* The input callback, on the real-time thread. */
@@ -2095,13 +2134,14 @@ static OSStatus coreaudio_mic_input_cb(void *ref,
          && list.mBuffers[0].mData && list.mBuffers[0].mDataByteSize)
    {
       size_t got = list.mBuffers[0].mDataByteSize;
+      size_t room, excess;
       if (got > bytes)
          got = bytes;
       /* Lock-free: the ring is SPSC and this thread is its only
        * producer.  Room is measured against ring_size, not the
        * rounded-up physical capacity. */
-      size_t room   = retro_spsc_write_avail(&mic->ring);
-      size_t excess = mic->ring.capacity - mic->ring_size;
+      room   = retro_spsc_write_avail(&mic->ring);
+      excess = mic->ring.capacity - mic->ring_size;
       room          = room > excess ? room - excess : 0;
       if (room >= got)
          retro_spsc_write(&mic->ring, list.mBuffers[0].mData, got);

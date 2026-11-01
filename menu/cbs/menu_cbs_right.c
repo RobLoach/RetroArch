@@ -48,7 +48,10 @@
 #endif
 #include "../../playlist.h"
 #include "../../manual_content_scan.h"
-#include "../misc/cpufreq/cpufreq.h"
+#include "../../os/lakka/cpufreq/cpufreq.h"
+#ifdef HAVE_LAKKA_SWITCH
+#include "../../os/lakka/reboot2payload/reboot2payload.h"
+#endif
 
 #ifndef BIND_ACTION_RIGHT
 #define BIND_ACTION_RIGHT(cbs, name) (cbs)->action_right = (name)
@@ -64,8 +67,8 @@ extern struct key_desc key_descriptors[RARCH_MAX_KEYS];
 static int generic_shader_action_parameter_right(struct video_shader_parameter *param,
       unsigned type, const char *label, bool wraparound)
 {
-   param->current += param->step;
-   param->current  = MIN(MAX(param->minimum, param->current), param->maximum);
+   float v = video_shader_param_get(param) + param->step;
+   video_shader_param_set(param, MIN(MAX(param->minimum, v), param->maximum));
 
    return 0;
 }
@@ -76,7 +79,6 @@ static int generic_shader_action_parameter_right_internal(unsigned type, const c
    video_shader_ctx_t shader_info;
    struct video_shader *shader          = menu_shader_get();
    struct video_shader_parameter *param_menu = NULL;
-   struct video_shader_parameter *param_prev = NULL;
 
    int ret = 0;
 
@@ -87,19 +89,18 @@ static int generic_shader_action_parameter_right_internal(unsigned type, const c
    if (!shader_info.data || !param_menu)
       return -1;
 
-   /* Step the value on a local copy, then submit it through the
-    * driver-level setter: the live shader's parameters are read by
-    * the video thread's frame path, and the setter writes on the
-    * owning thread. The copy's stable fields (range, step) only
-    * mutate inside set_shader's blocking window. */
+   /* Step the value on a local copy, then set it through the
+    * driver-level setter: the video thread's frame path reads the live
+    * value, so it is an atomic store. The copy's stable fields (range,
+    * step) only change inside set_shader's blocking window. */
    {
       struct video_shader_parameter param_copy =
          shader_info.data->parameters[type - offset];
       ret = generic_shader_action_parameter_right(&param_copy, type,
             label, wraparound);
       video_shader_driver_set_parameter(shader_info.data,
-            type - offset, param_copy.current);
-      param_menu->current = param_copy.current;
+            type - offset, video_shader_param_get(&param_copy));
+      video_shader_param_set(param_menu, video_shader_param_get(&param_copy));
    }
    shader->flags      |= SHDR_FLAG_MODIFIED;
 
@@ -154,6 +155,9 @@ static int action_right_input_desc(unsigned type, const char *label,
       unsigned mapped_port = settings->uints.input_remap_ports[user_idx];
       unsigned remap_idx   = settings->uints.input_remap_ids[user_idx][btn_idx];
 
+      if (mapped_port >= MAX_USERS)
+         return 0;
+
       for (bind_idx = 0; bind_idx < RARCH_ANALOG_BIND_LIST_END; bind_idx++)
       {
          if (input_config_bind_order[bind_idx] == remap_idx)
@@ -176,16 +180,16 @@ static int action_right_input_desc(unsigned type, const char *label,
       {
          bind_idx++;
          bind_idx = input_config_bind_order[bind_idx];
-         settings->uints.input_remap_ids[user_idx][btn_idx] = bind_idx;
+         input_config_set_remap_id(user_idx, btn_idx, bind_idx);
 
          /* Skip empty descs */
          if (!sys_info->input_desc_btn[mapped_port][bind_idx] || !*sys_info->input_desc_btn[mapped_port][bind_idx])
             return action_right_input_desc(type, NULL, wraparound);
       }
       else if (bind_idx == RARCH_ANALOG_BIND_LIST_END - 1)
-         settings->uints.input_remap_ids[user_idx][btn_idx] = RARCH_UNMAPPED;
+         input_config_set_remap_id(user_idx, btn_idx, RARCH_UNMAPPED);
       else
-         settings->uints.input_remap_ids[user_idx][btn_idx] = input_config_bind_order[0];
+         input_config_set_remap_id(user_idx, btn_idx, input_config_bind_order[0]);
    }
 
    return 0;
@@ -1126,6 +1130,17 @@ static int cpu_policy_freq_tweak(unsigned type, const char *label,
 }
 #endif
 
+#ifdef HAVE_LAKKA_SWITCH
+static int reboot_payload_right(unsigned type, const char *label,
+      bool wraparound)
+{
+   struct menu_state *menu_st = menu_state_get_ptr();
+   r2p_cycle_selection(config_get_ptr(), true);
+   menu_st->flags            |= MENU_ST_FLAG_ENTRIES_NEED_REFRESH;
+   return 0;
+}
+#endif
+
 static int core_setting_right(unsigned type, const char *label,
       bool wraparound)
 {
@@ -1468,6 +1483,11 @@ static int menu_cbs_init_bind_right_compare_label(menu_file_list_cbs_t *cbs,
             case MENU_ENUM_LABEL_CPU_POLICY_CORE_GOVERNOR:
             case MENU_ENUM_LABEL_CPU_POLICY_MENU_GOVERNOR:
                BIND_ACTION_RIGHT(cbs, cpu_policy_freq_managed_gov);
+               break;
+            #endif
+            #ifdef HAVE_LAKKA_SWITCH
+            case MENU_ENUM_LABEL_REBOOT_PAYLOAD:
+               BIND_ACTION_RIGHT(cbs, reboot_payload_right);
                break;
             #endif
             default:

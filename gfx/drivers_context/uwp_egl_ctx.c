@@ -36,7 +36,7 @@
 #include "../../config.h"
 #endif
 
-#include "../../uwp/uwp_func.h"
+#include "../../os/uwp/uwp_func.h"
 #include "gfx/common/win32_common.h"
 
 #include "../../configuration.h"
@@ -202,25 +202,11 @@ static bool gfx_ctx_uwp_set_video_mode(void *data,
 }
 
 static void gfx_ctx_uwp_input_driver(void *data,
-      const char *joypad_name,
-      input_driver_t **input, void **input_data)
+      const char *joypad_name)
 {
-   settings_t *settings = config_get_ptr();
-
-   /* Plain xinput is supported on UWP, but it
-    * supports joypad only (uwp driver was added later) */
-   if (string_is_equal(settings->arrays.input_driver, "xinput"))
-   {
-      void* xinput = input_driver_init_wrap(&input_xinput, joypad_name);
-      *input       = xinput ? (input_driver_t*)&input_xinput : NULL;
-      *input_data  = xinput;
-   }
-   else
-   {
-      void* uwp   = input_driver_init_wrap(&input_uwp, joypad_name);
-      *input      = uwp ? (input_driver_t*)&input_uwp : NULL;
-      *input_data = uwp;
-   }
+   /* no input driver of this context's own: the frontend starts the
+    * platform's */
+   input_driver_video_window(INPUT_WINDOW_PLATFORM, NULL);
 }
 
 static enum gfx_ctx_api gfx_ctx_uwp_get_api(void *data)
@@ -243,7 +229,7 @@ static uint32_t gfx_ctx_uwp_get_flags(void *data)
 {
    uint32_t flags = 0;
 
-#if defined(HAVE_SLANG) && defined(HAVE_SPIRV_CROSS)
+#if defined(HAVE_SLANG) && (defined(HAVE_SPIRV_CROSS) || defined(HAVE_RSLC))
    BIT32_SET(flags, GFX_CTX_FLAGS_SHADERS_SLANG);
 #endif
 #ifdef HAVE_GLSL

@@ -33,6 +33,7 @@
 #include <lrc_hash.h>
 #include <string/stdstring.h>
 #include <streams/file_stream.h>
+#include <vfs/vfs.h>
 #include <lists/dir_list.h>
 #include <lists/string_list.h>
 
@@ -56,7 +57,7 @@
 
 #include "video_shader_parse.h"
 
-#if defined(HAVE_SLANG) && defined(HAVE_SPIRV_CROSS)
+#if defined(HAVE_SLANG) && (defined(HAVE_SPIRV_CROSS) || defined(HAVE_RSLC))
 #include "drivers_shader/glslang_util.h"
 #include "drivers_shader/slang_process.h"
 #endif
@@ -637,6 +638,36 @@ static enum gfx_wrap_type video_shader_wrap_str_to_mode(const char *wrap_mode)
    return RARCH_WRAP_DEFAULT;
 }
 
+bool video_shader_check_hdr_output(
+      const struct video_shader *shader, unsigned output_mode)
+{
+   if (video_shader_hdr_output_compatible(shader, output_mode))
+      return true;
+   RARCH_ERR("[Shaders] Explicit HDR encoding requires a matching output.\n");
+   return false;
+}
+
+static bool video_shader_parse_hdr_mode(config_file_t *conf,
+      struct video_shader *shader)
+{
+   struct config_entry_list *entry = config_get_entry(conf, "hdr_mode");
+   const char *value = entry ? entry->value : NULL;
+   unsigned i;
+   for (i = 0; i < shader->num_parameters; i++)
+      if (!strcmp(shader->parameters[i].id, "hdr_mode"))
+         return false;
+   if (!value || !shader->passes || !video_shader_source_ident_is_slang(
+            shader->pass[shader->passes - 1].source.path))
+      return false;
+   if (!strcmp(value, "auto"))
+      shader->hdr_mode = 0;
+   else if (value[0] >= '0' && value[0] <= '2' && !value[1])
+      shader->hdr_mode = (unsigned)(value[0] - '0') + 1;
+   else
+      return false;
+   return true;
+}
+
 /**
  * video_shader_parse_pass:
  * @param conf
@@ -1061,6 +1092,139 @@ bool video_shader_source_ident_is_slang(const char *ident)
    return string_is_equal(path_get_extension(ident), "slang");
 }
 
+/* Where entry @key of cache @kind lives. A key is letters and digits,
+ * so it is only ever a file name in that directory. @dir receives the
+ * directory, for a writer to create. */
+static bool video_shader_cache_path(enum video_shader_cache_kind kind,
+      const char *key, char *dir, size_t dir_len, char *s, size_t len)
+{
+   char        name[96];
+   const char *k;
+   const char *suffix;
+
+   if (!key || !*key)
+      return false;
+   for (k = key; *k; k++)
+      if (!(   (*k >= '0' && *k <= '9')
+            || (*k >= 'a' && *k <= 'z')
+            || (*k >= 'A' && *k <= 'Z')))
+         return false;
+
+   switch (kind)
+   {
+      case VIDEO_SHADER_CACHE_SPIRV:
+         {
+            settings_t *settings = config_get_ptr();
+            if (!settings || !*settings->paths.directory_cache)
+               return false;
+            fill_pathname_join_special(dir,
+                  settings->paths.directory_cache, "spirv", dir_len);
+            suffix = ".spirv";
+         }
+         break;
+      case VIDEO_SHADER_CACHE_ORBIS_BINARY:
+         strlcpy(dir, "/data/retroarch/temp", dir_len);
+         suffix = ".sb";
+         break;
+      default:
+         return false;
+   }
+
+   if ((size_t)snprintf(name, sizeof(name), "%s%s", key, suffix)
+         >= sizeof(name))
+      return false;
+   fill_pathname_join_special(s, dir, name, len);
+   return true;
+}
+
+bool video_shader_cache_map(enum video_shader_cache_kind kind,
+      const char *key, video_shader_cache_view_t *view)
+{
+   char    dir[DIR_MAX_LENGTH];
+   char    path[PATH_MAX_LENGTH];
+   void   *data = NULL;
+   int64_t len  = 0;
+
+   if (!view)
+      return false;
+   view->data   = NULL;
+   view->len    = 0;
+   view->mapped = NULL;
+   view->heap   = NULL;
+
+   if (!video_shader_cache_path(kind, key, dir, sizeof(dir),
+            path, sizeof(path)))
+      return false;
+
+#if defined(VFS_HAVE_FILE_MAPPING) && defined(HAVE_MMAP)
+   /* Mapped where there is mmap(): the entry is parsed where it lies,
+    * with no copy of the file made first. Entries are only ever
+    * replaced by a rename, never rewritten, so a mapping is not cut
+    * short under the reader. */
+   {
+      RFILE *f = filestream_open(path, RETRO_VFS_FILE_ACCESS_READ,
+            RETRO_VFS_FILE_ACCESS_HINT_FREQUENT_ACCESS);
+      if (f)
+      {
+         int64_t        map_len = 0;
+         int64_t        size    = filestream_get_size(f);
+         const uint8_t *map     = filestream_get_mapped_ptr(f, &map_len);
+         if (map && size > 0 && map_len == size)
+         {
+            view->mapped = f;
+            view->data   = map;
+            view->len    = size;
+            return true;
+         }
+         filestream_close(f);
+      }
+   }
+#endif
+
+   if (!path_is_valid(path))
+      return false;
+   if (!filestream_read_file(path, &data, &len) || len <= 0)
+   {
+      if (data)
+         free(data);
+      return false;
+   }
+   view->heap = data;
+   view->data = (const uint8_t*)data;
+   view->len  = len;
+   return true;
+}
+
+void video_shader_cache_unmap(video_shader_cache_view_t *view)
+{
+   if (!view)
+      return;
+   if (view->mapped)
+      filestream_close((RFILE*)view->mapped);
+   if (view->heap)
+      free(view->heap);
+   view->data   = NULL;
+   view->len    = 0;
+   view->mapped = NULL;
+   view->heap   = NULL;
+}
+
+bool video_shader_cache_write(enum video_shader_cache_kind kind,
+      const char *key, const void *data, size_t len)
+{
+   char dir[DIR_MAX_LENGTH];
+   char path[PATH_MAX_LENGTH];
+
+   if (!data || !len || len > (size_t)-1 / 2)
+      return false;
+   if (!video_shader_cache_path(kind, key, dir, sizeof(dir),
+            path, sizeof(path)))
+      return false;
+   if (!path_is_directory(dir) && !path_mkdir(dir))
+      return false;
+   return filestream_write_file_atomic(path, data, (int64_t)len);
+}
+
 bool video_shader_source_read(const char *ident, char **buf, int64_t *len)
 {
    int64_t n  = 0;
@@ -1166,7 +1330,8 @@ void video_shader_resolve_parameters(struct video_shader *shader)
    if (!video_shader_param_sources_changed(shader))
    {
       for (i = 0; i < shader->num_parameters; i++)
-         shader->parameters[i].current = shader->parameters[i].initial;
+         video_shader_param_set(&shader->parameters[i],
+               shader->parameters[i].initial);
       return;
    }
 
@@ -1177,7 +1342,7 @@ void video_shader_resolve_parameters(struct video_shader *shader)
    RARCH_DBG("[Shaders] Finding parameters in shader passes (#pragma parameter)...\n");
 #endif
 
-#if defined(HAVE_SLANG) && defined(HAVE_SPIRV_CROSS)
+#if defined(HAVE_SLANG) && (defined(HAVE_SPIRV_CROSS) || defined(HAVE_RSLC))
    {
       /* One include cache for the whole walk.  Every pass is expanded
        * here to harvest its '#pragma parameter' lines, and the passes
@@ -1338,7 +1503,7 @@ void video_shader_resolve_parameters(struct video_shader *shader)
                      param->desc,    param->id,      param->initial,
                      param->minimum, param->maximum, param->step, param->pass);
 #endif
-               param->current  = param->initial;
+               video_shader_param_set(param, param->initial);
 
                shader->num_parameters++;
                param++;
@@ -1381,10 +1546,14 @@ bool video_shader_load_current_parameter_values(
       if (entry)
       {
          struct video_shader_parameter *parameter = &shader->parameters[i];
+         float value                              = 0.0f;
 
          /* Log each parameter read */
-         if (config_get_float(conf, parameter->id, &parameter->current))
-            RARCH_DBG("[Shaders] Load parameter value: \"%s\" = %f.\n", parameter->id, parameter->current);
+         if (config_get_float(conf, parameter->id, &value))
+         {
+            video_shader_param_set(parameter, value);
+            RARCH_DBG("[Shaders] Load parameter value: \"%s\" = %f.\n", parameter->id, value);
+         }
          else
             RARCH_WARN("[Shaders] Load parameter value: \"%s\" is set in preset but couldn't load its value.\n",
                         parameter->id);
@@ -1498,6 +1667,8 @@ static bool video_shader_write_root_preset(const struct video_shader *shader,
    RARCH_DBG("[Shaders] Saving full preset to: \"%s\".\n", path);
 
    config_set_int(conf, "shaders", shader->passes);
+   if (shader->hdr_mode)
+      config_set_int(conf, "hdr_mode", shader->hdr_mode - 1);
    if (shader->feedback_pass >= 0)
       config_set_int(conf, "feedback_pass", shader->feedback_pass);
 
@@ -1562,8 +1733,10 @@ static bool video_shader_write_root_preset(const struct video_shader *shader,
    /* Write shader parameters which are different than the default shader values */
    if (shader->num_parameters)
       for (i = 0; i < shader->num_parameters; i++)
-         if (shader->parameters[i].current != shader->parameters[i].initial)
-            config_set_float(conf, shader->parameters[i].id, shader->parameters[i].current);
+         if (video_shader_param_get(&shader->parameters[i])
+               != shader->parameters[i].initial)
+            config_set_float(conf, shader->parameters[i].id,
+                  video_shader_param_get(&shader->parameters[i]));
 
    if (shader->luts)
    {
@@ -1968,6 +2141,14 @@ static bool video_shader_write_referenced_preset(
    conf->path = strdup(path_to_save_conformed);
 
    config_file_add_reference(conf, path_to_ref);
+   if (shader->hdr_mode != ref_shader->hdr_mode)
+   {
+      if (shader->hdr_mode)
+         config_set_int(conf, "hdr_mode", shader->hdr_mode - 1);
+      else
+         config_set_string(conf, "hdr_mode", "auto");
+   }
+
 
    conf->flags |= CONF_FILE_FLG_MODIFIED;
 
@@ -2138,10 +2319,10 @@ static bool video_shader_write_referenced_preset(
    {
       for (i = 0; i < shader->num_parameters; i++)
       {
-         if (     shader->parameters[i].current
-               != ref_shader->parameters[i].current)
+         if (     video_shader_param_get(&shader->parameters[i])
+               != video_shader_param_get(&ref_shader->parameters[i]))
             config_set_float(conf, shader->parameters[i].id,
-                  shader->parameters[i].current);
+                  video_shader_param_get(&shader->parameters[i]));
       }
    }
 
@@ -2291,6 +2472,9 @@ static bool video_shader_load_root_config_into_shader(
 
    /* Load the parameter values */
    video_shader_load_current_parameter_values(conf, shader);
+   if (num_passes == shader->passes)
+      video_shader_parse_hdr_mode(conf, shader);
+
 
 #ifdef DEBUG
    RARCH_DBG("[Shaders] Number of passes: %u.\n", shader->passes);
@@ -2325,6 +2509,9 @@ static bool video_shader_override_values(config_file_t *override_conf,
    if (!shader || !override_conf)
       return false;
 
+   if (video_shader_parse_hdr_mode(override_conf, shader))
+      return_val = true;
+
    /* If the shader has parameters */
    if (shader->num_parameters)
    {
@@ -2336,15 +2523,16 @@ static bool video_shader_override_values(config_file_t *override_conf,
          if (config_get_entry(override_conf, shader->parameters[i].id))
          {
             struct video_shader_parameter *parameter = &shader->parameters[i];
+            float value                              = 0.0f;
 
             /* Set the shader's parameter value */
-            config_get_float(override_conf, parameter->id,
-                  &parameter->current);
+            if (config_get_float(override_conf, parameter->id, &value))
+               video_shader_param_set(parameter, value);
 
 #ifdef DEBUG
             RARCH_DBG("[Shaders] Parameter: \"%s\" = %f.\n",
                   parameter->id,
-                  parameter->current);
+                  video_shader_param_get(parameter));
 #endif
 
             return_val = true;
@@ -2422,6 +2610,11 @@ static bool video_shader_combine_shaders(
       combined_shader->passes += 1;
    }
 
+   combined_shader->hdr_mode = combined_shader->passes == first_shader->passes
+      ? first_shader->hdr_mode :
+      (combined_shader->passes == first_shader->passes + second_shader->passes
+         ? second_shader->hdr_mode : 0);
+
    for (i = 0; i < first_shader->luts && i < GFX_MAX_TEXTURES; i++)
    {
       strlcpy(combined_shader->lut[i].id,
@@ -2471,7 +2664,8 @@ static bool video_shader_combine_shaders(
                first_shader->num_parameters,
                combined_shader->parameters[i].id);
       if (param)
-         combined_shader->parameters[i].current = param->current;
+         video_shader_param_set(&combined_shader->parameters[i],
+               video_shader_param_get(param));
 
       /* Check the shader to append */
       param = video_shader_parse_find_parameter(
@@ -2479,7 +2673,8 @@ static bool video_shader_combine_shaders(
                second_shader->num_parameters,
                combined_shader->parameters[i].id);
       if (param)
-         combined_shader->parameters[i].current = param->current;
+         video_shader_param_set(&combined_shader->parameters[i],
+               video_shader_param_get(param));
    }
 
    return true;
@@ -2703,6 +2898,16 @@ end:
    config_file_free(conf);
    config_file_free(root_conf);
    free(path_to_ref);
+
+   if (ret)
+   {
+      const settings_t *settings = config_get_ptr();
+      unsigned w = settings->uints.video_shader_simulated_input_resolution_width;
+      unsigned h = settings->uints.video_shader_simulated_input_resolution_height;
+      shader->sim_source_dims    = 0;
+      if (settings->bools.video_shader_simulated_input_resolution && w && h)
+         shader->sim_source_dims = VIDEO_SCALE_PACK(w, h);
+   }
 
    return ret;
 }
@@ -3941,46 +4146,35 @@ bool video_shader_apply_shader(
             settings->paths.directory_video_shader);
 
    /* ---- Deferred (per-frame) path ----
-    * Skip when threaded video is active: the tick runs on the main
-    * thread but gl3_frame() runs on the video thread, so they would
-    * race on the filter_chain pointer.
+    * The passes are built one per frame on the thread the driver runs
+    * on - the video thread under threaded video, through the wrapper -
+    * while the chain on screen stays up.
     * Disabled on Android: untested on mobile GPU drivers.
     * Can be disabled at runtime via video_shader_deferred_loading. */
    if (  video_st->current_video
       && video_st->current_video->shader_load_begin
       && video_st->current_video->shader_load_step
-      && !video_st->threaded
       && settings->bools.video_shader_deferred_loading
       && preset_path && *preset_path)
    {
       shader_load_deferred_t *d = &video_st->shader_deferred;
 
-      /* Cancel any in-progress deferred load */
-      if (d->state == SHADER_LOAD_COMPILING)
-      {
-         /* Let the driver clean up the partial chain.
-          * Set current_pass past total and state to FAILED so
-          * step() skips compilation and goes to cleanup. */
-         if (d->driver_data
-               && video_st->current_video->shader_load_step)
-         {
-            d->current_pass = d->total_passes;
-            d->state        = SHADER_LOAD_FAILED;
-            video_st->current_video->shader_load_step(
-                  video_st->data, d);
-         }
-         d->state       = SHADER_LOAD_IDLE;
-         d->driver_data = NULL;
-      }
+      if (     retro_atomic_load_acquire_int(&d->busy)
+            || d->state == SHADER_LOAD_COMPILING)
+         video_driver_shader_deferred_cancel("Replaced by another shader load.");
 
-      d->type         = (unsigned)type;
-      d->current_pass = 0;
+      d->type            = (unsigned)type;
+      d->current_pass    = 0;
+      d->step_any_thread = false;
       strlcpy(d->preset_path, preset_path, sizeof(d->preset_path));
 
+      if (!video_st->threaded)
+         video_driver_shader_deferred_take(d, true);
       if (video_st->current_video->shader_load_begin(
                video_st->data, d))
       {
          d->state = SHADER_LOAD_COMPILING;
+         video_driver_shader_deferred_start(d);
 
          /* Store the runtime preset path early so hotkey
           * cycling and auto-preset logic see it immediately */
@@ -4199,6 +4393,10 @@ void video_shader_toggle(settings_t *settings, bool write)
 #ifdef HAVE_MENU
    struct video_shader *menu_shdr  = menu_shader_get();
    struct menu_state *menu_st      = menu_state_get_ptr();
+
+   /* a video driver that runs no shader has none to toggle */
+   if (!menu_shdr)
+      return;
 
    menu_shdr->flags               &= ~SHDR_FLAG_MODIFIED;
    menu_shdr->flags               &= ~SHDR_FLAG_TEMPORARY;

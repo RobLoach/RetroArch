@@ -280,3 +280,31 @@ const char *msg_hash_to_str(enum msg_hash_enums msg)
  * reads the device's transfer granularity from here, and no platform
  * in a harness reports one. */
 struct defaults g_defaults;
+
+/* The driver exposes transport pause; these harnesses stub mixer I/O. */
+void audio_mixer_voice_set_paused(audio_mixer_voice_t *voice, bool paused)
+{
+   (void)voice;
+   (void)paused;
+}
+
+void audio_mixer_voice_set_repeat(audio_mixer_voice_t *voice, bool repeat)
+{
+   (void)voice;
+   (void)repeat;
+}
+
+/* No real PCM is mixed by this stand-in: a voice plays until it is
+ * stopped, with no frames to count. */
+bool audio_mixer_voice_clock(audio_mixer_voice_t *voice,
+      size_t *frames, unsigned *rate, size_t *serial)
+{
+   if (frames) *frames = 0;
+   if (rate) *rate = 0;
+   if (serial) *serial = voice ? 1 : 0;
+   return voice != NULL;
+}
+void audio_mixer_sound_set_tag(audio_mixer_sound_t *sound, unsigned tag)
+{ (void)sound; (void)tag; }
+unsigned audio_mixer_sound_tag(const audio_mixer_sound_t *sound)
+{ (void)sound; return 0; }

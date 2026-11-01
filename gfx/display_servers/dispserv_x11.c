@@ -33,12 +33,14 @@
 #endif
 
 #ifdef HAVE_XRANDR
+#include <X11/Xlibint.h>
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/randr.h>
 #include <X11/extensions/Xrender.h>
 #endif
 
 #include "../video_display_server.h"
+#include "../gfx_media_display.h"
 #include "../common/x11_common.h"
 #ifdef HAVE_XINERAMA
 #include "../common/xinerama_common.h"
@@ -350,10 +352,10 @@ static int (*x11_ml_old_error_handler)(Display *, XErrorEvent *) = NULL;
 
 static int x11_ml_error_handler(Display *dpy, XErrorEvent *err)
 {
-   if (x11_ml_current)
-      x11_ml_current->xerrors |= x11_ml_current->xerrors_flag;
-   if (x11_ml_old_error_handler)
-      x11_ml_old_error_handler(dpy, err);
+   if (!x11_ml_current || dpy != x11_ml_current->dpy)
+      return x11_ml_old_error_handler
+         ? x11_ml_old_error_handler(dpy, err) : 0;
+   x11_ml_current->xerrors |= x11_ml_current->xerrors_flag;
    RARCH_ERR("[XRandR] Error code %d flags %02x\n", err->error_code,
          x11_ml_current ? x11_ml_current->xerrors : 0);
    return 0;
@@ -1439,7 +1441,6 @@ static int x11_res_list_qsort(const void *pa, const void *pb)
    return 0;
 }
 
-#ifdef RARCH_HAVE_MUTTER_DC
 /* XWayland lists every mode at the desktop's current rate and only
  * scales a fullscreen window when "switched"; the real modes belong to
  * the compositor. Under GNOME, Mutter's D-Bus interface has them.
@@ -1457,6 +1458,8 @@ static bool x11_res_is_xwayland(Display *dpy, const XRROutputInfo *oi)
       return true;
    return oi && oi->name && !strncmp(oi->name, "XWAYLAND", 8);
 }
+
+#ifdef RARCH_HAVE_MUTTER_DC
 
 /* The Mutter head to ask about: the one under the RetroArch window
  * (XWayland's root coordinates are Mutter's logical layout), else the
@@ -1797,6 +1800,243 @@ end:
    x11_display_server_close_display(dispserv, dpy);
    return ok;
 }
+typedef struct
+{
+   RROutput *outputs;
+   RRCrtc crtc;
+   RRMode original, applied;
+   int x, y, noutput;
+   Rotation rotation;
+} x11_media_refresh_t;
+
+static bool x11_media_mode_available(Display *dpy,
+      XRRScreenResources *res, const XRRCrtcInfo *ci, RRCrtc crtc,
+      RRMode mode)
+{
+   int o, m;
+   if (!ci->outputs || ci->noutput <= 0 || ci->noutput > res->noutput)
+      return false;
+   for (o = 0; o < ci->noutput; o++)
+   {
+      XRROutputInfo *oi = XRRGetOutputInfo(dpy, res, ci->outputs[o]);
+      bool found = false;
+      if (!oi)
+         return false;
+      if (oi->connection == RR_Connected && oi->crtc == crtc)
+         for (m = 0; m < oi->nmode; m++)
+            if (oi->modes[m] == mode)
+            {
+               found = true;
+               break;
+            }
+      XRRFreeOutputInfo(oi);
+      if (!found)
+         return false;
+   }
+   return true;
+}
+
+static Bool x11_media_wire_error(Display *dpy, XErrorEvent *error, xError *wire)
+{
+   (void)dpy;
+   (void)wire;
+   return error->request_code < 128 || error->minor_code != X_RRSetCrtcConfig;
+}
+
+static bool x11_media_apply(Display *dpy, XRRScreenResources *res,
+      RRCrtc crtc, const XRRCrtcInfo *ci, RRMode mode)
+{
+   Display *control = XOpenDisplay(DisplayString(dpy));
+   Status result;
+   int event, error, i;
+   if (!control)
+      return false;
+   if (!XRRQueryExtension(control, &event, &error))
+   {
+      XCloseDisplay(control);
+      return false;
+   }
+   /* A private connection keeps the error trap off the rendering thread. */
+   XESetWireToError(control, BadValue, x11_media_wire_error);
+   XESetWireToError(control, BadMatch, x11_media_wire_error);
+   XESetWireToError(control, BadAlloc, x11_media_wire_error);
+   XESetWireToError(control, BadAccess, x11_media_wire_error);
+   for (i = 0; i < RRNumberErrors; i++)
+      XESetWireToError(control, error + i, x11_media_wire_error);
+   result = XRRSetCrtcConfig(control, res, crtc, CurrentTime,
+         ci->x, ci->y, mode, ci->rotation, ci->outputs, ci->noutput);
+   XCloseDisplay(control);
+   x11_refresh_invalidate();
+   return result == RRSetConfigSuccess;
+}
+
+static bool x11_media_refresh_matches(const x11_media_refresh_t *lease,
+      const XRRCrtcInfo *ci)
+{
+   int i, j;
+   if (!ci || ci->mode != lease->applied || ci->x != lease->x
+         || ci->y != lease->y || ci->rotation != lease->rotation
+         || ci->noutput != lease->noutput || !ci->outputs)
+      return false;
+   for (i = 0; i < lease->noutput; i++)
+   {
+      for (j = 0; j < ci->noutput; j++)
+         if (lease->outputs[i] == ci->outputs[j])
+            break;
+      if (j == ci->noutput)
+         return false;
+   }
+   return true;
+}
+
+static void *x11_display_server_begin_media_refresh(void *data,
+      unsigned num, unsigned den)
+{
+   dispserv_x11_t *dispserv = (dispserv_x11_t *)data;
+   Display *dpy;
+   XRRScreenResources *res = NULL;
+   XRROutputInfo *oi = NULL;
+   XRRCrtcInfo *ci = NULL;
+   const XRRModeInfo *original, *best = NULL;
+   x11_media_refresh_t *lease = NULL;
+   video_display_config_t choices[2];
+   float selected, previous = 0.0f;
+   unsigned dims;
+   int i;
+   if (!dispserv || !num || !den)
+      return NULL;
+   dpy = x11_display_server_open_display(dispserv);
+   if (!dpy)
+      return NULL;
+   res = XRRGetScreenResourcesCurrent(dpy, RootWindow(dpy, DefaultScreen(dpy)));
+   if (!res || !x11_res_pick_output(dpy, res,
+            RootWindow(dpy, DefaultScreen(dpy)), 0, &oi, &ci)
+         || x11_res_is_xwayland(dpy, oi))
+      goto done;
+   original = x11_res_find_mode(res, ci->mode);
+   if (!original || !original->width || !original->height)
+      goto done;
+   dims = VIDEO_SCALE_PACK(original->width, original->height);
+   memset(choices, 0, sizeof(choices));
+   for (i = 0; i < oi->nmode; i++)
+   {
+      const XRRModeInfo *candidate = x11_res_find_mode(res, oi->modes[i]);
+      if (!candidate || candidate->width != original->width
+            || candidate->height != original->height
+            || (candidate->modeFlags & (RR_Interlace | RR_DoubleScan)))
+         continue;
+      choices[0].dims = dims;
+      choices[0].refreshrate_float = previous;
+      choices[1] = choices[0];
+      choices[1].refreshrate_float = x11_res_mode_rate(candidate);
+      selected = gfx_media_display_rate(choices, 2, dims, 0,
+            num, den, x11_res_mode_rate(original));
+      if (selected > 0.0f && selected != previous
+            && x11_media_mode_available(dpy, res, ci, oi->crtc, candidate->id))
+      {
+         best = candidate;
+         previous = selected;
+      }
+   }
+   if (!best || best->id == original->id
+         || (size_t)ci->noutput > (size_t)-1 / sizeof(RROutput))
+      goto done;
+   lease = (x11_media_refresh_t *)calloc(1, sizeof(*lease));
+   if (!lease)
+      goto done;
+   lease->outputs = (RROutput *)malloc((size_t)ci->noutput * sizeof(RROutput));
+   if (!lease->outputs)
+      goto failed;
+   memcpy(lease->outputs, ci->outputs, (size_t)ci->noutput * sizeof(RROutput));
+   lease->crtc = oi->crtc;
+   lease->original = original->id;
+   lease->applied = best->id;
+   lease->x = ci->x;
+   lease->y = ci->y;
+   lease->rotation = ci->rotation;
+   lease->noutput = ci->noutput;
+   if (x11_media_apply(dpy, res, lease->crtc, ci, best->id))
+      goto done;
+failed:
+   free(lease->outputs);
+   free(lease);
+   lease = NULL;
+done:
+   if (ci) XRRFreeCrtcInfo(ci);
+   if (oi) XRRFreeOutputInfo(oi);
+   if (res) XRRFreeScreenResources(res);
+   x11_display_server_close_display(dispserv, dpy);
+   return lease;
+}
+
+static void x11_display_server_end_media_refresh(void *data, void *handle)
+{
+   dispserv_x11_t *dispserv = (dispserv_x11_t *)data;
+   x11_media_refresh_t *lease = (x11_media_refresh_t *)handle;
+   Display *dpy;
+   XRRScreenResources *res = NULL;
+   XRRCrtcInfo *ci = NULL;
+   if (!lease)
+      return;
+   dpy = x11_display_server_open_display(dispserv);
+   if (dpy)
+   {
+      res = XRRGetScreenResourcesCurrent(dpy, RootWindow(dpy, DefaultScreen(dpy)));
+      if (res)
+         ci = XRRGetCrtcInfo(dpy, res, lease->crtc);
+      if (x11_media_refresh_matches(lease, ci)
+            && x11_res_find_mode(res, lease->original)
+            && x11_media_mode_available(dpy, res, ci, lease->crtc, lease->original))
+         x11_media_apply(dpy, res, lease->crtc, ci, lease->original);
+   }
+   if (ci) XRRFreeCrtcInfo(ci);
+   if (res) XRRFreeScreenResources(res);
+   x11_display_server_close_display(dispserv, dpy);
+   free(lease->outputs);
+   free(lease);
+}
+
+static bool x11_display_server_media_refresh_current(void *data, void *handle,
+      unsigned num, unsigned den)
+{
+   dispserv_x11_t *dispserv = (dispserv_x11_t *)data;
+   x11_media_refresh_t *lease = (x11_media_refresh_t *)handle;
+   Display *dpy;
+   XRRScreenResources *res = NULL;
+   XRROutputInfo *oi = NULL;
+   XRRCrtcInfo *ci = NULL;
+   const XRRModeInfo *applied;
+   video_display_config_t mode;
+   bool current = false;
+   if (!lease)
+      return false;
+   dpy = x11_display_server_open_display(dispserv);
+   if (!dpy)
+      return false;
+   res = XRRGetScreenResourcesCurrent(dpy, RootWindow(dpy, DefaultScreen(dpy)));
+   if (!res || !x11_res_pick_output(dpy, res,
+            RootWindow(dpy, DefaultScreen(dpy)), 0, &oi, &ci)
+         || oi->crtc != lease->crtc || !x11_media_refresh_matches(lease, ci))
+      goto done;
+   applied = x11_res_find_mode(res, lease->applied);
+   if (!applied)
+      goto done;
+   memset(&mode, 0, sizeof(mode));
+   mode.dims = VIDEO_SCALE_PACK(applied->width, applied->height);
+   mode.refreshrate_float = x11_res_mode_rate(applied);
+   mode.interlaced = (applied->modeFlags & RR_Interlace) != 0;
+   mode.dblscan = (applied->modeFlags & RR_DoubleScan) != 0;
+   current = gfx_media_display_rate(&mode, 1, mode.dims, 0,
+         num, den, mode.refreshrate_float) > 0.0f
+      && x11_media_mode_available(dpy, res, ci, lease->crtc, lease->applied);
+done:
+   if (ci) XRRFreeCrtcInfo(ci);
+   if (oi) XRRFreeOutputInfo(oi);
+   if (res) XRRFreeScreenResources(res);
+   x11_display_server_close_display(dispserv, dpy);
+   return current;
+}
+
 #endif /* HAVE_XRANDR */
 
 static void* x11_display_server_init(void)
@@ -1913,7 +2153,10 @@ static uint32_t x11_display_server_get_flags(void *data)
 
 #ifdef HAVE_XRANDR
 /* The first connected output's current mode. */
-static float x11_display_server_read_refresh_rate(Display *dpy)
+/* The refresh rate of the first connected output, or with @at, of the
+ * output whose CRTC holds that point in root coordinates. */
+static float x11_display_server_read_refresh_rate_at(Display *dpy,
+      const XPoint *at)
 {
    float refresh_rate         = 0.0f;
    XRRScreenResources *screen = XRRGetScreenResources(dpy,
@@ -1933,6 +2176,17 @@ static float x11_display_server_read_refresh_rate(Display *dpy)
          {
             int j;
             XRRCrtcInfo *crtc = XRRGetCrtcInfo(dpy, screen, info->crtc);
+
+            if (     at && crtc
+                  && (   at->x <  crtc->x
+                      || at->y <  crtc->y
+                      || at->x >= crtc->x + (int)crtc->width
+                      || at->y >= crtc->y + (int)crtc->height))
+            {
+               XRRFreeCrtcInfo(crtc);
+               XRRFreeOutputInfo(info);
+               continue;
+            }
 
             if (crtc && crtc->mode)
             {
@@ -2000,6 +2254,40 @@ static void x11_display_server_watch_randr(Display *dpy)
  * and answered from memory in between. A reader that raced a change
  * withdraws the rate it kept, so an old mode's rate never outlives the
  * change that replaced it. */
+static float x11_display_server_read_refresh_rate(Display *dpy)
+{
+   return x11_display_server_read_refresh_rate_at(dpy, NULL);
+}
+
+/* The refresh rate of the output under the middle of the window: on a
+ * desktop of several monitors the first output is not necessarily the
+ * one the window is on. Not cached: the window moves. */
+static float x11_display_server_get_window_refresh_rate(void *data)
+{
+   XWindowAttributes attr;
+   Window   child;
+   int      rx, ry;
+   XPoint   at;
+   float    rate              = 0.0f;
+   dispserv_x11_t *dispserv   = (dispserv_x11_t*)data;
+   Display *dpy;
+
+   if (!g_x11_win)
+      return 0.0f;
+   if (!(dpy = x11_display_server_open_display(dispserv)))
+      return 0.0f;
+   if (     XGetWindowAttributes(dpy, g_x11_win, &attr)
+         && XTranslateCoordinates(dpy, g_x11_win, attr.root,
+            attr.width / 2, attr.height / 2, &rx, &ry, &child))
+   {
+      at.x = (short)rx;
+      at.y = (short)ry;
+      rate = x11_display_server_read_refresh_rate_at(dpy, &at);
+   }
+   x11_display_server_close_display(dispserv, dpy);
+   return rate;
+}
+
 static float x11_display_server_get_refresh_rate(void *data)
 {
    union { float f; int i; } rate;
@@ -2050,37 +2338,72 @@ static void x11_display_server_get_video_output_size(void *data,
    dispserv_x11_t *dispserv       = (dispserv_x11_t*)data;
    Display *dpy                   = x11_display_server_open_display(dispserv);
    XRRScreenResources *screen     = NULL;
+   int rx                        = 0;
+   int ry                        = 0;
 
+   if (dims)
+      *dims = 0;
+   if (s && len)
+      s[0] = '\0';
    if (!dpy)
       return;
 
+   if (g_x11_win)
+   {
+      XWindowAttributes attr;
+      Window child;
+      if (!XGetWindowAttributes(dpy, g_x11_win, &attr)
+            || !XTranslateCoordinates(dpy, g_x11_win, attr.root,
+               attr.width / 2, attr.height / 2, &rx, &ry, &child))
+      {
+         x11_display_server_close_display(dispserv, dpy);
+         return;
+      }
+   }
    screen = XRRGetScreenResources(dpy, DefaultRootWindow(dpy));
 
    if (screen)
    {
       int i;
-      for (i = 0; i < screen->noutput; i++)
+      for (i = 0; screen->outputs && i < screen->noutput; i++)
       {
          XRROutputInfo *info = XRRGetOutputInfo(dpy, screen, screen->outputs[i]);
+         bool found         = false;
 
+         if (!info)
+            continue;
          if (info->connection == RR_Connected && info->crtc)
          {
             XRRCrtcInfo *crtc = XRRGetCrtcInfo(dpy, screen, info->crtc);
 
             if (crtc)
             {
-               if (dims)
-                  *dims = VIDEO_SCALE_PACK(crtc->width, crtc->height);
+               /* Before window creation, use the first active output.
+                * Otherwise bind the name and geometry to its window center. */
+               found = crtc->width && crtc->height && (!g_x11_win
+                     || (rx >= crtc->x && ry >= crtc->y
+                        && (int64_t)rx - crtc->x < crtc->width
+                        && (int64_t)ry - crtc->y < crtc->height));
+               if (found)
+               {
+                  if (dims)
+                     *dims = VIDEO_SCALE_PACK(crtc->width, crtc->height);
+                  if (s && len && info->name && info->nameLen > 0)
+                  {
+                     size_t count = (size_t)info->nameLen;
+                     if (count >= len)
+                        count = len - 1;
+                     memcpy(s, info->name, count);
+                     s[count] = '\0';
+                  }
+               }
                XRRFreeCrtcInfo(crtc);
             }
-
-            XRRFreeOutputInfo(info);
-            break;
          }
-
          XRRFreeOutputInfo(info);
+         if (found)
+            break;
       }
-
       XRRFreeScreenResources(screen);
    }
 
@@ -2255,30 +2578,10 @@ static bool x11_get_metrics(void *data,
    switch (type)
    {
       case DISPLAY_METRIC_PIXEL_WIDTH:
-         dpy    = (Display*)XOpenDisplay(NULL);
-         *value = (float)DisplayWidth(dpy, screen_no);
-         XCloseDisplay(dpy);
-         break;
       case DISPLAY_METRIC_PIXEL_HEIGHT:
-         dpy    = (Display*)XOpenDisplay(NULL);
-         *value = (float)DisplayHeight(dpy, screen_no);
-         XCloseDisplay(dpy);
-         break;
       case DISPLAY_METRIC_MM_WIDTH:
-         dpy    = (Display*)XOpenDisplay(NULL);
-         *value = (float)DisplayWidthMM(dpy, screen_no);
-         XCloseDisplay(dpy);
-         break;
       case DISPLAY_METRIC_MM_HEIGHT:
-         dpy    = (Display*)XOpenDisplay(NULL);
-         *value = (float)DisplayHeightMM(dpy, screen_no);
-         XCloseDisplay(dpy);
-         break;
       case DISPLAY_METRIC_DPI:
-         dpy    = (Display*)XOpenDisplay(NULL);
-         *value = ((((float)DisplayWidth  (dpy, screen_no)) * 25.4)
-               /  (  (float)DisplayWidthMM(dpy, screen_no)));
-         XCloseDisplay(dpy);
          break;
       case DISPLAY_METRIC_NONE:
       default:
@@ -2286,6 +2589,34 @@ static bool x11_get_metrics(void *data,
          return false;
    }
 
+   /* DISPLAY can be set with no server behind it */
+   if (!(dpy = (Display*)XOpenDisplay(NULL)))
+   {
+      *value = 0;
+      return false;
+   }
+
+   switch (type)
+   {
+      case DISPLAY_METRIC_PIXEL_WIDTH:
+         *value = (float)DisplayWidth(dpy, screen_no);
+         break;
+      case DISPLAY_METRIC_PIXEL_HEIGHT:
+         *value = (float)DisplayHeight(dpy, screen_no);
+         break;
+      case DISPLAY_METRIC_MM_WIDTH:
+         *value = (float)DisplayWidthMM(dpy, screen_no);
+         break;
+      case DISPLAY_METRIC_MM_HEIGHT:
+         *value = (float)DisplayHeightMM(dpy, screen_no);
+         break;
+      default:
+         *value = ((((float)DisplayWidth  (dpy, screen_no)) * 25.4)
+               /  (  (float)DisplayWidthMM(dpy, screen_no)));
+         break;
+   }
+
+   XCloseDisplay(dpy);
    return true;
 }
 
@@ -2467,5 +2798,16 @@ const video_display_server_t dispserv_x11 = {
 #endif
    x11_display_server_get_edid,
    x11_display_server_idle_wait,
-   "x11"
+   "x11",
+#ifdef HAVE_XRANDR
+   x11_display_server_get_window_refresh_rate,
+   x11_display_server_begin_media_refresh,
+   x11_display_server_end_media_refresh,
+   x11_display_server_media_refresh_current
+#else
+   NULL, /* get_window_refresh_rate */
+   NULL, /* begin_media_refresh */
+   NULL, /* end_media_refresh */
+   NULL  /* media_refresh_current */
+#endif
 };

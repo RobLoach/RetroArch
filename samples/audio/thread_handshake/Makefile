@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 compiler     := gcc
 TARGET       := thread_handshake_test
 
@@ -10,6 +12,7 @@ flags   += -std=gnu99
 
 SOURCES_C := \
 	thread_handshake_test.c \
+	terminal_ack_test.c \
 	../../../audio/audio_upmix.c \
 	../../../audio/audio_binaural.c \
 	stubs_retroarch.c \
@@ -21,6 +24,7 @@ SOURCES_C := \
 	$(LIBRETRO_COMM_DIR)/queues/fifo_queue.c \
 	$(LIBRETRO_COMM_DIR)/lists/string_list.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+	$(LIBRETRO_COMM_DIR)/time/rtime.c \
 	$(LIBRETRO_COMM_DIR)/features/features_cpu.c
 
 CFLAGS += -Wall $(INCDIRS)
@@ -32,15 +36,19 @@ ifneq ($(SAN),)
    SANITIZER := $(SAN)
 endif
 ifneq ($(SANITIZER),)
-   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g $(CFLAGS)
+   CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer -g1 $(CFLAGS)
    LDFLAGS := -fsanitize=$(SANITIZER) $(LDFLAGS)
 endif
 
-OBJS := $(SOURCES_C:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES_C:.c=.o))
 
 all: $(TARGET)
 
 %.o: %.c
+	$(CC) $(INCDIRS) $(CFLAGS) $(flags) -c -o$@ $<
+
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
 	$(CC) $(INCDIRS) $(CFLAGS) $(flags) -c -o$@ $<
 
 $(TARGET): $(OBJS)
@@ -50,6 +58,7 @@ check: $(TARGET)
 	./$(TARGET)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(OBJS)
 	rm -f $(TARGET)
 

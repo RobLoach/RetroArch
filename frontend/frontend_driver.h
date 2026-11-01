@@ -102,11 +102,17 @@ typedef struct frontend_ctx_driver
    const char *ident;
 
    const struct video_driver *(*get_video_driver)(void);
+   /* Whether the drive list offers the filesystem root; NULL means
+    * it does.  The file browser stops Parent Directory short of a
+    * root the drive list does not offer. */
+   bool (*root_in_drive_list)(void);
+   bool (*set_power_plan)(bool on, bool idle_disable);
 } frontend_ctx_driver_t;
 
 typedef struct
 {
    frontend_ctx_driver_t *current_frontend_ctx; /* ptr alignment */
+   enum frontend_fork fork_mode; /* the last mode the driver accepted */
 } frontend_state_t;
 
 /**
@@ -131,6 +137,8 @@ frontend_ctx_driver_t *frontend_get_ptr(void);
 frontend_ctx_driver_t *frontend_ctx_init_first(void);
 
 int frontend_driver_parse_drive_list(void *data, bool load_content);
+
+bool frontend_driver_root_in_drive_list(void);
 
 void frontend_driver_content_loaded(void);
 
@@ -159,6 +167,10 @@ void frontend_driver_deinit(void *args);
 void frontend_driver_exitspawn(char *s, size_t len, char *args);
 
 bool frontend_driver_has_fork(void);
+
+/* The fork the driver last accepted, FRONTEND_FORK_NONE when none:
+ * what exitspawn will launch on the way out. */
+enum frontend_fork frontend_driver_get_fork(void);
 
 size_t frontend_driver_get_core_extension(char *s, size_t len);
 
@@ -194,6 +206,8 @@ enum retro_language frontend_driver_get_user_language(void);
 bool frontend_driver_has_gamemode(void);
 
 bool frontend_driver_set_gamemode(bool on);
+
+bool frontend_driver_set_power_plan(bool on, bool idle_disable);
 
 frontend_state_t *frontend_state_get_ptr(void);
 

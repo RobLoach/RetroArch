@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := crt_switch_modeline_test
 
 # Path back to the repo root from this sample dir.  Like
@@ -28,7 +30,7 @@ SOURCES := crt_switch_modeline_test.c \
            $(LRC)/time/rtime.c \
            $(LRC)/vfs/vfs_implementation.c
 
-CFLAGS  += -Wall -std=gnu89 -g -O0 \
+CFLAGS  += -Wall -std=gnu89 -g1 -O0 \
            -DRARCH_INTERNAL -DHAVE_THREADS -DHAVE_MENU -DHAVE_MODELINE \
            -DHAVE_CONFIGFILE -DHAVE_DYNAMIC -D_GNU_SOURCE \
            -I$(REPO_ROOT) \
@@ -37,7 +39,7 @@ CFLAGS  += -Wall -std=gnu89 -g -O0 \
 
 LDFLAGS += -lm -lpthread
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
 ifneq ($(SANITIZER),)
    CFLAGS  := -fsanitize=$(SANITIZER) -fno-omit-frame-pointer $(CFLAGS)
@@ -49,6 +51,10 @@ all: $(TARGET)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
@@ -56,6 +62,7 @@ check: $(TARGET)
 	./$(TARGET)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJS)
 
 .PHONY: all check clean

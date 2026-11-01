@@ -1,3 +1,5 @@
+include ../../sample_objdir.mk
+
 TARGET := wait_timeout_test
 
 # Drives the shipping libretro-common/queues/task_queue.c directly.
@@ -12,12 +14,13 @@ LIBRETRO_COMM_DIR := $(REPO_ROOT)/libretro-common
 SOURCES := wait_timeout_test.c \
            $(LIBRETRO_COMM_DIR)/queues/task_queue.c \
            $(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
+           $(LIBRETRO_COMM_DIR)/rthreads/retro_eventcount.c \
            $(LIBRETRO_COMM_DIR)/features/features_cpu.c \
            $(LIBRETRO_COMM_DIR)/compat/compat_strl.c
 
-OBJS := $(SOURCES:.c=.o)
+OBJS := $(call sample_objs,$(SOURCES:.c=.o))
 
-CFLAGS  += -Wall -std=gnu99 -g -DHAVE_THREADS \
+CFLAGS  += -Wall -std=gnu99 -g1 -DHAVE_THREADS \
            -I$(LIBRETRO_COMM_DIR)/include
 LDFLAGS += -lpthread -lm
 
@@ -32,10 +35,15 @@ all: $(TARGET)
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(SAMPLE_OBJDIR)/%.o: $$(call sample_src,$$*).c
+	@mkdir -p $(@D)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
+	rm -rf $(SAMPLE_OBJDIR)
 	rm -f $(TARGET) $(OBJS)
 
 .PHONY: clean all

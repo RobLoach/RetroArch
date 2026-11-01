@@ -130,7 +130,7 @@ static audio_driver_t scripted = {
 
 /* Buffers the harness owns.
  *
- * In the frontend these six are slices of arena_int16, arena_float and
+ * In the frontend these are slices of arena_int16, arena_float and
  * pipe_arena: audio_driver_deinit_internal() frees the arenas as units
  * and then only NULLs the named pointers, because none of them is a
  * separate allocation there. A stand-up below hands the state plain
@@ -140,10 +140,31 @@ static audio_driver_t scripted = {
  * then. That leaked a set per case: 466 MB over a full run, enough
  * that the test cannot be run under LeakSanitizer.
  *
- * The buffers the frontend really does free - upmix_buf, upmix_i16,
- * pipe_wide, multi_fold, record_remap - are not here, and must not be:
- * deinit frees them and this would double it. */
-static void *owned[6];
+ * The fold staging and the recorder remap staging are arena regions
+ * too, carved at init to their fixed sizes - the batch callback no
+ * longer grows them - so the stand-up carves them as init does.  The
+ * buffers the frontend really does free - upmix_buf, upmix_i16 -
+ * are not here, and must not be: deinit frees them and this would
+ * double it. */
+static void *owned[8];
+
+/* The staging sizes init uses, from audio_driver.c */
+#define HARNESS_FOLD_FRAMES   (AUDIO_CHUNK_SIZE_NONBLOCKING >> 1)
+#define HARNESS_REMAP_INT16S  ((AUDIO_CHUNK_SIZE_NONBLOCKING >> 1) * 16)
+
+/* The two staging regions every stand-up gets, as init carves them:
+ * the fold's fronts, and the recorder's remap at the widest layout
+ * with a conversion half beside it. */
+static void owned_staging(audio_driver_state_t *st)
+{
+   st->multi_fold          = malloc(HARNESS_FOLD_FRAMES * 2 * sizeof(float));
+   st->multi_fold_frames   = HARNESS_FOLD_FRAMES;
+   st->record_remap        = (int16_t*)malloc(2 * HARNESS_REMAP_INT16S * sizeof(int16_t));
+   st->record_remap_frames = HARNESS_REMAP_INT16S;
+   owned[6]                = st->multi_fold;
+   owned[7]                = st->record_remap;
+}
+
 
 static void owned_free(void)
 {
@@ -185,6 +206,7 @@ static bool up(bool core_float, uint32_t layout, bool float_dev)
    owned[1]                   = st->output_samples_int16;
    owned[2]                   = st->input_data;
    owned[3]                   = st->input_data_int16;
+   owned_staging(st);
    st->core_float             = core_float;
    st->sink_bias              = 1.0;
    strcpy(st->resampler_ident, "sinc");
@@ -264,8 +286,6 @@ static bool pipe_up(bool core_float, bool float_dev)
    st->core_multi        = true;
    st->pipe_channels     = AUDIO_PIPE_CANON_CHANNELS;
    st->pipe_frame_bytes  = AUDIO_PIPE_CANON_CHANNELS * (float_dev ? sizeof(float) : sizeof(int16_t));
-   st->pipe_wide_bytes   = st->pipe_pass_frames * AUDIO_PIPE_CANON_CHANNELS * sizeof(float);
-   st->pipe_wide         = (uint8_t*)malloc(st->pipe_wide_bytes);
    st->pipe_layout = AUDIO_LAYOUT_STEREO;
    audio_pipeline_layout_init(&st->pipe_layouts, AUDIO_LAYOUT_STEREO);
    retro_atomic_store_release_int(&st->pipe_ctrl_avail, -1);
@@ -566,6 +586,7 @@ static void ac3_bitstream_case(void)
    owned[1]                 = st->output_samples_int16;
    owned[2]                 = st->input_data;
    owned[3]                 = st->input_data_int16;
+   owned_staging(st);
    st->core_float           = true;
    st->sink_bias            = 1.0;
    st->core_layout          = AUDIO_LAYOUT_STEREO;
@@ -910,7 +931,7 @@ static void suspended_multichannel_case(bool floating, bool discrete)
       ? audio_driver_sample_batch_multi_float(input_f, frames, 6, AUDIO_LAYOUT_5POINT1)
       : audio_driver_sample_batch_multi_int16(input_i, frames, 6, AUDIO_LAYOUT_5POINT1);
    CHECK(accepted == frames, "suspended frames not accepted");
-   CHECK(!st->multi_fold && !st->multi_fold_frames, "suspended batch allocated fold staging");
+   CHECK(st->multi_fold_frames == HARNESS_FOLD_FRAMES, "suspended batch touched the fold staging");
    CHECK(!st->extra.pending && !st->extra.channels, "suspended batch prepared extras");
    CHECK(!cap_frames, "suspended batch reached device");
    CHECK(st->core_layout == AUDIO_LAYOUT_5POINT1, "layout metadata was not retained");
@@ -992,6 +1013,53 @@ static void full_wide_ring_case(bool floating)
 
 }
 
+static bool record_gate_drop(void) { return true; }
+static void record_folded_playback_case(bool floating, uint32_t source_layout,
+      uint32_t device_layout)
+{
+   const size_t frames = 4099;
+   unsigned channels = audio_layout_channels(source_layout);
+   size_t i;
+   audio_driver_state_t *st = &audio_driver_st;
+   recording_state_t *rs = recording_state_get_ptr();
+   int16_t *input = (int16_t*)malloc(frames * channels * sizeof(int16_t));
+   float *input_f = (float*)malloc(frames * channels * sizeof(float));
+   CHECK(input && input_f, "record fold allocation");
+   if (!input || !input_f) goto end;
+   CHECK(up(floating, device_layout, false), "record fold stand-up");
+   free(rec_cap); rec_cap = NULL; rec_cap_frames = rec_frames = 0;
+   rs->driver = &rec_driver; rs->data = rs; rs->layout = source_layout;
+   rs->channels = rec_channels = channels;
+   for (i = 0; i < frames * channels; i++)
+   {
+      input[i] = (int16_t)((int)(i * 37 % 20000) - 10000);
+      input_f[i] = input[i] / 32768.0f;
+   }
+   if (floating)
+   {
+      audio_driver_sample_batch_multi_float(input_f, frames, channels, source_layout);
+      convert_float_to_s16(input, input_f, frames * channels);
+   }
+   else
+      audio_driver_sample_batch_multi_int16(input, frames, channels, source_layout);
+   CHECK(rec_frames == frames, "record fold lost or duplicated frames");
+   if (rec_frames == frames)
+      CHECK(!memcmp(rec_cap, input, frames * channels * sizeof(int16_t)),
+            "record fold replaced original channels with playback's mix");
+   CHECK(st->record_source == NULL, "record fold retained a stack borrow");
+   if (floating)
+   {
+      st->float_gate = record_gate_drop;
+      audio_driver_sample_batch_multi_float(input_f, frames, channels, source_layout);
+      CHECK(rec_frames == frames && st->record_source == NULL,
+            "record fold bypassed the float gate or retained its borrow");
+      st->float_gate = NULL;
+   }
+   rs->driver = NULL; rs->data = NULL;
+end:
+   free(input_f); free(input);
+}
+
 static void record_stereo_entry_case(unsigned kind, uint32_t layout)
 {
    size_t frames = kind ? 2053 : 1024, offset = kind ? 14 : 0, i;
@@ -1035,7 +1103,7 @@ static void record_stereo_entry_case(unsigned kind, uint32_t layout)
    if (rec_frames == frames)
       CHECK(!memcmp(rec_cap, expected, frames * rec_channels * sizeof(int16_t)),
             "record entry did not map stereo to the recorder layout");
-   CHECK(st->record_remap_frames <= 1024 * rec_channels, "record entry staging is unbounded");
+   CHECK(st->record_remap_frames == HARNESS_REMAP_INT16S, "record entry grew its staging");
    rs->driver = NULL; rs->data = NULL;
 end:
    free(expected); free(narrow); free(input_f); free(input);
@@ -1421,6 +1489,38 @@ static void canonical_prefix_case(void)
    CHECK(!audio_driver_pipe_widen_prefix(output, input, 32, 6, AUDIO_LAYOUT_5POINT1_SURROUND, true),
          "non-prefix layout skipped general remapping");
    for (i = 0; i < sizeof(output); i++) CHECK(output[i] == 0xa5, "rejected prefix changed output");
+}
+
+/* A new core rate with the extra lanes up is taken: the lanes, siblings
+ * of the front pair the change replaces, go with it and are remade at
+ * the new ratio by the next pass. */
+static void rate_change_extras_case(bool floating)
+{
+   union { float f[128 * 6]; int16_t i[128 * 6]; } input;
+   audio_driver_state_t *st = &audio_driver_st;
+   void *front;
+   size_t f;
+   bool ready = pipe_up(floating, floating);
+   CHECK(ready, "rate stand-up");
+   if (!ready) return;
+   for (f = 0; f < 128 * 6; f++)
+      if (floating) input.f[f] = (float)(f % 6 + 1) / 16.0f;
+      else input.i[f] = (int16_t)((f % 6 + 1) * 2048);
+   CHECK(audio_driver_multi_pipe(st, &input, 128, 6, AUDIO_LAYOUT_5POINT1, floating),
+         "rate warm publish");
+   audio_driver_pipeline_consume(st);
+   CHECK(st->extra.nres == 2, "rate: no extra lanes to begin with");
+   front = st->resampler_data;
+   CHECK(audio_driver_set_input_rate(32000.0), "a rate change with extra lanes refused");
+   CHECK(     st->extra.nres == 0
+           && st->resampler_data != front
+           && fabs(st->src_ratio_orig - 48000.0 / 32000.0) < 1e-9,
+         "the rate change left the old lanes or ratio: %u lanes, ratio %.4f",
+         st->extra.nres, st->src_ratio_orig);
+   CHECK(audio_driver_multi_pipe(st, &input, 128, 6, AUDIO_LAYOUT_5POINT1, floating),
+         "rate publish");
+   audio_driver_pipeline_consume(st);
+   CHECK(st->extra.nres == 2, "the extra lanes were not remade at the new rate");
 }
 
 static void resampler_discontinuity_case(unsigned backend, bool floating,
@@ -2594,6 +2694,8 @@ int main(void)
    RUN("transportscheduler", transport_scheduler_cases());
    RUN("nativerender", native_render_cases());
    RUN("srcreset", resampler_discontinuity_cases());
+   RUN("ratechange", rate_change_extras_case(true));
+   RUN("ratechange", rate_change_extras_case(false));
    RUN("suspended", suspended_multichannel_case(true, true));
    RUN("suspended", suspended_multichannel_case(false, true));
    RUN("suspended", suspended_multichannel_case(true, false));
@@ -2631,6 +2733,18 @@ int main(void)
    RUN("threaded", threaded_case(false, false));
    RUN("threaded", stereo_on_wide_ring_case());
    RUN("record",   record_case());
+   RUN("rawcapture", record_folded_playback_case(false, AUDIO_LAYOUT_5POINT1, AUDIO_LAYOUT_STEREO));
+   RUN("rawcapture", record_folded_playback_case(false, AUDIO_LAYOUT_5POINT1, AUDIO_LAYOUT_5POINT1));
+   RUN("rawcapture", record_folded_playback_case(false, AUDIO_LAYOUT_5POINT1_SURROUND, AUDIO_LAYOUT_STEREO));
+   RUN("rawcapture", record_folded_playback_case(false, AUDIO_LAYOUT_5POINT1_SURROUND, AUDIO_LAYOUT_5POINT1));
+   RUN("rawcapture", record_folded_playback_case(false, AUDIO_SPEAKER_FRONT_CENTER, AUDIO_LAYOUT_STEREO));
+   RUN("rawcapture", record_folded_playback_case(false, AUDIO_SPEAKER_FRONT_CENTER, AUDIO_LAYOUT_5POINT1));
+   RUN("rawcapture", record_folded_playback_case(true, AUDIO_LAYOUT_5POINT1, AUDIO_LAYOUT_STEREO));
+   RUN("rawcapture", record_folded_playback_case(true, AUDIO_LAYOUT_5POINT1, AUDIO_LAYOUT_5POINT1));
+   RUN("rawcapture", record_folded_playback_case(true, AUDIO_LAYOUT_5POINT1_SURROUND, AUDIO_LAYOUT_STEREO));
+   RUN("rawcapture", record_folded_playback_case(true, AUDIO_LAYOUT_5POINT1_SURROUND, AUDIO_LAYOUT_5POINT1));
+   RUN("rawcapture", record_folded_playback_case(true, AUDIO_SPEAKER_FRONT_CENTER, AUDIO_LAYOUT_STEREO));
+   RUN("rawcapture", record_folded_playback_case(true, AUDIO_SPEAKER_FRONT_CENTER, AUDIO_LAYOUT_5POINT1));
    RUN("recordentry", record_stereo_entry_case(0, AUDIO_LAYOUT_STEREO));
    RUN("recordentry", record_stereo_entry_case(0, AUDIO_LAYOUT_5POINT1));
    RUN("recordentry", record_stereo_entry_case(0, AUDIO_LAYOUT_7POINT1));

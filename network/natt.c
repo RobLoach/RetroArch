@@ -146,7 +146,7 @@ bool natt_device_next(struct natt_discovery *discovery,
    *device->desc         = '\0';
    *device->control      = '\0';
    *device->service_type = '\0';
-   device->busy          = false;
+   retro_atomic_store_release_int(&device->busy, 0);
 
    recvd = recvfrom(discovery->fd, buf, sizeof(buf), 0,
       (struct sockaddr*)&addr, &addr_size);
@@ -221,23 +221,6 @@ void natt_device_end(struct natt_discovery *discovery)
    }
 }
 
-/* Condition for the blocking variants below: wait only while THIS
- * device's operation is outstanding.  Every one of the callbacks
- * clears device->busy on all of its paths, so the wait always ends.
- *
- * The blocking variants previously waited on a NULL condition, which
- * task_queue_wait reads as "until the queue is empty" - so a caller
- * asking to block on one UPnP round trip also waited out every
- * unrelated task in flight, a content scan or a core download
- * included.  No in-tree caller passes block = true today (the NAT
- * task drives these non-blocking and steps its own state machine),
- * so this is a latent trap being closed rather than a live freeze. */
-static bool natt_device_is_busy(void *data)
-{
-   const struct natt_device *device = (const struct natt_device*)data;
-   return device && device->busy;
-}
-
 static void natt_query_device_cb(retro_task_t *task, void *task_data,
    void *user_data, const char *err)
 {
@@ -276,24 +259,23 @@ static void natt_query_device_cb(retro_task_t *task, void *task_data,
    free(xml);
 
 done:
-   device->busy = false;
+   retro_atomic_store_release_int(&device->busy, 0);
+   task_queue_wake(device->waiter);
 }
 
-bool natt_query_device(struct natt_device *device, bool block)
+bool natt_query_device(struct natt_device *device)
 {
-   if (!device || !*device->desc || device->busy)
+   if (     !device || !*device->desc
+         || retro_atomic_load_acquire_int(&device->busy))
       return false;
 
-   device->busy = true;
+   retro_atomic_store_release_int(&device->busy, 1);
    if (!task_push_http_transfer(device->desc,
       true, NULL, natt_query_device_cb, device))
    {
-      device->busy = false;
+      retro_atomic_store_release_int(&device->busy, 0);
       return false;
    }
-
-   if (block)
-      task_queue_wait(natt_device_is_busy, device);
 
    return true;
 }
@@ -376,7 +358,8 @@ static void natt_external_address_cb(retro_task_t *task, void *task_data,
    free(xml);
 
 done:
-   device->busy = false;
+   retro_atomic_store_release_int(&device->busy, 0);
+   task_queue_wake(device->waiter);
 }
 
 static bool natt_parse_open_port_node(rxml_node_t *node,
@@ -463,7 +446,8 @@ static void natt_open_port_cb(retro_task_t *task, void *task_data,
    free(xml);
 
 done:
-   device->busy = false;
+   retro_atomic_store_release_int(&device->busy, 0);
+   task_queue_wake(device->waiter);
 }
 
 static void natt_close_port_cb(retro_task_t *task, void *task_data,
@@ -486,7 +470,8 @@ static void natt_close_port_cb(retro_task_t *task, void *task_data,
    request->success             = true;
 
 done:
-   device->busy                 = false;
+   retro_atomic_store_release_int(&device->busy, 0);
+   task_queue_wake(device->waiter);
 }
 
 static bool natt_action(struct natt_device *device,
@@ -517,7 +502,7 @@ static bool natt_action(struct natt_device *device,
       data, true, NULL, headers, cb, obj) != NULL;
 }
 
-bool natt_external_address(struct natt_device *device, bool block)
+bool natt_external_address(struct natt_device *device)
 {
    static const char tmpl[] =
       "<?xml version=\"1.0\"?>"
@@ -537,26 +522,22 @@ bool natt_external_address(struct natt_device *device, bool block)
    snprintf(buf, sizeof(buf), tmpl,
       device->service_type);
 
-   if (device->busy)
+   if (retro_atomic_load_acquire_int(&device->busy))
       return false;
 
-   device->busy = true;
+   retro_atomic_store_release_int(&device->busy, 1);
    if (!natt_action(device, "GetExternalIPAddress", buf,
       natt_external_address_cb, NULL))
    {
-      device->busy = false;
+      retro_atomic_store_release_int(&device->busy, 0);
       return false;
    }
-
-   if (block)
-      task_queue_wait(natt_device_is_busy, device);
 
    return true;
 }
 
 bool natt_open_port(struct natt_device *device,
-   struct natt_request *request, enum natt_forward_type forward_type,
-   bool block)
+   struct natt_request *request, enum natt_forward_type forward_type)
 {
    static const char tmpl[] =
       "<?xml version=\"1.0\"?>"
@@ -601,25 +582,22 @@ bool natt_open_port(struct natt_device *device,
       port, protocol, port, host,
       action);
 
-   if (device->busy)
+   if (retro_atomic_load_acquire_int(&device->busy))
       return false;
 
-   device->busy = true;
+   retro_atomic_store_release_int(&device->busy, 1);
    if (!natt_action(device, action, buf,
       natt_open_port_cb, request))
    {
-      device->busy = false;
+      retro_atomic_store_release_int(&device->busy, 0);
       return false;
    }
-
-   if (block)
-      task_queue_wait(natt_device_is_busy, device);
 
    return true;
 }
 
 bool natt_close_port(struct natt_device *device,
-   struct natt_request *request, bool block)
+   struct natt_request *request)
 {
    static const char tmpl[] =
       "<?xml version=\"1.0\"?>"
@@ -654,19 +632,16 @@ bool natt_close_port(struct natt_device *device,
    snprintf(buf, sizeof(buf), tmpl,
       device->service_type, port, protocol);
 
-   if (device->busy)
+   if (retro_atomic_load_acquire_int(&device->busy))
       return false;
 
-   device->busy = true;
+   retro_atomic_store_release_int(&device->busy, 1);
    if (!natt_action(device, "DeletePortMapping", buf,
       natt_close_port_cb, request))
    {
-      device->busy = false;
+      retro_atomic_store_release_int(&device->busy, 0);
       return false;
    }
-
-   if (block)
-      task_queue_wait(natt_device_is_busy, device);
 
    return true;
 }

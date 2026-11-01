@@ -6,7 +6,7 @@
 
 S_BOOL(video_fullscreen, VIDEO_FULLSCREEN,
       "video_fullscreen",
-      DEFAULT_FULLSCREEN, SD_FLAG_CMD_APPLY_AUTO | SD_FLAG_LAKKA_ADVANCED, 0, CMD_EVENT_REINIT_FROM_TOGGLE,
+      DEFAULT_FULLSCREEN, SD_FLAG_CMD_APPLY_AUTO | SD_FLAG_LAKKA_ADVANCED, 0, CMD_EVENT_FULLSCREEN_APPLY,
       "Fullscreen Display",
       "Display in fullscreen. Can be changed at runtime. Can be overridden by a command line switch.")
 S_BOOL(video_windowed_fullscreen, VIDEO_WINDOWED_FULLSCREEN,
@@ -31,3 +31,9 @@ S_UINT(video_fullscreen_y, VIDEO_FULLSCREEN_Y,
       "Fullscreen Height",
       "Set the custom height size for the non-windowed fullscreen mode. Leaving it unset will use the desktop resolution.")
 #endif
+
+S_BOOL(video_dxgi_present, VIDEO_DXGI_PRESENT,
+      "video_dxgi_present",
+      false, SD_FLAG_CMD_APPLY_AUTO, 0, CMD_EVENT_REINIT,
+      "DXGI Presentation",
+      "Use a DXGI flip-model swap chain with Windows glcore and Vulkan drivers. Enables display-driver features such as NVIDIA Smooth Motion. Falls back to native presentation if unsupported and may change frame latency. With Smooth Motion, enable this globally for menus and cores. A core-only override can switch presentation APIs within one session and crash the display driver.")

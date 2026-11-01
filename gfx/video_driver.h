@@ -35,13 +35,17 @@
 #include <gfx/scaler/pixconv.h>
 #include <gfx/scaler/scaler.h>
 #include <formats/image.h>
+#include <formats/video_color.h>
 #include <formats/rpng.h>
+#include "../tasks/task_notify.h"
 
 #include "../configuration.h"
 #include "../input/input_driver.h"
 #include "../input/input_types.h"
 
 #include "video_defines.h"
+#include "video_views.h"
+#include "video_windows.h"
 
 #ifdef HAVE_MODELINE
 #include "video_crt_switch.h"
@@ -113,6 +117,16 @@
 
 RETRO_BEGIN_DECLS
 
+/* Internal shape of a headset content request, fed by the view-map
+ * adapter; the recommended_* members are outputs. */
+typedef struct video_vr_content_info
+{
+   bool stereo_native;
+   enum retro_vr_reference_space reference_space;
+   unsigned recommended_eye_width;
+   unsigned recommended_eye_height;
+} video_vr_content_info_t;
+
 enum video_driver_state_flags
 {
    VIDEO_FLAG_DEFERRED_VIDEO_CTX_DRIVER_SET_FLAGS = (1 << 0 ),
@@ -147,6 +161,9 @@ enum video_driver_state_flags
     * Bit left reserved rather than reused. */
    VIDEO_FLAG_ACTIVE                              = (1 << 11),
    VIDEO_FLAG_STATE_OUT_RGB32                     = (1 << 12),
+   /* main_flags: the fast-forward frameskip drops this iteration's
+    * frame (video_driver_ff_frameskip_decide) */
+   VIDEO_FLAG_FF_SKIP_FRAME                       = (1 << 13),
    VIDEO_FLAG_FORCE_FULLSCREEN                    = (1 << 14),
    VIDEO_FLAG_IS_SWITCHING_DISPLAY_MODE           = (1 << 15),
    VIDEO_FLAG_SHADER_PRESETS_NEED_RELOAD          = (1 << 16),
@@ -162,14 +179,67 @@ enum video_driver_state_flags
     * callbacks) while the main thread read-modify-writes this word for
     * unrelated bits, and a bit in a shared word cannot be read from
     * another thread without the lock the write side takes. */
-   VIDEO_FLAG_THREAD_WRAPPER_ACTIVE_UNUSED        = (1 << 22)
+   VIDEO_FLAG_THREAD_WRAPPER_ACTIVE_UNUSED        = (1 << 22),
+   /* A driver that failed to finish something it built its device for
+    * asks the main thread to rebuild video. */
+   VIDEO_FLAG_DRIVER_REINIT                       = (1 << 23),
+   /* main_flags: a frameskip turn went to a dupe, so the core is asked
+    * for video until a real frame comes */
+   VIDEO_FLAG_FF_FRAME_OWED                       = (1 << 24),
+   /* main_flags: a frameskip decision waits for its frame */
+   VIDEO_FLAG_FF_DECIDED                          = (1 << 25),
+   /* main_flags: frames go to video_null.frame, whichever driver
+    * is up (video_driver_set_stub_frame) */
+   VIDEO_FLAG_STUB_FRAME                          = (1 << 26)
+};
+
+/* Driver pacing: the graphics driver releases each frame (NVIDIA
+ * Reflex through VK_NV_low_latency2 today), video_driver_pacing */
+enum video_driver_pacing_mode
+{
+   VIDEO_DRIVER_PACING_OFF = 0,
+   VIDEO_DRIVER_PACING_ON,
+   VIDEO_DRIVER_PACING_BOOST,
+   VIDEO_DRIVER_PACING_LAST
+};
+
+/* Why the requested mode is not in effect; the first is "it is".
+ * Reported beside the requested mode so a setting that reads On is
+ * never taken for one that is working. */
+enum video_driver_pacing_reason
+{
+   VIDEO_DRIVER_PACING_REASON_NONE = 0,   /* in effect */
+   VIDEO_DRIVER_PACING_REASON_OFF,        /* not asked for */
+   VIDEO_DRIVER_PACING_REASON_DRIVER,     /* the video driver has no backend */
+   VIDEO_DRIVER_PACING_REASON_PENDING,    /* asked; the driver's thread has
+                                             not answered yet */
+   VIDEO_DRIVER_PACING_REASON_DEVICE,     /* the GPU driver does not offer it */
+   VIDEO_DRIVER_PACING_REASON_SWAPCHAIN,  /* no native swapchain to pace */
+   VIDEO_DRIVER_PACING_REASON_MODE,       /* Scanline Sync paces the present */
+   VIDEO_DRIVER_PACING_REASON_FAILED,     /* the backend errored; fell back */
+   VIDEO_DRIVER_PACING_REASON_SUSPENDED,  /* menu, pause, fast-forward,
+                                             unfocused, no content frame */
+   VIDEO_DRIVER_PACING_REASON_CORE,       /* the core made the device
+                                             without what it needs */
+   VIDEO_DRIVER_PACING_REASON_LAST
+};
+
+/* The latency markers the runloop reports through driver_pacing_mark;
+ * the values are VkLatencyMarkerNV's and NV_LATENCY_MARKER_TYPE's,
+ * which agree this far. The driver reports the render and present
+ * ones itself. */
+enum video_driver_pacing_mark
+{
+   VIDEO_DRIVER_PACING_MARK_SIMULATION_START = 0,
+   VIDEO_DRIVER_PACING_MARK_SIMULATION_END   = 1,
+   VIDEO_DRIVER_PACING_MARK_INPUT_SAMPLE     = 6
 };
 
 enum video_driver_scanline
 {
-   SCANLINE_NEXT = 0,
-   SCANLINE_PREV,
+   SCANLINE_TARGET = 0,
    SCANLINE_ACTIVE,
+   SCANLINE_OFFSET,
    SCANLINE_TOTAL,
    SCANLINE_HOLD,
    SCANLINE_LAST
@@ -390,6 +460,8 @@ typedef struct video_info
     * rotation and no paper-white scaling, because the core applied all of
     * that when it encoded them. */
    bool source_hdr10;
+   /* Native linear scRGB binary16 RGBA, eight bytes per pixel. */
+   bool source_fp16;
 
    /* Launch in fullscreen mode instead of windowed mode. */
    bool fullscreen;
@@ -490,6 +562,15 @@ typedef struct video_frame_info
     * Owned by whichever thread presents: video_driver_frame() on the
     * direct path, the video thread under the threaded wrapper. */
    uint64_t swap_count;
+   /* Driver Pacing: the identity the runloop released this frame under,
+    * 0 when the driver's release does not own the frame, and the
+    * minimum present interval it wants kept after this frame's
+    * present (0 for none). The presenter attributes the frame's
+    * markers, its present and the sleep that follows to the identity,
+    * whichever thread it is on. */
+   uint64_t driver_pacing_id;
+   uint64_t recording_gpu_timestamp;
+   void *recording_gpu;
    void *userdata;
    void *widgets_userdata;
    void *disp_userdata;
@@ -504,6 +585,8 @@ typedef struct video_frame_info
    unsigned runahead_frames;
    unsigned aspect_ratio_idx;
    unsigned max_swapchain_images;
+   unsigned driver_pacing_interval_us;
+   unsigned fse_negotiation;
    /* Settings a driver reads while it draws a frame: they arrive with
     * the frame, so the thread that draws never reads what the menu
     * writes on the main thread. */
@@ -516,6 +599,8 @@ typedef struct video_frame_info
 #ifdef GEKKO
    unsigned overscan_correction_top;
    unsigned overscan_correction_bottom;
+   /* The A/V encoder's gamma, set by the driver's resize from frame() */
+   unsigned video_gamma;
 #endif
    unsigned monitor_index;
    unsigned crt_switch_resolution;
@@ -538,6 +623,10 @@ typedef struct video_frame_info
    unsigned time_show;
    unsigned msg_queue_delay;
 
+   /* The display's peak in nits where Use Display Peak asks for it and
+    * it is known, else 0: HDR metadata a driver sets while drawing comes
+    * from here, not the settings. */
+   float hdr_display_peak;
    float menu_wallpaper_opacity;
    float menu_framebuffer_opacity;
    float refresh_rate;
@@ -584,12 +673,25 @@ typedef struct video_frame_info
    const char *stat_text;
    size_t stat_text_len;
 
+#ifdef GEKKO
+   /* The A/V encoder's trap filter, set beside video_gamma */
+   bool video_soft_filter;
+#endif
+#ifdef WIIU
+   bool video_wiiu_prefer_drc;
+#endif
    bool widgets_active;
+   /* gfx_widgets_visible() for this frame, answered once on the thread
+    * that draws the widgets: whether the frame carries any of them */
+   bool widgets_visible;
    bool notifications_hidden;
    bool menu_mouse_enable;
    bool input_menu_swap_ok_cancel_buttons;
    bool input_driver_nonblock_state;
    bool input_driver_grab_mouse_state;
+   /* When the input this frame was made from was read; 0 if not
+    * stamped. input_driver_get_poll_time(). */
+   retro_time_t input_poll_time;
    bool hard_sync;
    bool scanline_sync;
    bool runahead;
@@ -604,6 +706,8 @@ typedef struct video_frame_info
    bool core_status_msg_show;
    bool post_filter_record;
    bool windowed_fullscreen;
+   bool vsync;
+   bool adaptive_vsync;
    bool fullscreen;
    bool font_enable;
    bool hdr_support;
@@ -615,6 +719,14 @@ typedef struct video_frame_info
     * frame over, as it does the statistics text. */
    const char *widget_dir_assets;
    const char *widget_path_font;
+   /* The scale the worker lays the widgets out at, worked out from the
+    * settings as the frame is built */
+   float widget_scale_factor;
+#ifdef HAVE_OPENXR
+   /* 1 + the host's token for the eyes the core drew this frame from,
+    * given on the drawing thread before it is drawn; 0 for none */
+   unsigned vr_give;
+#endif
    /* Read by the menu driver's frame(), on the video thread */
    video_frame_menu_settings_t menu;
    float menu_ticker_speed;
@@ -632,6 +744,10 @@ typedef struct video_frame_info
     * pacing holds to the content's period while it runs and to the
     * display's while it does not. */
    bool core_running;
+   /* The menu is up at Menu Frame Rate 'Content Rate': the hold keeps
+    * the content's period over the stopped core, as nothing else then
+    * holds the menu to it. */
+   bool menu_content_rate;
    bool xmb_shadows_enable;
    bool battery_level_enable;
    bool timedate_enable;
@@ -643,6 +759,7 @@ typedef struct video_frame_info
    unsigned hdr_mode;
    float hdr_menu_nits;
    float hdr_paper_white_nits;
+   float hdr_max_nits;
    bool overlay_behind_menu;
    bool scan_subframes;
    bool shader_active;
@@ -654,10 +771,80 @@ typedef struct video_frame_info
     * draws them: it travels with the frame, so the thread that draws
     * never reads the recording state the main thread writes. */
    bool gpu_recording;
+   bool recording_gpu_pending;
+   bool recording_gpu_capture;
+   /* Record Game Only: the driver reads the recording's frame back
+    * before drawing any UI over it. */
+   bool record_game_only;
    bool threaded_present_repeat;
+   /* The threaded presenter is holding each push to the display's
+    * vblank: the setting is on and the wrapper is running. */
    bool threaded_display_pacing;
    bool present_timing_from_display;
+   /* This frame's views and where each is drawn. views.num_views is 0
+    * when the frame is drawn whole. */
+   video_views_map_t views;
+   video_views_layout_t views_layout;
+   /* The screens' own windows: NULL while they are off, the driver has
+    * none, or no views are presented. Owned by video_driver_state_t,
+    * or under the threaded wrapper by the frame's slot. */
+   const video_windows_frame_t *windows;
+   /* Each screen's placement from its menu rows, normalized. */
+   video_screen_xr_t headset_screens[RETRO_VIDEO_VIEWS_MAX];
+   /* The menu's own place, used once headset_menu_placed. */
+   video_screen_xr_t headset_menu;
+   /* Headset output: the screens' distance and width in metres, where
+    * they are kept (enum video_openxr_placement), and a count of
+    * recenter requests the driver compares with the last it saw. */
+   float headset_distance;
+   float headset_width;
+   unsigned headset_placement;
+   unsigned headset_recenter;
+   /* Edit mode's count of let-go grabs: a quad set planned with it
+    * shows them where the hands left them. */
+   unsigned headset_edit_seq;
+   /* Each core frame shows for this many headset frames and waits for
+    * them in place of the window's vsync; 0 while the window paces. */
+   unsigned headset_interval;
+   /* The rate to ask the headset for, 0 for none. */
+   float headset_request_hz;
+   unsigned screen_layout;
+   bool stereo_swap_eyes;
+   bool headset_menu_placed;
+   /* An unplaced menu opens in front of screen 1, not at its spot. */
+   bool headset_menu_follow;
+   /* The last frame sent again (paused, menu), not a new core frame. */
+   bool frame_repeat;
+   /* Edit mode moves the headset's items: the menu's quad stays up. */
+   bool headset_editing;
+   /* The tracked eyes' views, which the headset shows as its
+    * projection; -1 while it shows none. */
+   int headset_eye[2];
 } video_frame_info_t;
+
+enum gfx_ctx_shared_kind
+{
+   GFX_CTX_SHARED_NONE = 0,
+   GFX_CTX_SHARED_EGL,
+   GFX_CTX_SHARED_GLX
+};
+
+/* A second context in the window context's share group, for a thread
+ * of its own: textures and syncs are shared with the window's context,
+ * framebuffers and vertex arrays are not. The handles are the context
+ * driver's own, kept opaque here. */
+typedef struct gfx_ctx_shared_context
+{
+   enum gfx_ctx_shared_kind kind;
+   void *display;          /* EGLDisplay, or the X Display */
+   void *config;           /* EGLConfig, or GLXFBConfig */
+   void *context;          /* EGLContext, or GLXContext */
+   void *surface;          /* EGL: its own pbuffer, NULL surfaceless */
+   unsigned long drawable; /* GLX: its own pbuffer */
+   unsigned visual_id;     /* GLX: the config's visual */
+   unsigned api;           /* EGL: the client API it binds */
+   gfx_ctx_proc_t (*get_proc_address)(const char *);
+} gfx_ctx_shared_context_t;
 
 typedef void (*update_window_title_cb)(void*);
 typedef bool (*get_metrics_cb)(void *data, enum display_metric_types type,
@@ -736,7 +923,9 @@ typedef struct gfx_ctx_driver
 
    /* Most video backends will want to use a certain input driver.
     * Checks for it here. */
-   void (*input_driver)(void*, const char *, input_driver_t**, void**);
+   /* says what kind of window the context made:
+    * input_driver_video_window() */
+   void (*input_driver)(void*, const char *);
 
    /* Wraps whatever gl_proc_address() there is.
     * Does not take opaque, to avoid lots of ugly wrapper code. */
@@ -817,6 +1006,19 @@ typedef struct gfx_ctx_driver
     * Optional; the ring lets the context driver's teardown handle a
     * still-current context when it is missing. Placed last, as above. */
    void (*release_current)(void *data);
+
+   /* Optional, desktop GL: a context in the window context's share
+    * group (gfx_ctx_shared_context_t). New and free run on the video
+    * thread with the window's context current, and leave it so; bind
+    * and unbind run on the thread that uses the context, which never
+    * gets the window's surface. NULL where the driver has none. Placed
+    * last, as above. */
+   bool (*shared_context_new)(void *data, gfx_ctx_shared_context_t *out);
+   bool (*shared_context_bind)(gfx_ctx_shared_context_t *ctx, bool bind);
+   void (*shared_context_free)(gfx_ctx_shared_context_t *ctx);
+   /* Optional: windows of their own for secondary screens, on the
+    * thread that runs the context. Placed last, as above. */
+   const gfx_ctx_window_driver_t *windows;
 } gfx_ctx_driver_t;
 
 typedef struct gfx_ctx_mode
@@ -838,6 +1040,93 @@ typedef struct gfx_ctx_ident
 
 /* Optionally implemented interface to poke more
  * deeply into video driver. */
+
+enum video_texture_update
+{
+   VIDEO_TEXTURE_UPDATE_REFUSED = 0, /* no in-place path: load instead */
+   VIDEO_TEXTURE_UPDATE_DONE,
+   /* No staging free without waiting: the texture keeps what it had. */
+   VIDEO_TEXTURE_UPDATE_DROPPED
+};
+
+/* The device a driver draws with, for a producer that makes frames on
+ * it - a hardware video decoder - so its frames are imported rather
+ * than copied (see import_texture). */
+enum video_device_api
+{
+   VIDEO_DEVICE_NONE = 0,
+   VIDEO_DEVICE_VULKAN,
+   VIDEO_DEVICE_D3D11,
+   VIDEO_DEVICE_D3D12,
+   VIDEO_DEVICE_METAL
+};
+
+enum video_device_recording_cap
+{
+   VIDEO_DEVICE_CAP_ANDROID_CAPTURE_INTEROP = 1
+};
+
+typedef struct video_device_info
+{
+   enum video_device_api api;
+   /* Vulkan: VkInstance, VkPhysicalDevice, VkDevice, and the loader's
+    * vkGetInstanceProcAddr. D3D11, D3D12: the ID3D11Device or
+    * ID3D12Device in @device. Metal: borrowed id<MTLDevice> in
+    * @device, valid until driver teardown; no ownership transfer. */
+   void *instance;
+   void *physical_device;
+   void *device;
+   /* Vulkan or D3D12 render queue, borrowed with the device. */
+   void *queue;
+   /* Existing Vulkan queue serialization; cold render-owner jobs only. */
+   void *queue_lock;
+   retro_proc_address_t get_instance_proc_addr;
+   /* The driver's queue family: an image the driver imports is either
+    * exclusive to it or shared with it (concurrent). */
+   unsigned queue_family;
+   /* image_pixfmt bits import_texture takes; 0 when it takes none. */
+   uint32_t import_formats;
+   uint32_t recording_caps;
+} video_device_info_t;
+
+/* A frame that lives on the driver's device; handles are given as
+ * their bytes (a Vulkan non-dispatchable handle is 64 bits wide on
+ * every target). Vulkan: a VkImage of
+ * VK_FORMAT_G8_B8R8_2PLANE_420_UNORM for IMAGE_PIXFMT_NV12, and two
+ * timeline semaphores - the driver's reads wait for @wait to reach
+ * @wait_value, and it signals @done with @done_value once it reads the
+ * frame no more. The frame is left in @layout, or in GENERAL from
+ * UNDEFINED or PREINITIALIZED. Optional Y/UV plane views share the image's
+ * lease and use R8/R8G8 or R16/R16G16 UNORM; both handles must be present.
+ * D3D11, D3D12: NT handles - a shared DXGI_FORMAT_NV12 texture, and
+ * two shared fences waited for and signalled as above; @layout names
+ * the producer's set of handles, so that what a driver opened of them
+ * is opened again when it changes. D3D12 may import a decoder array element
+ * with an even visible crop origin; standalone textures use zeros. */
+typedef struct video_frame_import
+{
+   uint64_t image;
+   uint64_t plane_views[2]; /* optional Vulkan Y/UV views; same lease */
+   uint64_t wait;
+   uint64_t wait_value;
+   uint64_t done;
+   uint64_t done_value;
+   uint32_t pixfmt;
+   unsigned dims;
+   unsigned layout;
+   unsigned yuv;           /* IMAGE_YUV_FLAG_* */
+   /* Destination: 0/8888 for SDR RGBA8, FP16 for linear scRGB.
+    * Release the texture before changing this request. */
+   uint32_t output_pixfmt;
+   video_color_metadata_t color;
+   unsigned array_slice;
+   unsigned crop_x, crop_y;
+   /* The producer's, for a consumer that will not have the frame read
+    * after all: signals @done in the driver's place. The driver never
+    * calls it. NULL: nothing to do. */
+   void (*abandon)(void *owner, uint64_t done, uint64_t done_value);
+   void *owner;
+} video_frame_import_t;
 
 typedef struct video_poke_interface
 {
@@ -891,7 +1180,10 @@ typedef struct video_poke_interface
    /* Optional GPU-native compressed-texture path (BCn/ETC/ASTC).
     * Drivers that can sample the format implement both; leaving them
     * NULL (the default) makes video_driver_texture_load() fall back to
-    * a CPU decode + the normal RGBA8 load_texture. */
+    * a CPU decode + the normal RGBA8 load_texture.
+    * supports_texture_format also answers TEXTURE_GPU_FORMAT_RGB10A2:
+    * whether load_texture and update_texture take a pix10 image as
+    * 10-bit. Without it such an image is narrowed to 8 bits first. */
    bool      (*supports_texture_format)(void *data,
          enum texture_gpu_format fmt);
    uintptr_t (*load_texture_compressed)(void *video_data,
@@ -969,15 +1261,14 @@ typedef struct video_poke_interface
     * order the texture was created with. The handle stays valid and
     * bound descriptors stay correct, so a streaming producer updates
     * one persistent resource instead of creating and destroying one
-    * per frame. Returns false when this handle cannot be updated in
-    * place, in which case the caller loads a replacement. A driver
-    * may skip an update it cannot take without waiting for the GPU
-    * (a busy staging slot) and still return true: the texture keeps
-    * showing its previous contents. Optional; NULL when the driver
-    * has no in-place path, and video_driver_texture_can_update()
+    * per frame. REFUSED when this handle cannot be updated in place,
+    * in which case the caller loads a replacement. An update the
+    * driver cannot take without waiting for the GPU (a busy staging
+    * slot) is DROPPED, never reported as DONE. Optional; NULL when the
+    * driver has no in-place path, and video_driver_texture_can_update()
     * reports that so callers never post updates it cannot run. */
-   bool (*update_texture)(void *video_data, uintptr_t id,
-         const struct texture_image *ti, bool threaded);
+   enum video_texture_update (*update_texture)(void *video_data,
+         uintptr_t id, const struct texture_image *ti, bool threaded);
 
    /* The largest swap interval this driver can hold a frame for, or 0
     * when it has no limit of its own. The D3D APIs carry the interval
@@ -987,6 +1278,187 @@ typedef struct video_poke_interface
     * while the audio rate was scaled for the full multiple. Drivers
     * that hold a frame for as long as they are asked leave it NULL. */
    unsigned (*get_swap_interval_cap)(void *data);
+
+   /* Lending a streamed texture's upload memory, so a producer writes
+    * a frame where update_texture copies it to the GPU from and the
+    * copy into it goes away. Called on the driver's own thread: under
+    * the thread wrapper the video thread lends after an update node
+    * that asks (video_thread_async_load_t.lend) and answers readiness
+    * itself (video_thread_lend_ready), so the wrapper's poke leaves
+    * both NULL.
+    *
+    * texture_lend hands out slot @slot of texture @id's upload memory,
+    * mapped and writable, when its rows lie the @pitch bytes apart the
+    * caller writes them at; NULL, with nothing lent, otherwise. The
+    * memory is the texture's until it is unloaded. With
+    * texture_lend_per_write it expires on update: readiness then a new
+    * texture_lend call acquires its replacement. Non-NULL @out_pitch
+    * permits wider rows and receives their actual pitch; NULL requires
+    * an exact match. update_texture given a texture_image whose pixels
+    * are a lent slot uploads from there; with any slot lent, an update
+    * from other memory only ever goes through the slots not lent.
+    *
+    * texture_lend_ready answers whether lent slot @slot may be written:
+    * false while the GPU may still read the last upload from it. Never
+    * waits. */
+   void *(*texture_lend)(void *video_data, uintptr_t id, unsigned slot,
+         size_t pitch, size_t *out_pitch);
+   bool (*texture_lend_ready)(void *video_data, uintptr_t id,
+         unsigned slot);
+
+   /* How long the most recent frame call spent in its present waiting
+    * for the display, in microseconds; 0 where it did not wait or the
+    * driver cannot say. @shown is set when the frame is on the display
+    * as the call returns - a swap that waits for the vertical blank
+    * and comes back when it has passed - and cleared when the frame is
+    * queued for a later one.
+    *
+    * For the threaded presenter. It times the frame call to know how
+    * long a frame takes to draw, and holds the core back by that much
+    * before each vblank; and it takes a frame to go out on the first
+    * vblank after the call returns. A present that waits for the
+    * vblank makes both wrong: the wait is counted as drawing, and the
+    * frame is counted to the vblank after the one it went out on.
+    * Placed last: a table that stops short of it leaves it NULL. */
+   retro_time_t (*get_last_present_wait)(void *video_data, bool *shown);
+
+   /* Hold filter chains for count views; 0 frees them. The main thread
+    * calls it, or waits while the video thread runs it, so a driver may
+    * parse its shader preset here. */
+   void (*set_view_count)(void *data, unsigned count);
+
+   /* The core's hardware context goes next: from its context_destroy
+    * to its unload the core may wait on the device without the queue
+    * lock, so stop the driver's own threads that submit to the core's
+    * queue. The driver may present on until it is freed: a staged
+    * content load keeps it up until the next session's drivers. The
+    * main thread calls it, or waits while the video thread runs it. */
+   void (*hw_context_destroying)(void *data);
+
+   /* A headset's refresh, for the main thread: the rate it runs at as
+    * measured, 0 until known, and up to cap of the rates it can be
+    * asked for into rates, *count of them. */
+   float (*get_headset_refresh)(void *data, float *rates, unsigned cap,
+         unsigned *count);
+
+   /* The frames the driver gets from now on are @rgb32 (XRGB8888, else
+    * RGB565) and up to RARCH_SCALE_BASE * @input_scale on a side: a
+    * software filter was chosen, removed, or turned on or off. True
+    * when the driver takes them as it is set up now, adapting in place;
+    * false, and the frontend sets the driver up again. Called from the
+    * main thread with no frame in flight, or under the threaded video
+    * wrapper from the video thread while the main thread waits.
+    * Optional. */
+   bool (*set_frame_format)(void *data, bool rgb32, unsigned input_scale);
+
+   /* Frame memory, for the threaded video wrapper's frame buffers: a
+    * frame pushed from inside one is read by the GPU where it lies, so
+    * a frame the wrapper took in is never copied a second time on its
+    * way up. All three are called on the driver's own thread.
+    *
+    * frame_mem_alloc maps @size bytes the CPU writes and the GPU reads,
+    * at least 64-byte aligned, names them in @id, sets @cached when
+    * the CPU reads them back at cached speed, and @pitch_align to the
+    * row pitch multiple frame() reads them at in place; NULL when it
+    * has none.
+    * frame() given a frame inside them uploads from there.
+    * frame_mem_ready answers whether @id may be written: false while a
+    * frame submitted from it may still be read. Never waits.
+    * frame_mem_free lets @id go once nothing in flight reads it.
+    * Optional, all three or none. */
+   void *(*frame_mem_alloc)(void *data, size_t size, uintptr_t *id,
+         bool *cached, unsigned *pitch_align);
+   bool  (*frame_mem_ready)(void *data, uintptr_t id);
+   void  (*frame_mem_free)(void *data, uintptr_t id);
+
+   /* The device the driver draws with; false when it has none to share.
+    * Any thread: the handles stand for the driver's life. */
+   bool (*get_device)(void *data, video_device_info_t *info);
+   /* Converts @frame into texture *@id on the GPU, the frame never
+    * reaching the CPU: *@id 0 makes the texture (RGBA, @filter) and
+    * sets it. Never waits for the frame: the GPU does. DROPPED when no
+    * conversion slot is free, and then @frame->done is not signalled;
+    * REFUSED when the frame cannot be imported. Called on the driver's
+    * own thread. Optional. */
+   enum video_texture_update (*import_texture)(void *data, uintptr_t *id,
+         const video_frame_import_t *frame,
+         enum texture_filter_type filter);
+
+   /* What the last frame's present waited for besides the display, in
+    * microseconds: @fence_wait the frame's own GPU work, where a driver
+    * waits it out before presenting (the Vulkan driver does for a
+    * hardware core under the threaded wrapper); @lock_wait the queue
+    * lock, held by a core submitting from its own thread. Read on the
+    * video thread next to get_last_present_wait. Optional. */
+   void (*get_last_present_sync)(void *video_data,
+         retro_time_t *fence_wait, retro_time_t *lock_wait);
+
+   /* Reads back the frame just drawn for a GPU recording, never
+    * redrawing it: BGR24 bottom up, or with @bgrx 32-bit B,G,R,X with
+    * *bottom_up set to the row order written; viewport width * 3 or * 4
+    * per row. Called on the video thread; the threaded wrapper records
+    * through it. Optional. */
+   bool (*record_read)(void *data, uint8_t *buffer, bool bgrx,
+         bool *bottom_up);
+   /* Imports a movie frame for the following NULL refresh. NULL clears
+    * the movie source. Same ownership results as import_texture. */
+   enum video_texture_update (*import_movie_frame)(void *data,
+         const video_frame_import_t *frame);
+   /* Driver-thread menu loan. Publish with set_texture_frame, identical
+    * dimensions/format, before any other driver call. NULL declines.
+    * The row pitch may include padding. Optional. */
+   void *(*get_menu_framebuffer)(void *data, bool rgb32,
+         unsigned dims, size_t *pitch);
+   /* Worker-owned menu uploads; zero pitch alignment means tight rows.
+    * set_texture_frame retains storage until frame_mem_ready;
+    * frame_mem_free releases it.
+    * Optional, requires both frame-memory lifetime callbacks. */
+   void *(*menu_mem_alloc)(void *data, size_t size, uintptr_t *id);
+   unsigned menu_mem_pitch_align;
+   /* Lent pointers expire on update; acquire fresh pointer/pitch once ready. */
+   bool texture_lend_per_write;
+
+   /* Driver Pacing: the graphics driver's release of each frame, where
+    * the driver's presentation API has one (NVIDIA Reflex through
+    * VK_NV_low_latency2, NVAPI). All optional; a driver without them
+    * leaves the runloop on its own pacing.
+    *
+    * driver_pacing_set asks for @mode (enum video_driver_pacing_mode)
+    * and answers with the enum video_driver_pacing_reason it ended up
+    * in: NONE when the mode is in effect, the reason otherwise. Called
+    * on the thread that runs the frame loop, every frame while the
+    * mode is wanted, since a replaced swapchain comes up without it.
+    * Never blocks on the GPU. All three are called on the frame loop's
+    * thread while the driver's frame may be running on the video
+    * thread; a driver whose mode lives with its swapchain applies the
+    * answer from its own thread and reports the last one it gave.
+    *
+    * driver_pacing_wait is the release: called once per content frame,
+    * after the frame @frame_id was handed to the driver and before the
+    * next frame's input is sampled, only while driver_pacing_set
+    * answered NONE. It holds the calling thread, @max_wait_us at most,
+    * until that frame has been presented and the driver's sleep that
+    * follows it says the next frame may start; @next_id is the identity
+    * the released frame will carry, for a backend that names it at its
+    * input. Returns false when the backend could not release and the
+    * caller is to pace as before.
+    * The identity of each frame, and the minimum present interval the
+    * driver is to keep after it, travel in video_frame_info_t
+    * (driver_pacing_id, driver_pacing_interval_us), so the presenter
+    * attributes markers, present and sleep whichever thread it is on.
+    *
+    * driver_pacing_mark reports the latency marker @marker (enum
+    * video_driver_pacing_mark) for the frame @frame_id; the runloop
+    * reports the input sample and simulation boundaries, the driver
+    * its own render and present ones. Cheap, never blocks, ignored
+    * when the mode is not in effect. */
+   unsigned (*driver_pacing_set)(void *data, unsigned mode);
+   bool (*driver_pacing_wait)(void *data, uint64_t frame_id,
+         uint64_t next_id, unsigned max_wait_us);
+   void (*driver_pacing_mark)(void *data, uint64_t frame_id, unsigned marker);
+   /* Cold owner-thread preparation; all results retain the source lease. */
+   enum video_texture_update (*prepare_import_texture)(void *data, uintptr_t id,
+         const video_frame_import_t *frame);
 } video_poke_interface_t;
 
 /* dims is the frame's size, VIDEO_SCALE_PACK'd; msg is for showing a
@@ -1005,6 +1477,12 @@ enum shader_load_state
    SHADER_LOAD_FAILED          /* Error - revert to previous or stock    */
 };
 
+/* The load belongs to two threads: the main thread, which starts it,
+ * ticks it and tells the menu, and the thread the video driver runs
+ * on, which builds the passes.  Without threaded video they are one
+ * thread.  With it, a step runs on the video thread between frames
+ * while busy is set, and the main thread reads nothing else of this
+ * while it is: the clear of busy is what publishes the step's writes. */
 typedef struct shader_load_deferred
 {
    enum shader_load_state state;
@@ -1013,17 +1491,28 @@ typedef struct shader_load_deferred
    unsigned               current_pass; /* next pass to compile          */
    unsigned               total_passes;
    void                  *driver_data;  /* driver-specific work state    */
+   task_notify_t          done;         /* told once the load ends       */
+   void                  *precompile;   /* the passes compiling ahead    */
+   void                  *stepper;      /* the passes stepping on the task thread */
+   retro_atomic_int_t     busy;         /* a step runs on another thread */
+   retro_atomic_int_t     cancel;       /* the next step ends the load   */
+   /* The driver's own tasks building the load's passes: a cancel waits
+    * for none to be left before its step frees what they build into,
+    * and the driver's steps end the load only once none are. */
+   retro_atomic_int_t     builds;
+   /* Set by the driver's begin: its step may run on any thread but the
+    * finalizing one, since the chain is not on screen before that and
+    * a pass's objects are made at device level. */
+   bool                   step_any_thread;
 } shader_load_deferred_t;
 
 typedef struct video_driver
 {
    /* Should the video driver act as an input driver as well?
-    * The video initialization might preinitialize an input driver
-    * to override the settings in case the video driver relies on
-    * input driver for event handling. */
-   void *(*init)(const video_info_t *video,
-         input_driver_t **input,
-         void **input_data);
+    * A driver starts no input driver: it says what kind of window it
+    * made (input_driver_video_window()) and the frontend starts the
+    * input driver that goes with it. */
+   void *(*init)(const video_info_t *video);
 
    /* Updates frame on the screen.
     * Frame can be either XRGB1555, RGB565 or ARGB32 format
@@ -1141,7 +1630,134 @@ typedef struct video_driver
     * initializers leave it zero (== DONT_CARE) without shifting any
     * other vtable slot. */
    const struct font_renderer *font_backend;
+
+#ifdef HAVE_OPENXR
+   bool (*set_vr_content_info)(void *data, const video_vr_content_info_t *info);
+#endif
+
+   /* Optional: read_viewport as 32-bit B,G,R,X, viewport width * 4
+    * per row, with *bottom_up set to the row order written. Lets GPU
+    * recording skip the BGR24 conversion. */
+   bool (*read_viewport_bgrx)(void *data, uint8_t *buffer, bool is_idle,
+         bool *bottom_up);
 } video_driver_t;
+
+#ifdef HAVE_OPENXR
+/* What the headset's host says of it. */
+enum video_xr_headset_bits
+{
+   /* Its frames reach the headset. */
+   VIDEO_XR_HEADSET_PRESENTING = (1 << 0),
+   VIDEO_XR_HEADSET_FOCUSED    = (1 << 1),
+   /* The pose calls answer: a core's RETRO_VIDEO_VIEWS_STATUS_HMD. */
+   VIDEO_XR_HEADSET_TRACKING   = (1 << 2)
+};
+
+/* What owns the OpenXR session: the desktop's XR thread, or a Quest
+ * context's own frame. It registers from its driver's init and clears
+ * itself when it stops; the driver's free forgets it too. */
+typedef struct video_xr_host
+{
+   /* Any thread: VIDEO_XR_HEADSET_ bits. */
+   unsigned (*state)(void *user);
+   /* The thread that draws the host's frames. sample runs once a frame,
+    * for the core's next, @ahead frames past those already handed over,
+    * and writes the frame's RETRO_VR_FRAME_ bits. eye_state hands out
+    * the sampled eyes and a token for them; give, before the frame the
+    * core drew from them is drawn, has the projection show them. */
+   bool (*sample)(void *user, unsigned ahead, uint32_t *frame_flags);
+   bool (*eye_state)(void *user, struct retro_vr_eye_state out[2],
+         unsigned *token);
+   void (*give)(void *user, unsigned token);
+   /* The space tracked content is in, and one eye's recommended image
+    * size; what was granted is written back. */
+   bool (*set_space)(void *user, enum retro_vr_reference_space *space,
+         unsigned *eye_width, unsigned *eye_height);
+   /* The drawing thread, after sample: the head as sampled. */
+   bool (*head_pose)(void *user, struct retro_vr_head_pose *out);
+   /* The drawing thread, after sample: locates the hands at the
+    * sample's time. Asked once a core has asked for the hands. NULL if
+    * the host has none. */
+   bool (*locate_hands)(void *user);
+   /* The drawing thread, after locate_hands: the hands as located.
+    * NULL if the host has none. */
+   bool (*controller_poses)(void *user,
+         struct retro_vr_controller_poses *out);
+   /* Any thread: one eye's recommended image size. */
+   bool (*eye_size)(void *user, unsigned *eye_width, unsigned *eye_height);
+   /* The drawing thread, after a reinit set the same content's space
+    * again: the host places the views the core was last given in it,
+    * through the room, and tells a core whose origin moved. NULL if the
+    * host keeps none. */
+   void (*resume)(void *user);
+   void *user;
+} video_xr_host_t;
+
+/* NULL forgets the host. */
+void video_driver_set_xr_host(const video_xr_host_t *host);
+/* Whether the current context is a headset's own (its get_flags). */
+bool video_context_driver_headset_inline(void);
+/* Whether this build shows a headset through the video driver named:
+ * the menu lists the headset's settings for it. */
+bool video_driver_has_headset_path(const char *ident);
+/* VIDEO_XR_HEADSET_ bits; 0 without a host. */
+unsigned video_driver_xr_headset(void);
+/* After a video init: the core's VR content goes to the new driver. */
+void video_driver_vr_driver_changed(void);
+
+void video_driver_vr_content_clear(void);
+bool video_driver_vr_sample_tracking(void);
+/* The drawing thread: after each frame under the threaded wrapper, a
+ * sample for the core @ahead frames past those handed over; and the
+ * eyes a frame was drawn from (video_frame_info_t::vr_give - 1) given
+ * before it is drawn. */
+void video_driver_vr_publish(unsigned ahead);
+void video_driver_vr_give(unsigned token);
+/* Main thread: 1 + the token of the eyes handed to the core since the
+ * last frame, or 0 */
+unsigned video_driver_vr_give_take(void);
+bool video_driver_get_vr_head_pose(struct retro_vr_head_pose *out);
+bool video_driver_get_vr_controller_poses(
+      struct retro_vr_controller_poses *out);
+bool video_driver_get_vr_frame_state(struct retro_vr_frame_state *out);
+#endif
+
+/* A screen's own window's layout, as its renderer last published it;
+ * generation 0 for none */
+typedef struct video_window_layout
+{
+   video_views_layout_t layout;
+   video_views_map_t core_map;
+   unsigned core_dims;
+   unsigned window_dims;
+   unsigned generation;
+} video_window_layout_t;
+
+/* One window's published layouts, handed over by index as the window
+ * title is (see window_title_slot): the publisher fills a slot no
+ * reader holds and exchanges its index into 'published', the main
+ * thread exchanges it out and reads that slot until it takes another. */
+typedef struct video_window_layouts
+{
+   video_window_layout_t slot[3];
+   retro_atomic_int_t published;  /* slot + 1; 0: nothing new */
+   unsigned next;                 /* the publisher's: slot to fill */
+   unsigned last;                 /* the publisher's: slot + 1 */
+   unsigned held;                 /* the main thread's: slot + 1 */
+} video_window_layouts_t;
+
+/* The platform's displays, handed over by index as the window layouts
+ * are: the UI thread fills a slot no reader holds and exchanges its
+ * index into 'published'; the app thread takes it at its frame. */
+typedef struct video_window_displays
+{
+   video_window_display_t slot[3][VIDEO_WINDOW_DISPLAYS_MAX];
+   unsigned count[3];
+   retro_atomic_int_t published;  /* slot + 1; 0: nothing new */
+   unsigned next;                 /* the publisher's: slot to fill */
+   unsigned last;                 /* the publisher's: slot + 1 */
+   unsigned held;                 /* the app thread's: slot + 1 */
+} video_window_displays_t;
 
 /* Slots of video_driver_state_t::vp_params_bits in use. The array has
  * headroom above this so a parameter can be added without moving
@@ -1172,6 +1788,9 @@ typedef struct
    uint64_t frame_count;
    /* See video_frame_info_t::swap_count. */
    uint64_t swap_count;
+   /* See video_frame_info_t::driver_pacing_id; the runloop's, set at
+    * the release and built into the next frame's info. */
+   uint64_t driver_pacing_id;
    /* Display timestamp of the previous present, when the refresh-rate
     * estimate is measured from the display rather than the frame loop;
     * 0 when it is not, or before the driver reports one. */
@@ -1209,10 +1828,12 @@ typedef struct
 #endif
 
    /* hw_render.context_type, published for cross-thread readers:
-    * both writers run on the main thread and store-release this
-    * mirror after their edit lands - SET_HW_RENDER after copying
+    * every writer runs on the main thread and store-releases this
+    * mirror after its edit lands - SET_HW_RENDER after copying
     * the callback in, video_driver_free_hw_context() after
-    * context_destroy() and the memset - so an acquire load reading
+    * context_destroy() and the memset, and whoever puts a saved
+    * request back (video_driver_hw_request_restore(), a driver
+    * restart) after the copy - so an acquire load reading
     * RETRO_HW_CONTEXT_NONE is guaranteed the teardown completed.
     * video_driver_is_hw_context() reads only this; the hw_render
     * struct itself stays main-thread state. */
@@ -1221,7 +1842,6 @@ typedef struct
    /* Used for 15-bit -> 16-bit conversions that take place before
     * being passed to video driver. */
    video_pixel_scaler_t *scaler_ptr;
-   video_driver_frame_t frame_bak;  /* ptr alignment */
 
    void *current_display_server_data;
 
@@ -1255,6 +1875,11 @@ typedef struct
     * frame's snapshot (video_frame_info_t::video_st_flags) carries
     * both words. */
    uint32_t main_flags;
+   /* The fast-forward frameskip's clock: main thread, see
+    * video_driver_ff_frameskip_decide() */
+   retro_time_t ff_last_time;
+   int32_t      ff_accumulator;
+   int8_t       ff_nonblock_active;
 
    /* Whether CRT switching is on. Not a bit of main_flags: the video
     * thread reads it, through the refresh rate its driver answers
@@ -1265,6 +1890,10 @@ typedef struct
 #ifdef HAVE_VIDEO_FILTER
    unsigned state_scale;
    unsigned state_out_bpp;
+   /* What the driver was last set up or told the frames are: 32-bit
+    * or not, and the input scale (see set_frame_format) */
+   unsigned frame_scale;
+   bool     frame_rgb32;
 #endif
    /* The output size: width in the high 16 bits, height in the low
     * 16, one value so a reader gets a matching pair without a lock.
@@ -1331,6 +1960,13 @@ typedef struct
     * VIDEO_DRIVER_ASPECT_RATIO() and video_driver_store_aspect_ratio(). */
    retro_atomic_int_t aspect_ratio_bits;
    float video_refresh_rate_original;
+   /* The refresh rate of the output the window is on, as
+    * video_driver_get_window_refresh_rate() last read it, and whether
+    * that reading still stands; main thread only. */
+   float window_refresh_rate;
+   /* The same, as a windowing system that follows the window from
+    * output to output by events reported it (Wayland); 0 = none */
+   float window_refresh_hint;
 
    enum retro_pixel_format pix_fmt;
    enum rarch_display_type display_type;
@@ -1394,6 +2030,12 @@ typedef struct
    uint8_t frame_delay_target;
    uint8_t frame_delay_effective;
    bool frame_delay_pause;
+   /* What the driver pacing backend last answered: the mode the
+    * runloop asked it for, and why it is or is not in effect. Main
+    * thread. */
+   unsigned driver_pacing_interval_us;
+   uint8_t driver_pacing_mode;
+   uint8_t driver_pacing_reason;
 
    bool threaded;
 
@@ -1415,6 +2057,81 @@ typedef struct
     * out of order cannot strand or steal it. */
    struct font_data *osd_font;
    void             *osd_font_owner;
+   bool              movie_frame;
+   bool              movie_refused;
+   bool              window_refresh_known;
+
+   /* The core's view map, and what the last frame presented with views
+    * used: the core's map and frame size (touch maps back into those),
+    * the map scaled to the frame the driver got, and the layout.
+    * video_driver_frame() writes them on the main thread; the video
+    * thread's redraw of the cached frame only reads them. */
+   video_views_map_t views;
+   video_views_map_t views_core;
+   video_views_map_t views_frame;
+   video_views_layout_t views_layout;
+   unsigned views_frame_dims;
+   /* The view count the driver instance was last told. */
+   unsigned views_driver_count;
+   /* The status video_driver_views_status_changed() last saw. */
+   unsigned views_status_seen;
+   bool views_presented;
+   /* The driver drew frames with the map whole
+    * (GFX_CTX_FLAGS_VIDEO_VIEWS_FALLBACK), so touch, overlays and the
+    * UI follow the packed frame. */
+   bool views_fallback;
+   /* Recenter requests for a headset, counted. */
+   unsigned headset_recenter;
+   /* enum video_headset_view: the Headset View hotkey's choice, reset
+    * when content closes. */
+   unsigned headset_view;
+   /* Edit mode's let-go grabs, counted, main thread. */
+   unsigned headset_edit_seq;
+   /* The headset's runtime asked RetroArch to exit (OpenXR EXITING). */
+   retro_atomic_int_t headset_exit;
+   /* Headset pacing, main thread, never saved: the headset's measured
+    * rate, which stands in for the display's while it fits the core,
+    * and how many headset frames each core frame shows for (0: the
+    * window paces). */
+   float headset_hz;
+   /* The headset's rate while the runloop iterates at it: a headset's
+    * own context with no fit, under no wrapper. 0 otherwise. */
+   float headset_runloop_hz;
+   unsigned headset_interval;
+   /* The rate to ask the headset for, 0 for none. */
+   float headset_request_hz;
+   /* The headset rate and core fps the misfit notice was last shown
+    * for; the rate is cleared when content unloads. */
+   double headset_notice_fps;
+   unsigned headset_notice_hz;
+   bool headset_vsync;
+   bool headset_editing;
+   /* Set while video_driver_cached_frame() sends the last frame again. */
+   bool frame_repeat;
+#ifdef HAVE_VIDEO_WINDOWS
+   /* Each secondary's published layouts */
+   video_window_layouts_t window_layouts[RETRO_VIDEO_VIEWS_MAX - 1];
+   video_window_displays_t window_displays;
+   /* The screens' own windows: this frame's snapshot, and the screens
+    * a close attached until video_driver_restore_windows() and its
+    * count; main thread. */
+   video_windows_frame_t windows;
+#ifdef HAVE_THREADS
+   /* The video thread's redraw of the cached frame fills its own. */
+   video_windows_frame_t windows_redraw;
+#endif
+   /* The main thread's last route, which a redraw keeps; written only
+    * when it changes, as Win32's redraws run beside the main thread */
+   video_windows_route_t windows_route;
+   /* The last video_driver_window_generation(); never reset, so a
+    * replacement window never reuses one. */
+   retro_atomic_int_t window_generation;
+   /* Screens video_driver_attach_windows() sent back, for the next
+    * frame */
+   retro_atomic_int_t windows_failed;
+   unsigned windows_forced_attached;
+   unsigned windows_restore;
+#endif
 } video_driver_state_t;
 
 typedef struct video_frame_delay_auto
@@ -1432,6 +2149,8 @@ struct aspect_ratio_elem
 };
 
 extern struct aspect_ratio_elem aspectratio_lut[ASPECT_RATIO_END];
+
+bool video_driver_fullscreen_is_exclusive(void);
 
 #if !(defined(RARCH_CONSOLE) || defined(RARCH_MOBILE))
 bool video_driver_has_windowed(void);
@@ -1463,6 +2182,10 @@ bool video_thread_hw_allowed(void);
 #endif
 
 bool video_driver_has_focus(void);
+
+/* The player is in the headset: focused for pausing and controllers,
+ * never for the keyboard and mouse. */
+bool video_driver_headset_focused(void);
 
 void video_driver_set_stub_frame(void);
 
@@ -1657,6 +2380,15 @@ const char* config_get_video_driver_options(void);
  *
  * Returns: video driver's userdata.
  **/
+/* For the input code: see video_driver.c. */
+uint64_t video_driver_get_frame_count(void);
+const struct retro_game_geometry *video_driver_get_core_geometry(void);
+void video_driver_show_mouse(bool state);
+#ifdef HAVE_OVERLAY
+bool video_driver_get_overlay_interface(
+      const video_overlay_interface_t **iface, void **iface_data);
+#endif
+
 void *video_driver_get_ptr(void);
 
 video_driver_state_t *video_state_get_ptr(void);
@@ -1669,7 +2401,32 @@ video_driver_state_t *video_state_get_ptr(void);
  **/
 void video_driver_shader_deferred_tick(void);
 
+/* @cb is told once the deferred shader load in progress ends: task_data
+ * is the preset's path, and error is set if it did not load. False
+ * when no load is in progress. A caller still waiting is told it was
+ * superseded. */
+bool video_shader_deferred_notify(retro_task_callback_t cb, void *user_data);
+
+/* Ends the deferred shader load in progress, if any: the chain built so
+ * far is freed on the driver's thread before this returns, the chain
+ * on screen stays, and a caller waiting on the load is told @why. */
+void video_driver_shader_deferred_cancel(const char *why);
+
+/* Once the driver has begun a deferred load: its passes start
+ * compiling ahead on the task thread, when there is one. */
+void video_driver_shader_deferred_start(shader_load_deferred_t *d);
+
+/* On the thread that builds chains, before a step: the passes the
+ * worker has finished are listed for the step to take; with @end, the
+ * load is over and what was listed for it is let go. */
+void video_driver_shader_deferred_take(shader_load_deferred_t *d, bool end);
+
 bool video_driver_set_rotation(unsigned rotation);
+
+/* The size, packed with VIDEO_SCALE_PACK, the video driver would ask
+ * its window for in the given state; what a fullscreen toggle on the
+ * existing window resizes it to. */
+unsigned video_driver_window_dims(bool fullscreen);
 
 bool video_driver_set_video_mode(unsigned dims, bool fullscreen);
 
@@ -1720,6 +2477,73 @@ unsigned video_driver_get_output_dims(void);
 
 void video_driver_set_output_dims(unsigned dims);
 
+bool video_driver_set_views(struct retro_video_views *views);
+
+/* A headset is showing the core's own stereo views. */
+bool video_driver_vr_content_active(void);
+void video_driver_clear_views(void);
+/* RETRO_VIDEO_VIEWS_STATUS_ flags for the current driver and settings. */
+unsigned video_driver_views_status(void);
+/* Main thread: true once after the status changes. */
+bool video_driver_views_status_changed(void);
+/* The size the menu and widgets lay out at: the output size, or one
+ * eye's UI size when views are drawn side by side or top-bottom. */
+unsigned video_driver_get_ui_dims(void);
+/* Main thread: the layout the last frame presented a core's views
+ * with, or NULL when it was drawn whole. */
+const video_views_layout_t *video_driver_get_views_layout(void);
+/* @map laid out flat into a display of size @dims by the user's
+ * aspect, scaling and rotation settings, for a driver that places views
+ * on displays of its own (GFX_CTX_FLAGS_VIDEO_VIEWS_OWN_EYES); @window:
+ * the display the custom viewport is in. */
+void video_driver_views_layout_flat(const video_views_map_t *map,
+      unsigned dims, bool window, video_views_layout_t *out);
+#ifdef _3DS
+/* A bottom screen touch, -0x7fff to 0x7fff across it, to the core's
+ * pointer in its packed frame, while it shows the core's screens;
+ * -0x8000 off them. False, with @res_x and @res_y as they were, when it
+ * shows none. */
+bool ctr_views_touch(int16_t x, int16_t y, int16_t *res_x, int16_t *res_y);
+#endif
+#ifdef WIIU
+/* A GamePad touch, -0x7fff to 0x7fff across its screen, to the core's
+ * pointer in its packed frame, while the GamePad shows its views;
+ * -0x8000 off them. False, with @res_x and @res_y as they were, when
+ * it shows none. */
+bool gx2_views_touch(int16_t x, int16_t y, int16_t *res_x, int16_t *res_y);
+#endif
+#ifdef HAVE_OPENXR
+/* Main thread: the core's own view map and frame size the last frame
+ * presented with views used, or NULL and the last frame's size when it
+ * was drawn whole. False without a frame. */
+bool video_driver_get_views_core(const video_views_map_t **map,
+      unsigned *frame_dims);
+#endif
+/* Main thread: ask a headset to place its screens in front of where it
+ * looks now. */
+void video_driver_headset_recenter(void);
+/* Main thread: step the Headset View to the next of enum
+ * video_headset_view and return it; VIDEO_HEADSET_VIEW_LAST, unchanged,
+ * without a presenting headset. */
+unsigned video_driver_headset_view_toggle(void);
+/* Main thread: the headset's edit mode, on or off, and its count of
+ * let-go grabs, for the next frame snapshot. */
+void video_driver_headset_edit(bool editing, unsigned seq);
+/* Any thread: the headset's runtime asked RetroArch to exit. */
+void video_driver_headset_exit_request(void);
+
+/* Main thread: the Headset Refresh Rate choices in menu order,
+ * VIDEO_OPENXR_REFRESH_AUTO and _HEADSET, then the headset's rates in
+ * whole hertz, rising, or 72, 90, 120 and 144 while it lists none.
+ * Returns how many were written. */
+unsigned video_driver_headset_rate_choices(unsigned *values, unsigned cap);
+
+#ifdef HAVE_OPENXR
+/* Main thread, once an iteration: a new headset rate reruns the rate
+ * adjustment. */
+void video_driver_headset_poll(void);
+#endif
+
 #ifdef HAVE_OVERLAY
 struct overlay;
 /* Main thread: the viewport override of the overlay now active, or
@@ -1750,9 +2574,6 @@ static INLINE void video_driver_aspect_ratio_put(
 
 #define VIDEO_DRIVER_ASPECT_RATIO(video_st) \
    video_driver_aspect_ratio_of(&(video_st)->aspect_ratio_bits)
-
-void video_driver_menu_settings(void **list_data, void *list_info_data,
-      void *group_data, void *subgroup_data, const char *parent_group);
 
 /**
  * video_viewport_get_scaled_aspect2:
@@ -1795,20 +2616,18 @@ void video_monitor_set_refresh_rate(float hz);
 bool video_monitor_fps_statistics(double *refresh_rate,
       double *deviation, unsigned *sample_points);
 
-#define video_driver_translate_coord_viewport_wrap(vp, mouse_x, mouse_y, res_x, res_y, res_screen_x, res_screen_y) \
-   (video_driver_get_viewport_info(vp) ? video_driver_translate_coord_viewport(vp, mouse_x, mouse_y, res_x, res_y, res_screen_x, res_screen_y, true) : false)
+#define video_driver_translate_coord_viewport_wrap(vp, mouse_x, mouse_y, res_pos, res_screen_pos) \
+   (video_driver_get_viewport_info(vp) ? video_driver_translate_coord_viewport(vp, mouse_x, mouse_y, res_pos, res_screen_pos, true) : false)
 
-#define video_driver_translate_coord_viewport_confined_wrap(vp, mouse_x, mouse_y, res_x, res_y, res_screen_x, res_screen_y) \
-   (video_driver_get_viewport_info(vp) ? video_driver_translate_coord_viewport(vp, mouse_x, mouse_y, res_x, res_y, res_screen_x, res_screen_y, false) : false)
+#define video_driver_translate_coord_viewport_confined_wrap(vp, mouse_x, mouse_y, res_pos, res_screen_pos) \
+   (video_driver_get_viewport_info(vp) ? video_driver_translate_coord_viewport(vp, mouse_x, mouse_y, res_pos, res_screen_pos, false) : false)
 
 /**
  * video_driver_translate_coord_viewport:
  * @mouse_x                        : Pointer X coordinate.
  * @mouse_y                        : Pointer Y coordinate.
- * @res_x                          : Scaled  X coordinate.
- * @res_y                          : Scaled  Y coordinate.
- * @res_screen_x                   : Scaled screen X coordinate.
- * @res_screen_y                   : Scaled screen Y coordinate.
+ * @res_pos                        : Scaled position, VIDEO_POS_PACK.
+ * @res_screen_pos                 : Scaled screen position, VIDEO_POS_PACK.
  * @report_oob                     : Out-of-bounds report mode
  *
  * Translates pointer [X,Y] coordinates into scaled screen
@@ -1822,8 +2641,8 @@ bool video_monitor_fps_statistics(double *refresh_rate,
 bool video_driver_translate_coord_viewport(
       struct video_viewport *vp,
       int mouse_x, int mouse_y,
-      int16_t *res_x, int16_t *res_y, int16_t *res_screen_x,
-      int16_t *res_screen_y, bool report_oob);
+      uint32_t *res_pos, uint32_t *res_screen_pos,
+      bool report_oob);
 
 uintptr_t video_driver_display_userdata_get(void);
 
@@ -1851,33 +2670,50 @@ bool video_driver_texture_unload(uintptr_t *id);
  * see video_poke_interface::update_texture. @data is a struct
  * texture_image of the same size and channel order. Synchronous: under
  * threaded video the driver marshals the update onto the video thread
- * and this waits for it. Returns false when the driver cannot update
- * this handle in place; the caller then loads a replacement. */
-bool video_driver_texture_update(uintptr_t id, void *data);
+ * and this waits for it. */
+enum video_texture_update video_driver_texture_update(uintptr_t id,
+      void *data);
 
 /* Whether the active driver can update textures in place at all.
  * Callers that stream (gfx_surface) decide between an update and a
  * replacement load on this, once per surface rather than per frame. */
 bool video_driver_texture_can_update(void);
 
-/* Whether the active driver can sample @fmt as a compressed texture.
- * False with no driver, no poke, or a format it declines. */
-bool video_driver_supports_texture_format(enum texture_gpu_format fmt);
+bool video_driver_texture_lend_needs_refresh(void);
 
-/* Upload without making the caller wait for the video thread. @data
- * is a struct texture_image the caller gives up: it is handed to
- * release() once uploaded (on whichever thread uploads it). The
- * handle arrives through done(user, handle) on the main thread - at
- * once when the upload is synchronous (no wrapper, compressed image),
- * otherwise from a later video_thread_async_poll(), which every
- * frame push runs. done() gets 0 when the upload failed or the video
- * driver went away first. Returns false, having called neither
- * callback and taken no ownership, only when no texture can be
- * loaded at all. Main thread only. */
-bool video_driver_texture_load_async(void *data,
-      enum texture_filter_type filter_type,
-      void (*done)(void *user, uintptr_t handle), void *user,
-      void (*release)(void *img));
+/* texture_lend / texture_lend_ready of the active driver; NULL and
+ * true under the thread wrapper, whose lends come back with an update
+ * node, or with a driver that lends nothing. Main thread. */
+void *video_driver_texture_lend(uintptr_t id, unsigned slot,
+      size_t pitch, size_t *out_pitch);
+bool video_driver_texture_lend_ready(uintptr_t id, unsigned slot);
+
+/* Main-thread menu loan; the wrapper lends retired upload or CPU storage without
+ * entering the driver. See video_poke_interface::get_menu_framebuffer. */
+void *video_driver_get_menu_framebuffer(unsigned dims, bool rgb32,
+      size_t *pitch);
+
+/* get_device / import_texture of the active driver. The import is
+ * REFUSED under the thread wrapper, which takes imports as nodes
+ * (VIDEO_THREAD_ASYNC_IMPORT). Main thread. */
+bool video_driver_get_device(video_device_info_t *info);
+struct video_hw_frame;
+bool video_driver_movie_refresh(void *user, const struct video_hw_frame *frame);
+void video_driver_movie_clear(void);
+
+enum video_texture_update video_driver_texture_import(uintptr_t *id,
+      const video_frame_import_t *frame, enum texture_filter_type filter);
+
+/* @ti as the active driver samples it: a 10-bit image it cannot take
+ * narrowed to 8 bits in place. False for a half-float image or a
+ * planar frame it cannot take, which have no narrower form. Every upload of an image goes
+ * through this, so the answer is made once. */
+bool video_driver_texture_fit(struct texture_image *ti);
+
+/* Whether the active driver can sample @fmt: a compressed texture, or
+ * for TEXTURE_GPU_FORMAT_RGB10A2 a pix10 image as 10-bit. False with
+ * no driver, no poke, or a format it declines. */
+bool video_driver_supports_texture_format(enum texture_gpu_format fmt);
 
 void video_driver_build_info(video_frame_info_t *video_info);
 
@@ -1895,6 +2731,20 @@ void video_driver_build_info(video_frame_info_t *video_info);
 void video_driver_modify_disp_flags(uint32_t set_bits, uint32_t clear_bits);
 
 void video_driver_cache_context_ack_set(void);
+/* The hardware render interface a core holds, from when it is handed
+ * one until its context is destroyed.
+ *
+ * _note(): the core was handed @iface.
+ * _kept(): after a video restart that did not reset the core (it asked
+ * for its context to be kept, and it was), whether the interface it
+ * holds is the one in front now. Asking the driver for it again is also
+ * what brings it up to date: under the threaded wrapper the hand-over is
+ * made anew with each wrapper. False when the driver in front hands out
+ * another interface altogether - threaded video was switched across the
+ * restart - and the core has to be reset after all. True for a core
+ * that holds none. */
+void video_driver_hw_render_interface_note(const struct retro_hw_render_interface *iface);
+bool video_driver_hw_render_interface_kept(void);
 bool video_driver_cache_context_ack_test(void);
 void video_driver_cache_context_ack_clear(void);
 
@@ -1961,6 +2811,31 @@ bool video_context_driver_set(const gfx_ctx_driver_t *data);
 
 bool video_context_driver_get_ident(gfx_ctx_ident_t *ident);
 
+/* Whether the video context in use is the one named. */
+bool video_context_driver_is(const char *ident);
+
+/* A context's window surface, for a platform that takes the surface
+ * away while the context lives on - Android does when the app goes to
+ * the background, and gives one back when it returns. Both run where
+ * the context lives: EGL's bindings are per thread, so under threaded
+ * video they are handed to the video thread.
+ *
+ * video_context_surface_can_create() says whether the context can be
+ * given a new surface at all; video_context_surface_create() does it
+ * and returns false when it cannot or it failed, which leaves a
+ * restart of the video driver. video_context_surface_destroy() lets
+ * the surface go, after the video thread has finished the frame that
+ * may still be using it. */
+bool video_context_surface_can_create(void);
+bool video_context_surface_create(void);
+void video_context_surface_destroy(void);
+
+/* The video driver the configuration names, when a core has forced
+ * another for as long as it is loaded and the setting holds that one
+ * for now; NULL when the setting is the configured one. For code that
+ * writes the configuration out while the core is still loaded. */
+const char *video_driver_get_configured_ident(void);
+
 bool video_context_driver_get_refresh_rate(float *refresh_rate);
 
 bool video_context_driver_set_flags(gfx_ctx_flags_t *flags);
@@ -1975,6 +2850,10 @@ bool video_context_driver_presentable(void);
  * running on the thread that owns it. */
 bool video_context_driver_presentable_direct(void);
 
+void video_context_driver_bind_hw_render(bool enable);
+
+void video_context_driver_release_current(void);
+
 void video_context_driver_destroy(gfx_ctx_driver_t *ctx_driver);
 
 enum gfx_ctx_api video_context_driver_get_api(void);
@@ -1983,15 +2862,38 @@ void video_context_driver_free(void);
 
 bool video_shader_driver_get_current_shader(video_shader_ctx_t *shader);
 
-/* Writes one runtime parameter of the driver's live shader on the
- * thread that owns it: a blocking round trip under the threaded
- * wrapper, a direct store otherwise. The only field of the live
- * shader that mutates outside set_shader's blocking window is
- * parameters[i].current, and this is its one sanctioned writer. */
+/* Sets one runtime parameter of the driver's live shader: one atomic
+ * store, which the video thread reads for its next frame. The only
+ * field of the live shader that changes outside set_shader's blocking
+ * window is a parameter's value (video_shader_param_get/_set()). */
 void video_shader_driver_set_parameter(struct video_shader *live_shader,
       unsigned index, float value);
 
 float video_driver_get_refresh_rate(void);
+
+/* The frame rate the core declared, 0 before one did */
+float video_driver_get_core_hz(void);
+
+/**
+ * video_driver_get_window_refresh_rate:
+ *
+ * The refresh rate of the output the window is on, or 0 when nothing
+ * can say. Read from the display server once and kept until
+ * video_driver_window_output_changed() says the window may be on
+ * another output, or at another mode. Main thread only.
+ **/
+float video_driver_get_window_refresh_rate(void);
+
+/* The window may have moved to another output, or its output changed
+ * mode: the next video_driver_get_window_refresh_rate() reads again.
+ * Main thread only. */
+void video_driver_window_output_changed(void);
+
+/* For a windowing system that is told which output the window is on
+ * rather than asked (Wayland: surface enter and leave): the refresh rate
+ * of that output, in hertz, or 0 when it is not known. Main thread
+ * only. */
+void video_driver_set_window_refresh_rate(float hz);
 
 bool video_context_driver_get_flags(gfx_ctx_flags_t *flags);
 
@@ -2005,6 +2907,8 @@ bool video_driver_test_all_flags(enum display_flags testflag);
  **/
 bool video_driver_supports_10bit_source(void);
 
+bool video_driver_supports_fp16_source(void);
+
 size_t video_driver_set_gpu_api_version_string(const char *str);
 
 const char* video_driver_get_gpu_api_version_string(void);
@@ -2017,6 +2921,10 @@ void video_driver_set_gpu_api_devices(enum gfx_ctx_api api, struct string_list *
 /* The display's peak luminance as its context learned it (a sink's
  * EDID, a compositor's description of the output), in whole nits;
  * 0 while unknown. For the user's information: nothing applies it. */
+/* Published after successful output configuration; no GPU query. */
+void video_driver_set_hdr_output_mode(unsigned mode);
+bool video_driver_get_display_metadata(unsigned cmd, void *data);
+
 void video_driver_set_display_peak_nits(float nits);
 unsigned video_driver_get_display_peak_nits(void);
 
@@ -2028,6 +2936,18 @@ float video_driver_get_hdr_max_nits(void);
  * display's where Use Display Peak is on and one is known, else the
  * driver's own fixed value, unchanged. */
 float video_driver_hdr_metadata_peak(float driver_value);
+
+/* The GPU index to use for 'api' out of the devices in 'list'.
+ *
+ * An index alone is a position in a list that a driver update, a BIOS
+ * change or another GPU reorders, after which it names a different
+ * device. The device the index was chosen as is remembered with it:
+ * where that name has moved, its new position is returned; where it is
+ * gone, 0 with a warning, rather than whatever now sits at the index.
+ * The name is kept up to date with what was resolved.
+ */
+int video_driver_gpu_index_resolve(enum gfx_ctx_api api, int index,
+      struct string_list *list);
 
 struct string_list* video_driver_get_gpu_api_devices(enum gfx_ctx_api api);
 
@@ -2060,13 +2980,28 @@ retro_proc_address_t video_driver_get_proc_address(const char *sym);
 
 void video_driver_free_hw_context(void);
 
+/* A hardware-render request the core made for a context that does not
+ * exist yet - a staged content load takes the request during the new
+ * core's init, while the previous session's drivers are still up.
+ * The pair carries it across the teardown of those drivers: take
+ * moves the request out (the teardown then destroys nothing that was
+ * never reset), restore puts it back for drivers_init to build the
+ * context from, and publishes the type. */
+struct video_hw_request
+{
+   struct retro_hw_render_callback cb;
+   const struct retro_hw_render_context_negotiation_interface *negotiation;
+};
+void video_driver_hw_request_take(struct video_hw_request *req);
+void video_driver_hw_request_restore(const struct video_hw_request *req);
+
 #ifdef HAVE_VIDEO_FILTER
 void video_driver_filter_free(void);
 
-/* The loaded software filter outputs another pixel format than the
- * core's, so the driver has to be set up again when it starts or stops
- * receiving the filtered frames. */
-bool video_driver_filter_changes_format(void);
+/* After a software filter was loaded, freed, or turned on or off: the
+ * driver is told what its frames are now, in place where it can take
+ * them, and set up again where it cannot. */
+void video_driver_filter_apply(void);
 #endif
 
 void video_driver_lock_new(void);
@@ -2090,6 +3025,17 @@ bool video_driver_init_internal(bool *video_is_threaded, bool verbosity_enabled)
  **/
 void video_driver_frame(const void *data, unsigned width,
       unsigned height, size_t pitch);
+
+/**
+ * video_driver_ff_frameskip_decide:
+ * @now                  : the clock read before the core runs.
+ *
+ * Decides, before the core runs the frame, whether the fast-forward
+ * frameskip drops it (VIDEO_FLAG_FF_SKIP_FRAME in main_flags), so the
+ * core can be told through GET_AUDIO_VIDEO_ENABLE and skip rendering
+ * it. video_driver_frame() consumes the decision.
+ **/
+void video_driver_ff_frameskip_decide(retro_time_t now);
 
 void video_driver_update_title(void *data);
 
@@ -2160,6 +3106,8 @@ extern const gfx_ctx_driver_t gfx_ctx_mali_fbdev;
 extern const gfx_ctx_driver_t gfx_ctx_vivante_fbdev;
 extern const gfx_ctx_driver_t gfx_ctx_android;
 extern const gfx_ctx_driver_t gfx_ctx_vk_android;
+extern const gfx_ctx_driver_t gfx_ctx_android_vk_openxr;
+extern const gfx_ctx_driver_t gfx_ctx_gl_android_openxr;
 extern const gfx_ctx_driver_t gfx_ctx_ps3;
 extern const gfx_ctx_driver_t gfx_ctx_w_vk;
 extern const gfx_ctx_driver_t gfx_ctx_wgl;

@@ -13,11 +13,13 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include <retro_miscellaneous.h>
 #include <compat/intrinsics.h>
+#include <compat/strl.h>
 #include <string/stdstring.h>
 
 #ifdef HAVE_CONFIG_H
@@ -609,6 +611,58 @@ bool glslang_read_shader_pragmas_cached(const char *path,
    }
 }
 
+void glslang_last_pass_init(const struct video_shader *shader,
+      void *cache, struct glslang_last_pass *state)
+{
+   size_t k;
+   const struct video_shader_pass *pass;
+   struct shader_line_buf lines;
+   void *own = NULL;
+   bool scaled;
+   memset(state, 0, sizeof(*state));
+   if (!shader || !shader->passes)
+      return;
+   state->index = shader->passes - 1;
+   pass = &shader->pass[state->index];
+   /* Without a scale the last pass draws at the viewport and takes no
+    * format, but may still read its own feedback. */
+   scaled = (pass->fbo.flags & FBO_SCALE_FLAG_VALID) != 0;
+   state->needs_target = true;
+   if (scaled && !GFX_FBO_SCALE_IS_VIEWPORT(&pass->fbo))
+      return;
+   if (!cache && !(cache = own = glslang_include_cache_new()))
+      return;
+   strlcpy(state->name, pass->alias, sizeof(state->name));
+   if (!shader_line_buf_init(&lines))
+      goto end;
+   if (!glslang_read_shader_pragmas_cached(pass->source.path, &lines, cache))
+   {
+      shader_line_buf_free(&lines);
+      goto end;
+   }
+   state->needs_target = false;
+   for (k = 0; k < lines.num_lines; k++)
+   {
+      const char *line = shader_line_buf_get(&lines, k);
+      if (!line)
+         continue;
+      if (scaled && !memcmp(line, "#pragma format ", sizeof("#pragma format ") - 1))
+         state->needs_target = true;
+      if (!state->name[0]
+            && !memcmp(line, "#pragma name ", sizeof("#pragma name ") - 1))
+      {
+         const char *name = line + sizeof("#pragma name ") - 1;
+         while (*name == ' ' || *name == '\t')
+            name++;
+         strlcpy(state->name, name, sizeof(state->name));
+      }
+   }
+   shader_line_buf_free(&lines);
+   state->inspect_feedback = !state->needs_target;
+end:
+   glslang_include_cache_free(own);
+}
+
 static bool glslang_read_shader_file_internal(const char *path,
       struct shader_line_buf *output, bool root_file, bool is_optional,
       struct slang_include_cache *cache, bool pragmas_only)
@@ -652,13 +706,6 @@ static bool glslang_read_shader_file_internal(const char *path,
    if (!basename || basename[0] == '\0')
       return false;
 
-   if (!(scratch = (void*)malloc(sizeof(*scratch))))
-      return false;
-
-   tmp         = scratch->tmp;
-   line_suffix = scratch->line_suffix;
-   tmp[0]      = '\0';
-
    /* An include expands to the same lines wherever it appears: the
     * '#line' directive that returns to the parent's position is
     * written by the parent after the call below, and nothing else
@@ -667,7 +714,8 @@ static bool glslang_read_shader_file_internal(const char *path,
     * copy of it.  A file that does include is left out: its run is
     * mostly the runs of the leaves below it, which are captured on
     * their own, and holding a second copy of them costs far more
-    * memory than the scan it would save. */
+    * memory than the scan it would save.  A copy needs none of the
+    * scratch below, so the cache is asked before it is allocated. */
    if (!root_file && cache)
    {
       struct slang_include_cache_entry *hit =
@@ -685,6 +733,13 @@ static bool glslang_read_shader_file_internal(const char *path,
       cap_len   = output->len;
       cap_lines = output->num_lines;
    }
+
+   if (!(scratch = (void*)malloc(sizeof(*scratch))))
+      return false;
+
+   tmp         = scratch->tmp;
+   line_suffix = scratch->line_suffix;
+   tmp[0]      = '\0';
 
    /* Precompute the #line directive suffix: ' "basename"'
     * so the inner loop only needs to write the line number. */
@@ -1129,4 +1184,114 @@ unsigned glslang_num_miplevels(unsigned width, unsigned height)
       return 0;
    /* One more level than the index of the highest set bit. */
    return compat_highbit_u32((uint32_t)size) + 1u;
+}
+
+/* Grow-buffer used to assemble stage source in C.  Returns false on
+ * allocation failure; the buffer is always left in a freeable state. */
+struct stage_source_buf
+{
+   char *data;
+   size_t len;
+   size_t cap;
+};
+
+static bool stage_source_append(struct stage_source_buf *buf,
+      const char *s, size_t s_len)
+{
+   if (buf->len + s_len + 1 > buf->cap)
+   {
+      char *grown;
+      size_t new_cap = buf->cap ? buf->cap : 4096;
+      while (buf->len + s_len + 1 > new_cap)
+         new_cap *= 2;
+      grown = (char*)realloc(buf->data, new_cap);
+      if (!grown)
+         return false;
+      buf->data = grown;
+      buf->cap  = new_cap;
+   }
+   memcpy(buf->data + buf->len, s, s_len);
+   buf->len            += s_len;
+   buf->data[buf->len]  = '\0';
+   return true;
+}
+
+static bool stage_source_append_line(struct stage_source_buf *buf,
+      const char *line)
+{
+   if (!stage_source_append(buf, line, strlen(line)))
+      return false;
+   return stage_source_append(buf, "\n", 1);
+}
+
+char *glslang_build_stage_source(
+      const struct shader_line_buf *lines, const char *stage)
+{
+   size_t i;
+   struct stage_source_buf buf;
+   bool active = true;
+
+   buf.data = NULL;
+   buf.len  = 0;
+   buf.cap  = 0;
+
+   if (!lines || lines->num_lines < 1)
+   {
+      if (!stage_source_append(&buf, "", 0))
+         return NULL;
+      return buf.data;
+   }
+
+   /* Reserve the full preprocessed length up front (lines->len counts
+    * every line plus separators), so assembly never reallocates - the
+    * same exact-fit reservation the std::string implementation made
+    * via str.reserve(lines->len). */
+   buf.data = (char*)malloc(lines->len + 2);
+   if (!buf.data)
+      return NULL;
+   buf.cap     = lines->len + 2;
+   buf.data[0] = '\0';
+
+   /* Version header (line 0). */
+   if (!stage_source_append_line(&buf, shader_line_buf_get(lines, 0)))
+      goto error;
+
+   for (i = 1; i < lines->num_lines; i++)
+   {
+      const char *line = shader_line_buf_get(lines, i);
+      if (!memcmp(line, "#pragma", sizeof("#pragma")-1))
+      {
+         if (!memcmp(line, "#pragma stage ", sizeof("#pragma stage ")-1))
+         {
+            if (stage && *stage)
+            {
+               char expected[128];
+               size_t _len = strlcpy_lit(expected, "#pragma stage ", sizeof(expected));
+               strlcpy(expected + _len, stage, sizeof(expected) - _len);
+               active = !strcmp(expected, line);
+            }
+         }
+         else if (
+                  !memcmp(line, "#pragma name ", sizeof("#pragma name ")-1)
+               || !memcmp(line, "#pragma format ", sizeof("#pragma format ")-1))
+         {
+            /* Ignore */
+         }
+         else if (active)
+         {
+            if (!stage_source_append_line(&buf, line))
+               goto error;
+         }
+      }
+      else if (active)
+      {
+         if (!stage_source_append_line(&buf, line))
+            goto error;
+      }
+   }
+   return buf.data;
+
+error:
+   free(buf.data);
+   return NULL;
 }
