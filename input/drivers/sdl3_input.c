@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <boolean.h>
 #include <string/stdstring.h>
@@ -30,6 +31,7 @@
 
 #include "../../configuration.h"
 #include "../../retroarch.h"
+#include "../../verbosity.h"
 
 #ifdef HAVE_MENU
 #include "../../menu/menu_input.h"
@@ -45,6 +47,17 @@
 /* OVERLAY_MAX_TOUCH */
 #define SDL3_MAX_TOUCH 16
 
+#define SDL3_MAX_MICE MAX_USERS
+
+typedef struct sdl3_mouse
+{
+   SDL_MouseID id;
+   /* Relative motion not yet reported, sub-pixel part included. */
+   float x;
+   float y;
+   bool buttons[RETRO_DEVICE_ID_MOUSE_BUTTON_5 + 1];
+} sdl3_mouse_t;
+
 typedef struct sdl3_input
 {
    /* The keyboard state, provided by SDL_GetKeyboardState(). */
@@ -53,25 +66,12 @@ typedef struct sdl3_input
    SDL_Scancode key_scancode_lut[RETROK_LAST];
    /* RETROK of each scancode's unmodified key, for the key events */
    uint16_t scancode_rk_lut[SDL_SCANCODE_COUNT];
-   /* Whole-pixel relative motion, x and y: VIDEO_POS_PACK. */
-   uint32_t mouse_delta;
-   /* Sub-pixel remainder carried into the next frame. */
-   float mouse_rel_x;
-   float mouse_rel_y;
    /* Absolute position stays fractional; it's truncated at the API
     * boundary, where nothing accumulates. */
    float mouse_abs_x;
    float mouse_abs_y;
-   /* Button states. */
-   bool mouse_l;
-   bool mouse_r;
-   bool mouse_m;
-   bool mouse_b4;
-   bool mouse_b5;
-   bool mouse_wu;
-   bool mouse_wd;
-   bool mouse_wl;
-   bool mouse_wr;
+   /* Index 0 is the merged system mouse. */
+   sdl3_mouse_t mice[SDL3_MAX_MICE];
 
    /* Number of connected touch devices. Saves having to query them
     * every frame. */
@@ -209,6 +209,74 @@ static unsigned sdl3_translate_scancode(sdl3_input_t *sdl,
    return input_keymaps_translate_keysym_to_rk(key);
 }
 
+/* RETRO_DEVICE_ID_MOUSE_* of SDL_BUTTON_LEFT..SDL_BUTTON_X2. */
+static const uint8_t sdl3_mouse_button_ids[] = {
+   0,
+   RETRO_DEVICE_ID_MOUSE_LEFT,
+   RETRO_DEVICE_ID_MOUSE_MIDDLE,
+   RETRO_DEVICE_ID_MOUSE_RIGHT,
+   RETRO_DEVICE_ID_MOUSE_BUTTON_4,
+   RETRO_DEVICE_ID_MOUSE_BUTTON_5
+};
+
+/* INPUT_POINTER_* of each RETRO_DEVICE_ID_MOUSE_*. */
+static const uint16_t sdl3_mouse_pointer_bits[] = {
+   0,
+   0,
+   INPUT_POINTER_LEFT,
+   INPUT_POINTER_RIGHT,
+   INPUT_POINTER_WHEEL_UP,
+   INPUT_POINTER_WHEEL_DOWN,
+   INPUT_POINTER_MIDDLE,
+   INPUT_POINTER_HWHEEL_UP,
+   INPUT_POINTER_HWHEEL_DOWN,
+   INPUT_POINTER_BUTTON_4,
+   INPUT_POINTER_BUTTON_5
+};
+
+static sdl3_mouse_t *sdl3_get_mouse(sdl3_input_t *sdl, SDL_MouseID id)
+{
+   int i;
+   /* When id is 0, report it as NULL for the primary mouse. */
+   if (id == 0)
+      return NULL;
+   for (i = 1; i < SDL3_MAX_MICE; i++)
+      if (sdl->mice[i].id == id)
+         return &sdl->mice[i];
+   return NULL;
+}
+
+static void sdl3_mouse_added(sdl3_input_t *sdl, SDL_MouseID id)
+{
+   int i;
+   const char *name;
+
+   if (sdl3_get_mouse(sdl, id))
+      return;
+   for (i = 1; i < SDL3_MAX_MICE; i++)
+   {
+      if (sdl->mice[i].id == 0)
+         break;
+   }
+   if (i >= SDL3_MAX_MICE)
+      return;
+
+   sdl->mice[i].id = id;
+   name            = SDL_GetMouseNameForID(id);
+   if (string_is_empty(name))
+      name = "Mouse";
+   input_config_set_mouse_display_name((unsigned)i, name);
+   RARCH_LOG("[SDL3] Mouse #%d: \"%s\".\n", i, name);
+}
+
+static void sdl3_mouse_wheel(sdl3_mouse_t *mouse, float wx, float wy)
+{
+   mouse->buttons[RETRO_DEVICE_ID_MOUSE_WHEELUP]         |= wy > 0;
+   mouse->buttons[RETRO_DEVICE_ID_MOUSE_WHEELDOWN]       |= wy < 0;
+   mouse->buttons[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP]   |= wx > 0;
+   mouse->buttons[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN] |= wx < 0;
+}
+
 static void *sdl3_input_init(const char *joypad_driver)
 {
    sdl3_input_t *sdl = (sdl3_input_t*)calloc(1, sizeof(*sdl));
@@ -232,6 +300,18 @@ static void *sdl3_input_init(const char *joypad_driver)
    {
       SDL_TouchID *devices = SDL_GetTouchDevices(&sdl->num_touch_devices);
       SDL_free(devices);
+   }
+
+   /* Initialize the mouse values of those that are plugged in already. */
+   {
+      int i;
+      int num_mice = 0;
+      SDL_MouseID *mice = SDL_GetMice(&num_mice);
+
+      input_config_set_mouse_display_name(0, "Mouse");
+      for (i = 0; mice && i < num_mice; i++)
+         sdl3_mouse_added(sdl, mice[i]);
+      SDL_free(mice);
    }
 
    return sdl;
@@ -504,37 +584,23 @@ static float sdl3_get_sensor_input(void *data, unsigned port, unsigned id)
 
 static void sdl3_poll_mouse(sdl3_input_t *sdl)
 {
+   int b;
    float density;
    float dx = 0.0f;
    float dy = 0.0f;
+   sdl3_mouse_t *mouse      = &sdl->mice[0];
    SDL_MouseButtonFlags btn = SDL_GetMouseState(&sdl->mouse_abs_x, &sdl->mouse_abs_y);
    SDL_GetRelativeMouseState(&dx, &dy);
 
-   sdl->mouse_rel_x += dx;
-   sdl->mouse_rel_y += dy;
-
-   /* Converting a float outside int16_t's range is undefined behaviour
-    * rather than a wrap, so clamp before the cast. Only reachable if
-    * the frontend stops polling for a long stretch while the mouse
-    * keeps moving. */
-   sdl->mouse_rel_x = MIN(MAX(sdl->mouse_rel_x, -32767.0f), 32767.0f);
-   sdl->mouse_rel_y = MIN(MAX(sdl->mouse_rel_y, -32767.0f), 32767.0f);
-
-   sdl->mouse_delta = VIDEO_POS_PACK((int16_t)sdl->mouse_rel_x,
-         (int16_t)sdl->mouse_rel_y);
-
-   sdl->mouse_rel_x -= (float)VIDEO_POS_X(sdl->mouse_delta);
-   sdl->mouse_rel_y -= (float)VIDEO_POS_Y(sdl->mouse_delta);
+   mouse->x += dx;
+   mouse->y += dy;
 
    density = sdl3_window_pixel_density(sdl);
    sdl->mouse_abs_x *= density;
    sdl->mouse_abs_y *= density;
 
-   sdl->mouse_l = (SDL_BUTTON_MASK(SDL_BUTTON_LEFT) & btn) != 0;
-   sdl->mouse_r = (SDL_BUTTON_MASK(SDL_BUTTON_RIGHT) & btn) != 0;
-   sdl->mouse_m = (SDL_BUTTON_MASK(SDL_BUTTON_MIDDLE) & btn) != 0;
-   sdl->mouse_b4 = (SDL_BUTTON_MASK(SDL_BUTTON_X1) & btn) != 0;
-   sdl->mouse_b5 = (SDL_BUTTON_MASK(SDL_BUTTON_X2) & btn) != 0;
+   for (b = SDL_BUTTON_LEFT; b <= SDL_BUTTON_X2; b++)
+      mouse->buttons[sdl3_mouse_button_ids[b]] = (SDL_BUTTON_MASK(b) & btn) != 0;
 }
 
 /* Snapshot the active fingers across all touchscreens. Polling
@@ -658,8 +724,8 @@ static void sdl3_poll_pen(sdl3_input_t *sdl)
    /* Barrel buttons act as the right/middle mouse buttons (the
     * usual OS mapping). sdl3_poll_mouse has already run, so this
     * ORs on top of the polled state. */
-   sdl->mouse_r |= sdl->pen_b1;
-   sdl->mouse_m |= sdl->pen_b2;
+   sdl->mice[0].buttons[RETRO_DEVICE_ID_MOUSE_RIGHT]  |= sdl->pen_b1;
+   sdl->mice[0].buttons[RETRO_DEVICE_ID_MOUSE_MIDDLE] |= sdl->pen_b2;
 
    /* If the pen isn't in proximity, skip calculating its position. */
    if (!sdl->pen_in_proximity)
@@ -832,50 +898,55 @@ bool SDL_webOSCursorVisibility(bool visible)
 }
 #endif
 
-/* The mouse's frame, the touches and the pen, handed to the frontend,
- * which answers for the mouse, the pointer and the lightgun's aim. The
- * mouse is the port's whose Mouse Index is 0; the pointer and the
- * lightgun are every port's. Fingers are read before the pen, the pen
- * before the mouse, which stands for one touch: its left button. A pen
- * in the air is a pointer that is not pressed. */
+/* The mice's frames, the touches and the pen, handed to the frontend,
+ * which answers for the mouse, the pointer and the lightgun's aim. A
+ * port's mouse is the frame at its Mouse Index; the pointer and the
+ * lightgun are every port's, from frame 0. Fingers are read before the
+ * pen, the pen before the mouse, which stands for one touch: its left
+ * button. A pen in the air is a pointer that is not pressed. */
 static void sdl3_publish_pointers(sdl3_input_t *sdl)
 {
-   input_pointer_frame_t frame;
+   input_pointer_frame_t frame[SDL3_MAX_MICE];
    uint32_t touch_pos[SDL3_MAX_TOUCH];
    unsigned touches = 0;
    unsigned present = 0;
    unsigned down    = 0;
-   unsigned buttons = 0;
+   unsigned count   = 1;
+   unsigned i, b;
 
-   if (sdl->mouse_l)
-      buttons |= INPUT_POINTER_LEFT;
-   if (sdl->mouse_r)
-      buttons |= INPUT_POINTER_RIGHT;
-   if (sdl->mouse_m)
-      buttons |= INPUT_POINTER_MIDDLE;
-   if (sdl->mouse_b4)
-      buttons |= INPUT_POINTER_BUTTON_4;
-   if (sdl->mouse_b5)
-      buttons |= INPUT_POINTER_BUTTON_5;
-#ifdef WEBOS
-   /* Note: webOS wheel is reversed */
-   if (sdl->mouse_wd)
-      buttons |= INPUT_POINTER_WHEEL_UP;
-   if (sdl->mouse_wu)
-      buttons |= INPUT_POINTER_WHEEL_DOWN;
-#else
-   if (sdl->mouse_wu)
-      buttons |= INPUT_POINTER_WHEEL_UP;
-   if (sdl->mouse_wd)
-      buttons |= INPUT_POINTER_WHEEL_DOWN;
-#endif
-   if (sdl->mouse_wr)
-      buttons |= INPUT_POINTER_HWHEEL_UP;
-   if (sdl->mouse_wl)
-      buttons |= INPUT_POINTER_HWHEEL_DOWN;
-   frame.pos     = VIDEO_POS_PACK((int)sdl->mouse_abs_x, (int)sdl->mouse_abs_y);
-   frame.rel     = sdl->mouse_delta;
-   frame.buttons = (uint16_t)buttons;
+   for (i = 0; i < SDL3_MAX_MICE; i++)
+   {
+      sdl3_mouse_t *mouse = &sdl->mice[i];
+      unsigned buttons    = 0;
+      int dx, dy;
+
+      if (mouse->id)
+         count = i + 1;
+
+      /* Converts the mouse values to the int16_t boundary that libretro
+       * expects; the sub-pixel part carries over to the next frame. */
+      mouse->x  = MIN(MAX(mouse->x, -32767.0f), 32767.0f);
+      mouse->y  = MIN(MAX(mouse->y, -32767.0f), 32767.0f);
+      dx        = (int)mouse->x;
+      dy        = (int)mouse->y;
+      mouse->x -= dx;
+      mouse->y -= dy;
+
+      for (b = RETRO_DEVICE_ID_MOUSE_LEFT; b <= RETRO_DEVICE_ID_MOUSE_BUTTON_5; b++)
+         if (mouse->buttons[b])
+            buttons |= sdl3_mouse_pointer_bits[b];
+
+      /* The wheel is only set for the frame its notch came in. */
+      mouse->buttons[RETRO_DEVICE_ID_MOUSE_WHEELUP]         = false;
+      mouse->buttons[RETRO_DEVICE_ID_MOUSE_WHEELDOWN]       = false;
+      mouse->buttons[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP]   = false;
+      mouse->buttons[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN] = false;
+
+      /* SDL has only the one cursor position. */
+      frame[i].pos     = VIDEO_POS_PACK((int)sdl->mouse_abs_x, (int)sdl->mouse_abs_y);
+      frame[i].rel     = VIDEO_POS_PACK(dx, dy);
+      frame[i].buttons = (uint16_t)buttons;
+   }
 
    if (sdl->num_touches > 0)
    {
@@ -903,7 +974,7 @@ static void sdl3_publish_pointers(sdl3_input_t *sdl)
       down         = sdl->pen_down ? 1 : 0;
    }
 
-   input_driver_publish_pointers(&frame, 1,
+   input_driver_publish_pointers(frame, count,
            INPUT_POINTERS_BY_MOUSE_INDEX | INPUT_POINTERS_AIM_EVERY_PORT
          | INPUT_POINTERS_GUN_BUTTONS_BOUND
          | INPUT_POINTERS_GUN_BUTTONS_EVERY_PORT
@@ -950,11 +1021,6 @@ static void sdl3_input_poll(void *data)
    /* SDL_UpdateSensors works without a focused window. */
    if ((sdl->accel || sdl->gyro) && !pumped)
       SDL_UpdateSensors();
-
-   sdl->mouse_wu = false;
-   sdl->mouse_wd = false;
-   sdl->mouse_wl = false;
-   sdl->mouse_wr = false;
 
    while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_KEY_DOWN, SDL_EVENT_MOUSE_REMOVED) > 0)
    {
@@ -1077,6 +1143,7 @@ static void sdl3_input_poll(void *data)
       }
       else if (event.type == SDL_EVENT_MOUSE_WHEEL)
       {
+         sdl3_mouse_t *mouse = sdl3_get_mouse(sdl, event.wheel.which);
 #if SDL_VERSION_ATLEAST(3, 2, 12)
          /* Whole ticks, so a smooth wheel's fractions don't each
           * count as one. */
@@ -1094,10 +1161,45 @@ static void sdl3_input_poll(void *data)
             wx = -wx;
             wy = -wy;
          }
-         sdl->mouse_wu |= wy > 0;
-         sdl->mouse_wd |= wy < 0;
-         sdl->mouse_wl |= wx < 0;
-         sdl->mouse_wr |= wx > 0;
+#ifdef WEBOS
+         /* Note: webOS wheel is reversed */
+         wy = -wy;
+#endif
+         sdl3_mouse_wheel(&sdl->mice[0], wx, wy);
+         if (mouse)
+            sdl3_mouse_wheel(mouse, wx, wy);
+      }
+      else if (event.type == SDL_EVENT_MOUSE_MOTION)
+      {
+         sdl3_mouse_t *mouse = sdl3_get_mouse(sdl, event.motion.which);
+         if (mouse)
+         {
+            mouse->x += event.motion.xrel;
+            mouse->y += event.motion.yrel;
+         }
+      }
+      else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN
+            || event.type == SDL_EVENT_MOUSE_BUTTON_UP)
+      {
+         sdl3_mouse_t *mouse = sdl3_get_mouse(sdl, event.button.which);
+         if (mouse && event.button.button >= SDL_BUTTON_LEFT
+               && event.button.button <= SDL_BUTTON_X2)
+            mouse->buttons[sdl3_mouse_button_ids[event.button.button]] =
+                  event.button.down;
+      }
+      else if (event.type == SDL_EVENT_MOUSE_ADDED)
+         sdl3_mouse_added(sdl, event.mdevice.which);
+      else if (event.type == SDL_EVENT_MOUSE_REMOVED)
+      {
+         sdl3_mouse_t *mouse = sdl3_get_mouse(sdl, event.mdevice.which);
+         if (mouse)
+         {
+            /* Clean out the values for the mouse so it can
+             * be used again if another mouse is plugged in. */
+            input_config_set_mouse_display_name(
+                  (unsigned)(mouse - sdl->mice), "N/A");
+            memset(mouse, 0, sizeof(*mouse));
+         }
       }
       else if (event.type == SDL_EVENT_KEYMAP_CHANGED)
          sdl3_build_scancode_lut(sdl);
